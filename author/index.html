@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Βιβλίο</title>
+  <link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#ece6d9;
+  --paper:#fffdf9;
+  --ink:#1d2730;
+  --muted:#5e6d79;
+  --line:#ddd3c3;
+  --accent:#1f5f8b;
+  --accent-soft:#e7f0f6;
+  --note:#f6efdc;
+  --figure:#f6f8fa;
+  --sheet-width:794px;
+  --sheet-height:1123px;
+  --sheet-pad-top:54px;
+  --sheet-pad-right:44px;
+  --sheet-pad-bottom:54px;
+  --sheet-pad-left:44px;
+  --screen-scale:1;
+  --shadow:0 18px 36px rgba(0,0,0,.10);
+  --shape-width:340px;
+  --body-font-size:18px;
+  --body-leading:1.3;
+  --para-gap:6px;
+  --section-gap:14px;
+  --note-gap:8px;
+  --callout-gap:7px;
+  --header-top:20px;
+  --header-h:16px;
+  --footer-bottom:18px;
+  --footer-h:16px;
+  --header-font-size:0px;
+  --footer-font-size:0px;
+  --body-font-family:Georgia,"Noto Serif",serif;
+  --heading-font-family:Georgia,"Noto Serif",serif;
+  --hero-eyebrow-font-size:13px;
+  --hero-title-font-size:28px;
+  --hero-subtitle-font-size:16px;
+  --hero-title-font-family:Georgia,"Times New Roman",serif;
+  --part-kicker-font-size:10px;
+  --part-title-font-size:24px;
+  --part-title-font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --section-heading-font-size:18px;
+  --section-heading-font-family:Georgia,"Noto Serif",serif;
+  --note-font-size:14px;
+  --note-line-height:1.42;
+  --note-label-font-size:10.5px;
+  --caption-font-size:12px;
+  --callout-font-size:11.5px;
+  --callout-title-font-size:10.5px;
+  --callout-label-font-size:10px;
+  --callout-chip-font-size:10px;
+  --callout-observe-title-font-size:10px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#efe9dc 0,#ece6d9 120px);
+  color:var(--ink);
+  font-size:var(--body-font-size);
+  line-height:var(--body-leading);
+  font-family:var(--body-font-family);
+}
+a{color:#1f5f8b;text-decoration-thickness:.08em;text-underline-offset:.14em}
+a:hover{color:#173f5b}
+.page a[href^="#"]{font-weight:650}
+@media print{a{color:inherit;text-decoration:none}}
+.topbar{
+  position:sticky; top:0; z-index:30;
+  backdrop-filter:blur(10px);
+  background:rgba(236,230,217,.88);
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+.topbar-inner{
+  max-width:1200px; margin:0 auto; padding:10px 18px;
+}
+.lang-tools{display:flex;justify-content:flex-end;gap:8px;max-width:var(--sheet-width);margin:0 auto 8px}
+.lang-btn{border:1px solid rgba(0,0,0,.12);background:#fff;color:var(--ink);padding:8px 12px;border-radius:14px;font:700 12px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;cursor:pointer}
+.lang-btn.active{background:#f7fafc;border-color:#cfd8e0;color:#173f5b}
+.mega-nav{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+  align-items:stretch;
+  justify-content:center;
+  width:100%;
+  max-width:var(--sheet-width);
+  margin:0 auto;
+}
+.menu-item{position:relative;min-width:0}
+.menu-item::after{content:"";position:absolute;left:0;right:0;top:100%;height:10px;background:transparent}
+.menu-trigger,.menu-btn{
+  display:flex; width:100%; min-width:0; align-items:center; justify-content:center; gap:7px;
+  border:1px solid rgba(0,0,0,.12); background:#fff; color:var(--ink);
+  padding:10px 12px; border-radius:18px; font:700 13px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  text-decoration:none; white-space:nowrap; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.04); cursor:pointer;
+}
+.menu-trigger .caret{font-size:11px;color:var(--muted)}
+.menu-item.active .menu-trigger,.menu-item:hover>.menu-trigger,.menu-item:focus-within>.menu-trigger,.menu-btn:hover{
+  background:#f7fafc;border-color:#cfd8e0;color:#173f5b
+}
+.menu-dropdown{
+  position:absolute;left:0;top:calc(100% + 2px);min-width:100%;width:max-content;display:none;
+  padding:10px;background:#fffdf9;border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 34px rgba(0,0,0,.12);z-index:35
+}
+.menu-item:hover>.menu-dropdown,.menu-item:focus-within>.menu-dropdown,.menu-item.open>.menu-dropdown{display:block}
+.menu-dropdown .menu-section-link{
+  display:block;text-decoration:none;color:var(--ink);background:#faf8f3;border:1px solid rgba(0,0,0,.06);
+  border-radius:12px;padding:10px 12px;font:650 13px/1.35 system-ui,-apple-system,Segoe UI,Arial,sans-serif;margin:0 0 8px
+}
+.menu-dropdown .menu-section-link:last-child{margin-bottom:0}
+.menu-item.menu-tool::after{display:none}
+.viewport{max-width:1200px; margin:0 auto; padding:24px 18px 60px}
+.page-stack{display:flex; flex-direction:column; align-items:center; gap:26px}
+.sheet-wrap{
+  width:calc(var(--sheet-width) * var(--screen-scale));
+  min-height:calc(var(--sheet-height) * var(--screen-scale));
+  position:relative;
+}
+.sheet{
+  width:var(--sheet-width);
+  height:var(--sheet-height);
+  min-height:var(--sheet-height);
+  transform:scale(var(--screen-scale));
+  transform-origin:top left;
+  background:var(--paper);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  position:absolute; left:0; top:0;
+  overflow:hidden;
+}
+.sheet-inner{
+  position:relative;
+  height:100%;
+  min-height:100%;
+  padding:var(--sheet-pad-top) var(--sheet-pad-right) var(--sheet-pad-bottom) var(--sheet-pad-left);
+}
+.sheet-header{
+  position:absolute;
+  left:var(--sheet-pad-left);
+  right:var(--sheet-pad-right);
+  top:var(--header-top);
+  height:var(--header-h);
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  align-items:center;
+  border-bottom:1px solid rgba(0,0,0,.08);
+  padding-bottom:8px;
+  font:700 var(--header-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  letter-spacing:.04em;
+  text-transform:none;
+  color:#7f8890;
+}
+.sheet-header .c{text-align:center}
+.sheet-header .r{text-align:right}
+.sheet-header.hidden{display:none}
+.sheet-body{
+  display:flow-root;
+}
+.sheet-footer{
+  position:absolute;
+  left:var(--sheet-pad-left);
+  right:var(--sheet-pad-right);
+  bottom:var(--footer-bottom);
+  height:var(--footer-h);
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  align-items:center;
+  padding-top:8px;
+  border-top:1px solid rgba(0,0,0,.08);
+  font:600 var(--footer-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  color:#7b8791;
+}
+.sheet-footer .c{text-align:center}
+.sheet-footer .r{text-align:right}
+.sheet-footer.hidden{display:none}
+
+.hero{margin:0 0 var(--section-gap)}
+.eyebrow{margin:0 0 10px;font:800 var(--hero-eyebrow-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;text-transform:none;letter-spacing:.08em;color:var(--accent)}
+h1{margin:0 0 10px;font-family:var(--hero-title-font-family);font-size:var(--hero-title-font-size);line-height:1.06;letter-spacing:-.016em;font-weight:760;color:#1b506f}
+.subtitle{margin:0;color:var(--muted);font-size:var(--hero-subtitle-font-size);line-height:1.35;max-width:56ch}
+
+.part-head{margin:18px 0 14px;padding-top:2px}
+.part-kicker{margin:0 0 5px;font:800 var(--part-kicker-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;text-transform:none;letter-spacing:.11em;color:#8a6a32}
+.part-title-main{margin:0;font:780 var(--part-title-font-size)/1.08 var(--part-title-font-family);letter-spacing:-.022em;color:#2f627f}
+
+.section-heading{margin:20px 0 8px;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);font:700 var(--section-heading-font-size)/1.18 var(--section-heading-font-family);letter-spacing:-.008em;color:#5d7281}
+.paragraph{margin:0 0 var(--para-gap);text-align:justify;text-justify:inter-word;hyphens:auto}
+.note{
+  margin:var(--note-gap) 0; padding:10px 12px; border-radius:14px; background:var(--note); border:1px solid #e4d7ae;
+  font:500 var(--note-font-size)/var(--note-line-height) system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+}
+.note .label{display:block;margin:0 0 5px;font:800 var(--note-label-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;letter-spacing:.08em;text-transform:none;color:#8d6d1c}
+.side-note{
+  margin:4px 0 12px; padding:10px 12px; border-radius:16px;
+  background:#f7fafc; border:1px solid #d6e2eb; color:#29414f;
+  font:500 var(--note-font-size)/var(--note-line-height) system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+}
+.side-note.float-right,.side-note.float-left{width:min(var(--figure-width, var(--shape-width)), 42%)}
+.side-note.float-right{float:right;margin:4px 0 10px 18px}
+.side-note.float-left{float:left;margin:4px 18px 10px 0}
+.side-note.wide{clear:both;width:100%;max-width:100%;margin:14px 0}
+.side-note .label{display:block;margin:0 0 6px;font:800 var(--note-label-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;letter-spacing:.08em;text-transform:none;color:#2f698f}
+.side-note .title{display:block;margin:0 0 6px;font:800 13px/1.25 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#1f5f8b}
+.side-note p{margin:0 0 6px}
+.side-note p:last-child{margin-bottom:0}
+
+figure.media{
+  margin:4px 0 12px; background:var(--figure); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+}
+figure.media.float-right,figure.media.float-left{width:min(var(--figure-width, var(--shape-width)), 42%)}
+figure.media.float-right{float:right;margin:4px 0 10px 18px}
+figure.media.float-left{float:left;margin:4px 18px 10px 0}
+figure.media.wide{clear:both;width:100%;max-width:100%;margin:14px 0}
+.media-frame{position:relative;width:100%;background:#dde7ee;overflow:hidden;aspect-ratio:16/9}
+.media-frame.natural{aspect-ratio:auto;background:#fff;overflow:visible}
+.media-frame iframe,.media-frame img,.media-placeholder,.print-scene-snapshot{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.media-frame img{object-fit:cover}
+.media-frame.natural img{position:static;inset:auto;width:100%;height:auto;object-fit:contain;display:block}
+.media-placeholder{display:grid;place-items:center;text-align:center;padding:22px;background:linear-gradient(135deg,#f7fbfd,#e1ebf1);color:#465666;font:600 15px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.print-scene-snapshot{display:none;object-fit:contain;background:#fff}
+figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--muted);border-top:1px solid rgba(0,0,0,.07)}
+
+.callout{
+  margin:var(--callout-gap) 0; padding:8px 9px; border:1px solid #d6e2eb; border-radius:12px; background:#f8fbfd;
+  font:500 var(--callout-font-size)/1.35 system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:#29414f;
+}
+.callout-title{margin:0 0 6px;font:800 var(--callout-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;text-transform:none;letter-spacing:.08em;color:#2f698f}
+.callout-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}
+.callout-label{font:700 var(--callout-label-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#5a7386;padding:3px 6px;border-radius:999px;background:#eef4f8;border:1px solid #d7e4ec}
+.callout-chip{display:inline-flex;align-items:center;justify-content:center;min-height:20px;padding:3px 7px;border-radius:999px;background:#fff;border:1px solid #d6e2eb;font:700 var(--callout-chip-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#203848}
+.callout-observe{margin-top:4px;padding-top:5px;border-top:1px dashed #cfdbe3}
+.callout-observe-title{font:700 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#7b5c2a;margin-right:6px}
+.callout-observe ul{margin:6px 0 0 18px;padding:0}
+.callout-observe li{margin:4px 0;font-style:italic}
+.clear{clear:both}
+.nav-anchor{display:block;position:relative;height:0;overflow:hidden;scroll-margin-top:120px}
+.sheet-wrap[id],.sheet-body [id],.nav-anchor[id]{scroll-margin-top:120px}
+.status{max-width:var(--sheet-width);margin:16px auto 0;color:var(--muted);font:500 14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.local-book-loader{max-width:680px;margin:24px auto;padding:18px;border:1px solid var(--line);border-radius:18px;background:#fffdf9;text-align:center;font:600 14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.local-book-loader input{display:block;margin:12px auto 0}
+
+.math-inline math{font-size:1em}
+@media (max-width:980px){
+  .mega-nav{grid-template-columns:repeat(3,minmax(120px,1fr))}
+}
+@media (max-width:760px){
+  .mega-nav{grid-template-columns:repeat(2,minmax(120px,1fr))}
+  .menu-dropdown{position:static;display:block;min-width:0;width:100%;margin-top:8px}
+}
+@media print{
+  @page{size:A4 portrait; margin:0}
+  html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{
+    font-size:var(--body-font-size) !important;
+    line-height:var(--body-leading) !important;
+    font-family:var(--body-font-family) !important;
+  }
+  .topbar,.status,.local-book-loader{display:none !important}
+  .viewport{padding:0 !important; max-width:none !important}
+  .page-stack{gap:0 !important}
+  .sheet-wrap{
+    width:var(--sheet-width) !important;
+    min-height:var(--sheet-height) !important;
+    page-break-after:always;
+    break-after:page;
+    break-inside:avoid;
+    overflow:visible !important;
+  }
+  .sheet-wrap:last-child{page-break-after:auto;break-after:auto}
+  .sheet{
+    width:var(--sheet-width) !important;
+    height:var(--sheet-height) !important;
+    min-height:var(--sheet-height) !important;
+    transform:none !important;
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    border:0 !important;
+    box-shadow:none !important;
+    overflow:hidden !important;
+  }
+  .sheet-inner{
+    height:100% !important;
+    min-height:100% !important;
+    padding:var(--sheet-pad-top) var(--sheet-pad-right) var(--sheet-pad-bottom) var(--sheet-pad-left) !important;
+  }
+  .sheet-header{
+    left:var(--sheet-pad-left) !important;
+    right:var(--sheet-pad-right) !important;
+    top:var(--header-top) !important;
+    height:var(--header-h) !important;
+    font-size:var(--header-font-size) !important;
+  }
+  .sheet-footer{
+    left:var(--sheet-pad-left) !important;
+    right:var(--sheet-pad-right) !important;
+    bottom:var(--footer-bottom) !important;
+    height:var(--footer-h) !important;
+    font-size:var(--footer-font-size) !important;
+  }
+  figure.media,.note,.side-note,.callout,.hero,.part-head,.section-heading{break-inside:avoid; page-break-inside:avoid}
+  .media-frame.print-ready iframe{display:none !important}
+  .media-frame img{object-fit:contain !important; background:#fff !important}
+  .media-frame.scene-frame::after{
+    content:"[Η διαδραστική σκηνή εμφανίζεται στην ψηφιακή έκδοση]";
+    position:absolute; inset:0; display:grid; place-items:center;
+    padding:18px; color:#5e6d79; font:600 13px/1.4 system-ui,-apple-system,Segoe UI,Arial,sans-serif; background:#f4f6f8;
+  }
+  .media-frame.scene-frame.print-ready{background:#fff !important}
+  .media-frame.scene-frame.print-ready::after{content:none !important}
+  .print-scene-snapshot{display:block !important; object-fit:contain !important; background:#fff !important}
+}
+
+
+/* Book text rules: full justification + browser hyphenation for all text objects.
+   Labels/chips/titles stay compact and are excluded. */
+.paragraph,
+.note,
+.note p,
+.note li,
+.side-note,
+.side-note p,
+.side-note li,
+.callout,
+.callout-observe,
+.callout-observe li,
+figure.media figcaption{
+  text-align:justify;
+  text-justify:inter-word;
+  hyphens:auto;
+  -webkit-hyphens:auto;
+  overflow-wrap:break-word;
+  word-break:normal;
+}
+.note .label,
+.side-note .label,
+.side-note .title,
+.callout-title,
+.callout-row,
+.callout-label,
+.callout-chip{
+  text-align:initial;
+  text-justify:auto;
+  hyphens:manual;
+  -webkit-hyphens:manual;
+  overflow-wrap:normal;
+}
+
+</style>
+<link rel="stylesheet" href="book-core.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="lang-tools">
+        <button type="button" class="lang-btn" id="langElBtn">Ελληνικά</button>
+        <button type="button" class="lang-btn" id="langEnBtn">English</button>
+      </div>
+      <nav class="mega-nav" id="megaNav" aria-label="Μενού βιβλίου"></nav>
+    </div>
+  </div>
+
+  <main class="viewport">
+    <div class="page-stack" id="pageStack"></div>
+    <div class="status" id="status"></div>
+    <div class="local-book-loader" id="localBookLoader" hidden>
+      <div>Επίλεξε το αρχείο JSON του βιβλίου για να ανοίξει τοπικά.</div>
+      <input type="file" id="localBookInput" accept="application/json,.json">
+    </div>
+  </main>
+<script src="book-core.js"></script>
+<script src="snapshot-transport.js"></script>
+<script>
+'use strict';
+const pageStack=document.getElementById('pageStack');
+const megaNav=document.getElementById('megaNav');
+const statusEl=document.getElementById('status');
+const localBookLoader=document.getElementById('localBookLoader');
+const localBookInput=document.getElementById('localBookInput');
+const langElBtn=document.getElementById('langElBtn');
+const langEnBtn=document.getElementById('langEnBtn');
+let printPageStyleEl = null;
+const BOOK_QUERY_PARAM='book';
+const DEFAULT_BOOK_URL='../book/chapter_content.json';
+const initialParams=new URLSearchParams(window.location.search);
+let bookSourceUrl=null;
+let bookBaseUrl=new URL('.', window.location.href);
+function readLocalPreference(key,fallback){
+  try{return localStorage.getItem(key) || fallback;}catch(_e){return fallback;}
+}
+function writeLocalPreference(key,value){
+  try{localStorage.setItem(key,value);}catch(_e){}
+}
+const requestedLang=initialParams.get('lang');
+let contentLang = requestedLang === 'en'
+  ? 'en'
+  : (requestedLang === 'el' || requestedLang === 'gr'
+    ? 'el'
+    : readLocalPreference('bookContentLang','el'));
+function locKey(key){ return contentLang === 'en' ? `${key}_en` : key; }
+function getLoc(obj,key,fallback=''){
+  if(!obj) return fallback;
+  const v = obj[locKey(key)];
+  if(v != null && v !== '') return v;
+  const base = obj[key];
+  return base != null ? base : fallback;
+}
+function getLocArray(obj,key){
+  if(!obj) return [];
+  const v = obj[locKey(key)];
+  if(Array.isArray(v)) return v;
+  return Array.isArray(obj[key]) ? obj[key] : [];
+}
+function updateLangButtons(){
+  document.documentElement.lang = contentLang;
+  langElBtn?.classList.toggle('active', contentLang==='el');
+  langEnBtn?.classList.toggle('active', contentLang==='en');
+}
+function rerenderBook(){
+  if(!bookData) return;
+  renderPages(bookData);
+  deriveNav(bookData);
+  updateActiveNav();
+  setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(bookData.pages||[]).length}`);
+}
+langElBtn?.addEventListener('click', ()=>{ contentLang='el'; writeLocalPreference('bookContentLang',contentLang); updateLangButtons(); rerenderBook(); });
+langEnBtn?.addEventListener('click', ()=>{ contentLang='en'; writeLocalPreference('bookContentLang',contentLang); updateLangButtons(); rerenderBook(); });
+updateLangButtons();
+
+function applyPrintPageSettings(defs){
+  if(!printPageStyleEl){
+    printPageStyleEl = document.createElement('style');
+    printPageStyleEl.id = 'dynamic-print-page-style';
+    document.head.appendChild(printPageStyleEl);
+  }
+  const size = String(defs?.pageSize || 'A4').trim() || 'A4';
+  const orientation = String(defs?.orientation || 'portrait').trim() || 'portrait';
+  printPageStyleEl.textContent = `@media print{ @page{ size:${size} ${orientation}; margin:0 } }`;
+}
+
+function setStatus(msg){ statusEl.textContent = msg || ''; }
+function esc(s=''){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function applyScreenScale(){
+  const avail=Math.max(320, window.innerWidth - 48);
+  const pageWidth=Number(bookData?.layoutDefaults?.pageWidthPx || 794);
+  const scale=Math.min(1, avail / pageWidth);
+  document.documentElement.style.setProperty('--screen-scale', String(scale));
+}
+window.addEventListener('resize', applyScreenScale, {passive:true});
+
+function withCacheBust(url){
+  try{
+    const u=new URL(url, bookBaseUrl);
+    u.searchParams.set('_cb', String(Date.now()));
+    return u.toString();
+  }catch(_e){ return url; }
+}
+function configuredBookUrl(){
+  const raw=String(initialParams.get(BOOK_QUERY_PARAM) || DEFAULT_BOOK_URL).trim() || DEFAULT_BOOK_URL;
+  return new URL(raw, window.location.href);
+}
+function setBookSourceUrl(url){
+  bookSourceUrl=new URL(url, window.location.href);
+  bookBaseUrl=new URL('.', bookSourceUrl);
+}
+function resolveBookResource(url=''){
+  const raw=String(url || '').trim();
+  if(!raw || raw.startsWith('#')) return raw;
+  try{return new URL(raw, bookBaseUrl).toString();}catch(_e){return raw;}
+}
+function normalizeAppSrc(url=''){
+  return resolveBookResource(url);
+}
+function imageSrcCandidates(src=''){
+  const raw=String(src||'').trim();
+  if(!raw) return [];
+  return [resolveBookResource(raw)];
+}
+function applyImageWithFallback(img, rawSrc=''){
+  const candidates=imageSrcCandidates(rawSrc);
+  let i=0;
+  const tryNext=()=>{
+    if(i>=candidates.length){
+      img.dispatchEvent(new CustomEvent('imagefallbackfailed'));
+      return;
+    }
+    img.src=candidates[i++];
+  };
+  img.addEventListener('error', tryNext);
+  tryNext();
+}
+function waitForImage(img){
+  return new Promise(resolve=>{
+    if(!img || img.complete) return resolve();
+    img.addEventListener('load', ()=>resolve(), {once:true});
+    img.addEventListener('error', ()=>resolve(), {once:true});
+  });
+}
+function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+function waitForIframeLoad(iframe){
+  return new Promise(resolve=>{
+    if(!iframe) return resolve();
+    let done = false;
+    const finish = ()=>{ if(done) return; done = true; resolve(); };
+    try{
+      const doc = iframe.contentDocument;
+      if(doc && doc.readyState === 'complete') return resolve();
+    }catch(_e){}
+    iframe.addEventListener('load', finish, {once:true});
+    iframe.addEventListener('error', finish, {once:true});
+    setTimeout(finish, 3500);
+  });
+}
+async function waitForFigureImages(){
+  const imgs = Array.from(document.querySelectorAll('.media-frame img:not(.print-scene-snapshot)'));
+  for(const img of imgs) await waitForImage(img);
+}
+const SNAPSHOT_PATHS = BookSnapshotTransport.PATHS;
+let lastSnapshotReport = null;
+
+async function captureIframeWithRetry(iframe, options={}){
+  const maxAttempts = Math.max(1, Number(options.attempts) || 1);
+  const mergedAttempts = [];
+  let lastResult = null;
+  for(let attemptIndex=0; attemptIndex<maxAttempts; attemptIndex++){
+    lastResult = await BookSnapshotTransport.capture(iframe, {
+      timeoutMs:options.timeoutMs
+    });
+    mergedAttempts.push(...lastResult.attempts.map(attempt=>({
+      ...attempt,
+      attemptIndex:attemptIndex+1
+    })));
+    if(lastResult.result === 'success'){
+      return { ...lastResult, attempts:mergedAttempts };
+    }
+    if(attemptIndex < maxAttempts-1) await wait(220);
+  }
+  return {
+    ...(lastResult || {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:'no-attempt',
+      fallbackUsed:false,
+      dataUrl:null
+    }),
+    attempts:mergedAttempts
+  };
+}
+
+async function captureSceneFrame(frame){
+  const liveIframe = frame?.querySelector('iframe');
+  if(!liveIframe){
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:'live-iframe-unavailable',
+      fallbackUsed:false,
+      attempts:[],
+      dataUrl:null
+    };
+  }
+  await waitForIframeLoad(liveIframe);
+  return captureIframeWithRetry(liveIframe, {
+    attempts:2,
+    timeoutMs:4800
+  });
+}
+let printSnapshotsPrepared = false;
+let printFlowRunning = false;
+let bookData = null;
+
+function clearPrintSnapshots(){
+  document.querySelectorAll('.print-scene-snapshot').forEach(img=>img.remove());
+  document.querySelectorAll('.media-frame.print-ready').forEach(el=>el.classList.remove('print-ready'));
+  printSnapshotsPrepared = false;
+}
+function cleanupPrintSnapshots(){
+  clearPrintSnapshots();
+  printFlowRunning = false;
+}
+async function preparePrintSnapshots(forceOrOptions=false){
+  const force = forceOrOptions && typeof forceOrOptions === 'object'
+    ? forceOrOptions.force !== false
+    : Boolean(forceOrOptions);
+  const requestedPath = SNAPSHOT_PATHS.BOOK_SCENE_V1;
+  if(printSnapshotsPrepared && !force){
+    return lastSnapshotReport.successes;
+  }
+  clearPrintSnapshots();
+  await waitForFigureImages();
+
+  const frames = Array.from(document.querySelectorAll('.media-frame.scene-frame'));
+  let readyCount = 0;
+  const sceneReports = [];
+
+  for(let sceneIndex=0; sceneIndex<frames.length; sceneIndex++){
+    const frame = frames[sceneIndex];
+    const liveIframe = frame.querySelector('iframe');
+    if(!liveIframe) continue;
+
+    const capture = await captureSceneFrame(frame);
+    const exactPath = capture.executedPath === requestedPath;
+    const sceneReport = {
+      sceneIndex:sceneIndex+1,
+      source:liveIframe.getAttribute('src') || '',
+      requestedPath,
+      executedPath:capture.executedPath,
+      attempts:capture.attempts,
+      result:capture.result,
+      fallbackUsed:Boolean(capture.fallbackUsed),
+      pass:capture.result === 'success' && exactPath
+    };
+    sceneReports.push(sceneReport);
+    if(!capture.dataUrl) continue;
+
+    const img = document.createElement('img');
+    img.className = 'print-scene-snapshot';
+    img.alt = 'Στιγμιότυπο σκηνής';
+    img.src = capture.dataUrl;
+    frame.appendChild(img);
+    await waitForImage(img);
+    frame.classList.add('print-ready');
+    readyCount += 1;
+  }
+
+  await wait(120);
+  const byExecutedPath = {};
+  sceneReports.forEach(scene=>{
+    const key = scene.executedPath || 'none';
+    byExecutedPath[key] = (byExecutedPath[key] || 0) + 1;
+  });
+  const mismatches = sceneReports.filter(scene=>!scene.pass).length;
+  const fallbacksUsed = sceneReports.filter(scene=>scene.fallbackUsed).length;
+  lastSnapshotReport = {
+    generatedAt:new Date().toISOString(),
+    requestedPath,
+    expectedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+    fallbacksDisabled:true,
+    scenes:frames.length,
+    successes:readyCount,
+    failures:frames.length-readyCount,
+    mismatches,
+    fallbacksUsed,
+    byExecutedPath,
+    sceneReports,
+    pass:readyCount === frames.length && mismatches === 0 && fallbacksUsed === 0
+  };
+  printSnapshotsPrepared = lastSnapshotReport.pass;
+  return readyCount;
+}
+window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
+  prepare: (force=true)=>preparePrintSnapshots(force),
+  runCanonical: async ()=>{
+    await preparePrintSnapshots({ force:true });
+    return lastSnapshotReport;
+  },
+  paths: ()=>[...BookSnapshotTransport.SUPPORTED_PATHS],
+  cleanup: cleanupPrintSnapshots,
+  status: ()=>({
+    pages: document.querySelectorAll('.sheet-wrap').length,
+    scenes: document.querySelectorAll('.media-frame.scene-frame').length,
+    preparedSnapshots: document.querySelectorAll('.media-frame.scene-frame.print-ready .print-scene-snapshot').length,
+    ready: printSnapshotsPrepared,
+    lastReport:lastSnapshotReport
+  })
+});
+async function beginPrintFlow(){
+  if(printFlowRunning) return;
+  printFlowRunning = true;
+  setStatus('Ετοιμάζονται στατικά στιγμιότυπα για την εκτύπωση…');
+  try{
+    await preparePrintSnapshots(true);
+    if(!lastSnapshotReport?.pass){
+      throw new Error('Το book-scene-v1 δεν παρήγαγε όλα τα στιγμιότυπα.');
+    }
+  }catch(err){
+    console.warn(err);
+    printFlowRunning = false;
+    setStatus('Η εκτύπωση σταμάτησε: απέτυχε το book-scene-v1.');
+    return;
+  }
+  setStatus('');
+  window.print();
+}
+function resolveAppHref(){
+  return resolveBookResource(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
+}
+window.addEventListener('beforeprint', ()=>{
+  if(!printSnapshotsPrepared){
+    try{ preparePrintSnapshots(false); }catch(_e){}
+  }
+});
+window.addEventListener('afterprint', ()=>{
+  cleanupPrintSnapshots();
+  setStatus('');
+});
+
+function slugifyForId(value=''){
+  const s = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+    .replace(/[^a-z0-9\u0370-\u03ff]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48);
+  return s || 'anchor';
+}
+function normalizeDomId(value=''){
+  const raw = String(value || '').trim();
+  if(!raw) return '';
+  const safe = raw.replace(/[^A-Za-z0-9_:\-.\u0370-\u03ff]+/g,'-').replace(/^-+|-+$/g,'');
+  return (/^[A-Za-z_\u0370-\u03ff]/.test(safe) ? safe : `a-${safe}`) || '';
+}
+function itemNavTitle(item, fallback=''){
+  return String(getLoc(item,'navLabel','') || getLoc(item,'title','') || getLoc(item,'label','') || getLoc(item,'caption','') || fallback || '').trim();
+}
+function isStructuralNavItem(item){
+  return ['part_title','section_heading','scene','figure','side_note','note','hero','nav_anchor'].includes(item?.type);
+}
+function itemAnchorId(page, pageIndex, item, itemIndex){
+  const explicit = normalizeDomId(item?.id || item?.anchorId || item?.targetId || '');
+  if(explicit) return explicit;
+  if(!isStructuralNavItem(item)) return '';
+  const pageId = normalizeDomId(page?.id || `page-${pageIndex+1}`) || `page-${pageIndex+1}`;
+  const title = itemNavTitle(item, item?.type || 'item');
+  return normalizeDomId(`${pageId}-${itemIndex+1}-${slugifyForId(title || item?.type || 'item')}`);
+}
+function attachItemAnchor(el, item, ctx){
+  if(!el || !ctx || !isStructuralNavItem(item)) return el;
+  const id = itemAnchorId(ctx.page, ctx.pageIndex, item, ctx.itemIndex);
+  if(id) el.dataset.navTargetId = id;
+  if(item?.showInNav === false) el.dataset.navHidden = '1';
+  return el;
+}
+function renderNavAnchor(item){
+  const s=document.createElement('span');
+  s.className='nav-anchor nav-anchor-inline';
+  s.setAttribute('aria-hidden', 'true');
+  return s;
+}
+function renderItemAnchor(item, ctx){
+  if(!ctx || !isStructuralNavItem(item)) return null;
+  const id = itemAnchorId(ctx.page, ctx.pageIndex, item, ctx.itemIndex);
+  if(!id) return null;
+  const s=document.createElement('span');
+  s.className='nav-anchor';
+  s.id=id;
+  s.dataset.anchorFor=item.type || 'item';
+  s.setAttribute('aria-hidden', 'true');
+  return s;
+}
+function collectNavTargets(data){
+  const pages = Array.isArray(data?.pages) ? data.pages : [];
+  const targets = [];
+  const byId = new Map();
+  pages.forEach((page, pageIndex)=>{
+    const pageId = normalizeDomId(page.id || `page-${pageIndex+1}`);
+    const pageTitle = String((page.items||[]).map(it=>itemNavTitle(it,'')).find(Boolean) || getLoc(page.header,'right','') || getLoc(page.header,'left','') || pageId).trim();
+    const pageTarget = {id:pageId, pageId, pageIndex, title:pageTitle, type:'page'};
+    targets.push(pageTarget); byId.set(pageId, pageTarget);
+    (page.items||[]).forEach((item,itemIndex)=>{
+      if(!isStructuralNavItem(item) || item.showInNav === false) return;
+      const id = itemAnchorId(page,pageIndex,item,itemIndex);
+      const title = itemNavTitle(item, pageTitle || id);
+      if(!id || !title) return;
+      const t = {id, pageId, pageIndex, itemIndex, title, type:item.type};
+      targets.push(t); byId.set(id,t);
+    });
+  });
+  return {targets, byId};
+}
+function targetPageIndex(targetId, targetMap, fallback=0){
+  const target = targetMap.get(String(targetId || ''));
+  return target ? target.pageIndex : fallback;
+}
+
+function renderPages(data){
+  return BookCore.renderPages(pageStack, data, {
+    lang:contentLang,
+    sceneSource:src=>withCacheBust(normalizeAppSrc(src)),
+    imageCandidates:src=>imageSrcCandidates(src)
+  });
+}
+
+function appendNavTools(data){
+  const nav = data?.nav || {};
+  const showApp = nav.showApp !== false;
+  const showPrint = nav.showPrint !== false;
+
+  if(showApp){
+    const appNode = document.createElement('div');
+    appNode.className = 'menu-item menu-tool';
+    const appLink = document.createElement('a');
+    appLink.className = 'menu-btn';
+    appLink.href = resolveAppHref();
+    appLink.textContent = contentLang==='en' ? 'Open app' : 'Στην εφαρμογή';
+    appNode.appendChild(appLink);
+    megaNav.appendChild(appNode);
+  }
+
+  if(showPrint){
+    const printNode = document.createElement('div');
+    printNode.className = 'menu-item menu-tool';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'menu-btn';
+    btn.id = 'printBtn';
+    btn.textContent = contentLang==='en' ? 'Print' : 'Εκτύπωση';
+    btn.addEventListener('click', async ()=>{ await beginPrintFlow(); });
+    printNode.appendChild(btn);
+    megaNav.appendChild(printNode);
+  }
+}
+
+
+function closeAllNavMenus(except=null){
+  megaNav.querySelectorAll('.menu-item.open').forEach(item=>{
+    if(except && item === except) return;
+    item.classList.remove('open');
+    const btn = item.querySelector('.menu-trigger');
+    if(btn) btn.setAttribute('aria-expanded','false');
+  });
+}
+function wireNavMenuInteractions(){
+  megaNav.querySelectorAll('.menu-trigger').forEach(btn=>{
+    btn.addEventListener('click', ev=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      const item = btn.closest('.menu-item');
+      if(!item) return;
+      const willOpen = !item.classList.contains('open');
+      closeAllNavMenus(item);
+      item.classList.toggle('open', willOpen);
+      btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+  });
+  megaNav.querySelectorAll('.menu-dropdown a').forEach(link=>{
+    link.addEventListener('click', ev=>{
+      ev.preventDefault();
+      closeAllNavMenus();
+      const id = decodeURIComponent((link.getAttribute('href') || '').replace(/^#/, ''));
+      scrollToNavTarget(id, { updateHash:true });
+    });
+  });
+}
+function wireInTextInternalLinks(){
+  document.querySelectorAll('.sheet-body a[href^="#"]').forEach(link=>{
+    if(link.dataset.internalScrollWired === '1') return;
+    link.dataset.internalScrollWired = '1';
+    link.addEventListener('click', ev=>{
+      const href = link.getAttribute('href') || '';
+      const id = decodeURIComponent(href.replace(/^#/, ''));
+      if(!id) return;
+      const target = document.getElementById(id);
+      if(!target) return;
+      ev.preventDefault();
+      scrollToNavTarget(id, { updateHash:true });
+    });
+  });
+}
+
+function navScrollOffset(){
+  const topbar = document.querySelector('.topbar');
+  return Math.ceil((topbar?.getBoundingClientRect?.().height || 0) + 16);
+}
+function scrollToNavTarget(id, opts={}){
+  if(!id) return;
+  const el = document.getElementById(id);
+  if(!el) return;
+  const offset = navScrollOffset();
+  const doScroll = (behavior='smooth') => {
+    const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset);
+    window.scrollTo({ top, behavior });
+  };
+  doScroll(opts.instant ? 'auto' : 'smooth');
+  if(opts.updateHash){
+    try{ history.pushState(null, '', `#${encodeURIComponent(id)}`); }catch(_e){}
+  }
+  [80, 220, 520, 900].forEach(ms => setTimeout(() => doScroll('auto'), ms));
+}
+if(!window.__bookStructuralHashScrollInstalled){
+  window.__bookStructuralHashScrollInstalled = true;
+  window.addEventListener('load', () => {
+    const id = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+    if(id) setTimeout(() => scrollToNavTarget(id, { instant:true }), 60);
+  });
+  window.addEventListener('hashchange', () => {
+    const id = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+    if(id) scrollToNavTarget(id, { instant:true });
+  });
+}
+if(!window.__bookNavCloseHandlersInstalled){
+  window.__bookNavCloseHandlersInstalled = true;
+  document.addEventListener('click', ev=>{
+    if(!megaNav.contains(ev.target)) closeAllNavMenus();
+  });
+  document.addEventListener('keydown', ev=>{
+    if(ev.key === 'Escape') closeAllNavMenus();
+  });
+}
+
+function renderNavGroups(groups, pageToGroup, data){
+  megaNav.innerHTML = '';
+  groups.forEach(group => {
+    if(group.hidden) return;
+    const node = document.createElement('div');
+    node.className = 'menu-item';
+    node.dataset.groupKey = group.key;
+    const entries = (group.entries || []).filter(entry => !entry.hidden);
+    const links = entries.map(entry => `<a class="menu-section-link" href="#${esc(entry.id)}">${esc(entry.text)}</a>`).join('');
+    node.innerHTML = `<button class="menu-trigger" type="button" aria-expanded="false">${esc(group.title)}<span class="caret">▾</span></button><div class="menu-dropdown">${links}</div>`;
+    megaNav.appendChild(node);
+  });
+  appendNavTools(data);
+  wireNavMenuInteractions();
+  wireInTextInternalLinks();
+  megaNav.dataset.pageGroupMap = JSON.stringify(Object.fromEntries(pageToGroup));
+}
+
+function deriveManualNav(data){
+  const pages = Array.isArray(data.pages) ? data.pages : [];
+  const {byId: targetMap} = collectNavTargets(data);
+  const rawGroups = Array.isArray(data?.nav?.groups) ? data.nav.groups : [];
+  const visibleGroups = rawGroups
+    .map((group, idx) => {
+      const fallbackId = pages[0]?.id || 'page-1';
+      const id = String(group.target || group.targetId || group.id || fallbackId).trim() || fallbackId;
+      const target = targetMap.get(id);
+      const entries = Array.isArray(group.entries) ? group.entries : [];
+      return {
+        key: `manual-${idx}`,
+        id,
+        pageId: target?.pageId || id,
+        title: String(getLoc(group,'title', group.title || target?.title || id || `Menu ${idx+1}`)).trim() || id,
+        hidden: !!group.hidden,
+        entries: entries.map(entry => {
+          const entryId = String(entry.target || entry.targetId || entry.id || id).trim() || id;
+          const entryTarget = targetMap.get(entryId);
+          return {
+            id: entryId,
+            pageId: entryTarget?.pageId || entryId,
+            text: String(getLoc(entry,'title', entry.title || entryTarget?.title || entryId)).trim() || entryId,
+            hidden: !!entry.hidden
+          };
+        })
+      };
+    })
+    .filter(group => group.title && group.id);
+
+  const groups = visibleGroups.length ? visibleGroups : [{
+    key:'manual-0',
+    id:pages[0]?.id || 'page-1',
+    pageId:pages[0]?.id || 'page-1',
+    title:contentLang==='en' ? 'Book' : 'Βιβλίο',
+    entries:[]
+  }];
+
+  const pageToGroup = new Map();
+  const anchors = groups.map((g, idx)=>({
+    key:g.key,
+    index:targetPageIndex(g.id, targetMap, idx)
+  })).sort((a,b)=>a.index-b.index);
+
+  pages.forEach((page, idx)=>{
+    const pageId = page.id || `page-${idx+1}`;
+    let active = anchors[0]?.key || groups[0].key;
+    for(const a of anchors){
+      if(a.index <= idx) active = a.key;
+      else break;
+    }
+    pageToGroup.set(pageId, active);
+  });
+  groups.forEach(group => {
+    if(group.id) pageToGroup.set(group.id, group.key);
+    if(group.pageId) pageToGroup.set(group.pageId, group.key);
+    (group.entries || []).forEach(entry => {
+      if(entry.id) pageToGroup.set(entry.id, group.key);
+      if(entry.pageId) pageToGroup.set(entry.pageId, group.key);
+    });
+  });
+
+  renderNavGroups(groups, pageToGroup, data);
+}
+
+function deriveNav(data){
+  if(data?.nav?.mode === 'manual' && Array.isArray(data?.nav?.groups) && data.nav.groups.length){
+    deriveManualNav(data);
+    return;
+  }
+  const pages = Array.isArray(data.pages) ? data.pages : [];
+  const groups = [];
+  const pageToGroup = new Map();
+  let currentGroup = null;
+
+  function menuGroupTitle(groupIndex, page, partItem){
+    if(partItem && String(itemNavTitle(partItem,'')).trim()) return String(itemNavTitle(partItem,'')).trim();
+    const right = String(getLoc(page?.header,'right','')).trim();
+    const firstTitle = (page?.items || []).map(item=>itemNavTitle(item,'')).find(Boolean);
+    const bookTitle = groupIndex === 0 ? String(getLoc(data?.meta,'title','')).trim() : '';
+    return right || firstTitle || bookTitle || (contentLang==='en' ? `Page ${groupIndex+1}` : `Σελίδα ${groupIndex+1}`);
+  }
+
+  pages.forEach((page, idx) => {
+    const pageId = page.id || `page-${idx+1}`;
+    const partIndex = (page.items || []).findIndex(it => it.type === 'part_title' && it.showInNav !== false);
+    const partItem = partIndex >= 0 ? page.items[partIndex] : null;
+    const startsNewGroup = !currentGroup || !!partItem;
+
+    if(startsNewGroup){
+      const groupId = partItem ? itemAnchorId(page, idx, partItem, partIndex) : pageId;
+      currentGroup = {
+        key: `group-${groups.length}`,
+        id: groupId,
+        pageId,
+        title: menuGroupTitle(groups.length, page, partItem),
+        entries: [],
+        seen: new Set()
+      };
+      groups.push(currentGroup);
+    }
+
+    pageToGroup.set(pageId, currentGroup.key);
+
+    (page.items || []).forEach((it, itemIndex) => {
+      if(it.showInNav === false) return;
+      const raw = String(itemNavTitle(it,'')).trim();
+      if(!raw) return;
+      if(!['section_heading','scene','nav_anchor'].includes(it.type)) return;
+      const key = raw.toLowerCase();
+      if(currentGroup.seen.has(key)) return;
+      currentGroup.seen.add(key);
+      currentGroup.entries.push({ id:itemAnchorId(page, idx, it, itemIndex) || pageId, pageId, text:raw });
+    });
+
+    if(currentGroup.entries.length === 0){
+      const key = currentGroup.title.toLowerCase();
+      currentGroup.seen.add(key);
+      currentGroup.entries.push({ id:currentGroup.id || pageId, pageId, text:currentGroup.title });
+    }
+  });
+
+  groups.forEach(group => {
+    if(group.id) pageToGroup.set(group.id, group.key);
+    if(group.pageId) pageToGroup.set(group.pageId, group.key);
+    (group.entries || []).forEach(entry => {
+      if(entry.id) pageToGroup.set(entry.id, group.key);
+      if(entry.pageId) pageToGroup.set(entry.pageId, group.key);
+    });
+  });
+  groups.forEach(g=>delete g.seen);
+  renderNavGroups(groups, pageToGroup, data);
+}
+function updateActiveNav(){
+  const targetEls=Array.from(document.querySelectorAll('.sheet-wrap[id], .sheet-body .nav-anchor[id]'));
+  const y=window.scrollY + 140;
+  let activeId='';
+  for(const el of targetEls){
+    if(el.getBoundingClientRect().top + window.scrollY <= y) activeId=el.id;
+  }
+  let pageToGroup = {};
+  try{ pageToGroup = JSON.parse(megaNav.dataset.pageGroupMap || '{}'); }catch(_e){}
+  let activeGroupKey = pageToGroup[activeId] || '';
+  if(!activeGroupKey){
+    const el = activeId ? document.getElementById(activeId) : null;
+    const page = el?.closest?.('.sheet-wrap[id]');
+    activeGroupKey = page ? pageToGroup[page.id] || '' : '';
+  }
+  megaNav.querySelectorAll('.menu-item').forEach(node=>{
+    if(node.dataset.groupKey){
+      node.classList.toggle('active', node.dataset.groupKey === activeGroupKey);
+    }
+  });
+}
+window.addEventListener('scroll', updateActiveNav, {passive:true});
+
+async function loadData(){
+  const source=configuredBookUrl();
+  setBookSourceUrl(source);
+  const res=await fetch(source, {cache:'no-store'});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+}
+function fontPresetValue(key, fallback){
+  const presets = {
+    serif: 'Georgia,"Noto Serif","Times New Roman",serif',
+    sans: 'system-ui,-apple-system,"Segoe UI",Arial,sans-serif',
+    classic: '"Avenir Next","Segoe UI",system-ui,-apple-system,Arial,sans-serif'
+  };
+  return presets[key] || fallback;
+}
+function applyLayoutDefaults(defs){
+  const root = document.documentElement;
+  if(!defs || typeof defs !== 'object') return;
+  if(defs.pageWidthPx != null) root.style.setProperty('--sheet-width', `${Number(defs.pageWidthPx)}px`);
+  if(defs.pageHeightPx != null) root.style.setProperty('--sheet-height', `${Number(defs.pageHeightPx)}px`);
+  if(defs.pagePaddingTopPx != null) root.style.setProperty('--sheet-pad-top', `${Number(defs.pagePaddingTopPx)}px`);
+  if(defs.pagePaddingRightPx != null) root.style.setProperty('--sheet-pad-right', `${Number(defs.pagePaddingRightPx)}px`);
+  if(defs.pagePaddingBottomPx != null) root.style.setProperty('--sheet-pad-bottom', `${Number(defs.pagePaddingBottomPx)}px`);
+  if(defs.pagePaddingLeftPx != null) root.style.setProperty('--sheet-pad-left', `${Number(defs.pagePaddingLeftPx)}px`);
+  if(defs.bodyFontSize != null) root.style.setProperty('--body-font-size', `${Number(defs.bodyFontSize)}px`);
+  if(defs.lineHeight != null) root.style.setProperty('--body-leading', String(defs.lineHeight));
+  if(defs.paragraphGap != null) root.style.setProperty('--para-gap', `${Number(defs.paragraphGap)}px`);
+  if(defs.sectionGap != null) root.style.setProperty('--section-gap', `${Number(defs.sectionGap)}px`);
+  if(defs.noteGap != null) root.style.setProperty('--note-gap', `${Number(defs.noteGap)}px`);
+  if(defs.calloutGap != null) root.style.setProperty('--callout-gap', `${Number(defs.calloutGap)}px`);
+  if(defs.headerTopPx != null) root.style.setProperty('--header-top', `${Number(defs.headerTopPx)}px`);
+  if(defs.headerHeightPx != null) root.style.setProperty('--header-h', `${Number(defs.headerHeightPx)}px`);
+  if(defs.footerBottomPx != null) root.style.setProperty('--footer-bottom', `${Number(defs.footerBottomPx)}px`);
+  if(defs.footerHeightPx != null) root.style.setProperty('--footer-h', `${Number(defs.footerHeightPx)}px`);
+  if(defs.headerFontSize != null) root.style.setProperty('--header-font-size', `${Number(defs.headerFontSize)}px`);
+  if(defs.footerFontSize != null) root.style.setProperty('--footer-font-size', `${Number(defs.footerFontSize)}px`);
+  if(defs.bodyFontFamily != null) root.style.setProperty('--body-font-family', fontPresetValue(defs.bodyFontFamily, defs.bodyFontFamily));
+  if(defs.headingFontFamily != null) root.style.setProperty('--heading-font-family', fontPresetValue(defs.headingFontFamily, defs.headingFontFamily));
+  if(defs.heroEyebrowFontSize != null) root.style.setProperty('--hero-eyebrow-font-size', `${Number(defs.heroEyebrowFontSize)}px`);
+  if(defs.heroTitleFontSize != null) root.style.setProperty('--hero-title-font-size', `${Number(defs.heroTitleFontSize)}px`);
+  if(defs.heroSubtitleFontSize != null) root.style.setProperty('--hero-subtitle-font-size', `${Number(defs.heroSubtitleFontSize)}px`);
+  if(defs.heroTitleFontFamily != null) root.style.setProperty('--hero-title-font-family', fontPresetValue(defs.heroTitleFontFamily, defs.heroTitleFontFamily));
+  if(defs.partKickerFontSize != null) root.style.setProperty('--part-kicker-font-size', `${Number(defs.partKickerFontSize)}px`);
+  if(defs.partTitleFontSize != null) root.style.setProperty('--part-title-font-size', `${Number(defs.partTitleFontSize)}px`);
+  if(defs.partTitleFontFamily != null) root.style.setProperty('--part-title-font-family', fontPresetValue(defs.partTitleFontFamily, defs.partTitleFontFamily));
+  if(defs.sectionHeadingFontSize != null) root.style.setProperty('--section-heading-font-size', `${Number(defs.sectionHeadingFontSize)}px`);
+  if(defs.sectionHeadingFontFamily != null) root.style.setProperty('--section-heading-font-family', fontPresetValue(defs.sectionHeadingFontFamily, defs.sectionHeadingFontFamily));
+  if(defs.noteFontSize != null) root.style.setProperty('--note-font-size', `${Number(defs.noteFontSize)}px`);
+  if(defs.noteLineHeight != null) root.style.setProperty('--note-line-height', String(defs.noteLineHeight));
+  if(defs.noteLabelFontSize != null) root.style.setProperty('--note-label-font-size', `${Number(defs.noteLabelFontSize)}px`);
+  if(defs.captionFontSize != null) root.style.setProperty('--caption-font-size', `${Number(defs.captionFontSize)}px`);
+  if(defs.calloutFontSize != null) root.style.setProperty('--callout-font-size', `${Number(defs.calloutFontSize)}px`);
+  if(defs.calloutTitleFontSize != null) root.style.setProperty('--callout-title-font-size', `${Number(defs.calloutTitleFontSize)}px`);
+  if(defs.calloutLabelFontSize != null) root.style.setProperty('--callout-label-font-size', `${Number(defs.calloutLabelFontSize)}px`);
+  if(defs.calloutChipFontSize != null) root.style.setProperty('--callout-chip-font-size', `${Number(defs.calloutChipFontSize)}px`);
+  if(defs.calloutObserveTitleFontSize != null) root.style.setProperty('--callout-observe-title-font-size', `${Number(defs.calloutObserveTitleFontSize)}px`);
+}
+function mountBook(loaded){
+  const validation=BookCore.validateData(loaded);
+  if(!validation.ok) throw new Error(validation.errors.join(' '));
+  const data=BookCore.normalizeData(loaded);
+  bookData = data;
+  if(data?.schemaVersion !== 'pages-v1' && !Array.isArray(data?.pages)){
+    throw new Error('Το βιβλίο περιμένει page-first JSON (pages-v1).');
+  }
+  const defs=data.layoutDefaults || {};
+  document.title = getLoc(data.meta,'title','Βιβλίο');
+  applyLayoutDefaults(defs);
+  applyScreenScale();
+  applyPrintPageSettings(defs);
+  renderPages(data);
+  deriveNav(data);
+  updateActiveNav();
+  setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(data.pages||[]).length}`);
+  localBookLoader.hidden=true;
+  window.BookAuthorRuntime=Object.freeze({
+    protocol:'book-author-v1',
+    bookSource:bookSourceUrl?.toString() || null,
+    bookBase:bookBaseUrl.toString(),
+    renderer:BookCore.VERSION
+  });
+}
+async function boot(){
+  applyScreenScale();
+  mountBook(await loadData());
+}
+boot().catch(err=>{
+  console.error(err);
+  setStatus('Δεν έγινε αυτόματη φόρτωση. Επίλεξε το αρχείο του βιβλίου.');
+  localBookLoader.hidden=false;
+});
+localBookInput?.addEventListener('change',async event=>{
+  const file=event.target.files?.[0];
+  if(!file) return;
+  try{
+    bookSourceUrl=null;
+    bookBaseUrl=new URL('.', window.location.href);
+    mountBook(JSON.parse(await file.text()));
+  }catch(err){
+    console.error(err);
+    setStatus(`Σφάλμα στο αρχείο βιβλίου: ${err.message}`);
+  }
+});
+</script>
+</body>
+</html>
