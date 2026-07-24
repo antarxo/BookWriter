@@ -1,0 +1,78 @@
+name: Rebase book.json on shared author
+
+on:
+  push:
+    branches:
+      - agent/shared-author-book-json-rebase
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebase-book-json:
+    if: ${{ !contains(github.event.head_commit.message, '[book-json-rebase]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/shared-author-book-json-rebase
+          fetch-depth: 0
+
+      - name: Create book.json without touching runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='books/electromagnetic_wave'
+          cp "$root/chapter_content.json" "$root/book.json"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('books/electromagnetic_wave')
+          path = root / 'book.json'
+          data = json.loads(path.read_text(encoding='utf-8'))
+          meta = data.setdefault('meta', {})
+          meta['id'] = 'electromagnetic_wave'
+          meta['version'] = '1.0.0'
+          meta['language'] = 'el'
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          for name in ('index.html', 'Editor.html'):
+              p = root / name
+              text = p.read_text(encoding='utf-8')
+              text = text.replace('chapter_content.json', 'book.json')
+              p.write_text(text, encoding='utf-8')
+
+          pages = data.get('pages', [])
+          items = [item for page in pages for item in page.get('items', [])]
+          scenes = [item for item in items if item.get('type') == 'scene']
+          assert len(pages) == 28, len(pages)
+          assert len(items) == 293, len(items)
+          assert len(scenes) == 10, len(scenes)
+          assert all(str(item.get('singleSrc', '')).startswith('https://antarxo.github.io/HMK/') for item in scenes)
+          PY
+
+      - name: Validate preserved shared-author runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s author/index.html
+          test -s author/snapshot-transport.js
+          test -s books/electromagnetic_wave/book.json
+          grep -F 'book.json' books/electromagnetic_wave/index.html
+          grep -F 'book.json' books/electromagnetic_wave/Editor.html
+          test -s books/electromagnetic_wave/chapter_content.json
+
+      - name: Commit checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add books/electromagnetic_wave/book.json books/electromagnetic_wave/index.html books/electromagnetic_wave/Editor.html
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m '[book-json-rebase] Add book.json identity checkpoint'
+          git push origin HEAD:agent/shared-author-book-json-rebase
