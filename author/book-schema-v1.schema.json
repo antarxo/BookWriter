@@ -1,9 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.invalid/book-schema-v1.schema.json",
-  "title": "Γενικό βιβλίο σελίδων",
+  "$id": "https://antarxo.github.io/BookWriter/author/book-schema-v1.schema.json",
+  "title": "BookWriter strict book.json contract",
   "type": "object",
-  "required": ["schemaVersion", "meta", "layoutDefaults", "pages"],
+  "required": [
+    "schemaVersion",
+    "meta",
+    "layoutDefaults",
+    "pages"
+  ],
   "properties": {
     "schemaVersion": {
       "const": "pages-v1"
@@ -11,46 +16,132 @@
     "meta": {
       "type": "object",
       "properties": {
-        "projectId": {"type": "string"},
-        "fileName": {"type": "string"},
-        "title": {"type": "string"},
-        "title_en": {"type": "string"},
-        "subtitle": {"type": "string"},
-        "subtitle_en": {"type": "string"},
-        "appHref": {"type": "string"},
-        "defaultLanguage": {"enum": ["el", "en"]},
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title_en": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "subtitle_en": {
+          "type": "string"
+        },
+        "eyebrow": {
+          "type": "string"
+        },
+        "eyebrow_en": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "enum": [
+            "el",
+            "en"
+          ]
+        },
         "languages": {
           "type": "array",
-          "items": {"enum": ["el", "en"]},
+          "items": {
+            "enum": [
+              "el",
+              "en"
+            ]
+          },
           "uniqueItems": true
-        }
+        },
+        "authoringVersion": {
+          "type": "string"
+        },
+        "projectId": false,
+        "fileName": false,
+        "appHref": false,
+        "defaultLanguage": false
       },
-      "additionalProperties": true
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "title",
+        "version",
+        "language"
+      ]
     },
     "layoutDefaults": {
       "type": "object",
       "properties": {
-        "pageSize": {"type": "string"},
-        "orientation": {"enum": ["portrait", "landscape"]},
-        "pageWidthPx": {"type": "number", "exclusiveMinimum": 0},
-        "pageHeightPx": {"type": "number", "exclusiveMinimum": 0},
-        "pagePaddingTopPx": {"type": "number", "minimum": 0},
-        "pagePaddingRightPx": {"type": "number", "minimum": 0},
-        "pagePaddingBottomPx": {"type": "number", "minimum": 0},
-        "pagePaddingLeftPx": {"type": "number", "minimum": 0},
-        "bodyFontSize": {"type": "number", "exclusiveMinimum": 0},
-        "lineHeight": {"type": "number", "exclusiveMinimum": 0},
-        "showPageNumbers": {"type": "boolean"}
+        "pageSize": {
+          "type": "string"
+        },
+        "orientation": {
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
+        "pageWidthPx": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pageHeightPx": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pagePaddingTopPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pagePaddingRightPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pagePaddingBottomPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pagePaddingLeftPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bodyFontSize": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "lineHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "showPageNumbers": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": true
     },
     "nav": {
       "type": "object",
       "properties": {
-        "mode": {"enum": ["auto", "manual"]},
-        "showApp": {"type": "boolean"},
-        "showPrint": {"type": "boolean"},
-        "groups": {"type": "array"}
+        "mode": {
+          "enum": [
+            "auto",
+            "manual"
+          ]
+        },
+        "showPrint": {
+          "type": "boolean"
+        },
+        "groups": {
+          "type": "array"
+        },
+        "appHref": false,
+        "showApp": false
       },
       "additionalProperties": true
     },
@@ -58,14 +149,26 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "items"],
+        "required": [
+          "id",
+          "items"
+        ],
         "properties": {
-          "id": {"type": "string", "minLength": 1},
-          "header": {"$ref": "#/$defs/threeColumns"},
-          "footer": {"$ref": "#/$defs/threeColumns"},
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "header": {
+            "$ref": "#/$defs/threeColumns"
+          },
+          "footer": {
+            "$ref": "#/$defs/threeColumns"
+          },
           "items": {
             "type": "array",
-            "items": {"$ref": "#/$defs/pageItem"}
+            "items": {
+              "$ref": "#/$defs/pageItem"
+            }
           }
         },
         "additionalProperties": true
@@ -76,18 +179,32 @@
     "threeColumns": {
       "type": "object",
       "properties": {
-        "left": {"type": "string"},
-        "center": {"type": "string"},
-        "right": {"type": "string"},
-        "left_en": {"type": "string"},
-        "center_en": {"type": "string"},
-        "right_en": {"type": "string"}
+        "left": {
+          "type": "string"
+        },
+        "center": {
+          "type": "string"
+        },
+        "right": {
+          "type": "string"
+        },
+        "left_en": {
+          "type": "string"
+        },
+        "center_en": {
+          "type": "string"
+        },
+        "right_en": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "pageItem": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
         "type": {
           "enum": [
@@ -104,24 +221,58 @@
             "clear"
           ]
         },
-        "id": {"type": "string"},
-        "showInNav": {"type": "boolean"},
-        "placement": {"enum": ["left", "right", "wide", "float-left", "float-right"]},
-        "frameWidth": {"type": "number", "exclusiveMinimum": 0},
-        "frameHeight": {"type": "number", "exclusiveMinimum": 0},
-        "sceneHeight": {"type": "number", "exclusiveMinimum": 0},
-        "aspectRatio": {
-          "oneOf": [
-            {"type": "number", "exclusiveMinimum": 0},
-            {"type": "string", "minLength": 1}
+        "id": {
+          "type": "string"
+        },
+        "showInNav": {
+          "type": "boolean"
+        },
+        "placement": {
+          "enum": [
+            "left",
+            "right",
+            "wide",
+            "float-left",
+            "float-right"
           ]
         },
-        "src": {"type": "string"},
-        "singleSrc": {"type": "string"},
-        "hideCaption": {"type": "boolean"}
+        "frameWidth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "frameHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sceneHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "aspectRatio": {
+          "oneOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        },
+        "src": {
+          "type": "string"
+        },
+        "singleSrc": {
+          "type": "string"
+        },
+        "hideCaption": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "description": "Κάθε βιβλίο αποθηκεύεται αποκλειστικά ως books/<meta.id>/book.json."
 }

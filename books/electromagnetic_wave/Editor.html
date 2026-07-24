@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <p>Άνοιγμα του γενικού Συγγραφέα… <a id="manualLink" href="../../author/Editor.html?book=../books/electromagnetic_wave/chapter_content.json">συνέχεια</a></p>
+  <p>Άνοιγμα του γενικού Συγγραφέα… <a id="manualLink" href="../../author/Editor.html?book=../books/electromagnetic_wave/book.json">συνέχεια</a></p>
   <script>
     'use strict';
     const target=new URL('../../author/Editor.html', window.location.href);
@@ -18,7 +18,7 @@
     for(const [key,value] of incoming){
       if(key !== 'book') target.searchParams.append(key,value);
     }
-    target.searchParams.set('book','../books/electromagnetic_wave/chapter_content.json');
+    target.searchParams.set('book','../books/electromagnetic_wave/book.json');
     target.hash=window.location.hash;
     document.getElementById('manualLink').href=target.toString();
     window.location.replace(target.toString());

@@ -1,20 +1,20 @@
 {
   "schemaVersion": "pages-v1",
   "meta": {
-    "projectId": "em-wave-book",
-    "fileName": "chapter_content.json",
-    "defaultLanguage": "el",
     "languages": [
       "el",
       "en"
     ],
-    "authoringVersion": "0.1.0",
+    "authoringVersion": "0.3.0",
     "eyebrow": "",
     "title": "Γέννηση και διάδοση του ΗΜ κύματος",
     "subtitle": "",
     "title_en": "Generation and propagation of the EM wave",
     "subtitle_en": "",
-    "eyebrow_en": ""
+    "eyebrow_en": "",
+    "id": "electromagnetic_wave",
+    "version": "1.0.0",
+    "language": "el"
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -314,7 +314,7 @@
         {
           "type": "figure",
           "id": "orientation_axes_static",
-          "src": "images/orientation_axes.png",
+          "src": "../book/images/orientation_axes.png",
           "alt": "Σχήμα προσανατολισμού με άξονες x, y, z.",
           "caption": "Εικόνα 1",
           "placement": "right",
@@ -2566,7 +2566,6 @@
   ],
   "nav": {
     "mode": "auto",
-    "showApp": true,
     "showPrint": true,
     "groups": []
   }

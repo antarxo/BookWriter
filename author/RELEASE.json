@@ -1,22 +1,24 @@
 {
   "name": "Γενικός Συγγραφέας βιβλίων",
-  "version": "0.2.0-integration-candidate",
+  "version": "0.3.0-book-json-contract",
   "releaseType": "diagnostic-only",
-  "releaseType_el": "υποψήφια απομόνωση κοινόχρηστου Συγγραφέα",
+  "releaseType_el": "υποψήφιο αυστηρό συμβόλαιο book.json",
   "date": "2026-07-24",
   "schemaVersion": "pages-v1",
-  "rendererVersion": "0.1.0",
+  "rendererVersion": "0.3.0",
   "publicContract": {
-    "reader": "author/index.html?book=<book-json>",
-    "editor": "author/Editor.html?book=<book-json>",
-    "resourceBase": "directory-of-book-json",
-    "sceneTransport": "book-scene-v1"
+    "bookFile": "book.json",
+    "reader": "author/index.html?book=../books/<book-id>/book.json",
+    "editor": "author/Editor.html?book=../books/<book-id>/book.json",
+    "resourceBase": "directory-of-book.json",
+    "sceneTransport": "book-scene-v1",
+    "fallbacks": false
   },
   "separation": {
     "runtimePath": "author/",
-    "productionBookPath": "book/",
+    "booksPath": "books/",
     "runtimeContainsBookContent": false,
-    "productionLaunchersContainRenderer": false,
+    "launchersContainRenderer": false,
     "legacyRuntimeHooks": 0
   },
   "baseline": {
@@ -36,5 +38,19 @@
     "repository": "antarxo/AAT",
     "book": "Απλή Αρμονική Ταλάντωση",
     "rule": "Το AAT-specific περιεχόμενο και οι adapters μένουν έξω από τον κοινό runtime."
+  },
+  "status": "diagnostic-only",
+  "bookContract": {
+    "fileName": "book.json",
+    "oneFileNameOnly": true,
+    "fallbacks": false,
+    "requiredMeta": [
+      "id",
+      "title",
+      "version",
+      "language"
+    ],
+    "folderMatchesMetaId": true,
+    "globalApplicationLink": false
   }
 }

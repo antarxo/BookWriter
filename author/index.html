@@ -354,6 +354,7 @@ figure.media figcaption{
   overflow-wrap:normal;
 }
 
+.book-identity{display:flex;flex-direction:column;gap:2px;min-width:0;padding:5px 10px;border-left:1px solid rgba(148,163,184,.35);color:#e2e8f0}.book-identity strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}.book-identity span{font-size:10px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
 </style>
 <link rel="stylesheet" href="book-core.css">
 </head>
@@ -363,6 +364,10 @@ figure.media figcaption{
       <div class="lang-tools">
         <button type="button" class="lang-btn" id="langElBtn">Ελληνικά</button>
         <button type="button" class="lang-btn" id="langEnBtn">English</button>
+      </div>
+      <div class="book-identity" id="bookIdentity" hidden>
+        <strong id="bookIdentityTitle"></strong>
+        <span id="bookIdentityMeta"></span>
       </div>
       <nav class="mega-nav" id="megaNav" aria-label="Μενού βιβλίου"></nav>
     </div>
@@ -387,9 +392,13 @@ const localBookLoader=document.getElementById('localBookLoader');
 const localBookInput=document.getElementById('localBookInput');
 const langElBtn=document.getElementById('langElBtn');
 const langEnBtn=document.getElementById('langEnBtn');
+const bookIdentity=document.getElementById('bookIdentity');
+const bookIdentityTitle=document.getElementById('bookIdentityTitle');
+const bookIdentityMeta=document.getElementById('bookIdentityMeta');
 let printPageStyleEl = null;
 const BOOK_QUERY_PARAM='book';
-const DEFAULT_BOOK_URL='../book/chapter_content.json';
+const BOOK_FILE_NAME='book.json';
+const DEFAULT_BOOK_URL='../books/electromagnetic_wave/book.json';
 const initialParams=new URLSearchParams(window.location.search);
 let bookSourceUrl=null;
 let bookBaseUrl=new URL('.', window.location.href);
@@ -447,6 +456,23 @@ function applyPrintPageSettings(defs){
 }
 
 function setStatus(msg){ statusEl.textContent = msg || ''; }
+function displayedBookPath(){
+  if(!bookSourceUrl) return BOOK_FILE_NAME;
+  try{
+    const parts=decodeURIComponent(bookSourceUrl.pathname).split('/').filter(Boolean);
+    return parts.slice(-3).join('/');
+  }catch(_e){ return BOOK_FILE_NAME; }
+}
+function updateBookIdentity(data){
+  const title=getLoc(data?.meta,'title','Βιβλίο');
+  const id=String(data?.meta?.id || '');
+  const version=String(data?.meta?.version || '');
+  bookIdentityTitle.textContent=title;
+  bookIdentityMeta.textContent=`${displayedBookPath()} · ID: ${id} · v${version}`;
+  bookIdentity.hidden=false;
+  document.title=`${title} — BookWriter`;
+}
+
 function esc(s=''){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function applyScreenScale(){
   const avail=Math.max(320, window.innerWidth - 48);
@@ -692,9 +718,6 @@ async function beginPrintFlow(){
   setStatus('');
   window.print();
 }
-function resolveAppHref(){
-  return resolveBookResource(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
-}
 window.addEventListener('beforeprint', ()=>{
   if(!printSnapshotsPrepared){
     try{ preparePrintSnapshots(false); }catch(_e){}
@@ -789,20 +812,7 @@ function renderPages(data){
 
 function appendNavTools(data){
   const nav = data?.nav || {};
-  const showApp = nav.showApp !== false;
   const showPrint = nav.showPrint !== false;
-
-  if(showApp){
-    const appNode = document.createElement('div');
-    appNode.className = 'menu-item menu-tool';
-    const appLink = document.createElement('a');
-    appLink.className = 'menu-btn';
-    appLink.href = resolveAppHref();
-    appLink.textContent = contentLang==='en' ? 'Open app' : 'Στην εφαρμογή';
-    appNode.appendChild(appLink);
-    megaNav.appendChild(appNode);
-  }
-
   if(showPrint){
     const printNode = document.createElement('div');
     printNode.className = 'menu-item menu-tool';
@@ -1144,7 +1154,7 @@ function mountBook(loaded){
     throw new Error('Το βιβλίο περιμένει page-first JSON (pages-v1).');
   }
   const defs=data.layoutDefaults || {};
-  document.title = getLoc(data.meta,'title','Βιβλίο');
+  updateBookIdentity(data);
   applyLayoutDefaults(defs);
   applyScreenScale();
   applyPrintPageSettings(defs);
@@ -1157,7 +1167,11 @@ function mountBook(loaded){
     protocol:'book-author-v1',
     bookSource:bookSourceUrl?.toString() || null,
     bookBase:bookBaseUrl.toString(),
-    renderer:BookCore.VERSION
+    renderer:BookCore.VERSION,
+    bookFile:BOOK_FILE_NAME,
+    bookId:data.meta.id,
+    bookTitle:getLoc(data.meta,'title','Βιβλίο'),
+    bookVersion:data.meta.version
   });
 }
 async function boot(){
@@ -1172,6 +1186,11 @@ boot().catch(err=>{
 localBookInput?.addEventListener('change',async event=>{
   const file=event.target.files?.[0];
   if(!file) return;
+  if(file.name !== BOOK_FILE_NAME){
+    setStatus(`Άκυρο αρχείο: απαιτείται ακριβώς ${BOOK_FILE_NAME}.`);
+    event.target.value='';
+    return;
+  }
   try{
     bookSourceUrl=null;
     bookBaseUrl=new URL('.', window.location.href);

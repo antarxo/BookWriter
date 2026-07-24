@@ -1,7 +1,7 @@
 (function(global){
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.3.0';
   const DEFAULT_LAYOUT = Object.freeze({
     pageSize:'A4',
     orientation:'portrait',
@@ -72,7 +72,6 @@
     out.layoutDefaults = Object.assign({}, DEFAULT_LAYOUT, out.layoutDefaults);
     if(!out.nav || typeof out.nav !== 'object') out.nav = {};
     if(!out.nav.mode) out.nav.mode = 'auto';
-    if(out.nav.showApp == null) out.nav.showApp = true;
     if(out.nav.showPrint == null) out.nav.showPrint = true;
     if(!Array.isArray(out.nav.groups)) out.nav.groups = [];
     if(!Array.isArray(out.pages)) out.pages = [];
@@ -93,8 +92,28 @@
       errors.push('Το αρχείο δεν περιέχει αντικείμενο JSON.');
       return {ok:false, errors, warnings};
     }
-    if(raw.schemaVersion && raw.schemaVersion !== 'pages-v1'){
-      warnings.push(`Άγνωστη έκδοση σχήματος: ${raw.schemaVersion}.`);
+    if(raw.schemaVersion !== 'pages-v1'){
+      errors.push('Το schemaVersion πρέπει να είναι ακριβώς pages-v1.');
+    }
+    if(!raw.meta || typeof raw.meta !== 'object'){
+      errors.push('Λείπει το αντικείμενο meta.');
+    }else{
+      const requiredMeta = ['id','title','version','language'];
+      requiredMeta.forEach(key=>{
+        if(!String(raw.meta[key] ?? '').trim()) errors.push(`Λείπει meta.${key}.`);
+      });
+      if(raw.meta.id && !/^[a-z0-9][a-z0-9_-]*$/.test(String(raw.meta.id))){
+        errors.push('Το meta.id επιτρέπεται να περιέχει μόνο πεζά λατινικά, αριθμούς, _ και -.');
+      }
+      if(raw.meta.language && !['el','en'].includes(raw.meta.language)){
+        errors.push('Το meta.language πρέπει να είναι el ή en.');
+      }
+      ['projectId','fileName','appHref','defaultLanguage'].forEach(key=>{
+        if(Object.prototype.hasOwnProperty.call(raw.meta,key)) errors.push(`Απαγορευμένο παλιό πεδίο meta.${key}.`);
+      });
+    }
+    if(raw.nav && (Object.prototype.hasOwnProperty.call(raw.nav,'showApp') || Object.prototype.hasOwnProperty.call(raw.nav,'appHref'))){
+      errors.push('Απαγορεύεται γενικός σύνδεσμος εφαρμογής στο nav. Κάθε σκηνή δηλώνει το δικό της URL.');
     }
     if(!Array.isArray(raw.pages)){
       errors.push('Λείπει ο πίνακας pages.');

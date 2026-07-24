@@ -185,14 +185,19 @@
        rendered book element are styled exclusively by book-core.css. */
     .page-preview-scale{transform-origin:top center;width:max-content;height:max-content}
 
+.editor-book-identity{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;color:#e2e8f0}.editor-book-identity strong{font-size:13px}.editor-book-identity span{font-size:11px;color:#94a3b8}
 </style>
 <link rel="stylesheet" href="book-core.css">
 </head>
 <body>
 <header>
   <div>
-    <h1>Γενικός συγγραφέας βιβλίων <span style="font-size:12px;color:#94a3b8">v0.1 · υποδομή</span></h1>
+    <h1>Γενικός συγγραφέας βιβλίων <span style="font-size:12px;color:#94a3b8">v0.3 · αυστηρό book.json</span></h1>
     <small>Η σελίδα είναι η βασική μονάδα. Κεφαλίδα, υποσέλιδο και στοιχεία σελίδας αποδίδονται από τον ίδιο πυρήνα με το βιβλίο και την εκτύπωση.</small>
+    <div class="editor-book-identity" id="editorBookIdentity" hidden>
+      <strong id="editorBookTitle"></strong>
+      <span id="editorBookDetails"></span>
+    </div>
   </div>
   <div class="controls">
     <span>Αρχείο βιβλίου:</span>
@@ -229,7 +234,8 @@
 let data = null;
 let selection = null;
 const BOOK_QUERY_PARAM='book';
-const DEFAULT_BOOK_URL='../book/chapter_content.json';
+const BOOK_FILE_NAME='book.json';
+const DEFAULT_BOOK_URL='../books/electromagnetic_wave/book.json';
 const initialParams=new URLSearchParams(window.location.search);
 let bookSourceUrl=null;
 let bookBaseUrl=new URL('.', window.location.href);
@@ -245,6 +251,9 @@ const preview = document.getElementById('preview');
 const treeBadge = document.getElementById('treeBadge');
 const editorBadge = document.getElementById('editorBadge');
 const contentLangSelect = document.getElementById('contentLang');
+const editorBookIdentity=document.getElementById('editorBookIdentity');
+const editorBookTitle=document.getElementById('editorBookTitle');
+const editorBookDetails=document.getElementById('editorBookDetails');
 function readLocalPreference(key,fallback){
   try{return localStorage.getItem(key) || fallback;}catch(_e){return fallback;}
 }
@@ -295,6 +304,7 @@ updateContentLangUI();
 
 jsonInput.addEventListener('change', async e => {
   const file = e.target.files?.[0]; if(!file) return;
+  if(file.name !== BOOK_FILE_NAME){ alert(`Το αρχείο πρέπει να ονομάζεται ακριβώς ${BOOK_FILE_NAME}.`); e.target.value=''; return; }
   const text = await file.text();
   try{
     bookSourceUrl=null;
@@ -311,19 +321,18 @@ newBookBtn.addEventListener('click', ()=>{
   data = BookCore.normalizeData({
     schemaVersion:'pages-v1',
     meta:{
-      projectId:'new-book',
-      fileName:'chapter_content.json',
+      id:'new-book',
+      version:'1.0.0',
+      language:'el',
       title:'Νέο βιβλίο',
       title_en:'New book',
       subtitle:'',
       subtitle_en:'',
-      appHref:'../index.html',
-      defaultLanguage:'el',
       languages:['el','en'],
       authoringVersion:BookCore.VERSION
     },
     layoutDefaults:{pageSize:'A4',orientation:'portrait',showPageNumbers:true},
-    nav:{mode:'auto',showApp:true,showPrint:true,groups:[]},
+    nav:{mode:'auto',showPrint:true,groups:[]},
     pages:[{
       id:'page-1',
       header:{left:'',center:'',right:''},
@@ -377,7 +386,7 @@ exportBtn.addEventListener('click', ()=>{
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = String(data?.meta?.fileName || 'chapter_content.json');
+  a.download = BOOK_FILE_NAME;
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
 });
@@ -515,7 +524,22 @@ function currentItem(){
   return data?.pages?.[selection.pageIndex]?.items?.[selection.itemIndex] || null;
 }
 
-function renderAll(){ renderTree(); renderEditor(); renderPreview(); }
+function displayedEditorBookPath(){
+  if(!bookSourceUrl) return BOOK_FILE_NAME;
+  try{
+    const parts=decodeURIComponent(bookSourceUrl.pathname).split('/').filter(Boolean);
+    return parts.slice(-3).join('/');
+  }catch(_e){ return BOOK_FILE_NAME; }
+}
+function updateEditorBookIdentity(){
+  if(!data){ editorBookIdentity.hidden=true; document.title='BookWriter'; return; }
+  const title=getLoc(data.meta,'title','Βιβλίο');
+  editorBookTitle.textContent=title;
+  editorBookDetails.textContent=`${displayedEditorBookPath()} · ID: ${data.meta.id} · v${data.meta.version}`;
+  editorBookIdentity.hidden=false;
+  document.title=`${title} — BookWriter`;
+}
+function renderAll(){ updateEditorBookIdentity(); renderTree(); renderEditor(); renderPreview(); }
 
 function ensureElementVisibleInList(container, el){
   if(!container || !el) return;
@@ -1509,9 +1533,8 @@ function renderTypeFields(item){
 
 
 function ensureNav(){
-  if(!data.nav) data.nav = {mode:'auto', showApp:true, showPrint:true, groups:[]};
+  if(!data.nav) data.nav = {mode:'auto', showPrint:true, groups:[]};
   if(!data.nav.mode) data.nav.mode = 'auto';
-  if(data.nav.showApp == null) data.nav.showApp = true;
   if(data.nav.showPrint == null) data.nav.showPrint = true;
   if(!Array.isArray(data.nav.groups)) data.nav.groups = [];
   return data.nav;
@@ -1614,7 +1637,7 @@ function generateAutoNavModel(){
     }
   });
   groups.forEach(g=>delete g.seen);
-  return {mode:'manual', showApp:data.nav?.showApp !== false, showPrint:data.nav?.showPrint !== false, groups};
+  return {mode:'manual', showPrint:data.nav?.showPrint !== false, groups};
 }
 function createNavGroup(){
   const firstPage = data.pages?.[0]?.id || 'page-1';
@@ -1643,7 +1666,6 @@ function renderNavEditor(){
         </select>
       </label>
       <label><span>Ομάδες χειροκίνητου μενού</span><input type="text" value="${groupCount}" disabled></label>
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="navShowApp"> <span>Να εμφανίζεται «Στην εφαρμογή»</span></label>
       <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="navShowPrint"> <span>Να εμφανίζεται «Εκτύπωση»</span></label>
     </div>
     <div class="row" style="margin-top:8px">
@@ -1658,10 +1680,6 @@ function renderNavEditor(){
   const modeSel = document.getElementById('navMode');
   modeSel.value = nav.mode || 'auto';
   modeSel.onchange = ()=>{ nav.mode = modeSel.value; renderTree(); };
-
-  const showApp = document.getElementById('navShowApp');
-  showApp.checked = nav.showApp !== false;
-  showApp.onchange = ()=>{ nav.showApp = !!showApp.checked; renderTree(); };
 
   const showPrint = document.getElementById('navShowPrint');
   showPrint.checked = nav.showPrint !== false;
@@ -1776,9 +1794,10 @@ function renderMetaEditor(){
       <label><span>Υπέρτιτλος βιβλίου</span><input type="text" id="metaEyebrow"></label>
       <label><span>Κύριος τίτλος βιβλίου</span><input type="text" id="metaTitle"></label>
       <label><span>Υπότιτλος βιβλίου</span><input type="text" id="metaSubtitle"></label>
-      <label><span>Αναγνωριστικό έργου</span><input type="text" id="metaProjectId" placeholder="π.χ. oscillations-book"></label>
-      <label><span>Όνομα αρχείου εξαγωγής</span><input type="text" id="metaFileName" placeholder="chapter_content.json"></label>
-      <label><span>Σύνδεσμος «Στην εφαρμογή»</span><input type="text" id="metaAppHref" placeholder="../index.html"></label>
+      <label><span>Αναγνωριστικό βιβλίου</span><input type="text" id="metaId" placeholder="π.χ. oscillations_book"></label>
+      <label><span>Έκδοση βιβλίου</span><input type="text" id="metaVersion" placeholder="1.0.0"></label>
+      <label><span>Κύρια γλώσσα</span><select id="metaLanguage"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+      <div class="editor-help">Το αρχείο ονομάζεται υποχρεωτικά <strong>book.json</strong>. Κάθε σκηνή δηλώνει το δικό της URL· δεν υπάρχει γενικός σύνδεσμος εφαρμογής.</div>
     </div>
 
     <div class="subhead">Βασικό κείμενο και αποστάσεις</div>
@@ -1879,9 +1898,11 @@ function renderMetaEditor(){
   bindTextInput(document.getElementById('metaEyebrow'), data.meta, 'eyebrow');
   bindTextInput(document.getElementById('metaTitle'), data.meta, 'title');
   bindTextInput(document.getElementById('metaSubtitle'), data.meta, 'subtitle');
-  bindTextInput(document.getElementById('metaProjectId'), data.meta, 'projectId');
-  bindTextInput(document.getElementById('metaFileName'), data.meta, 'fileName');
-  bindTextInput(document.getElementById('metaAppHref'), data.meta, 'appHref');
+  bindTextInput(document.getElementById('metaId'), data.meta, 'id');
+  bindTextInput(document.getElementById('metaVersion'), data.meta, 'version');
+  const metaLanguage=document.getElementById('metaLanguage');
+  metaLanguage.value=data.meta.language || 'el';
+  metaLanguage.onchange=()=>{ data.meta.language=metaLanguage.value; updateEditorBookIdentity(); };
   bindTextInput(document.getElementById('ldPageSize'), data.layoutDefaults, 'pageSize');
   const orientationSelect=document.getElementById('ldOrientation');
   orientationSelect.value=data.layoutDefaults.orientation || 'portrait';
@@ -2040,12 +2061,6 @@ function renderNavPreviewPanel(){
 
   const tools = document.createElement('div');
   tools.className = 'nav-preview-tools';
-  if(nav.showApp !== false){
-    const app = document.createElement('span');
-    app.className = 'nav-preview-tool';
-    app.textContent = 'Στην εφαρμογή';
-    tools.appendChild(app);
-  }
   if(nav.showPrint !== false){
     const print = document.createElement('span');
     print.className = 'nav-preview-tool';
