@@ -1,0 +1,61 @@
+name: Import shared author runtime
+
+on:
+  push:
+    branches:
+      - agent/import-shared-author
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-runtime:
+    if: ${{ !contains(github.event.head_commit.message, '[author-import]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/import-shared-author
+          fetch-depth: 0
+
+      - name: Download canonical runtime from HMK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p author
+          base='https://raw.githubusercontent.com/antarxo/HMK/agent/shared-author-cutover/author'
+          for file in index.html Editor.html book-core.js book-core.css; do
+            curl --fail --location --silent --show-error "$base/$file" --output "author/$file"
+          done
+
+      - name: Verify exact Git blob hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git_blob_sha() {
+            local file="$1"
+            local size
+            size=$(wc -c < "$file" | tr -d ' ')
+            { printf 'blob %s\0' "$size"; cat "$file"; } | sha1sum | awk '{print $1}'
+          }
+          test "$(git_blob_sha author/index.html)" = '7e3bd2d79c83e9fec5e1f5e8e1701ef2a9b6065c'
+          test "$(git_blob_sha author/Editor.html)" = 'ea323358aa3ebe0f6154c99f6b4daf8e23ef745c'
+          test "$(git_blob_sha author/book-core.js)" = '7aba2ee1740990058dd39b3faa58438aee9302a0'
+          test "$(git_blob_sha author/book-core.css)" = '92c152ff2c241844eff4c64b57f3d84e1a6b4e3e'
+
+      - name: Commit imported runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- author/index.html author/Editor.html author/book-core.js author/book-core.css && \
+             git ls-files --error-unmatch author/index.html author/Editor.html author/book-core.js author/book-core.css >/dev/null 2>&1; then
+            echo 'Runtime already imported.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add author/index.html author/Editor.html author/book-core.js author/book-core.css
+          git commit -m '[author-import] Import shared General Author runtime from HMK'
+          git push origin HEAD:agent/import-shared-author
