@@ -1,0 +1,40 @@
+{
+  "name": "Γενικός Συγγραφέας βιβλίων",
+  "version": "0.2.0-integration-candidate",
+  "releaseType": "diagnostic-only",
+  "releaseType_el": "υποψήφια απομόνωση κοινόχρηστου Συγγραφέα",
+  "date": "2026-07-24",
+  "schemaVersion": "pages-v1",
+  "rendererVersion": "0.1.0",
+  "publicContract": {
+    "reader": "author/index.html?book=<book-json>",
+    "editor": "author/Editor.html?book=<book-json>",
+    "resourceBase": "directory-of-book-json",
+    "sceneTransport": "book-scene-v1"
+  },
+  "separation": {
+    "runtimePath": "author/",
+    "productionBookPath": "book/",
+    "runtimeContainsBookContent": false,
+    "productionLaunchersContainRenderer": false,
+    "legacyRuntimeHooks": 0
+  },
+  "baseline": {
+    "book": "Γέννηση και διάδοση του ΗΜ κύματος",
+    "pages": 28,
+    "items": 293,
+    "scenes": 10,
+    "requiredSnapshots": 10,
+    "requiredFallbacks": 0,
+    "knownPreexistingVisualDefect": {
+      "page": 28,
+      "description": "Η ένδειξη «ίδια μέγιστα» επικαλύπτει τον τίτλο του γραφήματος.",
+      "cutoverRegression": false
+    }
+  },
+  "nextConsumer": {
+    "repository": "antarxo/AAT",
+    "book": "Απλή Αρμονική Ταλάντωση",
+    "rule": "Το AAT-specific περιεχόμενο και οι adapters μένουν έξω από τον κοινό runtime."
+  }
+}
