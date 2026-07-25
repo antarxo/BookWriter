@@ -2,7 +2,7 @@
   "schemaVersion": "pages-v1",
   "meta": {
     "projectId": "em-wave-book",
-    "fileName": "book.json",
+    "fileName": "/electromagnetic_wave/book.json",
     "defaultLanguage": "el",
     "languages": [
       "el",
