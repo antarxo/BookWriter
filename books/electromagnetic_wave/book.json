@@ -2,7 +2,7 @@
   "schemaVersion": "pages-v1",
   "meta": {
     "projectId": "em-wave-book",
-    "fileName": "book.json",
+    "fileName": "/electromagnetic_wave/book.json",
     "defaultLanguage": "el",
     "languages": [
       "el",
@@ -14,8 +14,7 @@
     "subtitle": "",
     "title_en": "Generation and propagation of the EM wave",
     "subtitle_en": "",
-    "eyebrow_en": "",
-    "appHref": "https://antarxo.github.io/HMK/"
+    "eyebrow_en": ""
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -1550,7 +1549,7 @@
         },
         {
           "type": "scene",
-          "id": "electrostatic_charge_book_scene_p17_1",
+          "id": "electrostatic_charge_book_scene",
           "title": "Σκηνή Α1",
           "caption": "Σκηνή Α1 — Μονό φορτίο: εμφάνιση, εξαφάνιση και αιτιακή κίνηση",
           "placement": "right",
@@ -1856,7 +1855,7 @@
       "items": [
         {
           "type": "scene",
-          "id": "electrostatic_charge_book_scene_p21_2",
+          "id": "electrostatic_charge_book_scene",
           "title": "Σκηνή Α1",
           "caption": "Σκηνή Α1 — Μονό φορτίο: εμφάνιση, εξαφάνιση και αιτιακή κίνηση",
           "placement": "right",
@@ -1904,7 +1903,7 @@
         },
         {
           "type": "scene",
-          "id": "electrostatic_charge_book_scene_p21_3",
+          "id": "electrostatic_charge_book_scene",
           "title": "Σκηνή Α1",
           "caption": "Σκηνή Α1 — Μονό φορτίο: εμφάνιση, εξαφάνιση και αιτιακή κίνηση",
           "placement": "right",
