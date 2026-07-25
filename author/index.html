@@ -497,26 +497,39 @@ function applyImageWithFallback(img, rawSrc=''){
   img.addEventListener('error', tryNext);
   tryNext();
 }
-function waitForImage(img){
+function waitForImage(img, timeoutMs=8000){
   return new Promise(resolve=>{
-    if(!img || img.complete) return resolve();
-    img.addEventListener('load', ()=>resolve(), {once:true});
-    img.addEventListener('error', ()=>resolve(), {once:true});
+    if(!img) return resolve(false);
+    const isReady = ()=>img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+    if(isReady()) return resolve(true);
+    let done = false;
+    const finish = ok=>{
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(Boolean(ok));
+    };
+    img.addEventListener('load', ()=>finish(isReady()), {once:true});
+    img.addEventListener('error', ()=>finish(false), {once:true});
+    const timer = setTimeout(()=>finish(isReady()), Math.max(500, Number(timeoutMs) || 8000));
   });
 }
 function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
-function waitForIframeLoad(iframe){
+function waitForIframeLoad(iframe, timeoutMs=6000){
   return new Promise(resolve=>{
-    if(!iframe) return resolve();
+    if(!iframe) return resolve('unavailable');
+    const current = iframe.dataset.sceneLoadState;
+    if(current === 'loaded' || current === 'error') return resolve(current);
     let done = false;
-    const finish = ()=>{ if(done) return; done = true; resolve(); };
-    try{
-      const doc = iframe.contentDocument;
-      if(doc && doc.readyState === 'complete') return resolve();
-    }catch(_e){}
-    iframe.addEventListener('load', finish, {once:true});
-    iframe.addEventListener('error', finish, {once:true});
-    setTimeout(finish, 3500);
+    const finish = state=>{
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(state || iframe.dataset.sceneLoadState || 'timeout');
+    };
+    iframe.addEventListener('load', ()=>finish('loaded'), {once:true});
+    iframe.addEventListener('error', ()=>finish('error'), {once:true});
+    const timer = setTimeout(()=>finish('timeout'), Math.max(500, Number(timeoutMs) || 6000));
   });
 }
 async function waitForFigureImages(){
@@ -569,10 +582,21 @@ async function captureSceneFrame(frame){
       dataUrl:null
     };
   }
-  await waitForIframeLoad(liveIframe);
+  const loadState = await waitForIframeLoad(liveIframe);
+  if(loadState === 'error'){
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:'scene-load-error',
+      fallbackUsed:false,
+      attempts:[],
+      dataUrl:null
+    };
+  }
   return captureIframeWithRetry(liveIframe, {
     attempts:2,
-    timeoutMs:4800
+    timeoutMs:6000
   });
 }
 let printSnapshotsPrepared = false;
@@ -617,6 +641,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
       executedPath:capture.executedPath,
       attempts:capture.attempts,
       result:capture.result,
+      reason:capture.reason || null,
       fallbackUsed:Boolean(capture.fallbackUsed),
       pass:capture.result === 'success' && exactPath
     };
@@ -628,7 +653,14 @@ async function preparePrintSnapshots(forceOrOptions=false){
     img.alt = 'Στιγμιότυπο σκηνής';
     img.src = capture.dataUrl;
     frame.appendChild(img);
-    await waitForImage(img);
+    const imageReady = await waitForImage(img);
+    if(!imageReady){
+      img.remove();
+      sceneReport.result = 'failure';
+      sceneReport.reason = 'snapshot-image-decode-failed';
+      sceneReport.pass = false;
+      continue;
+    }
     frame.classList.add('print-ready');
     readyCount += 1;
   }

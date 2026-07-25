@@ -403,6 +403,9 @@
           iframe.referrerPolicy = 'no-referrer';
           iframe.allow = 'fullscreen';
           iframe.dataset.sceneProtocol = 'book-scene-v1';
+          iframe.dataset.sceneLoadState = 'loading';
+          iframe.addEventListener('load', ()=>{ iframe.dataset.sceneLoadState = 'loaded'; }, {once:true});
+          iframe.addEventListener('error', ()=>{ iframe.dataset.sceneLoadState = 'error'; }, {once:true});
           iframe.src = source;
           frame.appendChild(iframe);
         }else{

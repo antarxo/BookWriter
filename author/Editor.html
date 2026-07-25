@@ -229,7 +229,7 @@
 let data = null;
 let selection = null;
 const BOOK_QUERY_PARAM='book';
-const DEFAULT_BOOK_URL='../book/chapter_content.json';
+const DEFAULT_BOOK_URL='../book/book.json';
 const initialParams=new URLSearchParams(window.location.search);
 let bookSourceUrl=null;
 let bookBaseUrl=new URL('.', window.location.href);
@@ -312,7 +312,7 @@ newBookBtn.addEventListener('click', ()=>{
     schemaVersion:'pages-v1',
     meta:{
       projectId:'new-book',
-      fileName:'chapter_content.json',
+      fileName:'book.json',
       title:'Νέο βιβλίο',
       title_en:'New book',
       subtitle:'',
@@ -377,7 +377,7 @@ exportBtn.addEventListener('click', ()=>{
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = String(data?.meta?.fileName || 'chapter_content.json');
+  a.download = String(data?.meta?.fileName || 'book.json');
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
 });
@@ -1777,7 +1777,7 @@ function renderMetaEditor(){
       <label><span>Κύριος τίτλος βιβλίου</span><input type="text" id="metaTitle"></label>
       <label><span>Υπότιτλος βιβλίου</span><input type="text" id="metaSubtitle"></label>
       <label><span>Αναγνωριστικό έργου</span><input type="text" id="metaProjectId" placeholder="π.χ. oscillations-book"></label>
-      <label><span>Όνομα αρχείου εξαγωγής</span><input type="text" id="metaFileName" placeholder="chapter_content.json"></label>
+      <label><span>Όνομα αρχείου εξαγωγής</span><input type="text" id="metaFileName" placeholder="book.json"></label>
       <label><span>Σύνδεσμος «Στην εφαρμογή»</span><input type="text" id="metaAppHref" placeholder="../index.html"></label>
     </div>
 
