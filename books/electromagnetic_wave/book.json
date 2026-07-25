@@ -2,7 +2,7 @@
   "schemaVersion": "pages-v1",
   "meta": {
     "projectId": "em-wave-book",
-    "fileName": "chapter_content.json",
+    "fileName": "book.json",
     "defaultLanguage": "el",
     "languages": [
       "el",
