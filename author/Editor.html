@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Γενικός συγγραφέας βιβλίων · v0.1</title>
+  <title>Γενικός συγγραφέας βιβλίων · v0.2</title>
   <style>
     :root{
       color-scheme:dark;
@@ -191,15 +191,18 @@
 <body>
 <header>
   <div>
-    <h1>Γενικός συγγραφέας βιβλίων <span style="font-size:12px;color:#94a3b8">v0.1 · υποδομή</span></h1>
+    <h1>Γενικός συγγραφέας βιβλίων <span style="font-size:12px;color:#94a3b8">v0.3 · δημιουργία βιβλίου</span></h1>
     <small>Η σελίδα είναι η βασική μονάδα. Κεφαλίδα, υποσέλιδο και στοιχεία σελίδας αποδίδονται από τον ίδιο πυρήνα με το βιβλίο και την εκτύπωση.</small>
   </div>
   <div class="controls">
     <span>Αρχείο βιβλίου:</span>
     <input type="file" id="jsonInput" accept="application/json,.json">
-    <button id="newBookBtn">Νέο βιβλίο</button>
-    <button id="loadDefaultBtn">Άνοιγμα δείγματος</button>
-    <button id="exportBtn" class="good" disabled>Εξαγωγή βιβλίου (JSON)</button>
+    <button id="openFolderBtn" class="good">Άνοιγμα φακέλου βιβλίου</button>
+    <button id="saveBookBtn" class="good" disabled>Αποθήκευση στο book.json</button>
+    <button id="newBookBtn">Δημιουργία νέου βιβλίου</button>
+    <button id="loadDefaultBtn">Άνοιγμα από URL</button>
+    <button id="exportBtn" disabled>Εξαγωγή αντιγράφου JSON</button>
+    <span id="folderStatus" style="max-width:280px;color:#94a3b8;font-size:11px">Δεν έχει επιλεγεί τοπικός φάκελος.</span>
     <label style="display:flex;align-items:center;gap:6px;color:#cbd5e1;font-size:12px">Γλώσσα περιεχομένου <select id="contentLang"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
   </div>
 </header>
@@ -230,14 +233,22 @@ let data = null;
 let selection = null;
 const BOOK_QUERY_PARAM='book';
 const DEFAULT_BOOK_URL='../book/book.json';
+const LIBRARY_MANIFEST_FILE='library.json';
 const initialParams=new URLSearchParams(window.location.search);
 let bookSourceUrl=null;
 let bookBaseUrl=new URL('.', window.location.href);
 
 const jsonInput = document.getElementById('jsonInput');
+const openFolderBtn = document.getElementById('openFolderBtn');
+const saveBookBtn = document.getElementById('saveBookBtn');
+const folderStatus = document.getElementById('folderStatus');
 const newBookBtn = document.getElementById('newBookBtn');
 const loadDefaultBtn = document.getElementById('loadDefaultBtn');
 const exportBtn = document.getElementById('exportBtn');
+let localBookDirectoryHandle = null;
+let localBookFileHandle = null;
+let localResourceUrls = new Map();
+let cleanSnapshot = null;
 const tree = document.getElementById('tree');
 const treeQuickNav = document.getElementById('treeQuickNav');
 const editor = document.getElementById('editor');
@@ -293,48 +304,362 @@ if(contentLangSelect){
 }
 updateContentLangUI();
 
+function serializeBook(){
+  return data ? JSON.stringify(data,null,2) : '';
+}
+function rememberCleanState(){ cleanSnapshot = data ? serializeBook() : null; }
+function hasUnsavedChanges(){ return !!data && (cleanSnapshot == null || serializeBook() !== cleanSnapshot); }
+function updateFolderStatus(message=''){
+  if(!folderStatus) return;
+  if(message){ folderStatus.textContent=message; return; }
+  if(localBookDirectoryHandle){
+    folderStatus.textContent=`Τοπικός φάκελος: ${localBookDirectoryHandle.name} / book.json`;
+  }else if(!('showDirectoryPicker' in window)){
+    folderStatus.textContent='Ο browser δεν υποστηρίζει άμεσο άνοιγμα/αποθήκευση φακέλου.';
+  }else{
+    folderStatus.textContent='Δεν έχει επιλεγεί τοπικός φάκελος.';
+  }
+}
+function clearLocalResourceUrls(){
+  for(const url of localResourceUrls.values()){
+    try{ URL.revokeObjectURL(url); }catch(_e){}
+  }
+  localResourceUrls.clear();
+}
+function detachLocalFolder(){
+  clearLocalResourceUrls();
+  localBookDirectoryHandle=null;
+  localBookFileHandle=null;
+  saveBookBtn.disabled=true;
+  updateFolderStatus();
+}
+function normalizedLocalPath(value=''){
+  const raw=String(value||'').replace(/\\/g,'/').replace(/^\.\//,'');
+  if(!raw || raw.startsWith('/') || /^[a-z]+:/i.test(raw) || raw.includes('..')) return '';
+  return raw.split('/').filter(Boolean).join('/');
+}
+async function fileHandleAtPath(directoryHandle, relativePath){
+  const parts=normalizedLocalPath(relativePath).split('/').filter(Boolean);
+  if(!parts.length) throw new Error('Άκυρη σχετική διαδρομή.');
+  let dir=directoryHandle;
+  for(const part of parts.slice(0,-1)) dir=await dir.getDirectoryHandle(part);
+  return dir.getFileHandle(parts.at(-1));
+}
+function collectRelativeFigureSources(){
+  const values=new Set();
+  for(const page of data?.pages || []){
+    for(const item of page.items || []){
+      if(item?.type !== 'figure') continue;
+      const path=normalizedLocalPath(item.src || '');
+      if(path) values.add(path);
+    }
+  }
+  return [...values];
+}
+async function refreshLocalResourceUrls(){
+  clearLocalResourceUrls();
+  if(!localBookDirectoryHandle || !data) return;
+  for(const path of collectRelativeFigureSources()){
+    try{
+      const handle=await fileHandleAtPath(localBookDirectoryHandle,path);
+      const file=await handle.getFile();
+      localResourceUrls.set(path,URL.createObjectURL(file));
+    }catch(err){
+      console.warn('Δεν βρέθηκε τοπικός πόρος:',path,err);
+    }
+  }
+}
+async function ensureReadWritePermission(handle){
+  if(!handle) return false;
+  const options={mode:'readwrite'};
+  if((await handle.queryPermission(options)) === 'granted') return true;
+  return (await handle.requestPermission(options)) === 'granted';
+}
+async function openLocalBookFolder(){
+  if(!('showDirectoryPicker' in window)){
+    alert('Απαιτείται Chromium browser σε localhost ή HTTPS. Παραμένει διαθέσιμο το upload/download JSON.');
+    return;
+  }
+  if(hasUnsavedChanges() && !confirm('Υπάρχουν μη αποθηκευμένες αλλαγές. Να ανοίξει άλλος φάκελος;')) return;
+  try{
+    const directoryHandle=await window.showDirectoryPicker({mode:'readwrite'});
+    const fileHandle=await directoryHandle.getFileHandle('book.json');
+    const file=await fileHandle.getFile();
+    const parsed=JSON.parse(await file.text());
+    const normalized=normalizeData(parsed);
+    localBookDirectoryHandle=directoryHandle;
+    localBookFileHandle=fileHandle;
+    bookSourceUrl=null;
+    bookBaseUrl=new URL('.',window.location.href);
+    data=normalized;
+    selection={kind:'meta'};
+    await refreshLocalResourceUrls();
+    rememberCleanState();
+    saveBookBtn.disabled=false;
+    updateFolderStatus();
+    renderAll();
+  }catch(err){
+    if(err?.name === 'AbortError') return;
+    console.error(err);
+    alert(err?.name === 'NotFoundError'
+      ? 'Ο επιλεγμένος φάκελος δεν περιέχει book.json.'
+      : 'Αποτυχία ανοίγματος φακέλου βιβλίου. Δες την κονσόλα.');
+  }
+}
+async function saveLocalBook(){
+  if(!localBookFileHandle || !data){
+    alert('Άνοιξε πρώτα τον φάκελο που περιέχει το book.json.');
+    return;
+  }
+  try{
+    if(!(await ensureReadWritePermission(localBookFileHandle))) throw new Error('Δεν δόθηκε άδεια εγγραφής.');
+    const writable=await localBookFileHandle.createWritable();
+    await writable.write(serializeBook());
+    await writable.close();
+    rememberCleanState();
+    updateFolderStatus(`Αποθηκεύτηκε: ${localBookDirectoryHandle.name} / book.json`);
+    setTimeout(()=>updateFolderStatus(),1800);
+  }catch(err){
+    console.error(err);
+    alert('Η αποθήκευση στο book.json απέτυχε. Δες την κονσόλα.');
+  }
+}
+function safeImageFileName(name='image.png'){
+  const clean=String(name || 'image.png').normalize('NFKD')
+    .replace(/[^A-Za-z0-9._-]+/g,'_').replace(/^_+|_+$/g,'');
+  return clean || `image_${Date.now()}.png`;
+}
+async function storeImageInBookFolder(file){
+  if(!localBookDirectoryHandle) return '';
+  if(!(await ensureReadWritePermission(localBookDirectoryHandle))) throw new Error('Δεν δόθηκε άδεια εγγραφής.');
+  const imagesDir=await localBookDirectoryHandle.getDirectoryHandle('images',{create:true});
+  const fileName=safeImageFileName(file.name);
+  let exists=false;
+  try{ await imagesDir.getFileHandle(fileName); exists=true; }catch(err){ if(err?.name !== 'NotFoundError') throw err; }
+  if(exists && !confirm(`Το images/${fileName} υπάρχει ήδη. Να αντικατασταθεί;`)) throw new DOMException('Ακυρώθηκε','AbortError');
+  const handle=await imagesDir.getFileHandle(fileName,{create:true});
+  const writable=await handle.createWritable();
+  await writable.write(file);
+  await writable.close();
+  const relativePath=`images/${fileName}`;
+  const previous=localResourceUrls.get(relativePath);
+  if(previous) URL.revokeObjectURL(previous);
+  localResourceUrls.set(relativePath,URL.createObjectURL(file));
+  return relativePath;
+}
+openFolderBtn.addEventListener('click',openLocalBookFolder);
+saveBookBtn.addEventListener('click',saveLocalBook);
+window.addEventListener('beforeunload',event=>{
+  if(!hasUnsavedChanges()) return;
+  event.preventDefault();
+  event.returnValue='';
+});
+updateFolderStatus();
+
 jsonInput.addEventListener('change', async e => {
   const file = e.target.files?.[0]; if(!file) return;
   const text = await file.text();
   try{
+    detachLocalFolder();
     bookSourceUrl=null;
     bookBaseUrl=new URL('.', window.location.href);
     const parsed = JSON.parse(text);
     data = normalizeData(parsed);
     selection = {kind:'meta'};
+    rememberCleanState();
     renderAll();
   }catch(err){ alert('Σφάλμα στο JSON'); console.error(err); }
 });
 
-newBookBtn.addEventListener('click', ()=>{
-  if(data && !confirm('Να δημιουργηθεί νέο κενό βιβλίο; Οι μη εξαχθείσες αλλαγές θα χαθούν.')) return;
-  data = BookCore.normalizeData({
+function createBlankBookData({bookId,title,subtitle=''}){
+  const safeTitle=String(title || 'Νέο βιβλίο').trim() || 'Νέο βιβλίο';
+  return BookCore.normalizeData({
     schemaVersion:'pages-v1',
     meta:{
-      projectId:'new-book',
+      projectId:bookId,
       fileName:'book.json',
-      title:'Νέο βιβλίο',
-      title_en:'New book',
-      subtitle:'',
+      title:safeTitle,
+      title_en:'',
+      subtitle:String(subtitle || '').trim(),
       subtitle_en:'',
-      appHref:'../index.html',
       defaultLanguage:'el',
       languages:['el','en'],
       authoringVersion:BookCore.VERSION
     },
     layoutDefaults:{pageSize:'A4',orientation:'portrait',showPageNumbers:true},
-    nav:{mode:'auto',showApp:true,showPrint:true,groups:[]},
+    nav:{mode:'auto',showApp:false,showPrint:true,groups:[]},
     pages:[{
       id:'page-1',
       header:{left:'',center:'',right:''},
       footer:{left:'',center:'',right:'{page}'},
-      items:[{type:'hero',title:'Νέο βιβλίο',title_en:'New book',subtitle:'',subtitle_en:''}]
+      items:[{type:'hero',title:safeTitle,title_en:'',subtitle:String(subtitle || '').trim(),subtitle_en:''}]
     }]
   });
-  exportBtn.disabled=false;
-  selection={kind:'meta'};
-  renderAll();
-});
+}
+function htmlTemplateEscape(value=''){
+  return String(value).replace(/[&<>"']/g,ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+function createBookLauncherHtml({bookId,title,editor=false}){
+  const authorFile=editor ? 'Editor.html' : 'index.html';
+  const pageTitle=editor ? `Επεξεργασία — ${title}` : title;
+  const message=editor ? 'Άνοιγμα του γενικού Συγγραφέα…' : 'Άνοιγμα του βιβλίου με τον γενικό Συγγραφέα…';
+  const encodedBookPath=`../books/${bookId}/book.json`;
+  const closeScript='</scr'+'ipt>';
+  return `<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${htmlTemplateEscape(pageTitle)}</title>
+  <style>
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:#0f766e}
+  </style>
+</head>
+<body>
+  <p>${htmlTemplateEscape(message)} <a id="manualLink" href="../../author/${authorFile}?book=${encodeURIComponent(encodedBookPath)}">συνέχεια</a></p>
+  <script>
+    'use strict';
+    const target=new URL('../../author/${authorFile}', window.location.href);
+    const incoming=new URLSearchParams(window.location.search);
+    for(const [key,value] of incoming){
+      if(key !== 'book') target.searchParams.append(key,value);
+    }
+    target.searchParams.set('book',${JSON.stringify(encodedBookPath)});
+    target.hash=window.location.hash;
+    document.getElementById('manualLink').href=target.toString();
+    window.location.replace(target.toString());
+  ${closeScript}
+</body>
+</html>
+`;
+}
+async function writeTextFile(directoryHandle,fileName,contents){
+  const handle=await directoryHandle.getFileHandle(fileName,{create:true});
+  const writable=await handle.createWritable();
+  await writable.write(contents);
+  await writable.close();
+  return handle;
+}
+async function childDirectoryExists(parentHandle,name){
+  try{
+    await parentHandle.getDirectoryHandle(name);
+    return true;
+  }catch(err){
+    if(err?.name === 'NotFoundError') return false;
+    throw err;
+  }
+}
+async function readOptionalTextFile(directoryHandle,fileName){
+  try{
+    const handle=await directoryHandle.getFileHandle(fileName);
+    return await (await handle.getFile()).text();
+  }catch(err){
+    if(err?.name === 'NotFoundError') return '';
+    throw err;
+  }
+}
+function libraryEntryForBook({bookId,title,subtitle=''}){
+  return {
+    id:bookId,
+    title:String(title || bookId),
+    subtitle:String(subtitle || ''),
+    book:`books/${bookId}/book.json`,
+    reader:`books/${bookId}/index.html`,
+    editor:`books/${bookId}/Editor.html`,
+    language:'el'
+  };
+}
+async function upsertLibraryManifest(booksRoot,entry){
+  let manifest={schemaVersion:'book-library-v1',updatedAt:'',books:[]};
+  const existing=await readOptionalTextFile(booksRoot,LIBRARY_MANIFEST_FILE);
+  if(existing.trim()){
+    const parsed=JSON.parse(existing);
+    if(parsed && typeof parsed === 'object') manifest=parsed;
+  }
+  if(!Array.isArray(manifest.books)) manifest.books=[];
+  const normalized=libraryEntryForBook(entry);
+  const byId=new Map(manifest.books.filter(item=>item && item.id).map(item=>[String(item.id),item]));
+  byId.set(normalized.id,{...(byId.get(normalized.id)||{}),...normalized});
+  manifest.schemaVersion='book-library-v1';
+  manifest.updatedAt=new Date().toISOString();
+  manifest.books=[...byId.values()].sort((a,b)=>String(a.title||a.id).localeCompare(String(b.title||b.id),'el'));
+  await writeTextFile(booksRoot,LIBRARY_MANIFEST_FILE,JSON.stringify(manifest,null,2));
+}
+async function createNewBookFolder(){
+  if(!('showDirectoryPicker' in window)){
+    alert('Η δημιουργία πλήρους βιβλίου απαιτεί Chromium browser σε localhost ή HTTPS.');
+    return;
+  }
+  if(hasUnsavedChanges() && !confirm('Υπάρχουν μη αποθηκευμένες αλλαγές. Να δημιουργηθεί νέο βιβλίο;')) return;
+  try{
+    const booksRoot=await window.showDirectoryPicker({mode:'readwrite',id:'bookwriter-books-root'});
+    if(booksRoot.name !== 'books'){
+      alert('Επίλεξε ακριβώς τον φάκελο BookWriter/books/. Η δομή των launchers βασίζεται σε αυτήν την τοπολογία.');
+      return;
+    }
+    if(!(await ensureReadWritePermission(booksRoot))) throw new Error('Δεν δόθηκε άδεια εγγραφής στον φάκελο books.');
+
+    const rawId=prompt('book_id του νέου βιβλίου\n(λατινικά πεζά, αριθμοί, _ ή -):','test_book');
+    if(rawId == null) return;
+    const bookId=String(rawId).trim();
+    if(!/^[a-z0-9][a-z0-9_-]*$/.test(bookId)){
+      alert('Άκυρο book_id. Χρησιμοποίησε μόνο λατινικά πεζά, αριθμούς, _ ή -, με πρώτο χαρακτήρα γράμμα ή αριθμό.');
+      return;
+    }
+    if(await childDirectoryExists(booksRoot,bookId)){
+      alert(`Ο φάκελος books/${bookId}/ υπάρχει ήδη. Δεν έγινε καμία αντικατάσταση.`);
+      return;
+    }
+
+    const rawTitle=prompt('Τίτλος νέου βιβλίου:','Νέο βιβλίο');
+    if(rawTitle == null) return;
+    const title=String(rawTitle).trim();
+    if(!title){ alert('Ο τίτλος δεν μπορεί να είναι κενός.'); return; }
+    const rawSubtitle=prompt('Υπότιτλος (προαιρετικός):','');
+    if(rawSubtitle == null) return;
+    const subtitle=String(rawSubtitle).trim();
+
+    const bookDir=await booksRoot.getDirectoryHandle(bookId,{create:true});
+    await bookDir.getDirectoryHandle('images',{create:true});
+    const newData=createBlankBookData({bookId,title,subtitle});
+    const bookFileHandle=await writeTextFile(bookDir,'book.json',JSON.stringify(newData,null,2));
+    await writeTextFile(bookDir,'index.html',createBookLauncherHtml({bookId,title,editor:false}));
+    await writeTextFile(bookDir,'Editor.html',createBookLauncherHtml({bookId,title,editor:true}));
+    let libraryUpdated=true;
+    try{
+      await upsertLibraryManifest(booksRoot,{bookId,title,subtitle});
+    }catch(libraryErr){
+      libraryUpdated=false;
+      console.warn('Το βιβλίο δημιουργήθηκε, αλλά η βιβλιοθήκη δεν ενημερώθηκε.',libraryErr);
+    }
+
+    detachLocalFolder();
+    localBookDirectoryHandle=bookDir;
+    localBookFileHandle=bookFileHandle;
+    data=newData;
+    selection={kind:'meta'};
+    const sourceRelative=`../books/${bookId}/book.json`;
+    setBookSourceUrl(new URL(sourceRelative,window.location.href));
+    const currentUrl=new URL(window.location.href);
+    currentUrl.searchParams.set(BOOK_QUERY_PARAM,sourceRelative);
+    history.replaceState({},'',currentUrl);
+    await refreshLocalResourceUrls();
+    rememberCleanState();
+    saveBookBtn.disabled=false;
+    exportBtn.disabled=false;
+    updateFolderStatus(`Δημιουργήθηκε: books/${bookId}/ — book.json, index.html, Editor.html, images/${libraryUpdated ? ' — βιβλιοθήκη ενημερωμένη' : ''}`);
+    renderAll();
+    alert(`Το βιβλίο δημιουργήθηκε:\nBookWriter/books/${bookId}/\n\nΟ φάκελος είναι ήδη ανοιχτός στον Editor.${libraryUpdated ? '\nΗ βιβλιοθήκη ενημερώθηκε.' : '\nΠροσοχή: η δοκιμαστική βιβλιοθήκη δεν ενημερώθηκε· χρησιμοποίησε Συγχρονισμό.'}`);
+  }catch(err){
+    if(err?.name === 'AbortError') return;
+    console.error(err);
+    alert('Η δημιουργία του βιβλίου απέτυχε. Αν δημιουργήθηκε μερικός φάκελος, έλεγξέ τον πριν ξαναδοκιμάσεις.');
+  }
+}
+newBookBtn.addEventListener('click',createNewBookFolder);
 
 function configuredBookUrl(){
   const raw=String(initialParams.get(BOOK_QUERY_PARAM) || DEFAULT_BOOK_URL).trim() || DEFAULT_BOOK_URL;
@@ -347,10 +672,13 @@ function setBookSourceUrl(url){
 function resolveBookResource(url=''){
   const raw=String(url || '').trim();
   if(!raw || raw.startsWith('#')) return raw;
+  const localPath=normalizedLocalPath(raw);
+  if(localPath && localResourceUrls.has(localPath)) return localResourceUrls.get(localPath);
   try{return new URL(raw, bookBaseUrl).toString();}catch(_e){return raw;}
 }
 async function loadConfiguredBook({alertOnFailure=false}={}){
   try{
+    detachLocalFolder();
     const source=configuredBookUrl();
     setBookSourceUrl(source);
     const requestUrl=new URL(source);
@@ -360,6 +688,7 @@ async function loadConfiguredBook({alertOnFailure=false}={}){
     const parsed = await res.json();
     data = normalizeData(parsed);
     selection = {kind:'meta'};
+    rememberCleanState();
     renderAll();
     return true;
   }catch(err){
@@ -370,7 +699,10 @@ async function loadConfiguredBook({alertOnFailure=false}={}){
     return false;
   }
 }
-loadDefaultBtn.addEventListener('click', ()=>loadConfiguredBook({alertOnFailure:true}));
+loadDefaultBtn.addEventListener('click', ()=>{
+  if(hasUnsavedChanges() && !confirm('Υπάρχουν μη αποθηκευμένες αλλαγές. Να φορτωθεί ξανά το βιβλίο από URL;')) return;
+  loadConfiguredBook({alertOnFailure:true});
+});
 
 exportBtn.addEventListener('click', ()=>{
   if(!data) return;
@@ -1074,9 +1406,26 @@ function wireFigureImageControls(item){
   srcInput.addEventListener('input', sync);
   altInput?.addEventListener('input', sync);
   if(fileInput){
-    fileInput.addEventListener('change', ()=>{
+    fileInput.addEventListener('change', async ()=>{
       const file = fileInput.files?.[0];
       if(!file) return;
+      if(localBookDirectoryHandle){
+        try{
+          const relativePath=await storeImageInBookFolder(file);
+          if(!relativePath) return;
+          item.src=relativePath;
+          srcInput.value=relativePath;
+          renderTree();
+          renderPreview();
+          sync();
+        }catch(err){
+          if(err?.name !== 'AbortError'){
+            console.error(err);
+            alert('Η αντιγραφή της εικόνας στον φάκελο images απέτυχε.');
+          }
+        }
+        return;
+      }
       const reader = new FileReader();
       reader.onload = ()=>{
         item.src = String(reader.result || '');
