@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BookWriter — PNG print probe v6</title>
+  <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:#0f766e}</style>
+</head>
+<body>
+  <p>Άνοιγμα PNG print probe v6… <a id="manualLink" href="../../author/index.html?book=../books/electromagnetic_wave/book_print_png_probe_v6.json">συνέχεια</a></p>
+  <script>
+    'use strict';
+    const target=new URL('../../author/index.html', window.location.href);
+    const incoming=new URLSearchParams(window.location.search);
+    for(const [key,value] of incoming){ if(key !== 'book') target.searchParams.append(key,value); }
+    target.searchParams.set('book','../books/electromagnetic_wave/book_print_png_probe_v6.json');
+    target.hash=window.location.hash;
+    document.getElementById('manualLink').href=target.toString();
+    window.location.replace(target.toString());
+  </script>
+</body>
+</html>

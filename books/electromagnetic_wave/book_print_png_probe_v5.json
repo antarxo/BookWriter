@@ -8,7 +8,7 @@
       "el",
       "en"
     ],
-    "authoringVersion": "0.1.0",
+    "authoringVersion": "0.1.0-print-png-probe",
     "eyebrow": "",
     "title": "Γέννηση και διάδοση του ΗΜ κύματος",
     "subtitle": "",
@@ -469,7 +469,7 @@
           "wrapTight": true,
           "hideCaption": false,
           "status": "scene",
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=V%2CQ&availableGraphs=V%2CQ%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow&timePreset=t0&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphV%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB&play=0&zoom=1620",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=V%2CQ&availableGraphs=V%2CQ%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow&timePreset=t0&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphV%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB&play=0&zoom=1620",
           "title_en": "Scene 1",
           "caption_en": "Scene 1",
           "aspectRatio": 0.623053
@@ -713,7 +713,7 @@
           "frameWidth": 340,
           "wrapTight": true,
           "hideCaption": false,
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "status": "scene",
           "title_en": "Scene 0→T/4",
           "caption_en": "Scene 0→T/4",
@@ -814,7 +814,7 @@
           "frameWidth": 340,
           "wrapTight": true,
           "hideCaption": false,
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "status": "scene",
           "title_en": "Scene T/4→T/2",
           "caption_en": "Scene T/4→T/2",
@@ -922,7 +922,7 @@
           "frameWidth": 340,
           "wrapTight": true,
           "hideCaption": false,
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "status": "scene",
           "title_en": "Scene T/2→3T/4",
           "caption_en": "Scene T/2→3T/4",
@@ -1022,7 +1022,7 @@
           "frameWidth": 340,
           "wrapTight": true,
           "hideCaption": false,
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q4&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q4&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "status": "scene",
           "title_en": "Scene 3T/4→T",
           "caption_en": "Scene 3T/4→T",
@@ -1163,7 +1163,7 @@
           "wrapTight": true,
           "hideCaption": false,
           "status": "scene",
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2Ccharges%2CcurrentArrow%2ClinearPropagation&region=nearAtt&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=0.98",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2Ccharges%2CcurrentArrow%2ClinearPropagation&region=nearAtt&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=0.98",
           "title_en": "Scene — Truth 1",
           "caption_en": "Scene — Truth 1",
           "aspectRatio": 0.623053
@@ -1261,7 +1261,7 @@
           "wrapTight": true,
           "hideCaption": false,
           "status": "scene",
-          "singleSrc": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
+          "singleSrc": "/HMK/index_print_png_probe_v4.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
           "title_en": "Scene — Truth 2",
           "caption_en": "Scene — Truth 2",
           "aspectRatio": 0.623053
@@ -1558,7 +1558,7 @@
           "hideCaption": false,
           "status": "scene",
           "sceneAspect": "340/360",
-          "singleSrc": "/HMK/electrostatic_field_book_ready.html?p=charge&lang=el&t=5",
+          "singleSrc": "/HMK/electrostatic_field_book_ready_t5_probe.html?p=charge&lang=el&t=5",
           "aspectRatio": 0.944444
         },
         {
@@ -1857,14 +1857,14 @@
           "type": "scene",
           "id": "electrostatic_charge_vanish_book_scene",
           "title": "Σκηνή Α2",
-          "caption": "Σκηνή Α2 — Μονό φορτίο: εξαφάνιση μετά από προηγούμενη εμφάνιση και διάδοση της πληροφορίας σβησίματος",
+          "caption": "Σκηνή Α2 — Μονό φορτίο: εξαφάνιση και διάδοση της πληροφορίας σβησίματος",
           "placement": "right",
           "frameWidth": 340,
           "wrapTight": true,
           "hideCaption": false,
           "status": "scene",
           "sceneAspect": "340/360",
-          "singleSrc": "/HMK/electrostatic_field_book_ready.html?p=charge_vanish&lang=el&disappearAt=5&t=10",
+          "singleSrc": "/HMK/electrostatic_field_book_ready_t5_probe.html?p=charge_vanish&lang=el&t=5",
           "aspectRatio": 0.944444
         },
         {
@@ -1912,7 +1912,7 @@
           "hideCaption": false,
           "status": "scene",
           "sceneAspect": "340/360",
-          "singleSrc": "/HMK/electrostatic_field_book_ready.html?p=dipole&lang=el&t=5",
+          "singleSrc": "/HMK/electrostatic_field_book_ready_t5_probe.html?p=dipole&lang=el&t=5",
           "aspectRatio": 0.944444
         },
         {
