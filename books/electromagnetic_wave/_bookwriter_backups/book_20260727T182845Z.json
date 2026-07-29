@@ -10,15 +10,7 @@
     "authoringVersion": "4.0.0-phase1.5",
     "eyebrow": "",
     "migratedFrom": "pages-v1",
-    "migratedAt": "2026-07-27T16:13:10.837Z",
-    "updatedAt": "2026-07-29T15:12:21.963Z",
-    "library": {
-      "discipline": "Φυσική",
-      "level": "Γ΄ Λυκείου",
-      "category": "ΦΥΛΛΑΔΙΟ",
-      "status": "Προσχέδιο",
-      "tags": []
-    }
+    "migratedAt": "2026-07-27T16:13:10.837Z"
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -763,10 +755,7 @@
             "label": ""
           },
           "title": "Συμβάσεις",
-          "level": 2,
-          "layout": {
-            "floatInteraction": "wrap"
-          }
+          "level": 2
         },
         {
           "id": "page-added-intro-3-paragraph-1-απο-το-διπλανο-σχημα-α-4",
@@ -1463,29 +1452,6 @@
       ]
     },
     {
-      "id": "page-5-2",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "ΜΕΡΟΣ Β΄",
-        "center": "",
-        "right": "Σχολικό αφήγημα"
-      },
-      "footer": {
-        "inherit": false,
-        "left": " © antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": []
-    },
-    {
       "id": "page-3",
       "sourcePage": null,
       "header": {
@@ -1639,76 +1605,7 @@
           "observeItems": [
             "Δες το V–t. Σύγκρινε τo με το q–t .",
             "Δες ότι το V ξεκινά από το μηδέν όπως και το  q."
-          ],
-          "layout": {
-            "floatInteraction": "wrap"
-          }
-        },
-        {
-          "id": "page-3-paragraph-νεα-παραγραφος-6",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Παράδειγμα ν",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "superscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "ου κειμ",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "νου",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              }
-            ]
-          },
-          "style": {
-            "align": "left",
-            "hyphenate": true
-          },
-          "layout": {
-            "floatInteraction": "wrap"
-          },
-          "legacySourceHtml": "<b><i><u>Παράδειγμα ν<sup>έ</sup>ου κειμ<sub>έ</sub>νου</u></i></b>",
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": false,
-            "editedAt": "2026-07-28T00:18:39.949Z"
-          },
-          "extensions": {
-            "richTextSync": "visual-html-primary-v4.1"
-          }
+          ]
         },
         {
           "id": "page-3-paragraph-2-q-qημ-ωt-το-εμφανιζομε-5",
@@ -2281,6 +2178,29 @@
           "legacySourceHtml": "<ul><li>Τη στιγμή t=0 το φορτίο στα άκρα του διπόλου είναι μηδέν. Επομένως η τιμή της έντασης του ηλεκτρικού πεδίου Ε=0</li><li>Την ίδια στιγμή όπως φαίνεται από την κλίση στο διάγραμμα q-t, το ρεύμα i είναι μέγιστο. Αυτό σημαίνει ότι η μαγνητική επαγωγή B θα είναι μέγιστη</li></ul>"
         },
         {
+          "id": "phase_0_T4",
+          "type": "scene",
+          "nav": {
+            "show": true,
+            "label": ""
+          },
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "title": "Σκηνή 0→T/4",
+          "caption": "Σκηνή 0→T/4",
+          "hideCaption": false,
+          "layout": {
+            "placement": "right",
+            "wrap": true,
+            "floatInteraction": "",
+            "widthPx": 340,
+            "aspectRatio": 0.623053
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        },
+        {
           "id": "page-5-note-η-εικονα-των-πεδιων-6",
           "type": "note",
           "nav": {
@@ -2306,29 +2226,6 @@
           },
           "style": {},
           "legacySourceHtml": "<ul><li>Ηλεκτρικό: καμιά εικόνα του ηλεκτρικού πεδίου που συνδέεται με συσσώρευση φορτίου στα άκρα δεν έχει ακόμη αναπτυχθεί, καμιά εμφάνιση δυναμικών γραμμών ηλεκτροστατικού πεδίου.</li><li>Μαγνητικό: Το B είναι μέγιστο και επομένως οι κυκλικές δυναμικές γραμμές (ομόκεντροι κύκλοι γύρω από τη ράβδο και με κέντρο τη ράβδο) εμφανίζονται στην πυκνότερη μορφή τους.</li></ul>"
-        },
-        {
-          "id": "phase_0_T4",
-          "type": "scene",
-          "nav": {
-            "show": true,
-            "label": ""
-          },
-          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
-          "title": "Σκηνή 0→T/4",
-          "caption": "Σκηνή 0→T/4",
-          "hideCaption": false,
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "",
-            "widthPx": 340,
-            "aspectRatio": 0.623053
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
         },
         {
           "id": "page-5-paragraph-χρονικο-διαστημα-0-t-4-7",
@@ -2546,6 +2443,29 @@
           "legacySourceHtml": "Τη στιγμή <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mi>t</mi><mo>=</mo><mfrac><mi>T</mi><mn>4</mn></mfrac></math></span> το φορτίο στα άκρα του διπόλου έχει μέγιστο μέτρο, άρα και το ηλεκτρικό πεδίο εμφανίζεται στην εντονότερη μορφή του. Την ίδια στιγμή το ρεύμα μηδενίζεται, επειδή η κλίση του διαγράμματος <em>q-t</em> είναι μηδενική, και έτσι το μαγνητικό πεδίο εξαφανίζεται στιγμιαία. Πρόκειται για την πρώτη καθαρά ηλεκτρικά ακραία φάση της κίνησης των φορτίων του διπόλου."
         },
         {
+          "id": "phase_T4_T2",
+          "type": "scene",
+          "nav": {
+            "show": true,
+            "label": ""
+          },
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "title": "Σκηνή T/4→T/2",
+          "caption": "Σκηνή T/4→T/2",
+          "hideCaption": false,
+          "layout": {
+            "placement": "right",
+            "wrap": true,
+            "floatInteraction": "",
+            "widthPx": 340,
+            "aspectRatio": 0.623053
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        },
+        {
           "id": "page-6-paragraph-χρονικο-διαστημα-t-4-t-2-5",
           "type": "paragraph",
           "nav": {
@@ -2598,29 +2518,6 @@
             "Παρατήρησε πώς μεταβάλλονται διαδιδόμενα τα πεδία",
             "Επανέλαβε με νέα ρύθμιση E→ και Β→ για να παρατηρήσεις γράφημα διανυσμάτων"
           ]
-        },
-        {
-          "id": "phase_T4_T2",
-          "type": "scene",
-          "nav": {
-            "show": true,
-            "label": ""
-          },
-          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
-          "title": "Σκηνή T/4→T/2",
-          "caption": "Σκηνή T/4→T/2",
-          "hideCaption": false,
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "",
-            "widthPx": 340,
-            "aspectRatio": 0.623053
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
         },
         {
           "id": "page-6-note-περιγραφη-συμβαντων-7",
@@ -3306,26 +3203,6 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Τη στιγμή <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mi>t</mi><mo>=</mo><mi>T</mi></math></span> το σύστημα επιστρέφει ακριβώς στην αρχική του κατάσταση. Το φορτίο στα άκρα του διπόλου είναι ξανά μηδέν, το ηλεκτρικό πεδίο μηδενίζεται, ενώ το ρεύμα αποκτά πάλι τη μέγιστη αρχική του τιμή και το μαγνητικό πεδίο εμφανίζεται όπως στη στιγμή <em>t = 0</em>. Ένας πλήρης κύκλος έχει κλείσει και η ίδια ακολουθία ξεκινά ξανά από την αρχή."
-        },
-        {
-          "id": "page-9-note-διδακτικη-επισημανση-1",
-          "type": "note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "label": "Διδακτική επισήμανση",
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
-              }
-            ]
-          },
-          "style": {},
-          "legacySourceHtml": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
         }
       ]
     },
@@ -3350,7 +3227,28 @@
         "offset": 0,
         "hide": false
       },
-      "items": []
+      "items": [
+        {
+          "id": "page-9-note-διδακτικη-επισημανση-1",
+          "type": "note",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "label": "Διδακτική επισήμανση",
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
+              }
+            ]
+          },
+          "style": {},
+          "legacySourceHtml": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
+        }
+      ]
     },
     {
       "id": "page-14",
@@ -3637,8 +3535,8 @@
             "label": ""
           },
           "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
-          "title": "Το πραγματικό ΗΜ κύμα",
-          "caption": "Το πραγματικό ΗΜ κύμα",
+          "title": "Σκηνή Αλήθεια 2η",
+          "caption": "Σκηνή Αλήθεια 2η",
           "hideCaption": false,
           "layout": {
             "placement": "right",

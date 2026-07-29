@@ -11,14 +11,7 @@
     "eyebrow": "",
     "migratedFrom": "pages-v1",
     "migratedAt": "2026-07-27T16:13:10.837Z",
-    "updatedAt": "2026-07-29T15:12:21.963Z",
-    "library": {
-      "discipline": "Φυσική",
-      "level": "Γ΄ Λυκείου",
-      "category": "ΦΥΛΛΑΔΙΟ",
-      "status": "Προσχέδιο",
-      "tags": []
-    }
+    "updatedAt": "2026-07-28T00:15:20.738Z"
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -1463,29 +1456,6 @@
       ]
     },
     {
-      "id": "page-5-2",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "ΜΕΡΟΣ Β΄",
-        "center": "",
-        "right": "Σχολικό αφήγημα"
-      },
-      "footer": {
-        "inherit": false,
-        "left": " © antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": []
-    },
-    {
       "id": "page-3",
       "sourcePage": null,
       "header": {
@@ -1656,37 +1626,7 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Παράδειγμα ν",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "superscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "ου κειμ",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "νου",
+                "text": "Παράδειγμα νέου κειμένου",
                 "bold": true,
                 "italic": true,
                 "underline": true
@@ -1700,11 +1640,11 @@
           "layout": {
             "floatInteraction": "wrap"
           },
-          "legacySourceHtml": "<b><i><u>Παράδειγμα ν<sup>έ</sup>ου κειμ<sub>έ</sub>νου</u></i></b>",
+          "legacySourceHtml": "<b><i><u>Παράδειγμα νέου κειμένου</u></i></b>",
           "provenance": {
             "visualEdited": true,
             "contentEdited": false,
-            "editedAt": "2026-07-28T00:18:39.949Z"
+            "editedAt": "2026-07-28T00:15:20.115Z"
           },
           "extensions": {
             "richTextSync": "visual-html-primary-v4.1"

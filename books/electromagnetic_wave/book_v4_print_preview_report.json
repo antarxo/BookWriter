@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-07-27T23:00:22.758Z",
+  "sourceSchema": "bookwriter-v4",
+  "sourceMode": "canonical",
+  "rendererVersion": "0.2.0-direct-v4",
+  "renderPath": "bookwriter-v4 → BookCore direct → snapshot pipeline",
+  "targetSchema": "bookwriter-v4",
+  "targetFile": "book_v4_print_preview.json",
+  "productionBookUntouched": true,
+  "pages": 28,
+  "items": 293,
+  "runtimeAudit": {
+    "ok": true,
+    "renderer": "BookCore 0.2.0-direct-v4",
+    "directV4": true,
+    "validation": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "schema": "bookwriter-v4"
+    },
+    "stats": {
+      "schema": "bookwriter-v4",
+      "pages": 28,
+      "items": 293,
+      "figures": 17,
+      "figuresWithCaptions": 11,
+      "figuresWithAssets": 17,
+      "scenes": 10,
+      "scenesWithSources": 10,
+      "legacyHtmlBlocks": 207,
+      "richTextBlocks": 207,
+      "layoutItems": 55
+    },
+    "warnings": []
+  },
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "pages[0].items[12]: figure χωρίς alt",
+      "pages[2].items[7]: figure χωρίς alt"
+    ],
+    "stats": {
+      "pages": 28,
+      "items": 293,
+      "byType": {
+        "hero": 1,
+        "part_title": 4,
+        "section_heading": 38,
+        "side_note": 7,
+        "paragraph": 184,
+        "clear": 2,
+        "figure": 17,
+        "scene": 10,
+        "interactive_callout": 14,
+        "note": 16
+      },
+      "internalLinks": 0,
+      "externalLinks": 0,
+      "assets": 17,
+      "scenes": 10
+    }
+  },
+  "coreValidation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "schema": "bookwriter-v4"
+  }
+}

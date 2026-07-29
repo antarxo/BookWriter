@@ -1,0 +1,8 @@
+*.zip
+_inspect/
+render/
+tmp/
+*.tmp
+*~
+.DS_Store
+Thumbs.db

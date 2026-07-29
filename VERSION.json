@@ -1,0 +1,27 @@
+{
+  "version": "4.5.0-rc1",
+  "type": "release candidate",
+  "entrypoint": "BookWriter/author/index.html",
+  "reader": "BookWriter/reader/index.html",
+  "canonicalSchema": "bookwriter-v4",
+  "lockedWorkflows": [
+    "sortable-table-library",
+    "docx-create",
+    "split-docx-insertion",
+    "save-with-backup",
+    "standalone-book",
+    "print-pdf-with-overflow-decision"
+  ],
+  "officialPrintPath": "visible Print/PDF command, File menu, or Ctrl+P — all call the same function",
+  "knownDeferred": [
+    "complex DOCX tables",
+    "fine typography for subscript/superscript",
+    "legacy migrations beyond current compatibility path",
+    "alternative unverified workflows"
+  ],
+  "rejectedRuntimeBranchesRemoved": [
+    "v4.4.8 insertion destination-selector wizard",
+    "separate BEFORE/NEW/AFTER insertion preview"
+  ],
+  "schemaChanged": false
+}

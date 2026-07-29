@@ -203,6 +203,10 @@
 .book-page-root figure.media.float-left{width:min(var(--figure-width,var(--shape-width)),42%)}
 .book-page-root figure.media.float-right{float:right;margin:4px 0 10px 18px}
 .book-page-root figure.media.float-left{float:left;margin:4px 18px 10px 0}
+.book-page-root figure.media.no-wrap-right,
+.book-page-root figure.media.no-wrap-left{clear:both;width:min(var(--figure-width,var(--shape-width)),100%);max-width:100%}
+.book-page-root figure.media.no-wrap-right{margin:4px 0 12px auto}
+.book-page-root figure.media.no-wrap-left{margin:4px auto 12px 0}
 .book-page-root figure.media.wide{clear:both;width:100%;max-width:100%;margin:14px 0}
 .book-page-root .media-frame{position:relative;width:100%;background:#dde7ee;overflow:hidden;aspect-ratio:16/9}
 .book-page-root .media-frame.natural{aspect-ratio:auto;background:#fff;overflow:visible}
@@ -309,6 +313,18 @@
   -webkit-hyphens:manual;
   overflow-wrap:normal
 }
+
+.book-page-root .render-overflow-marker{
+  position:absolute;left:var(--sheet-pad-left);right:var(--sheet-pad-right);
+  bottom:var(--sheet-pad-bottom);height:0;border-top:3px dashed #d92d20;
+  z-index:120;pointer-events:none;color:#fff;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Arial,sans-serif
+}
+.book-page-root .render-overflow-marker span{
+  position:absolute;right:0;bottom:5px;background:#b42318;padding:4px 7px;border-radius:7px;
+  box-shadow:0 2px 8px #0003;white-space:nowrap
+}
+@media print{.book-page-root .render-overflow-marker{display:none!important}}
+
 @media print{
   .book-page-root{
     width:var(--sheet-width)!important;
@@ -327,7 +343,7 @@
     position:relative!important;
     left:auto!important;
     top:auto!important;
-    border:0!important;
+    border:1px solid transparent!important;
     box-shadow:none!important;
     overflow:hidden!important
   }
@@ -339,3 +355,52 @@
   .book-page-root .part-head,
   .book-page-root .section-heading{break-inside:avoid;page-break-inside:avoid}
 }
+
+/* bookwriter-v4 direct content types */
+.book-page-root .math-inline-source{font-family:Cambria Math,"STIX Two Math","Times New Roman",serif}
+.book-page-root .display-equation{position:relative;clear:both;margin:var(--section-gap) 0;text-align:center;font-family:Cambria Math,"STIX Two Math","Times New Roman",serif}
+.book-page-root .display-equation-body{display:inline-block;max-width:92%;overflow-wrap:anywhere}
+.book-page-root .equation-number{position:absolute;right:0;top:50%;transform:translateY(-50%);font-family:var(--body-font-family);font-size:.85em}
+.book-page-root .equation-caption{margin-top:4px;font-family:var(--body-font-family);font-size:var(--caption-font-size);color:#66727d}
+.book-page-root .book-list{margin:var(--para-gap) 0;padding-left:1.5em}
+.book-page-root .book-list li{margin:.2em 0}
+.book-page-root .book-table{
+  width:100%;
+  max-width:100%;
+  table-layout:fixed;
+  border-collapse:collapse;
+  margin:var(--section-gap) 0;
+  font-size:.92em;
+  box-sizing:border-box
+}
+.book-page-root .book-table td,.book-page-root .book-table th{
+  min-width:0;
+  max-width:100%;
+  border:1px solid #b9c1c7;
+  padding:.35em .45em;
+  vertical-align:top;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  box-sizing:border-box
+}
+.book-page-root .book-table td>*,
+.book-page-root .book-table th>*{max-width:100%;box-sizing:border-box}
+.book-page-root .book-table math{
+  max-width:100%;
+  font-size:.94em;
+  overflow:hidden
+}
+
+/* bookwriter-v4 canonical typography and pagination fields */
+.book-page-root .paragraph,
+.book-page-root .note,
+.book-page-root .side-note,
+.book-page-root .part-head,
+.book-page-root .section-heading,
+.book-page-root .book-list,
+.book-page-root .book-table,
+.book-page-root .display-equation{box-sizing:border-box}
+.book-page-root .book-table tr[data-table-header="1"]{font-weight:700;background:rgba(0,0,0,.035)}
+.book-page-root .book-table td{overflow-wrap:anywhere}
+.book-page-root [data-keep-together="1"]{break-inside:avoid;page-break-inside:avoid}
+.book-page-root [data-keep-with-next="1"]{break-after:avoid;page-break-after:avoid}

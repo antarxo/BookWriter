@@ -1,7 +1,10 @@
 (function(global){
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.3.0-rc1-render-parity';
+  const V4_SCHEMA = 'bookwriter-v4';
+  const LEGACY_SCHEMA = 'pages-v1';
+  const SUPPORTED_SCHEMAS = Object.freeze([LEGACY_SCHEMA,V4_SCHEMA]);
   const DEFAULT_LAYOUT = Object.freeze({
     pageSize:'A4',
     orientation:'portrait',
@@ -66,7 +69,9 @@
 
   function normalizeData(raw){
     const out = deepClone(raw);
-    if(!out.schemaVersion) out.schemaVersion = 'pages-v1';
+    const schema = String(out?.schemaVersion || LEGACY_SCHEMA);
+    if(!SUPPORTED_SCHEMAS.includes(schema)) out.schemaVersion = schema;
+    else out.schemaVersion = schema;
     if(!out.meta || typeof out.meta !== 'object') out.meta = {};
     if(!out.layoutDefaults || typeof out.layoutDefaults !== 'object') out.layoutDefaults = {};
     out.layoutDefaults = Object.assign({}, DEFAULT_LAYOUT, out.layoutDefaults);
@@ -75,12 +80,24 @@
     if(out.nav.showApp == null) out.nav.showApp = true;
     if(out.nav.showPrint == null) out.nav.showPrint = true;
     if(!Array.isArray(out.nav.groups)) out.nav.groups = [];
+    if(schema === V4_SCHEMA){
+      if(!out.pageDefaults || typeof out.pageDefaults !== 'object') out.pageDefaults = {};
+      if(!out.pageDefaults.header || typeof out.pageDefaults.header !== 'object') out.pageDefaults.header = {inherit:false,left:'',center:'',right:''};
+      if(!out.pageDefaults.footer || typeof out.pageDefaults.footer !== 'object') out.pageDefaults.footer = {inherit:false,left:'',center:'',right:'{page}'};
+      if(!out.pageDefaults.pageNumbering || typeof out.pageDefaults.pageNumbering !== 'object') out.pageDefaults.pageNumbering = {enabled:true,startAt:1,position:'footer-right',hideOnFirstPage:false};
+    }
     if(!Array.isArray(out.pages)) out.pages = [];
     out.pages.forEach((page, index)=>{
       if(!page || typeof page !== 'object') out.pages[index] = page = {};
       if(!page.id) page.id = `page-${index+1}`;
-      if(!page.header || typeof page.header !== 'object') page.header = {left:'',center:'',right:''};
-      if(!page.footer || typeof page.footer !== 'object') page.footer = {left:'',center:'',right:'{page}'};
+      if(schema === V4_SCHEMA){
+        if(!page.header || typeof page.header !== 'object') page.header = {inherit:true,left:'',center:'',right:''};
+        if(!page.footer || typeof page.footer !== 'object') page.footer = {inherit:true,left:'',center:'',right:''};
+        if(!page.pageNumbering || typeof page.pageNumbering !== 'object') page.pageNumbering = {inherit:true,enabled:true,offset:0,hide:false};
+      }else{
+        if(!page.header || typeof page.header !== 'object') page.header = {left:'',center:'',right:''};
+        if(!page.footer || typeof page.footer !== 'object') page.footer = {left:'',center:'',right:'{page}'};
+      }
       if(!Array.isArray(page.items)) page.items = [];
     });
     return out;
@@ -91,14 +108,13 @@
     const warnings = [];
     if(!raw || typeof raw !== 'object'){
       errors.push('Το αρχείο δεν περιέχει αντικείμενο JSON.');
-      return {ok:false, errors, warnings};
+      return {ok:false, errors, warnings, schema:null};
     }
-    if(raw.schemaVersion && raw.schemaVersion !== 'pages-v1'){
-      warnings.push(`Άγνωστη έκδοση σχήματος: ${raw.schemaVersion}.`);
-    }
+    const schema = String(raw.schemaVersion || LEGACY_SCHEMA);
+    if(!SUPPORTED_SCHEMAS.includes(schema)) warnings.push(`Άγνωστη έκδοση σχήματος: ${schema}.`);
     if(!Array.isArray(raw.pages)){
       errors.push('Λείπει ο πίνακας pages.');
-      return {ok:false, errors, warnings};
+      return {ok:false, errors, warnings, schema};
     }
     const pageIds = new Set();
     const itemIds = new Set();
@@ -120,11 +136,12 @@
           if(itemIds.has(item.id)) warnings.push(`Το id στοιχείου επαναλαμβάνεται: ${item.id}.`);
           itemIds.add(item.id);
         }
-        if(item.type === 'scene' && !item.singleSrc) warnings.push(`Σκηνή χωρίς URL στη ${pageName}, θέση ${itemIndex+1}.`);
+        const sceneSrc = schema === V4_SCHEMA ? item.src : item.singleSrc;
+        if(item.type === 'scene' && !sceneSrc) warnings.push(`Σκηνή χωρίς URL στη ${pageName}, θέση ${itemIndex+1}.`);
         if(item.type === 'figure' && !item.src) warnings.push(`Εικόνα χωρίς αρχείο στη ${pageName}, θέση ${itemIndex+1}.`);
       });
     });
-    return {ok:errors.length === 0, errors, warnings};
+    return {ok:errors.length === 0, errors, warnings, schema};
   }
 
   function locKey(key, lang){
@@ -144,6 +161,118 @@
     const localized = obj[locKey(key, lang)];
     if(Array.isArray(localized)) return localized;
     return Array.isArray(obj[key]) ? obj[key] : [];
+  }
+
+  function isV4Data(data){
+    return String(data?.schemaVersion || '') === V4_SCHEMA;
+  }
+
+  function escapeHtml(value=''){
+    return String(value ?? '').replace(/[&<>"']/g, ch=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[ch]);
+  }
+
+  function renderTextRun(run){
+    let html = escapeHtml(run?.text ?? '');
+    if(run?.bold) html = `<strong>${html}</strong>`;
+    if(run?.italic) html = `<em>${html}</em>`;
+    if(run?.underline) html = `<u>${html}</u>`;
+    if(run?.superscript) html = `<sup>${html}</sup>`;
+    if(run?.subscript) html = `<sub>${html}</sub>`;
+    const styles=[];
+    if(run?.color) styles.push(`color:${String(run.color)}`);
+    if(run?.highlight) styles.push(`background-color:${String(run.highlight)}`);
+    if(styles.length) html = `<span style="${escapeHtml(styles.join(';'))}">${html}</span>`;
+    return html;
+  }
+
+  function richTextToHtml(rich){
+    const renderNodes = nodes => (nodes || []).map(node=>{
+      if(!node || typeof node !== 'object') return escapeHtml(node ?? '');
+      switch(node.type){
+        case 'text_run': return renderTextRun(node);
+        case 'line_break': return '<br>';
+        case 'math_inline': return node.mathml || `<span class="math-inline-source">${escapeHtml(node.source || '')}</span>`;
+        case 'link': {
+          const href=escapeHtml(node.href || '');
+          const target=node.target ? ` target="${escapeHtml(node.target)}"` : '';
+          return `<a href="${href}"${target}>${renderNodes(node.children)}</a>`;
+        }
+        default: return '';
+      }
+    }).join('');
+    return renderNodes(rich?.nodes);
+  }
+
+  function itemNavVisible(item){
+    if(item?.nav && typeof item.nav === 'object') return item.nav.show !== false;
+    return item?.showInNav !== false;
+  }
+
+  function itemLayout(item){
+    const layout = item?.layout && typeof item.layout === 'object' ? item.layout : {};
+    const media=item?.type==='figure'||item?.type==='scene';
+    const placement=String(layout.placement ?? item?.placement ?? (media?'float-right':'wide'));
+    return {
+      placement,
+      widthPx:layout.widthPx ?? item?.frameWidth,
+      heightPx:layout.heightPx ?? item?.frameHeight ?? item?.figureHeight ?? item?.sceneHeight,
+      aspectRatio:layout.aspectRatio ?? item?.aspectRatio ?? item?.sceneAspect ?? item?.aspect,
+      wrap:!!(layout.wrap ?? item?.wrapTight ?? (media||placement.startsWith('float-'))),
+      floatInteraction:String(layout.floatInteraction ?? item?.floatInteraction ?? '')
+    };
+  }
+
+  function defaultFloatInteraction(type){
+    return type==='clear'?'clear':'wrap';
+  }
+
+  function itemBodyHtml(item, options={}){
+    if(!item || typeof item !== 'object') return '';
+    if(typeof item.html === 'string') return item.html;
+    const preferRich = item?.provenance?.contentEdited === true || item?.extensions?.preferRichText === true;
+    if(!preferRich && typeof item.legacySourceHtml === 'string') return item.legacySourceHtml;
+    const html = richTextToHtml(item.body);
+    return html || (options.preview ? '<em>(κενό)</em>' : '');
+  }
+
+  function resolvedTriplet(value, defaults){
+    const useDefaults = value?.inherit === true;
+    const source = useDefaults ? (defaults || {}) : (value || {});
+    return {left:String(source.left||''),center:String(source.center||''),right:String(source.right||'')};
+  }
+
+  function resolvePageFrame(data,page,pageIndex=0){
+    const count = Array.isArray(data?.pages) ? data.pages.length : 1;
+    if(!isV4Data(data)){
+      return {
+        header:{left:getLoc(page?.header,'left',''),center:getLoc(page?.header,'center',''),right:getLoc(page?.header,'right','')},
+        footer:{left:getLoc(page?.footer,'left',''),center:getLoc(page?.footer,'center',''),right:getLoc(page?.footer,'right','{page}')},
+        pageNumber:pageIndex+1,
+        pageCount:count,
+        numberingEnabled:data?.layoutDefaults?.showPageNumbers !== false
+      };
+    }
+    const defaults=data?.pageDefaults || {};
+    const baseNumbering=defaults.pageNumbering || {};
+    const own=page?.pageNumbering || {};
+    const numbering=own.inherit === true ? baseNumbering : Object.assign({},baseNumbering,own);
+    const startAt=Number(baseNumbering.startAt ?? 1) || 1;
+    const number=startAt + pageIndex + (Number(numbering.offset)||0);
+    const enabled=data?.layoutDefaults?.showPageNumbers !== false && numbering.enabled !== false && numbering.hide !== true && !(numbering.hideOnFirstPage===true && pageIndex===0);
+    const header=resolvedTriplet(page?.header,defaults.header);
+    const footer=resolvedTriplet(page?.footer,defaults.footer);
+    if(enabled){
+      const all=[header.left,header.center,header.right,footer.left,footer.center,footer.right].join(' ');
+      if(!all.includes('{page}')){
+        const [where,side]=String(numbering.position || baseNumbering.position || 'footer-right').split('-');
+        const target=where==='header'?header:footer;
+        const key=['left','center','right'].includes(side)?side:'right';
+        target[key]=target[key] || '{page}';
+      }
+    }
+    return {header,footer,pageNumber:number,pageCount:count,numberingEnabled:enabled};
   }
 
   function replaceTokens(value, ctx){
@@ -167,8 +296,9 @@
   }
 
   function itemNavTitle(item, fallback='', lang='el'){
+    const navLabel = item?.nav && typeof item.nav === 'object' ? item.nav.label : getLoc(item,'navLabel','',lang);
     return String(
-      getLoc(item,'navLabel','',lang) ||
+      navLabel ||
       getLoc(item,'title','',lang) ||
       getLoc(item,'label','',lang) ||
       getLoc(item,'caption','',lang) ||
@@ -204,11 +334,11 @@
   }
 
   function mediaAspect(item, kind){
-    const frameWidth = Math.max(120, Number(item?.frameWidth || 340) || 340);
-    const heightKey = kind === 'scene' ? 'sceneHeight' : 'figureHeight';
-    const explicitHeight = Number(item?.[heightKey] ?? item?.frameHeight ?? item?.height);
+    const layout=itemLayout(item);
+    const frameWidth = Math.max(120, Number(layout.widthPx || 340) || 340);
+    const explicitHeight = Number(layout.heightPx);
     if(Number.isFinite(explicitHeight) && explicitHeight > 0) return frameWidth / explicitHeight;
-    const explicitAspect = parseAspect(item?.aspectRatio ?? item?.[`${kind}Aspect`] ?? item?.aspect);
+    const explicitAspect = parseAspect(layout.aspectRatio ?? (kind === 'scene' ? '16/9' : null));
     if(explicitAspect) return explicitAspect;
     const viewportWidth = Number(item?.viewport?.width);
     const viewportHeight = Number(item?.viewport?.height);
@@ -258,7 +388,9 @@
   }
 
   function placementClass(item){
-    const placement = String(item?.placement || '').trim().toLowerCase();
+    const layout=itemLayout(item),placement=String(layout.placement || '').trim().toLowerCase();
+    if(!layout.wrap&&(placement==='left'||placement==='float-left'))return'no-wrap-left';
+    if(!layout.wrap&&(placement==='right'||placement==='float-right'))return'no-wrap-right';
     if(placement === 'left' || placement === 'float-left') return 'float-left';
     if(placement === 'right' || placement === 'float-right') return 'float-right';
     return 'wide';
@@ -283,11 +415,83 @@
     next();
   }
 
+  function applyItemLayout(node,item){
+    const layout=itemLayout(item);
+    const interaction=layout.floatInteraction || defaultFloatInteraction(item?.type);
+    node.dataset.floatInteraction=interaction;
+    if(interaction === 'avoid') node.style.display='flow-root';
+    else if(interaction === 'clear') node.style.clear='both';
+    if(!['figure','scene','side_note'].includes(item?.type)){
+      const placement=String(layout.placement||'').toLowerCase();
+      if(placement==='left'||placement==='float-left'){
+        node.style.float='left';
+        if(layout.widthPx) node.style.width=typeof layout.widthPx==='number'?`${layout.widthPx}px`:String(layout.widthPx);
+      }else if(placement==='right'||placement==='float-right'){
+        node.style.float='right';
+        if(layout.widthPx) node.style.width=typeof layout.widthPx==='number'?`${layout.widthPx}px`:String(layout.widthPx);
+      }else if(placement==='wide'){
+        node.style.width='100%';
+      }
+    }
+    return node;
+  }
+
+  function cssLength(value){
+    if(value === null || value === undefined || value === '') return '';
+    if(typeof value === 'number' && Number.isFinite(value)) return `${value}px`;
+    const n=Number(value);
+    return Number.isFinite(n) ? `${n}px` : String(value);
+  }
+
+  function applyCanonicalStyle(node,style={}){
+    if(!node || !style || typeof style !== 'object') return node;
+    const pxMap={
+      fontSizePx:'fontSize',marginTopPx:'marginTop',marginRightPx:'marginRight',
+      marginBottomPx:'marginBottom',marginLeftPx:'marginLeft',textIndentPx:'textIndent',
+      paddingTopPx:'paddingTop',paddingRightPx:'paddingRight',
+      paddingBottomPx:'paddingBottom',paddingLeftPx:'paddingLeft',
+      borderRadiusPx:'borderRadius'
+    };
+    Object.entries(pxMap).forEach(([key,prop])=>{
+      const value=cssLength(style[key]);
+      if(value) node.style[prop]=value;
+    });
+    if(style.fontFamily) node.style.fontFamily=String(style.fontFamily);
+    if(style.lineHeight !== undefined && style.lineHeight !== null && style.lineHeight !== ''){
+      const n=Number(style.lineHeight);
+      node.style.lineHeight=Number.isFinite(n) ? (n>4?`${n}px`:String(n)) : String(style.lineHeight);
+    }else if(style.lineHeightPx){
+      node.style.lineHeight=cssLength(style.lineHeightPx);
+    }
+    if(style.align) node.style.textAlign=String(style.align);
+    if(style.color) node.style.color=String(style.color);
+    if(style.backgroundColor) node.style.backgroundColor=String(style.backgroundColor);
+    if(style.fontWeight) node.style.fontWeight=String(style.fontWeight);
+    if(style.fontStyle) node.style.fontStyle=String(style.fontStyle);
+    if(style.listStyleType) node.style.listStyleType=String(style.listStyleType);
+    if(style.listStylePosition) node.style.listStylePosition=String(style.listStylePosition);
+    if(style.hyphenate===false){node.style.hyphens='none';node.style.webkitHyphens='none';}
+    if(style.hyphenate===true){node.style.hyphens='auto';node.style.webkitHyphens='auto';}
+    if(style.keepTogether) node.dataset.keepTogether='1';
+    if(style.keepWithNext) node.dataset.keepWithNext='1';
+    if(style.pageBreakBefore) node.dataset.pageBreakBefore='1';
+    return node;
+  }
+
+  function applyCellStyle(node,style={}){
+    applyCanonicalStyle(node,style);
+    if(style.verticalAlign) node.style.verticalAlign=String(style.verticalAlign);
+    if(style.borderColor) node.style.borderColor=String(style.borderColor);
+    return node;
+  }
+
   function addAnchor(node, item, ctx, lang){
-    if(!node || !ctx || !isStructuralNavItem(item)) return node;
+    if(!node) return node;
+    applyItemLayout(node,item);
+    if(!ctx || !isStructuralNavItem(item)) return node;
     const id = itemAnchorId(ctx.page, ctx.pageIndex, item, ctx.itemIndex, lang);
-    if(id) node.dataset.navTargetId = id;
-    if(item?.showInNav === false) node.dataset.navHidden = '1';
+    if(id){ node.dataset.navTargetId = id; if(!node.id) node.id = id; }
+    if(!itemNavVisible(item)) node.dataset.navHidden = '1';
     return node;
   }
 
@@ -308,6 +512,7 @@
     const text = (key, fallback='')=>getLoc(item,key,fallback,lang);
     const list = key=>getLocArray(item,key,lang);
     const empty = lang === 'en' ? '(empty)' : '(κενό)';
+    const layout=itemLayout(item);
     let node;
 
     if(!item || typeof item !== 'object'){
@@ -322,43 +527,49 @@
         node = document.createElement('section');
         node.className = 'hero';
         node.innerHTML = `${text('eyebrow')?`<p class="eyebrow">${text('eyebrow')}</p>`:''}${text('title')?`<h1>${text('title')}</h1>`:''}${text('subtitle')?`<p class="subtitle">${text('subtitle')}</p>`:''}`;
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'part_title': {
         node = document.createElement('section');
         node.className = 'part-head';
         node.innerHTML = `${text('label')?`<p class="part-kicker">${text('label')}</p>`:''}${text('title')?`<h2 class="part-title-main">${text('title')}</h2>`:''}`;
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'section_heading': {
         node = document.createElement('h2');
         node.className = 'section-heading';
         node.innerHTML = text('title');
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'paragraph': {
         node = document.createElement('p');
         node.className = 'paragraph';
-        node.innerHTML = text('html', options.preview ? `<em>${empty}</em>` : '');
+        node.innerHTML = itemBodyHtml(item,{preview:options.preview}) || (options.preview ? `<em>${empty}</em>` : '');
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'note': {
         node = document.createElement('div');
         node.className = 'note';
-        node.innerHTML = `${text('label')?`<span class="label">${text('label')}</span>`:''}${text('html', options.preview ? `<em>${empty}</em>` : '')}`;
+        node.innerHTML = `${text('label')?`<span class="label">${text('label')}</span>`:''}${itemBodyHtml(item,{preview:options.preview}) || (options.preview ? `<em>${empty}</em>` : '')}`;
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'side_note': {
         node = document.createElement('aside');
         node.className = `side-note ${placementClass(item)}`;
-        if(item.frameWidth) node.style.setProperty('--figure-width',`${Number(item.frameWidth)}px`);
-        node.innerHTML = `${text('label')?`<span class="label">${text('label')}</span>`:''}${text('title')?`<span class="title">${text('title')}</span>`:''}${text('html',options.preview ? `<em>${empty}</em>` : '')}`;
+        if(layout.widthPx) node.style.setProperty('--figure-width',`${Number(layout.widthPx)}px`);
+        node.innerHTML = `${text('label')?`<span class="label">${text('label')}</span>`:''}${text('title')?`<span class="title">${text('title')}</span>`:''}${itemBodyHtml(item,{preview:options.preview}) || (options.preview ? `<em>${empty}</em>` : '')}`;
+        applyCanonicalStyle(node,item.style);
         break;
       }
       case 'figure': {
         node = document.createElement('figure');
         node.className = `media ${placementClass(item)}`;
-        if(item.frameWidth) node.style.setProperty('--figure-width',`${Number(item.frameWidth)}px`);
+        if(layout.widthPx) node.style.setProperty('--figure-width',`${Number(layout.widthPx)}px`);
         const frame = document.createElement('div');
         const aspect = mediaAspect(item,'figure');
         frame.className = `media-frame ${aspect ? '' : 'natural'}`.trim();
@@ -392,11 +603,12 @@
       case 'scene': {
         node = document.createElement('figure');
         node.className = `media ${placementClass(item)}`;
-        if(item.frameWidth) node.style.setProperty('--figure-width',`${Number(item.frameWidth)}px`);
+        if(layout.widthPx) node.style.setProperty('--figure-width',`${Number(layout.widthPx)}px`);
         const frame = document.createElement('div');
         frame.className = 'media-frame scene-frame';
         frame.style.aspectRatio = String(mediaAspect(item,'scene'));
-        const source = String((options.sceneSource || (value=>value))(item.singleSrc || '',item) || '');
+        const rawSource=item.src ?? item.singleSrc ?? '';
+        const source = String((options.sceneSource || (value=>value))(rawSource,item) || '');
         if(source){
           const iframe = document.createElement('iframe');
           iframe.loading = 'eager';
@@ -431,11 +643,37 @@
         node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}`;
         break;
       }
+      case 'equation': {
+        node=document.createElement('div');
+        node.className='display-equation';
+        node.innerHTML=`<div class="display-equation-body">${item.mathml || escapeHtml(item.source || '')}</div>${item.number?`<span class="equation-number">${escapeHtml(item.number)}</span>`:''}${item.caption?`<div class="equation-caption">${escapeHtml(item.caption)}</div>`:''}`;
+        applyCanonicalStyle(node,item.style);
+        break;
+      }
+      case 'list': {
+        node=document.createElement(item.ordered?'ol':'ul');
+        node.className='book-list';
+        if(item.ordered && Number.isFinite(Number(item.start))) node.start=Number(item.start);
+        applyCanonicalStyle(node,item.style);
+        (item.items||[]).forEach(entry=>{const li=document.createElement('li');li.innerHTML=richTextToHtml(entry?.body);if(item.ordered&&Number.isFinite(Number(entry?.value)))li.value=Number(entry.value);if(Number(entry?.level)>0)li.style.marginLeft=`${Number(entry.level)*1.25}em`;applyCanonicalStyle(li,entry?.style);node.appendChild(li);});
+        break;
+      }
+      case 'table': {
+        node=document.createElement('table');
+        node.className='book-table';
+        applyCanonicalStyle(node,item.style);
+        const widths=Array.isArray(item?.style?.columnWidthsPx)?item.style.columnWidthsPx:[];
+        if(widths.length){const colgroup=document.createElement('colgroup');const total=widths.reduce((a,v)=>a+(Number(v)||0),0)||1;widths.forEach(value=>{const col=document.createElement('col');col.style.width=`${((Number(value)||0)/total)*100}%`;colgroup.appendChild(col)});node.appendChild(colgroup);}
+        const tbody=document.createElement('tbody');
+        (item.rows||[]).forEach((row,rowIndex)=>{const tr=document.createElement('tr');if(rowIndex<Number(item?.style?.headerRows||0))tr.dataset.tableHeader='1';(row.cells||[]).forEach(cell=>{const td=document.createElement('td');if(Number(cell.colspan)>1)td.colSpan=Number(cell.colspan);if(Number(cell.rowspan)>1)td.rowSpan=Number(cell.rowspan);td.innerHTML=richTextToHtml(cell.body);applyCellStyle(td,cell.style);tr.appendChild(td);});tbody.appendChild(tr);});
+        node.appendChild(tbody);
+        break;
+      }
       case 'nav_anchor': {
         node = document.createElement('span');
-        node.className = options.preview ? 'nav-anchor-preview' : 'nav-anchor nav-anchor-inline';
-        if(options.preview) node.textContent = `${lang==='en'?'Menu point':'Σημείο μενού'}: ${itemNavTitle(item,item.id || '—',lang)}`;
-        else node.setAttribute('aria-hidden','true');
+        node.className = 'nav-anchor nav-anchor-inline';
+        node.setAttribute('aria-hidden','true');
+        if(options.editor) node.dataset.editorLabel = `${lang==='en'?'Menu point':'Σημείο μενού'}: ${itemNavTitle(item,item.id || '—',lang)}`;
         break;
       }
       case 'clear': {
@@ -455,11 +693,12 @@
   function renderPageNode(data, page, pageIndex=0, options={}){
     const lang = options.lang === 'en' ? 'en' : 'el';
     const pages = Array.isArray(data?.pages) ? data.pages : [];
-    const totalPages = pages.length || 1;
-    const pageNumber = Number(options.pageNumber || pageIndex+1);
     const layout = Object.assign({}, DEFAULT_LAYOUT, data?.layoutDefaults || {});
+    const frame=resolvePageFrame(data,page,pageIndex);
+    const pageNumber=Number(options.pageNumber || frame.pageNumber || pageIndex+1);
+    const totalPages=frame.pageCount || pages.length || 1;
     const wrap = document.createElement('div');
-    wrap.className = `book-page-root sheet-wrap${options.preview ? ' editor-preview-sheet-wrap' : ''}`;
+    wrap.className = `book-page-root sheet-wrap${(options.editor||options.preview) ? ' editor-preview-sheet-wrap' : ''}`;
     wrap.id = page?.id || `page-${pageNumber}`;
     applyLayoutVars(wrap,layout);
 
@@ -470,18 +709,17 @@
     const header = document.createElement('div');
     header.className = 'sheet-header';
     if(Number(layout.headerFontSize) <= 0) header.classList.add('hidden');
-    header.innerHTML = `<div class="l">${replaceTokens(getLoc(page?.header,'left','',lang),{page:pageNumber,pages:totalPages})}</div><div class="c">${replaceTokens(getLoc(page?.header,'center','',lang),{page:pageNumber,pages:totalPages})}</div><div class="r">${replaceTokens(getLoc(page?.header,'right','',lang),{page:pageNumber,pages:totalPages})}</div>`;
+    header.innerHTML = `<div class="l">${replaceTokens(frame.header.left,{page:pageNumber,pages:totalPages})}</div><div class="c">${replaceTokens(frame.header.center,{page:pageNumber,pages:totalPages})}</div><div class="r">${replaceTokens(frame.header.right,{page:pageNumber,pages:totalPages})}</div>`;
     inner.appendChild(header);
 
     const body = document.createElement('div');
     body.className = 'sheet-body';
     (page?.items || []).forEach((item,itemIndex)=>{
       const context = {page,pageIndex,itemIndex};
-      if(!options.preview){
-        const anchor = renderItemAnchor(item,context,lang);
-        if(anchor) body.appendChild(anchor);
-      }
       const node = renderItem(item,context,options);
+      if(item?.id) node.dataset.bookItemId = String(item.id);
+      node.dataset.bookItemType = String(item?.type || 'unknown');
+      node.dataset.bookItemIndex = String(itemIndex);
       if(itemIndex === options.highlightedIndex) node.classList.add('item-highlight');
       body.appendChild(node);
     });
@@ -490,8 +728,8 @@
     const footer = document.createElement('div');
     footer.className = 'sheet-footer';
     if(Number(layout.footerFontSize) <= 0) footer.classList.add('hidden');
-    const rightValue = layout.showPageNumbers === false ? '' : getLoc(page?.footer,'right','',lang);
-    footer.innerHTML = `<div class="l">${replaceTokens(getLoc(page?.footer,'left','',lang),{page:pageNumber,pages:totalPages})}</div><div class="c">${replaceTokens(getLoc(page?.footer,'center','',lang),{page:pageNumber,pages:totalPages})}</div><div class="r">${replaceTokens(rightValue,{page:pageNumber,pages:totalPages})}</div>`;
+    const rightValue = frame.numberingEnabled ? frame.footer.right : '';
+    footer.innerHTML = `<div class="l">${replaceTokens(frame.footer.left,{page:pageNumber,pages:totalPages})}</div><div class="c">${replaceTokens(frame.footer.center,{page:pageNumber,pages:totalPages})}</div><div class="r">${replaceTokens(rightValue,{page:pageNumber,pages:totalPages})}</div>`;
     inner.appendChild(footer);
     sheet.appendChild(inner);
     wrap.appendChild(sheet);
@@ -505,14 +743,53 @@
     return pages.length;
   }
 
+  function auditData(data){
+    const validation=validateData(data);
+    const stats={schema:String(data?.schemaVersion||LEGACY_SCHEMA),pages:0,items:0,figures:0,figuresWithCaptions:0,figuresWithAssets:0,scenes:0,scenesWithSources:0,legacyHtmlBlocks:0,richTextBlocks:0,layoutItems:0};
+    const warnings=[...validation.warnings];
+    (data?.pages||[]).forEach((page,pageIndex)=>{
+      stats.pages++;
+      (page.items||[]).forEach((item,itemIndex)=>{
+        stats.items++;
+        if(['paragraph','note','side_note'].includes(item.type)){
+          if(typeof item.legacySourceHtml==='string'||typeof item.html==='string') stats.legacyHtmlBlocks++;
+          if(item.body?.format==='rich-text-v1') stats.richTextBlocks++;
+        }
+        if(item.layout) stats.layoutItems++;
+        if(item.type==='figure'){
+          stats.figures++;
+          if(String(item.caption||item.title||'').trim()) stats.figuresWithCaptions++;
+          if(String(item.src||'').trim()) stats.figuresWithAssets++;
+          if(!String(item.src||'').trim()) warnings.push(`Σελίδα ${pageIndex+1}, figure ${itemIndex+1}: λείπει src.`);
+        }
+        if(item.type==='scene'){
+          stats.scenes++;
+          const src=item.src??item.singleSrc??'';
+          if(String(src).trim()) stats.scenesWithSources++;
+          if(!String(src).trim()) warnings.push(`Σελίδα ${pageIndex+1}, scene ${itemIndex+1}: λείπει src.`);
+        }
+      });
+    });
+    return {ok:validation.ok&&warnings.length===0,renderer:`BookCore ${VERSION}`,directV4:isV4Data(data),validation,stats,warnings};
+  }
+
   global.BookCore = Object.freeze({
     VERSION,
+    V4_SCHEMA,
+    LEGACY_SCHEMA,
+    SUPPORTED_SCHEMAS,
     DEFAULT_LAYOUT,
     TEXT_KEYS,
     normalizeData,
     validateData,
     getLoc,
     getLocArray,
+    isV4Data,
+    richTextToHtml,
+    itemNavVisible,
+    itemLayout,
+    itemBodyHtml,
+    resolvePageFrame,
     replaceTokens,
     slugifyForId,
     normalizeDomId,
@@ -524,6 +801,7 @@
     applyLayoutVars,
     renderItem,
     renderPageNode,
-    renderPages
+    renderPages,
+    auditData
   });
 })(window);

@@ -1,0 +1,104 @@
+{
+  "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
+  "totalSourcePages": 42,
+  "selectedBlocks": 822,
+  "selectedPages": {
+    "start": 2,
+    "end": 42
+  },
+  "paragraphs": 921,
+  "listParagraphs": 272,
+  "tables": 7,
+  "mathObjectsDetectedRaw": 632,
+  "mathObjectsImportedCanonical": 620,
+  "mathDuplicatesSkipped": 12,
+  "inlineMath": 590,
+  "displayMath": 30,
+  "rawImageRefs": 36,
+  "imagesAfterDedupe": 35,
+  "duplicateImagesRemoved": 0,
+  "fallbackImagesSkipped": 24,
+  "textBoxesRaw": 108,
+  "textBoxesUnique": 49,
+  "textBoxCaptions": 18,
+  "textBoxesImported": 2,
+  "textBoxLabelsRetained": 29,
+  "drawings": 54,
+  "reconciledPageBreaks": 3,
+  "skippedStaticTocParagraphs": 0,
+  "unsupportedMath": [],
+  "documentLayout": {
+    "pageWidthPx": 793.7333333333333,
+    "pageHeightPx": 1122.5333333333333,
+    "marginsPx": {
+      "top": 56.733333333333334,
+      "right": 56.6,
+      "bottom": 56.733333333333334,
+      "left": 56.733333333333334
+    },
+    "headerDistancePx": 47.2,
+    "footerDistancePx": 47.2,
+    "bodyFontFamily": "Calibri",
+    "bodyFontSize": 14.666666666666666,
+    "lineHeight": 1.15,
+    "paragraphGap": 13.333333333333334
+  },
+  "canonicalTarget": "bookwriter-v4",
+  "paginationRequired": true,
+  "converter": "author-workspace-v4.4.5-numbering-media-flow-probe",
+  "bookId": "book_445",
+  "title": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026",
+  "createdAt": "2026-07-29T00:45:54.675Z",
+  "canonicalValidation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "stats": {
+      "pages": 50,
+      "items": 824,
+      "byType": {
+        "part_title": 6,
+        "paragraph": 523,
+        "section_heading": 88,
+        "list": 149,
+        "figure": 36,
+        "table": 7,
+        "equation": 13,
+        "side_note": 2
+      },
+      "internalLinks": 57,
+      "externalLinks": 0,
+      "assets": 36,
+      "scenes": 0
+    }
+  },
+  "pagination": {
+    "version": "1.1.0-canonical-reflow-fast",
+    "startedAt": "2026-07-29T00:45:40.995Z",
+    "sourcePages": 2,
+    "outputPages": 50,
+    "splitItems": 0,
+    "splitByType": {},
+    "resizedFigures": 0,
+    "oversizeItems": [],
+    "hardBreaks": 0,
+    "rendererVersion": "0.2.2-direct-v4-numbering-media-flow",
+    "completedAt": "2026-07-29T00:45:44.257Z",
+    "audit": {
+      "ok": true,
+      "pagesChecked": 50,
+      "overflowPages": 0,
+      "pages": [],
+      "rendererVersion": "0.2.2-direct-v4-numbering-media-flow",
+      "paginationVersion": "1.1.0-canonical-reflow-fast"
+    }
+  },
+  "overflowAudit": {
+    "ok": true,
+    "pagesChecked": 50,
+    "overflowPages": 0,
+    "pages": [],
+    "rendererVersion": "0.2.2-direct-v4-numbering-media-flow",
+    "paginationVersion": "1.1.0-canonical-reflow-fast"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "save-20260729T151222Z-alo8s",
+  "target": "book.json",
+  "temp": ".bookwriter-save.tmp",
+  "status": "complete",
+  "startedAt": "2026-07-29T15:12:22.229Z",
+  "backupPath": "_bookwriter_backups/book_20260729T151221Z.json",
+  "completedAt": "2026-07-29T15:12:23.399Z"
+}

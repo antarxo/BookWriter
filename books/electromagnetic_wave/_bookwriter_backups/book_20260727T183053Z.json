@@ -11,14 +11,7 @@
     "eyebrow": "",
     "migratedFrom": "pages-v1",
     "migratedAt": "2026-07-27T16:13:10.837Z",
-    "updatedAt": "2026-07-29T15:12:21.963Z",
-    "library": {
-      "discipline": "Φυσική",
-      "level": "Γ΄ Λυκείου",
-      "category": "ΦΥΛΛΑΔΙΟ",
-      "status": "Προσχέδιο",
-      "tags": []
-    }
+    "updatedAt": "2026-07-27T18:28:32.327Z"
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -763,10 +756,7 @@
             "label": ""
           },
           "title": "Συμβάσεις",
-          "level": 2,
-          "layout": {
-            "floatInteraction": "wrap"
-          }
+          "level": 2
         },
         {
           "id": "page-added-intro-3-paragraph-1-απο-το-διπλανο-σχημα-α-4",
@@ -1463,29 +1453,6 @@
       ]
     },
     {
-      "id": "page-5-2",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "ΜΕΡΟΣ Β΄",
-        "center": "",
-        "right": "Σχολικό αφήγημα"
-      },
-      "footer": {
-        "inherit": false,
-        "left": " © antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": []
-    },
-    {
       "id": "page-3",
       "sourcePage": null,
       "header": {
@@ -1639,76 +1606,7 @@
           "observeItems": [
             "Δες το V–t. Σύγκρινε τo με το q–t .",
             "Δες ότι το V ξεκινά από το μηδέν όπως και το  q."
-          ],
-          "layout": {
-            "floatInteraction": "wrap"
-          }
-        },
-        {
-          "id": "page-3-paragraph-νεα-παραγραφος-6",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Παράδειγμα ν",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "superscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "ου κειμ",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              },
-              {
-                "type": "text_run",
-                "text": "έ",
-                "bold": true,
-                "italic": true,
-                "underline": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "νου",
-                "bold": true,
-                "italic": true,
-                "underline": true
-              }
-            ]
-          },
-          "style": {
-            "align": "left",
-            "hyphenate": true
-          },
-          "layout": {
-            "floatInteraction": "wrap"
-          },
-          "legacySourceHtml": "<b><i><u>Παράδειγμα ν<sup>έ</sup>ου κειμ<sub>έ</sub>νου</u></i></b>",
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": false,
-            "editedAt": "2026-07-28T00:18:39.949Z"
-          },
-          "extensions": {
-            "richTextSync": "visual-html-primary-v4.1"
-          }
+          ]
         },
         {
           "id": "page-3-paragraph-2-q-qημ-ωt-το-εμφανιζομε-5",
@@ -3306,26 +3204,6 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Τη στιγμή <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mi>t</mi><mo>=</mo><mi>T</mi></math></span> το σύστημα επιστρέφει ακριβώς στην αρχική του κατάσταση. Το φορτίο στα άκρα του διπόλου είναι ξανά μηδέν, το ηλεκτρικό πεδίο μηδενίζεται, ενώ το ρεύμα αποκτά πάλι τη μέγιστη αρχική του τιμή και το μαγνητικό πεδίο εμφανίζεται όπως στη στιγμή <em>t = 0</em>. Ένας πλήρης κύκλος έχει κλείσει και η ίδια ακολουθία ξεκινά ξανά από την αρχή."
-        },
-        {
-          "id": "page-9-note-διδακτικη-επισημανση-1",
-          "type": "note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "label": "Διδακτική επισήμανση",
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
-              }
-            ]
-          },
-          "style": {},
-          "legacySourceHtml": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
         }
       ]
     },
@@ -3350,7 +3228,28 @@
         "offset": 0,
         "hide": false
       },
-      "items": []
+      "items": [
+        {
+          "id": "page-9-note-διδακτικη-επισημανση-1",
+          "type": "note",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "label": "Διδακτική επισήμανση",
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
+              }
+            ]
+          },
+          "style": {},
+          "legacySourceHtml": "Η παραπάνω αφήγηση είναι χρήσιμη επειδή επιτρέπει στον μαθητή να οργανώσει πρώτα καθαρά τη σχέση ανάμεσα στη φόρτιση των άκρων, στο ρεύμα και στις πρώτες εικόνες του ηλεκτρικού και του μαγνητικού πεδίου κοντά στη ράβδο. Δεν είναι όμως όλη η ιστορία."
+        }
+      ]
     },
     {
       "id": "page-14",
@@ -3637,8 +3536,8 @@
             "label": ""
           },
           "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
-          "title": "Το πραγματικό ΗΜ κύμα",
-          "caption": "Το πραγματικό ΗΜ κύμα",
+          "title": "Σκηνή Αλήθεια 2η",
+          "caption": "Σκηνή Αλήθεια 2η",
           "hideCaption": false,
           "layout": {
             "placement": "right",

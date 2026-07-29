@@ -1,0 +1,68 @@
+{
+  "version": "4.5.0-rc1",
+  "generatedAt": "2026-07-29T14:41:35.079729+00:00",
+  "result": "pass",
+  "checks": {
+    "javascriptSyntax": "pass",
+    "htmlStructure": [
+      {
+        "file": "BookWriter/author/index.html",
+        "idCount": 84,
+        "duplicateIds": [],
+        "missingReferences": [],
+        "ok": true
+      },
+      {
+        "file": "BookWriter/reader/index.html",
+        "idCount": 12,
+        "duplicateIds": [],
+        "missingReferences": [],
+        "ok": true
+      },
+      {
+        "file": "BookWriter/books/book_445/index.html",
+        "idCount": 1,
+        "duplicateIds": [],
+        "missingReferences": [],
+        "ok": true
+      },
+      {
+        "file": "BookWriter/books/book_445/Editor.html",
+        "idCount": 0,
+        "duplicateIds": [],
+        "missingReferences": [],
+        "ok": true
+      }
+    ],
+    "activeRuntimeLegacyReferences": [],
+    "book445PaginationState": {
+      "currentPages": 42,
+      "certified": false,
+      "status": "stale",
+      "staleReason": "stored-pagination-page-count-mismatch",
+      "certifiedPageCount": 50
+    },
+    "browserAuthorSmoke": {
+      "result": "pass",
+      "pagesRendered": 42,
+      "itemsLoaded": 826,
+      "printCommands": 2,
+      "splitInsertionWorkspace": true,
+      "rejectedWizardPresent": false,
+      "runtimeErrors": []
+    },
+    "browserReaderSmoke": {
+      "result": "pass",
+      "pagesRendered": 42,
+      "printCommandPresent": true,
+      "renderer": "0.3.0-rc1-render-parity",
+      "runtimeErrors": []
+    }
+  },
+  "notYetConfirmedOnUserWindows": [
+    "real filesystem write and backup in the user local Git folder",
+    "persisted DOCX insertion and undo with the user production books",
+    "actual Chrome print/PDF after installing this clean RC1 package",
+    "complex chemistry DOCX tables"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://local.invalid/book-schema-v4.schema.json",
+  "title":"ΣΥΓΓΡΑΦΕΑΣ canonical book schema v4",
+  "type":"object",
+  "required":["schemaVersion","schemaRevision","meta","layoutDefaults","pageDefaults","nav","pages"],
+  "properties":{
+    "schemaVersion":{"const":"bookwriter-v4"},
+    "schemaRevision":{"const":1},
+    "meta":{"type":"object","required":["projectId","fileName","title","defaultLanguage"],"properties":{"projectId":{"type":"string"},"fileName":{"type":"string"},"title":{"type":"string"},"subtitle":{"type":"string"},"eyebrow":{"type":"string"},"appHref":{"type":"string"},"defaultLanguage":{"const":"el"}},"additionalProperties":true},
+    "layoutDefaults":{"type":"object","required":["pageSize","orientation","pageWidthPx","pageHeightPx","showPageNumbers"],"properties":{"pageSize":{"type":"string"},"orientation":{"enum":["portrait","landscape"]},"pageWidthPx":{"type":"number"},"pageHeightPx":{"type":"number"},"showPageNumbers":{"type":"boolean"}},"additionalProperties":true},
+    "pageDefaults":{"type":"object","required":["header","footer","pageNumbering"]},
+    "nav":{"type":"object","required":["mode","showApp","showPrint","groups"],"properties":{"mode":{"enum":["auto","manual"]},"showApp":{"type":"boolean"},"showPrint":{"type":"boolean"},"groups":{"type":"array"}},"additionalProperties":true},
+    "pages":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/page"}},
+    "importManifest":{"type":"object"},"extensions":{"type":"object"}
+  },
+  "additionalProperties":false,
+  "$defs":{
+    "three":{"type":"object","required":["inherit","left","center","right"],"properties":{"inherit":{"type":"boolean"},"left":{"type":"string"},"center":{"type":"string"},"right":{"type":"string"}},"additionalProperties":false},
+    "numbering":{"type":"object","required":["inherit","enabled","offset","hide"],"properties":{"inherit":{"type":"boolean"},"enabled":{"type":"boolean"},"offset":{"type":"integer"},"hide":{"type":"boolean"}},"additionalProperties":false},
+    "page":{"type":"object","required":["id","header","footer","pageNumbering","items"],"properties":{"id":{"type":"string","minLength":1},"sourcePage":{"type":["integer","null"]},"header":{"$ref":"#/$defs/three"},"footer":{"$ref":"#/$defs/three"},"pageNumbering":{"$ref":"#/$defs/numbering"},"items":{"type":"array","items":{"$ref":"#/$defs/item"}},"extensions":{"type":"object"}},"additionalProperties":false},
+    "navMeta":{"type":"object","required":["show","label"],"properties":{"show":{"type":"boolean"},"label":{"type":"string"}},"additionalProperties":false},
+    "rich":{"type":"object","required":["format","nodes"],"properties":{"format":{"const":"rich-text-v1"},"nodes":{"type":"array","items":{"$ref":"#/$defs/inline"}}},"additionalProperties":false},
+    "inline":{"oneOf":[{"type":"object","required":["type","text"],"properties":{"type":{"const":"text_run"},"text":{"type":"string"},"bold":{"type":"boolean"},"italic":{"type":"boolean"},"underline":{"type":"boolean"},"color":{"type":"string"},"highlight":{"type":"string"},"superscript":{"type":"boolean"},"subscript":{"type":"boolean"}},"additionalProperties":false},{"type":"object","required":["type","source","mathml"],"properties":{"type":{"const":"math_inline"},"source":{"type":"string"},"mathml":{"type":"string"},"alt":{"type":"string"}},"additionalProperties":false},{"type":"object","required":["type","href","children"],"properties":{"type":{"const":"link"},"href":{"type":"string"},"target":{"type":"string"},"children":{"type":"array"}},"additionalProperties":false},{"type":"object","required":["type"],"properties":{"type":{"const":"line_break"}},"additionalProperties":false}]},
+    "item":{"type":"object","required":["id","type","nav"],"properties":{"id":{"type":"string","minLength":1},"type":{"enum":["hero","part_title","section_heading","paragraph","note","side_note","figure","scene","interactive_callout","nav_anchor","clear","table","list","equation"]},"nav":{"$ref":"#/$defs/navMeta"},"body":{"$ref":"#/$defs/rich"},"title":{"type":"string"},"eyebrow":{"type":"string"},"subtitle":{"type":"string"},"label":{"type":"string"},"level":{"type":"integer"},"src":{"type":"string"},"alt":{"type":"string"},"caption":{"type":"string"},"hideCaption":{"type":"boolean"},"layout":{"type":"object"},"print":{"type":"object"},"source":{"type":"string"},"mathml":{"type":"string"},"number":{"type":"string"},"ordered":{"type":"boolean"},"start":{"type":"integer"},"items":{"type":"array"},"columns":{"type":"integer"},"rows":{"type":"array"},"style":{"type":"object"},"setupLabel":{"type":"string"},"setupChips":{"type":"array"},"pressLabel":{"type":"string"},"pressChips":{"type":"array"},"observeTitle":{"type":"string"},"observeItems":{"type":"array"},"legacySourceHtml":{"type":"string"},"sourceRef":{"type":"object"},"provenance":{"type":"object"},"extensions":{"type":"object"},"status":{}},"additionalProperties":false}
+  }
+}
