@@ -896,6 +896,7 @@ function ensurePrintSequenceExpansion(){
   if(!source) return;
   const expanded = BookCore.expandPrintSequences(source);
   if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
+  if(bookData?.extensions?.printSequenceExpansion?.enabled) return;
   clearPrintSnapshots();
   bookData = expanded;
   renderPages(bookData);
@@ -929,7 +930,7 @@ function resolveAppHref(){
   return normalizeAppSrc(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
 }
 window.addEventListener('beforeprint', ()=>{
-  ensurePrintSequenceExpansion();
+  if(!printSnapshotsPrepared) ensurePrintSequenceExpansion();
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
 });
 window.addEventListener('afterprint', ()=>{
