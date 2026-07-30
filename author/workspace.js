@@ -185,7 +185,8 @@ function renderChrome(){
   $('#statusSelection').className='selection-state';
   $('#statusView').textContent=viewTitle();
   const sceneToggle=$('#sceneToggleButton');
-  sceneToggle.textContent=state.realScenes?'◉':'○';
+  sceneToggle.innerHTML=`<span class="bw-icon ${state.realScenes?'bw-icon-scenes-on':'bw-icon-scenes-off'}" aria-hidden="true"></span>`;
+  sceneToggle.classList.toggle('is-off',!state.realScenes);
   sceneToggle.title=`Σκηνές: ${state.realScenes?'ON':'OFF'}`;
   sceneToggle.setAttribute('aria-label',state.realScenes?'Σκηνές ενεργές':'Σκηνές ανενεργές');
   $('#bookView').classList.toggle('properties-hidden',!state.propertiesOpen);
