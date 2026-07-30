@@ -737,7 +737,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
   printSnapshotsPrepared = lastSnapshotReport.pass;
   return readyCount;
 }
-window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
+const BOOK_PRINT_DIAGNOSTICS = Object.freeze({
   prepare: (force=true)=>preparePrintSnapshots(force),
   runCanonical: async ()=>{
     await preparePrintSnapshots({ force:true });
@@ -762,6 +762,7 @@ window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
     domCallouts: document.querySelectorAll('[data-book-item-type="interactive_callout"]').length
   })
 });
+globalThis.BOOK_PRINT_DIAGNOSTICS = BOOK_PRINT_DIAGNOSTICS;
 function snapshotFailureSummary(report=lastSnapshotReport, error=null){
   const rows = Array.isArray(report?.sceneReports)
     ? report.sceneReports.filter(scene=>!scene.pass)
