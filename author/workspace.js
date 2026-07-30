@@ -2128,5 +2128,9 @@ window.BookWriterApp={version:APP_VERSION,getBook:()=>clone(session.book),getSel
 
 renderChrome();
 applyPreviewZoom(false);
-loadInitialBookFromUrl().then(opened=>{if(!opened)restoreLibrary()});
+loadInitialBookFromUrl().then(opened=>{
+  if(opened)return;
+  if(!filesystemAccessAvailable())scanStaticLibrary(configuredStaticLibraryRoot(),true);
+  else restoreLibrary();
+});
 })();
