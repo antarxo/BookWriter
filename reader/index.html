@@ -421,8 +421,8 @@ figure.media figcaption{
       <p class="print-progress-label" id="printProgressLabel">Προετοιμασία βιβλίου…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-print-progress-1"></script>
-<script src="../core/snapshot-transport.js?v=20260730-print-progress-1"></script>
+<script src="../core/book-core.js?v=20260730-no-app-button-1"></script>
+<script src="../core/snapshot-transport.js?v=20260730-no-app-button-1"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');
@@ -1103,9 +1103,6 @@ async function beginPrintFlow(){
     throw err;
   }
 }
-function resolveAppHref(){
-  return normalizeAppSrc(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
-}
 window.addEventListener('beforeprint', ()=>{
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
 });
@@ -1233,19 +1230,7 @@ function renderPages(data){
 
 function appendNavTools(data){
   const nav = data?.nav || {};
-  const showApp = nav.showApp !== false;
   const showPrint = nav.showPrint !== false;
-
-  if(showApp){
-    const appNode = document.createElement('div');
-    appNode.className = 'menu-item menu-tool';
-    const appLink = document.createElement('a');
-    appLink.className = 'menu-btn';
-    appLink.href = resolveAppHref();
-    appLink.textContent = contentLang==='en' ? 'Open app' : 'Στην εφαρμογή';
-    appNode.appendChild(appLink);
-    megaNav.appendChild(appNode);
-  }
 
   if(showPrint){
     const printNode = document.createElement('div');

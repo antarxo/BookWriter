@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-author-simple-1">
-<link rel="stylesheet" href="workspace.css?v=20260730-author-simple-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-author-wordplus-1">
+<link rel="stylesheet" href="workspace.css?v=20260730-author-wordplus-1">
 </head>
 <body>
 <svg class="bw-icon-sprite" aria-hidden="true" focusable="false">
@@ -38,6 +38,11 @@
   <symbol id="bw-i-word" viewBox="0 0 24 24">
     <path d="M5 3.8h10l4 4v12.4H5zM15 3.8v4h4"/>
     <path d="M7.7 10.2l1.3 6 1.5-5.1 1.5 5.1 1.3-6"/>
+  </symbol>
+  <symbol id="bw-i-word-plus" viewBox="0 0 24 24">
+    <path d="M5 3.8h10l4 4v12.4H5zM15 3.8v4h4"/>
+    <path d="M7.7 10.2l1.3 6 1.5-5.1 1.5 5.1 1.3-6"/>
+    <path d="M17 13.3v5M14.5 15.8h5"/>
   </symbol>
   <symbol id="bw-i-new-book" viewBox="0 0 24 24">
     <path d="M4 6.5c2.8 0 5 .5 8 2v10c-3-1.5-5.2-2-8-2zM20 6.5c-2.8 0-5 .5-8 2v10c3-1.5 5.2-2 8-2z"/>
@@ -80,9 +85,6 @@
       <button class="menu-command" data-command="close-book"><span>×</span><span>Κλείσιμο βιβλίου</span><kbd></kbd></button>
     </div></div>
 
-    <button class="menu-direct-command icon-command reader-direct" data-command="reader" title="Άνοιγμα όπως θα το δει ο αναγνώστης" aria-label="Προβολή βιβλίου"><span class="bw-icon bw-icon-reader" aria-hidden="true"></span></button>
-    <button class="menu-direct-command icon-command print-command" data-command="print" title="Εκτύπωση ή δημιουργία PDF (Ctrl+P)" aria-label="Εκτύπωση ή PDF"><span class="bw-icon bw-icon-print" aria-hidden="true"></span></button>
-
     <div class="menu"><button class="menu-button">Επεξεργασία</button><div class="menu-popup">
       <button class="menu-command" data-command="undo"><span>↶</span><span>Αναίρεση</span><kbd>Ctrl+Z</kbd></button>
       <button class="menu-command" data-command="redo"><span>↷</span><span>Επανάληψη</span><kbd>Ctrl+Y</kbd></button>
@@ -109,7 +111,7 @@
       <button class="menu-command" data-command="insert-page-before"><span>▤</span><span>Νέα σελίδα πριν</span><kbd></kbd></button>
       <button class="menu-command" data-command="insert-page-after"><span>▤</span><span>Νέα σελίδα μετά</span><kbd></kbd></button>
       <div class="menu-separator"></div>
-      <button class="menu-command" data-command="insert-docx"><span class="bw-icon bw-icon-word" aria-hidden="true"></span><span>Παρεμβολή από Word…</span><kbd></kbd></button>
+      <button class="menu-command" data-command="insert-docx"><span class="bw-icon bw-icon-word-plus" aria-hidden="true"></span><span>Παρεμβολή από Word…</span><kbd></kbd></button>
       <button class="menu-command" data-command="inline-equation"><span>∑</span><span>Inline εξίσωση στη θέση δρομέα</span><kbd></kbd></button>
       <button class="menu-command" data-command="display-equation"><span>∫</span><span>Αυτόνομη εξίσωση</span><kbd></kbd></button>
     </div></div>
@@ -162,7 +164,7 @@
     <button class="tool-button" data-command="insert-item-before" title="Νέο στοιχείο πριν" aria-label="Νέο στοιχείο πριν"><span class="bw-icon bw-icon-insert-before" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="insert-item-after" title="Νέο στοιχείο μετά" aria-label="Νέο στοιχείο μετά"><span class="bw-icon bw-icon-insert-after" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="insert-page-after" title="Νέα σελίδα μετά" aria-label="Νέα σελίδα μετά"><span class="bw-icon bw-icon-new-page" aria-hidden="true"></span></button>
-    <button class="tool-button word-tool-button" data-command="insert-docx" title="Παρεμβολή από Word" aria-label="Παρεμβολή από Word"><span class="bw-icon bw-icon-word" aria-hidden="true"></span></button>
+    <button class="tool-button word-tool-button" data-command="insert-docx" title="Παρεμβολή από Word" aria-label="Παρεμβολή από Word"><span class="bw-icon bw-icon-word-plus" aria-hidden="true"></span></button>
     <span class="tool-separator"></span>
     <button class="tool-button" data-command="undo" title="Αναίρεση (Ctrl+Z)" aria-label="Αναίρεση"><span class="bw-icon bw-icon-undo" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="redo" title="Επανάληψη (Ctrl+Y)" aria-label="Επανάληψη"><span class="bw-icon bw-icon-redo" aria-hidden="true"></span></button>
@@ -352,7 +354,7 @@
 <script src="../core/v4/book-service-v4.js"></script>
 <script src="../core/v4/docx-core-v4.js"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-author-simple-1"></script>
+<script src="workspace.js?v=20260730-no-app-button-1"></script>
 </body>
 </html>
 

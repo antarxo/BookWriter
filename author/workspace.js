@@ -22,6 +22,7 @@ const ICON_SYMBOLS={
   'bw-icon-page':'bw-i-page',
   'bw-icon-properties':'bw-i-properties',
   'bw-icon-word':'bw-i-word',
+  'bw-icon-word-plus':'bw-i-word-plus',
   'bw-icon-new-book':'bw-i-new-book',
   'bw-icon-insert-before':'bw-i-insert-before',
   'bw-icon-insert-after':'bw-i-insert-after',
@@ -1613,7 +1614,6 @@ function renderBookProperties(host){
     field('Επίπεδο Βιβλιοθήκης',book.meta.library?.level||'',v=>prop('Επίπεδο Βιβλιοθήκης',['meta','library','level'],v)),
     field('Είδος Βιβλιοθήκης',book.meta.library?.category||'',v=>prop('Είδος Βιβλιοθήκης',['meta','library','category'],v)),
     field('Κατάσταση Βιβλιοθήκης',book.meta.library?.status||'',v=>prop('Κατάσταση Βιβλιοθήκης',['meta','library','status'],v)),
-    field('Σύνδεσμος εφαρμογής',book.meta.appHref||'',v=>prop('Σύνδεσμος εφαρμογής',['meta','appHref'],v)),
     field('Όνομα αρχείου',book.meta.fileName||'book.json',v=>prop('Όνομα αρχείου',['meta','fileName'],v))
   );host.appendChild(meta);
 
@@ -1893,7 +1893,6 @@ function renderNavProperties(host){
   const nav=section('Μενού και πλοήγηση');
   nav.querySelector('.property-form').append(
     field('Τρόπος',session.book.nav?.mode||'auto',v=>prop('Τρόπος μενού',['nav','mode'],v),'text',[{value:'auto',label:'Αυτόματο'},{value:'manual',label:'Χειροκίνητο'}]),
-    check('Σύνδεσμος εφαρμογής',session.book.nav?.showApp!==false,v=>prop('Σύνδεσμος εφαρμογής',['nav','showApp'],v)),
     check('Σύνδεσμος εκτύπωσης',session.book.nav?.showPrint!==false,v=>prop('Σύνδεσμος εκτύπωσης',['nav','showPrint'],v))
   );host.appendChild(nav);
 
