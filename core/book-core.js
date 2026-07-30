@@ -173,6 +173,125 @@
     })[ch]);
   }
 
+  function attrJson(value){
+    return escapeHtml(JSON.stringify(value == null ? {} : value));
+  }
+
+  function sequenceSteps(item){
+    return Array.isArray(item?.sequenceSteps) ? item.sequenceSteps.filter(step=>step && typeof step === 'object') : [];
+  }
+
+  function queryValue(value){
+    if(value === true) return '1';
+    if(value === false) return '0';
+    return String(value ?? '');
+  }
+
+  function sequenceSceneUrl(source='', step={}){
+    const raw = String(source || '').trim();
+    if(!raw) return '';
+    let url;
+    try{ url = new URL(raw, global.location?.href || 'http://bookwriter.local/'); }
+    catch(_e){ return raw; }
+    const preset = step.printPreset ?? step.preset;
+    if(preset != null && String(preset).trim()) url.searchParams.set('state', String(preset));
+    const state = step.state && typeof step.state === 'object' ? step.state : {};
+    for(const [key,value] of Object.entries(state)) url.searchParams.set(key, queryValue(value));
+    const printQuery = step.printQuery && typeof step.printQuery === 'object' ? step.printQuery : {};
+    for(const [key,value] of Object.entries(printQuery)) url.searchParams.set(key, queryValue(value));
+    return url.href;
+  }
+
+  function calloutForSequenceStep(item, step={}, index=0){
+    const out = deepClone(item || {});
+    out.id = `${item?.id || 'callout'}-step-${index+1}`;
+    out.type = 'interactive_callout';
+    out.title = step.title || item?.title || out.title || '';
+    out.setupLabel = step.setupLabel || item?.setupLabel || out.setupLabel || '';
+    out.setupChips = Array.isArray(step.setupChips) ? deepClone(step.setupChips) : deepClone(item?.setupChips || []);
+    out.pressLabel = step.pressLabel || item?.pressLabel || out.pressLabel || '';
+    out.pressChips = Array.isArray(step.pressChips) ? deepClone(step.pressChips) : deepClone(item?.pressChips || []);
+    out.observeTitle = step.observeTitle || item?.observeTitle || out.observeTitle || '';
+    out.observeItems = Array.isArray(step.observeItems) ? deepClone(step.observeItems) : deepClone(item?.observeItems || []);
+    out.sequenceSteps = [];
+    out.extensions = Object.assign({}, out.extensions || {}, {sequenceStep:index+1, sourceCalloutId:item?.id || '', sequenceStepData:deepClone(step)});
+    return out;
+  }
+
+  function expandScreenSequences(data, options={}){
+    if(options.enabled === false) return deepClone(data);
+    const book = normalizeData(deepClone(data));
+    let changed = false;
+    book.pages = (book.pages || []).map((page,pageIndex)=>{
+      const items = [];
+      (page.items || []).forEach((item,itemIndex)=>{
+        const steps = sequenceSteps(item);
+        if(steps.length){
+          changed = true;
+          steps.forEach((step,stepIndex)=>{
+            const callout = calloutForSequenceStep(item, step, stepIndex);
+            callout.extensions = Object.assign({}, callout.extensions || {}, {sequenceScreenGenerated:true});
+            items.push(callout);
+          });
+          return;
+        }
+        items.push(item);
+      });
+      return Object.assign({}, page, {
+        id:page.id || `page-${pageIndex+1}`,
+        items,
+        extensions:Object.assign({}, page.extensions || {}, changed ? {screenSequenceExpansion:true} : {})
+      });
+    });
+    book.extensions = Object.assign({}, book.extensions || {}, {screenSequenceExpansion:{enabled:changed}});
+    return book;
+  }
+
+  function expandPrintSequences(data, options={}){
+    if(options.enabled === false) return deepClone(data);
+    const book = normalizeData(deepClone(data));
+    const sceneById = new Map();
+    (book.pages || []).forEach(page => (page.items || []).forEach(item => {
+      if(item?.type === 'scene' && item.id) sceneById.set(String(item.id), item);
+    }));
+    const expanded = [];
+    let changed = false;
+    let generatedCount = 0;
+    (book.pages || []).forEach((page,pageIndex)=>{
+      const generated = [];
+      (page.items || []).forEach((item,itemIndex)=>{
+        const steps = sequenceSteps(item);
+        const sceneId = String(item?.sequenceSceneId || '').trim();
+        const scene = sceneId ? sceneById.get(sceneId) : null;
+        if(!steps.length || !scene || item?.print?.expand === 'none') return;
+        steps.forEach((step,stepIndex)=>{
+          const callout = calloutForSequenceStep(item, step, stepIndex);
+          callout.extensions = Object.assign({}, callout.extensions || {}, {sequencePrintGenerated:true});
+          const sceneCopy = deepClone(scene);
+          sceneCopy.id = `${scene.id}-step-${stepIndex+1}`;
+          sceneCopy.src = sequenceSceneUrl(scene.src ?? scene.singleSrc ?? '', step);
+          sceneCopy.title = step.title || scene.title || '';
+          sceneCopy.extensions = Object.assign({}, sceneCopy.extensions || {}, {sequenceSourceSceneId:scene.id, sequenceStep:stepIndex+1});
+          generated.push(Object.assign({}, deepClone(page), {
+            id:`${page.id || `page-${pageIndex+1}`}-${item.id || `sequence-${itemIndex+1}`}-print-${stepIndex+1}`,
+            items:[callout, sceneCopy],
+            extensions:Object.assign({}, page.extensions || {}, {printGeneratedSequence:true, sourcePageId:page.id || '', sourceCalloutId:item.id || '', sourceSceneId:scene.id || '', sequenceStep:stepIndex+1})
+          }));
+        });
+      });
+      if(generated.length){
+        changed = true;
+        generatedCount += generated.length;
+        expanded.push(...generated);
+      }else{
+        expanded.push(page);
+      }
+    });
+    book.pages = expanded;
+    book.extensions = Object.assign({}, book.extensions || {}, {printSequenceExpansion:{enabled:changed, generatedPages:generatedCount, totalPages:expanded.length, generatedAt:new Date().toISOString()}});
+    return book;
+  }
+
   function renderTextRun(run){
     let html = escapeHtml(run?.text ?? '');
     if(run?.bold) html = `<strong>${html}</strong>`;
@@ -607,18 +726,38 @@
         const frame = document.createElement('div');
         frame.className = 'media-frame scene-frame';
         frame.style.aspectRatio = String(mediaAspect(item,'scene'));
+        const printOptions = item.print && typeof item.print === 'object' ? item.print : {};
+        if(printOptions.snapshotTimeoutMs != null) frame.dataset.snapshotTimeoutMs = String(printOptions.snapshotTimeoutMs);
+        if(printOptions.snapshotAttempts != null) frame.dataset.snapshotAttempts = String(printOptions.snapshotAttempts);
+        if(printOptions.snapshotRetryDelayMs != null) frame.dataset.snapshotRetryDelayMs = String(printOptions.snapshotRetryDelayMs);
         const rawSource=item.src ?? item.singleSrc ?? '';
         const source = String((options.sceneSource || (value=>value))(rawSource,item) || '');
         if(source){
           const iframe = document.createElement('iframe');
-          iframe.loading = 'eager';
+          const deferred = options.deferScenes === true;
+          iframe.loading = deferred ? 'lazy' : 'eager';
           iframe.referrerPolicy = 'no-referrer';
           iframe.allow = 'fullscreen';
           iframe.dataset.sceneProtocol = 'book-scene-v1';
-          iframe.dataset.sceneLoadState = 'loading';
-          iframe.addEventListener('load', ()=>{ iframe.dataset.sceneLoadState = 'loaded'; }, {once:true});
-          iframe.addEventListener('error', ()=>{ iframe.dataset.sceneLoadState = 'error'; }, {once:true});
-          iframe.src = source;
+          iframe.dataset.sceneSource = source;
+          frame.dataset.sceneSource = source;
+          frame.dataset.sceneBaseSource = source;
+          if(deferred){
+            iframe.dataset.sceneLoadState = 'deferred';
+            iframe.src = 'about:blank';
+            iframe.hidden = true;
+            const placeholder = document.createElement('div');
+            placeholder.className = 'scene-deferred-placeholder';
+            placeholder.textContent = lang === 'en'
+              ? 'Preparing a printable view of the scene…'
+              : 'Προετοιμάζεται η εικόνα της σκηνής…';
+            frame.appendChild(placeholder);
+          }else{
+            iframe.dataset.sceneLoadState = 'loading';
+            iframe.addEventListener('load', ()=>{ iframe.dataset.sceneLoadState = 'loaded'; }, {once:true});
+            iframe.addEventListener('error', ()=>{ iframe.dataset.sceneLoadState = 'error'; }, {once:true});
+            iframe.src = source;
+          }
           frame.appendChild(iframe);
         }else{
           const placeholder = document.createElement('div');
@@ -636,11 +775,26 @@
       }
       case 'interactive_callout': {
         node = document.createElement('div');
-        node.className = 'callout';
-        const setup = (item.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('setupLabel',lang==='en'?'Set':'Ρύθμισε')}</span>${item.setupChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
-        const press = (item.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('pressLabel',lang==='en'?'Press':'Πίεσε')}</span>${item.pressChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
-        const observe = list('observeItems').length ? `<div class="callout-observe"><span class="callout-observe-title">${text('observeTitle',lang==='en'?'Observe':'Παρατήρησε')}</span><ul>${list('observeItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
-        node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}`;
+        const steps = sequenceSteps(item);
+        if(steps.length){
+          node.className = 'callout callout-sequence';
+          node.dataset.sequenceSceneId = String(item.sequenceSceneId || '');
+          const stepHtml = steps.map((step,index)=>{
+            const callout = calloutForSequenceStep(item, step, index);
+            const setup = (callout.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.setupLabel || (lang==='en'?'Set':'Ρύθμισε'))}</span>${callout.setupChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
+            const press = (callout.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.pressLabel || (lang==='en'?'Press':'Πίεσε'))}</span>${callout.pressChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
+            const observe = (callout.observeItems || []).length ? `<div class="callout-observe"><span class="callout-observe-title">${escapeHtml(callout.observeTitle || (lang==='en'?'Observe':'Παρατήρησε'))}</span><ul>${callout.observeItems.map(value=>`<li>${escapeHtml(value)}</li>`).join('')}</ul></div>` : '';
+            return `<section class="callout-sequence-step${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-index="${index}" data-sequence-step="${attrJson(step)}"><div class="callout-title">${escapeHtml(callout.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}</div>${setup}${press}${observe}</section>`;
+          }).join('');
+          const buttons = steps.map((step,index)=>`<button type="button" class="callout-sequence-dot${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-goto="${index}" title="${escapeHtml(step.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}">${index+1}</button>`).join('');
+          node.innerHTML = `<div class="callout-sequence-head"><button type="button" class="callout-sequence-arrow" data-sequence-move="-1" title="${lang==='en'?'Previous':'Προηγούμενο'}">‹</button><div class="callout-sequence-dots">${buttons}</div><button type="button" class="callout-sequence-arrow" data-sequence-move="1" title="${lang==='en'?'Next':'Επόμενο'}">›</button></div><div class="callout-sequence-body">${stepHtml}</div>`;
+        }else{
+          node.className = 'callout';
+          const setup = (item.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('setupLabel',lang==='en'?'Set':'Ρύθμισε')}</span>${item.setupChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
+          const press = (item.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('pressLabel',lang==='en'?'Press':'Πίεσε')}</span>${item.pressChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
+          const observe = list('observeItems').length ? `<div class="callout-observe"><span class="callout-observe-title">${text('observeTitle',lang==='en'?'Observe':'Παρατήρησε')}</span><ul>${list('observeItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
+          node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}`;
+        }
         break;
       }
       case 'equation': {
@@ -743,6 +897,56 @@
     return pages.length;
   }
 
+  function findSequenceSceneFrame(sequenceNode){
+    const id = String(sequenceNode?.dataset?.sequenceSceneId || '').trim();
+    if(!id) return null;
+    const page = sequenceNode.closest?.('.book-page-root,.sheet-wrap') || global.document;
+    return page.querySelector?.(`[data-book-item-id="${CSS.escape(id)}"] .scene-frame`) || global.document.querySelector?.(`[data-book-item-id="${CSS.escape(id)}"] .scene-frame`) || null;
+  }
+
+  function activateCalloutSequence(sequenceNode,index=0){
+    const steps = Array.from(sequenceNode.querySelectorAll('.callout-sequence-step'));
+    if(!steps.length) return;
+    const next = Math.max(0, Math.min(steps.length-1, Number(index)||0));
+    steps.forEach((stepNode,stepIndex)=>stepNode.classList.toggle('active', stepIndex===next));
+    sequenceNode.querySelectorAll('.callout-sequence-dot').forEach(button=>button.classList.toggle('active', Number(button.dataset.sequenceGoto)===next));
+    sequenceNode.dataset.sequenceActive = String(next);
+    const stepNode = steps[next];
+    let step = {};
+    try{ step = JSON.parse(stepNode.dataset.sequenceStep || '{}'); }catch(_e){}
+    const frame = findSequenceSceneFrame(sequenceNode);
+    const iframe = frame?.querySelector?.('iframe');
+    if(!iframe) return;
+    const base = frame.dataset.sceneBaseSource || frame.dataset.sceneSource || iframe.dataset.sceneSource || iframe.getAttribute('src') || '';
+    const nextSrc = sequenceSceneUrl(base, step);
+    if(nextSrc && iframe.getAttribute('src') !== nextSrc){
+      iframe.dataset.sceneLoadState = 'loading';
+      iframe.addEventListener('load', ()=>{ iframe.dataset.sceneLoadState = 'loaded'; }, {once:true});
+      iframe.addEventListener('error', ()=>{ iframe.dataset.sceneLoadState = 'error'; }, {once:true});
+      iframe.src = nextSrc;
+      iframe.dataset.sceneSource = nextSrc;
+      frame.dataset.sceneSource = nextSrc;
+    }
+  }
+
+  function bindCalloutSequences(root=global.document){
+    root.querySelectorAll?.('.callout-sequence').forEach(sequenceNode=>{
+      if(sequenceNode.dataset.sequenceBound === '1') return;
+      sequenceNode.dataset.sequenceBound = '1';
+      sequenceNode.addEventListener('click',event=>{
+        const goto = event.target.closest?.('[data-sequence-goto]');
+        const move = event.target.closest?.('[data-sequence-move]');
+        if(!goto && !move) return;
+        event.preventDefault();
+        const current = Number(sequenceNode.dataset.sequenceActive || 0) || 0;
+        if(goto) activateCalloutSequence(sequenceNode, Number(goto.dataset.sequenceGoto));
+        else activateCalloutSequence(sequenceNode, current + (Number(move.dataset.sequenceMove)||0));
+      });
+      const initial = Number(sequenceNode.querySelector('.callout-sequence-step.active')?.dataset.sequenceIndex || sequenceNode.dataset.sequenceActive || 0) || 0;
+      activateCalloutSequence(sequenceNode, initial);
+    });
+  }
+
   function auditData(data){
     const validation=validateData(data);
     const stats={schema:String(data?.schemaVersion||LEGACY_SCHEMA),pages:0,items:0,figures:0,figuresWithCaptions:0,figuresWithAssets:0,scenes:0,scenesWithSources:0,legacyHtmlBlocks:0,richTextBlocks:0,layoutItems:0};
@@ -802,6 +1006,10 @@
     renderItem,
     renderPageNode,
     renderPages,
+    sequenceSceneUrl,
+    expandScreenSequences,
+    expandPrintSequences,
+    bindCalloutSequences,
     auditData
   });
 })(window);

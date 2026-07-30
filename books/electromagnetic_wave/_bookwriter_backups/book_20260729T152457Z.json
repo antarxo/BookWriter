@@ -2,16 +2,16 @@
   "schemaVersion": "bookwriter-v4",
   "schemaRevision": 1,
   "meta": {
-    "projectId": "electromagnetic_wave",
+    "projectId": "em-wave-book",
     "fileName": "/electromagnetic_wave/book.json",
     "title": "Γέννηση και διάδοση του ΗΜ κύματος",
     "subtitle": "",
-    "eyebrow": "",
     "defaultLanguage": "el",
-    "authoringVersion": "bookwriter-4.5.0-rc1",
-    "createdAt": "2026-07-27T16:13:10.837Z",
-    "updatedAt": "2026-07-29T15:24:57.191Z",
-    "appHref": "",
+    "authoringVersion": "4.0.0-phase1.5",
+    "eyebrow": "",
+    "migratedFrom": "pages-v1",
+    "migratedAt": "2026-07-27T16:13:10.837Z",
+    "updatedAt": "2026-07-29T15:12:21.963Z",
     "library": {
       "discipline": "Φυσική",
       "level": "Γ΄ Λυκείου",
@@ -61,7 +61,8 @@
     "calloutLabelFontSize": 10,
     "calloutChipFontSize": 10,
     "calloutObserveTitleFontSize": 10,
-    "showPageNumbers": true
+    "showPageNumbers": true,
+    "pageInnerPaddingMm": 14
   },
   "pageDefaults": {
     "header": {
@@ -177,7 +178,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -266,7 +267,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -341,9 +342,9 @@
           "hideCaption": false,
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
-            "widthPx": 150,
+            "widthPx": 120,
             "aspectRatio": "natural"
           }
         },
@@ -471,7 +472,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 130,
             "aspectRatio": "natural"
           },
@@ -545,7 +546,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 230,
             "aspectRatio": "natural"
           },
@@ -637,7 +638,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 234,
             "aspectRatio": "natural"
           },
@@ -726,7 +727,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -762,7 +763,10 @@
             "label": ""
           },
           "title": "Συμβάσεις",
-          "level": 2
+          "level": 2,
+          "layout": {
+            "floatInteraction": "wrap"
+          }
         },
         {
           "id": "page-added-intro-3-paragraph-1-απο-το-διπλανο-σχημα-α-4",
@@ -856,9 +860,9 @@
           "hideCaption": false,
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
-            "widthPx": 240,
+            "widthPx": 340,
             "aspectRatio": "natural"
           },
           "status": "static_image"
@@ -956,7 +960,7 @@
           "hideCaption": false,
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 260,
             "aspectRatio": "natural"
@@ -1109,7 +1113,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -1387,7 +1391,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -1457,6 +1461,29 @@
           "legacySourceHtml": "Τονίζουμε εξαρχής ότι αυτή η αφετηρία που δεν δίνει πλήρη περιγραφή της δημιουργίας και διάδοσης του ηλεκτρομαγνητικού κύματος είναι μια διδακτική αφετηρία, γιατί επιτρέπει να οργανωθεί καθαρά η λεγόμενη \"κοντινή\" εικόνα του πεδίου γύρω από την πηγή και να φανεί αργότερα πού ακριβώς αρχίζουν τα όριά της."
         }
       ]
+    },
+    {
+      "id": "page-5-2",
+      "sourcePage": null,
+      "header": {
+        "inherit": false,
+        "left": "ΜΕΡΟΣ Β΄",
+        "center": "",
+        "right": "Σχολικό αφήγημα"
+      },
+      "footer": {
+        "inherit": false,
+        "left": " © antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": []
     },
     {
       "id": "page-3",
@@ -1572,14 +1599,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=V%2CQ&availableGraphs=V%2CQ%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow&timePreset=t0&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphV%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB&play=0&zoom=1620",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=V%2CQ&availableGraphs=V%2CQ%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow&timePreset=t0&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphV%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB&play=0&zoom=1620",
           "title": "Σκηνή 1",
           "caption": "Σκηνή 1",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -1612,7 +1639,76 @@
           "observeItems": [
             "Δες το V–t. Σύγκρινε τo με το q–t .",
             "Δες ότι το V ξεκινά από το μηδέν όπως και το  q."
-          ]
+          ],
+          "layout": {
+            "floatInteraction": "wrap"
+          }
+        },
+        {
+          "id": "page-3-paragraph-νεα-παραγραφος-6",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Παράδειγμα ν",
+                "bold": true,
+                "italic": true,
+                "underline": true
+              },
+              {
+                "type": "text_run",
+                "text": "έ",
+                "bold": true,
+                "italic": true,
+                "underline": true,
+                "superscript": true
+              },
+              {
+                "type": "text_run",
+                "text": "ου κειμ",
+                "bold": true,
+                "italic": true,
+                "underline": true
+              },
+              {
+                "type": "text_run",
+                "text": "έ",
+                "bold": true,
+                "italic": true,
+                "underline": true,
+                "subscript": true
+              },
+              {
+                "type": "text_run",
+                "text": "νου",
+                "bold": true,
+                "italic": true,
+                "underline": true
+              }
+            ]
+          },
+          "style": {
+            "align": "left",
+            "hyphenate": true
+          },
+          "layout": {
+            "floatInteraction": "wrap"
+          },
+          "legacySourceHtml": "<b><i><u>Παράδειγμα ν<sup>έ</sup>ου κειμ<sub>έ</sub>νου</u></i></b>",
+          "provenance": {
+            "visualEdited": true,
+            "contentEdited": false,
+            "editedAt": "2026-07-28T00:18:39.949Z"
+          },
+          "extensions": {
+            "richTextSync": "visual-html-primary-v4.1"
+          }
         },
         {
           "id": "page-3-paragraph-2-q-qημ-ωt-το-εμφανιζομε-5",
@@ -2218,14 +2314,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "title": "Σκηνή 0→T/4",
           "caption": "Σκηνή 0→T/4",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -2510,14 +2606,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "title": "Σκηνή T/4→T/2",
           "caption": "Σκηνή T/4→T/2",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -2742,14 +2838,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "title": "Σκηνή T/2→3T/4",
           "caption": "Σκηνή T/2→3T/4",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -3013,14 +3109,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q4&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q4&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
           "title": "Σκηνή 3T/4→T",
           "caption": "Σκηνή 3T/4→T",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -3234,6 +3330,29 @@
       ]
     },
     {
+      "id": "page-9",
+      "sourcePage": null,
+      "header": {
+        "inherit": false,
+        "left": "ΜΕΡΟΣ Γ΄",
+        "center": "",
+        "right": "Η σχολική εικόνα με απόσβεση"
+      },
+      "footer": {
+        "inherit": false,
+        "left": " © antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": []
+    },
+    {
       "id": "page-14",
       "sourcePage": null,
       "header": {
@@ -3304,14 +3423,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2Ccharges%2CcurrentArrow%2ClinearPropagation&region=nearAtt&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=0.98",
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2Ccharges%2CcurrentArrow%2ClinearPropagation&region=nearAtt&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=0.98",
           "title": "Σκηνή Αλήθεια 1η",
           "caption": "Σκηνή Αλήθεια 1η",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.623053
           },
@@ -3453,7 +3572,31 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Άρα η Αλήθεια 1η δεν καταργεί ακόμη το σχολικό αφήγημα. Το φέρνει όμως στα φυσικά του όρια. Μας λέει ότι, ακόμη κι αν δεχτούμε προσωρινά τη σχολική γεωμετρία των πεδίων, δεν επιτρέπεται να κρατάμε τις εντάσεις τους αμετάβλητες όσο η διαταραχή απομακρύνεται από την πηγή. Το πρώτο βήμα προς την πραγματικότητα είναι ακριβώς αυτή η χωρική εξασθένηση."
-        },
+        }
+      ]
+    },
+    {
+      "id": "page-10",
+      "sourcePage": null,
+      "header": {
+        "inherit": false,
+        "left": "ΜΕΡΟΣ Γ΄",
+        "center": "",
+        "right": "Το πραγματικό ΗΜ κύμα"
+      },
+      "footer": {
+        "inherit": false,
+        "left": " © antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "page-10-section_heading-β-το-πραγματικο-ημ-κυμα-1",
           "type": "section_heading",
@@ -3487,6 +3630,29 @@
           "legacySourceHtml": "Η δεύτερη αλήθεια είναι ότι το πραγματικό ηλεκτρομαγνητικό κύμα δεν προκύπτει απλώς επειδή «μεταφέρουμε προς τα έξω» την κοντινή σχολική εικόνα. Η γέννησή του αρχίζει όταν τα μεταβαλλόμενα πεδία παύουν να λειτουργούν μόνο ως ίχνη της πηγής και αρχίζουν να τροφοδοτούν το ένα το άλλο μέσα στον χώρο."
         },
         {
+          "id": "truth2_real_em_wave_scene",
+          "type": "scene",
+          "nav": {
+            "show": true,
+            "label": ""
+          },
+          "src": "/HMK/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
+          "title": "Το πραγματικό ΗΜ κύμα",
+          "caption": "Το πραγματικό ΗΜ κύμα",
+          "hideCaption": false,
+          "layout": {
+            "placement": "right",
+            "wrap": true,
+            "floatInteraction": "",
+            "widthPx": 340,
+            "aspectRatio": 0.623053
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        },
+        {
           "id": "page-10-paragraph-η-μεταβολη-του-μαγνητικο-4",
           "type": "paragraph",
           "nav": {
@@ -3507,31 +3673,7 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Η μεταβολή του μαγνητικού πεδίου δημιουργεί επαγωγικό ηλεκτρικό πεδίο, όπως μας λέει ο Faraday, ενώ η μεταβολή του ηλεκτρικού πεδίου δημιουργεί μαγνητικό πεδίο ακόμη και εκεί όπου δεν υπάρχει τοπικά αγώγιμο ρεύμα, όπως λέει ο Ampère–Maxwell. Έτσι, λίγο πιο έξω από τη ράβδο, το ηλεκτρικό και το μαγνητικό πεδίο δεν είναι πια μόνο «του φορτίου» και «του ρεύματος». Είναι ήδη συνιστάμενα πεδία που αυτοσυντηρούν τη διάδοση της διαταραχής."
-        }
-      ]
-    },
-    {
-      "id": "page-10",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "ΜΕΡΟΣ Γ΄",
-        "center": "",
-        "right": "Το πραγματικό ΗΜ κύμα"
-      },
-      "footer": {
-        "inherit": false,
-        "left": " © antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "page-10-paragraph-σε-αυτη-την-εικονα-η-δια-5",
           "type": "paragraph",
@@ -3553,29 +3695,6 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Σε αυτή την εικόνα η διάδοση δεν γίνεται επειδή η πηγή στέλνει κάθε φορά έτοιμα ολόκληρα αντίγραφα του εαυτού της. Γίνεται τοπικά, από περιοχή σε περιοχή. Κάθε περιοχή του χώρου παραλαμβάνει μια ηλεκτρομαγνητική διαταραχή, αποκρίνεται σε αυτήν, και με τη σειρά της συμβάλλει στη γέννηση της επόμενης. Έτσι το κύμα προχωρά με πεπερασμένη ταχύτητα, την ταχύτητα του φωτός στο κενό."
-        },
-        {
-          "id": "truth2_real_em_wave_scene",
-          "type": "scene",
-          "nav": {
-            "show": true,
-            "label": ""
-          },
-          "src": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
-          "title": "Το πραγματικό ΗΜ κύμα",
-          "caption": "Το πραγματικό ΗΜ κύμα",
-          "hideCaption": false,
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": 0.623053
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
         },
         {
           "id": "page-10-paragraph-οσο-απομακρυνομαστε-απο--6",
@@ -3687,7 +3806,31 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Έτσι η Αλήθεια 2η ολοκληρώνει τη διόρθωση. Η Αλήθεια 1η μάς ανάγκασε να εγκαταλείψουμε την ιδέα ότι η σχολική εικόνα μπορεί να ταξιδεύει χωρίς εξασθένηση. Η Αλήθεια 2η μάς δείχνει ότι το ώριμο ηλεκτρομαγνητικό κύμα δεν είναι απλώς μια αποδυναμωμένη σχολική εικόνα, αλλά ένα νέο καθεστώς διάδοσης, στο οποίο το ηλεκτρικό και το μαγνητικό πεδίο γεννιούνται και συντηρούν μαζί το κύμα."
-        },
+        }
+      ]
+    },
+    {
+      "id": "page-11",
+      "sourcePage": null,
+      "header": {
+        "inherit": false,
+        "left": "ΜΕΡΟΣ Γ΄",
+        "center": "",
+        "right": "Το πραγματικό ΗΜ κύμα"
+      },
+      "footer": {
+        "inherit": false,
+        "left": " © antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "page-11-section_heading-τι-να-κρατησει-ο-αναγνωσ-1",
           "type": "section_heading",
@@ -4112,7 +4255,7 @@
           "layout": {
             "placement": "wide",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -4153,31 +4296,7 @@
             "hyphenate": true
           },
           "legacySourceHtml": "<strong>Οι παραλείψεις</strong> είναι εμφανείς αλλά σημαντικές και\n<strong>ως προς τον χώρο</strong> αλλά και ως προς την εικόνα του πεδίου\nμέσω των δυναμικών γραμμών του και κυρίως πώς αυτό εγκαθίσταται στο χώρο. Να\nξεκαθαρίσουμε εδώ ότι ως χώρος νοείται ένα τμήμα ή και (θεωρητικά) όλο\nτο σύμπαν!"
-        }
-      ]
-    },
-    {
-      "id": "page-12",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "ΜΕΡΟΣ Δ΄",
-        "center": "",
-        "right": "Παραρτήματα"
-      },
-      "footer": {
-        "inherit": false,
-        "left": " © antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "page-appendix-1-section_heading-ιστορικη-αναδρομη-10",
           "type": "section_heading",
@@ -4218,7 +4337,31 @@
             "hyphenate": true
           },
           "legacySourceHtml": "Τα ερωτήματα εύλογα: Πώς προέκυψε η ιδέα του πεδίου δυνάμεων; Ποια\nανάγκη ήλθε να καλύψει η έννοια του πεδίου; Για να πλησιάσουμε τη ρίζα της ιδέας, χρειάζεται να θυμηθούμε ότι\nιστορικά και όσον αφορά στο πώς και σε πόσο χρόνο, ένα σώμα Α ασκεί\nδύναμη σε (αλλά και δέχεται ταυτόχρονα δύναμη από) ένα σώμα Β που\nβρίσκεται σε αποσταση από αυτό, αναπτύχθηκε η <strong>θεωρία της δράσης\nαπό απόσταση</strong>."
-        },
+        }
+      ]
+    },
+    {
+      "id": "page-12",
+      "sourcePage": null,
+      "header": {
+        "inherit": false,
+        "left": "ΜΕΡΟΣ Δ΄",
+        "center": "",
+        "right": "Παραρτήματα"
+      },
+      "footer": {
+        "inherit": false,
+        "left": " © antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "page-12-paragraph-συμφωνα-με-αυτην-το-σωμα-1",
           "type": "paragraph",
@@ -4453,7 +4596,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -4653,14 +4796,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge&lang=el&t=5",
+          "src": "/HMK/electrostatic_field_book_ready.html?p=charge&lang=el&t=5",
           "title": "Σκηνή Α1",
           "caption": "Σκηνή Α1 — Μονό φορτίο: εμφάνιση και διάδοση του πεδίου",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.944444
           },
@@ -4773,7 +4916,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -6749,7 +6892,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -6935,7 +7078,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -7375,7 +7518,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -7683,14 +7826,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge_vanish&lang=el&disappearAt=5&t=10",
+          "src": "/HMK/electrostatic_field_book_ready.html?p=charge_vanish&lang=el&disappearAt=5&t=10",
           "title": "Σκηνή Α2",
           "caption": "Σκηνή Α2 — Μονό φορτίο: εξαφάνιση μετά από προηγούμενη εμφάνιση και διάδοση της πληροφορίας σβησίματος",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.944444
           },
@@ -7787,14 +7930,14 @@
             "show": true,
             "label": ""
           },
-          "src": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=dipole&lang=el&t=5",
+          "src": "/HMK/electrostatic_field_book_ready.html?p=dipole&lang=el&t=5",
           "title": "Σκηνή Α3",
           "caption": "Σκηνή Α3 — Ηλεκτρικό δίπολο: εμφάνιση και σταδιακή εγκατάσταση του πεδίου",
           "hideCaption": false,
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": 0.944444
           },
@@ -8137,7 +8280,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -10290,7 +10433,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -12239,7 +12382,7 @@
           "layout": {
             "placement": "right",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -15614,7 +15757,7 @@
           "layout": {
             "placement": "wide",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 300,
             "aspectRatio": "natural"
           },
@@ -17446,7 +17589,7 @@
           "layout": {
             "placement": "wide",
             "wrap": true,
-            "floatInteraction": "wrap",
+            "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
           },
@@ -17560,7 +17703,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "",
             "widthPx": 340,
             "aspectRatio": "natural"
@@ -17638,19 +17781,7 @@
   ],
   "importManifest": {
     "version": 1,
-    "sourceType": "pages-v1",
-    "sourceFile": "",
-    "createdAt": "2026-07-27T16:13:10.837Z",
-    "selection": null,
-    "headingIndex": [],
-    "mergeReady": false,
-    "converter": "",
-    "metrics": {},
     "insertions": []
   },
-  "extensions": {
-    "docxHeadingPalette": {},
-    "docxDocumentSettings": {},
-    "docxDocumentLayout": {}
-  }
+  "extensions": {}
 }

@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "bookwriter-v4",
+  "schemaRevision": 1,
+  "meta": {
+    "projectId": "AAT",
+    "fileName": "/AAT/book.json",
+    "title": "Απλή Αρμονική Ταλάντωση",
+    "subtitle": "",
+    "defaultLanguage": "el",
+    "authoringVersion": "bookwriter-4.5.0-rc1",
+    "createdAt": "2026-07-29T15:37:37.247Z",
+    "updatedAt": "2026-07-29T15:37:37.247Z",
+    "library": {
+      "discipline": "Φυσική",
+      "level": "Γ΄ Λυκείου",
+      "category": "ΦΥΛΛΑΔΙΟ",
+      "status": "Προσχέδιο",
+      "tags": []
+    }
+  },
+  "layoutDefaults": {
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "pageWidthPx": 794,
+    "pageHeightPx": 1123,
+    "pagePaddingTopPx": 54,
+    "pagePaddingRightPx": 44,
+    "pagePaddingBottomPx": 54,
+    "pagePaddingLeftPx": 44,
+    "headerTopPx": 20,
+    "headerHeightPx": 16,
+    "footerBottomPx": 18,
+    "footerHeightPx": 16,
+    "headerFontSize": 11,
+    "footerFontSize": 11,
+    "bodyFontSize": 18,
+    "lineHeight": 1.3,
+    "paragraphGap": 6,
+    "sectionGap": 14,
+    "noteGap": 8,
+    "calloutGap": 7,
+    "bodyFontFamily": "serif",
+    "headingFontFamily": "serif",
+    "heroEyebrowFontSize": 13,
+    "heroTitleFontSize": 28,
+    "heroSubtitleFontSize": 16,
+    "heroTitleFontFamily": "serif",
+    "partKickerFontSize": 10,
+    "partTitleFontSize": 24,
+    "partTitleFontFamily": "classic",
+    "sectionHeadingFontSize": 18,
+    "sectionHeadingFontFamily": "serif",
+    "noteFontSize": 14,
+    "noteLineHeight": 1.42,
+    "noteLabelFontSize": 10.5,
+    "captionFontSize": 12,
+    "calloutFontSize": 11.5,
+    "calloutTitleFontSize": 10.5,
+    "calloutLabelFontSize": 10,
+    "calloutChipFontSize": 10,
+    "calloutObserveTitleFontSize": 10,
+    "showPageNumbers": true
+  },
+  "pageDefaults": {
+    "header": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": ""
+    },
+    "footer": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": "{page}"
+    },
+    "pageNumbering": {
+      "enabled": true,
+      "startAt": 1,
+      "position": "footer-right",
+      "hideOnFirstPage": false
+    }
+  },
+  "nav": {
+    "mode": "auto",
+    "showApp": true,
+    "showPrint": true,
+    "groups": []
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "hero-1",
+          "type": "hero",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "eyebrow": "",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "subtitle": "",
+          "layout": {
+            "floatInteraction": "wrap"
+          }
+        }
+      ]
+    }
+  ],
+  "importManifest": {
+    "version": 1,
+    "insertions": []
+  },
+  "extensions": {}
+}

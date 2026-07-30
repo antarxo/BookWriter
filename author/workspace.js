@@ -16,15 +16,10 @@ const clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
 const storage={get(k,d=''){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 const APP_VERSION='4.5.0-rc1';
 const APP_AUTHORING_VERSION='bookwriter-4.5.0-rc1';
-const PUBLIC_HMK_BASE='https://emkyma.netlify.app/';
 
 function resolveSceneSource(value='',fallbackBase=location.href){
   const raw=String(value||'').trim();
   if(!raw)return '';
-  if(/^\/?HMK(?:\/|$)/i.test(raw)){
-    const publicPath=raw.replace(/^\/?HMK\/?/i,'');
-    try{return new URL(publicPath,PUBLIC_HMK_BASE).href}catch{return raw}
-  }
   try{return new URL(raw,fallbackBase).href}catch{return raw}
 }
 
@@ -200,7 +195,7 @@ function libraryVisibleEntries(){const f=state.library.filters,q=String(f.query|
 function libraryFilterOptions(id,values,current){const node=$(id);if(!node)return;const label=node.options[0]?.textContent||'Όλα';node.innerHTML=`<option value="">${esc(label)}</option>`+[...new Set(values.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'el')).map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('');node.value=current||''}
 async function scanLibrary(){
   const root=state.library.booksHandle;if(!root)return renderLibrary();state.library.loading=true;state.library.error='';renderLibrary();const entries=[];
-  try{if(await permissionFor(root,false)!=='granted')throw Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια.');for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||name.startsWith('.'))continue;try{const opened=await readNamedJson(handle,'book.json'),file=await opened.handle.getFile(),book=opened.data,canonical=book?.schemaVersion===M.SCHEMA_VERSION,meta=libraryMetadata(book);entries.push({name,handle,fileHandle:opened.handle,book,title:libraryBookTitle(book,name),canonical,pages:(book.pages||[]).length,items:(book.pages||[]).reduce((n,p)=>n+(p.items||[]).length,0),updated:file.lastModified,version:book?.meta?.authoringVersion||book?.schemaVersion||'—',paginationStatus:book?.extensions?.paginationStatus||'',discipline:meta.discipline,level:meta.level,category:meta.category,status:meta.status,tags:meta.tags,error:''})}catch(error){entries.push({name,handle,title:name,canonical:false,pages:0,items:0,updated:0,version:'—',paginationStatus:'',discipline:'',level:'',category:'',status:'',tags:[],error:error.message})}}
+  try{if(await permissionFor(root,false)!=='granted')throw Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια.');for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||name.startsWith('.'))continue;try{const opened=await readNamedJson(handle,'book.json'),file=await opened.handle.getFile(),book=opened.data,canonical=book?.schemaVersion===M.SCHEMA_VERSION,meta=libraryMetadata(book);entries.push({name,handle,fileHandle:opened.handle,book,title:libraryBookTitle(book,name),canonical,pages:(book.pages||[]).length,items:(book.pages||[]).reduce((n,p)=>n+(p.items||[]).length,0),updated:file.lastModified,version:book?.meta?.authoringVersion||book?.schemaVersion||'—',layoutState:book?.extensions?.paginationStatus||'',discipline:meta.discipline,level:meta.level,category:meta.category,status:meta.status,tags:meta.tags,error:''})}catch(error){entries.push({name,handle,title:name,canonical:false,pages:0,items:0,updated:0,version:'—',layoutState:'',discipline:'',level:'',category:'',status:'',tags:[],error:error.message})}}
     state.library.entries=entries;
   }catch(error){state.library.error=error.message;state.library.entries=[]}finally{state.library.loading=false;renderLibrary()}
 }
@@ -215,7 +210,7 @@ function renderLibrary(){
   if(!rows.length){host.innerHTML='<div class="library-empty">Δεν βρέθηκε βιβλίο με τα συγκεκριμένα φίλτρα.</div>';return}
   const arrow=key=>state.library.sortKey===key?`<span class="library-sort-arrow">${state.library.sortDir==='asc'?'▲':'▼'}</span>`:'';
   const th=(key,label,cls='')=>`<th class="${cls}"><button type="button" data-library-sort="${key}">${label}${arrow(key)}</button></th>`;
-  host.innerHTML=`<table class="library-table"><thead><tr>${th('title','Τίτλος')}${th('discipline','Κλάδος')}${th('level','Επίπεδο')}${th('category','Είδος')}${th('status','Κατάσταση')}${th('pages','Σελίδες','numeric')}${th('updated','Τροποποίηση')}${th('folder','Φάκελος')}<th>Ενέργειες</th></tr></thead><tbody>${rows.map(entry=>`<tr tabindex="0" class="${entry.error?'invalid ':''}${state.library.selectedName===entry.name?'selected':''}" data-library-name="${esc(entry.name)}"><td class="library-title-cell"><div class="library-title-main">${esc(entry.title)}</div><div class="library-title-sub">${entry.canonical?'canonical v4':'μη έγκυρο/παλιό'} · ${esc(entry.paginationStatus||'χωρίς πιστοποίηση')}</div></td><td>${entry.discipline?esc(entry.discipline):'<span class="library-meta-empty">—</span>'}</td><td>${entry.level?esc(entry.level):'<span class="library-meta-empty">—</span>'}</td><td>${entry.category?esc(entry.category):'<span class="library-meta-empty">—</span>'}</td><td>${entry.status?`<span class="library-status ${libraryStatusClass(entry.status)}">${esc(entry.status)}</span>`:'<span class="library-meta-empty">—</span>'}</td><td style="text-align:right">${entry.pages}</td><td>${esc(libraryDate(entry.updated))}</td><td><div>${esc(entry.name)}</div>${entry.tags?.length?`<div class="library-tags" title="${esc(entry.tags.join(', '))}">${esc(entry.tags.join(', '))}</div>`:''}</td><td class="library-actions-cell"><button class="primary" data-library-action="author" ${entry.error?'disabled':''}>Συγγραφέας</button><button data-library-action="reader" ${entry.error?'disabled':''}>Βιβλίο</button><button data-library-action="metadata" ${entry.error?'disabled':''}>Στοιχεία</button></td></tr>`).join('')}</tbody></table>`;
+  host.innerHTML=`<table class="library-table"><thead><tr>${th('title','Τίτλος')}${th('discipline','Κλάδος')}${th('level','Επίπεδο')}${th('category','Είδος')}${th('status','Κατάσταση')}${th('pages','Σελίδες','numeric')}${th('updated','Τροποποίηση')}${th('folder','Φάκελος')}<th>Ενέργειες</th></tr></thead><tbody>${rows.map(entry=>`<tr tabindex="0" class="${entry.error?'invalid ':''}${state.library.selectedName===entry.name?'selected':''}" data-library-name="${esc(entry.name)}"><td class="library-title-cell"><div class="library-title-main">${esc(entry.title)}</div><div class="library-title-sub">${entry.canonical?'canonical v4':'μη έγκυρο/παλιό'} · ${esc(entry.layoutState||'δυναμική διάταξη')}</div></td><td>${entry.discipline?esc(entry.discipline):'<span class="library-meta-empty">—</span>'}</td><td>${entry.level?esc(entry.level):'<span class="library-meta-empty">—</span>'}</td><td>${entry.category?esc(entry.category):'<span class="library-meta-empty">—</span>'}</td><td>${entry.status?`<span class="library-status ${libraryStatusClass(entry.status)}">${esc(entry.status)}</span>`:'<span class="library-meta-empty">—</span>'}</td><td style="text-align:right">${entry.pages}</td><td>${esc(libraryDate(entry.updated))}</td><td><div>${esc(entry.name)}</div>${entry.tags?.length?`<div class="library-tags" title="${esc(entry.tags.join(', '))}">${esc(entry.tags.join(', '))}</div>`:''}</td><td class="library-actions-cell"><button class="primary" data-library-action="author" ${entry.error?'disabled':''}>Συγγραφέας</button><button data-library-action="reader" ${entry.error?'disabled':''}>Βιβλίο</button><button data-library-action="metadata" ${entry.error?'disabled':''}>Στοιχεία</button></td></tr>`).join('')}</tbody></table>`;
   $$('[data-library-sort]').forEach(button=>button.onclick=()=>{const key=button.dataset.librarySort;if(state.library.sortKey===key)state.library.sortDir=state.library.sortDir==='asc'?'desc':'asc';else{state.library.sortKey=key;state.library.sortDir=['updated','pages','items'].includes(key)?'desc':'asc'}renderLibrary()});
   $$('[data-library-name]').forEach(row=>{const entry=state.library.entries.find(x=>x.name===row.dataset.libraryName);row.onclick=event=>{if(event.target.closest('button'))return;state.library.selectedName=entry?.name||'';$$('[data-library-name]').forEach(node=>node.classList.toggle('selected',node.dataset.libraryName===state.library.selectedName))};row.ondblclick=event=>{if(!event.target.closest('button')&&entry&&!entry.error)openLibraryEntry(entry,false)};row.onkeydown=event=>{if(event.key==='Enter'&&entry&&!entry.error){event.preventDefault();openLibraryEntry(entry,false)}}});
   $$('[data-library-action]').forEach(button=>button.onclick=async event=>{event.stopPropagation();const row=button.closest('[data-library-name]'),entry=state.library.entries.find(x=>x.name===row?.dataset.libraryName);if(!entry)return;if(button.dataset.libraryAction==='metadata')await editLibraryMetadata(entry);else await openLibraryEntry(entry,button.dataset.libraryAction==='reader')});
@@ -299,7 +294,7 @@ async function openBook(){
     if(opened.data.schemaVersion===M.SCHEMA_VERSION){
       await attachOpened(dir,opened.handle,opened.data,'canonical',dir.name);
       const reconciled=state.paginationReconciliation;
-      setStatus(reconciled?.changed?`Άνοιξε canonical v4 βιβλίο · ακυρώθηκε παλιά πιστοποίηση (${reconciled.mismatches.join(', ')}).`:'Άνοιξε canonical v4 βιβλίο.',reconciled?.changed?'warn':'good');
+      setStatus(reconciled?.changed?'Άνοιξε canonical v4 βιβλίο · καθαρίστηκε παλιά κατάσταση σελιδοποίησης.':'Άνοιξε canonical v4 βιβλίο.',reconciled?.changed?'warn':'good');
       return;
     }
     const proceed=await confirmBox('Μετάβαση σε v4',`<div class="info-card warn">Το <b>book.json</b> είναι <b>${esc(opened.data.schemaVersion||'άγνωστο')}</b>. Θα δημιουργηθεί ελληνικό-only v4 candidate στη μνήμη. Το production book.json δεν αλλάζει.</div>`,'Δημιουργία candidate');
@@ -415,37 +410,19 @@ function detachBook(){
 }
 
 function isPaginationManaged(book){
-  return !!book&&(book?.extensions?.paginationRequired===true||!!book?.importManifest?.pagination);
+  return false;
 }
 
 function invalidatePaginationCertification(book,reason='manual-layout-change'){
-  if(!isPaginationManaged(book))return;
-  const now=new Date().toISOString(),previous=book?.importManifest?.pagination||{};
-  book.extensions={
-    ...(book.extensions||{}),
-    paginationCertified:false,
-    paginationStatus:'stale',
-    paginationStaleAt:now,
-    paginationStaleReason:String(reason||'manual-layout-change'),
-    paginationCertifiedPageCount:Number(previous.outputPages)||null,
-    paginationCurrentPageCount:(book.pages||[]).length
-  };
+  if(!book)return;
+  book.importManifest={...(book.importManifest||{})};delete book.importManifest.pagination;delete book.importManifest.paginationRequired;
+  book.extensions={...(book.extensions||{})};for(const key of['paginationRequired','paginationCertified','paginationStatus','paginationCertifiedAt','paginationCurrentPageCount','paginationCertifiedPageCount','paginationStaleReason','paginationStaleAt','paginationReconciledAt','paginationReconciliation'])delete book.extensions[key];
 }
 
 function reconcilePaginationCertification(book){
-  if(!isPaginationManaged(book))return{changed:false,reason:'not-managed'};
-  const pagination=book?.importManifest?.pagination||{},audit=pagination.audit||{},current=(book.pages||[]).length;
-  const reported=Number(pagination.outputPages),checked=Number(audit.pagesChecked);
-  const certified=book?.extensions?.paginationCertified===true;
-  const mismatches=[];
-  if(Number.isFinite(reported)&&reported>0&&reported!==current)mismatches.push(`outputPages ${reported} → ${current}`);
-  if(Number.isFinite(checked)&&checked>0&&checked!==current)mismatches.push(`pagesChecked ${checked} → ${current}`);
-  if(certified&&mismatches.length){
-    invalidatePaginationCertification(book,'stored-pagination-page-count-mismatch');
-    book.extensions={...(book.extensions||{}),paginationReconciledAt:new Date().toISOString(),paginationReconciliation:mismatches};
-    return{changed:true,certified,reported,checked,current,mismatches};
-  }
-  return{changed:false,certified,reported:Number.isFinite(reported)?reported:null,checked:Number.isFinite(checked)?checked:null,current,mismatches};
+  const hadState=!!(book?.importManifest?.pagination||book?.importManifest?.paginationRequired||book?.extensions?.paginationRequired||book?.extensions?.paginationCertified||book?.extensions?.paginationStatus);
+  invalidatePaginationCertification(book,'strip-stored-pagination-state');
+  return{changed:hadState,reason:hadState?'stripped-stored-pagination-state':'not-managed'};
 }
 
 function mutate(label,operation,options={}){
@@ -600,10 +577,10 @@ function bodyHtml(current){
 function renderAuditProperties(host){
   state.audit=M.auditIntegrity(session.book);
   state.compatibility=BookCore.auditData(session.book);
-  const v=state.audit.validation,c=state.compatibility,ext=session.book.extensions||{},pagination=session.book.importManifest?.pagination||{},currentPages=session.book.pages.length,reportedPages=Number(pagination.outputPages)||null,checkedPages=Number(pagination.audit?.pagesChecked)||null,certified=ext.paginationCertified===true,stale=ext.paginationStatus==='stale'||certified&&(reportedPages&&reportedPages!==currentPages||checkedPages&&checkedPages!==currentPages);
+  const v=state.audit.validation,c=state.compatibility,hasStoredPagination=!!(session.book.importManifest?.pagination||session.book.importManifest?.paginationRequired||session.book.extensions?.paginationRequired||session.book.extensions?.paginationCertified||session.book.extensions?.paginationStatus);
   host.innerHTML=`
     <div class="info-card ${state.audit.ok?'good':v.ok?'warn':'bad'}"><b>${state.audit.ok?'Έγκυρο και συνεπές':'Χρειάζεται έλεγχο'}</b><br>Pages ${v.stats.pages} · Items ${v.stats.items} · IDs ${state.audit.stableIds.total} · Broken ${state.audit.brokenReferences.length}</div>
-    <div class="info-card ${stale?'warn':certified?'good':'warn'}"><b>Σελιδοποίηση: ${stale?'παλιά πιστοποίηση — stale':certified?'πιστοποιημένη':'μη πιστοποιημένη'}</b><br>Τρέχουσες σελίδες ${currentPages}${reportedPages?` · report outputPages ${reportedPages}`:''}${checkedPages?` · audit pagesChecked ${checkedPages}`:''}${ext.paginationStaleReason?`<br>Αιτία: ${esc(ext.paginationStaleReason)}`:''}</div>
+    <div class="info-card ${hasStoredPagination?'warn':'good'}"><b>Διάταξη: ${hasStoredPagination?'παλιά αποθηκευμένη κατάσταση σελιδοποίησης':'δυναμική'}</b><br>Τρέχουσες σελίδες ${session.book.pages.length}</div>
     <div class="info-card ${c.ok?'good':'warn'}"><b>Direct v4 renderer</b><br>Figures ${c.stats.figures} · Captions ${c.stats.figuresWithCaptions} · Scenes ${c.stats.scenes} · Scene URLs ${c.stats.scenesWithSources}<br>${esc(c.renderer)} · ${c.directV4?'direct v4':'legacy input'}</div>
     <section class="property-section"><h3>Τύποι</h3><pre class="code-block">${esc(JSON.stringify(v.stats.byType,null,2))}</pre></section>
     <section class="property-section"><h3>Σφάλματα</h3><div class="property-form">${v.errors.length?'<ul>'+v.errors.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'<div class="info-card good">Κανένα</div>'}</div></section>
@@ -681,14 +658,21 @@ function applyPreviewOverflowMarkers(audit){
   $$('#bookPreviewPages .preview-overflow-page').forEach(node=>{node.classList.remove('preview-overflow-page');delete node.dataset.overflowPx;node.querySelector('.render-overflow-marker')?.remove()});
   (audit?.pages||[]).forEach(entry=>{const wrapper=document.querySelector(`[data-preview-page="${CSS.escape(entry.pageId||'')}"]`);if(wrapper)addOverflowMarker(wrapper,entry)});
 }
+function renderPreviewOverflowSummary(audit){
+  const caption=$('#previewCaption'),base=`BookCore ${BookCore.VERSION} · canonical print DOM · ${Math.round(state.previewZoom*100)}%`;
+  if(!audit||!audit.overflowPages){caption.textContent=`${base} · 0 overflow`;return}
+  const pages=(audit.pages||[]).slice(0,8);
+  caption.innerHTML=`${esc(base)} · <span class="overflow-summary">overflow: ${pages.map(entry=>`<button type="button" class="overflow-page-link" data-overflow-page="${esc(entry.pageId||'')}">σελ. ${Number(entry.displayPage||entry.pageIndex+1)}</button>`).join(', ')}${audit.pages.length>pages.length?` +${audit.pages.length-pages.length}`:''}</span>`;
+  caption.querySelectorAll('[data-overflow-page]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();const pageId=button.dataset.overflowPage;if(pageId){select(pageId,null,'overflow');document.querySelector(`[data-preview-page="${CSS.escape(pageId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'});}}));
+}
 function schedulePreviewOverflowAudit(delay=180){
-  if(!has()||!isPaginationManaged(session.book))return;
+  if(!has())return;
   const token=++state.previewOverflowAuditToken;
   setTimeout(async()=>{try{
-    const audit=await P.auditOverflow(session.book,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:1800});
+    const audit=await P.auditOverflow(BookCore.expandScreenSequences(session.book),{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:1800});
     if(token!==state.previewOverflowAuditToken||!has())return;
     state.previewOverflowAudit=audit;applyPreviewOverflowMarkers(audit);
-    $('#previewCaption').textContent=`BookCore ${BookCore.VERSION} · canonical print DOM · ${Math.round(state.previewZoom*100)}% · ${audit.overflowPages} overflow`;
+    renderPreviewOverflowSummary(audit);
   }catch(error){console.warn('preview overflow audit',error)}},delay);
 }
 
@@ -743,10 +727,10 @@ async function reflowCurrentBook(){
   try{
     state.busy=true;renderChrome();setStatus('Συνένωση της παλιάς σταθερής ροής και νέα canonical σελιδοποίηση…','warn');
     const flow=P.coalesceDocxFlow(session.book);
-    const paged=await P.paginateBook(flow,{imageCandidates,rejectOverflow:true,tolerancePx:1,assetTimeout:2500});
+    const paged=await P.paginateBook(flow,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     mutate('Canonical reflow και σελιδοποίηση',book=>{for(const key of Object.keys(book))delete book[key];Object.assign(book,clone(paged.book));return{pageId:book.pages[0].id,itemId:book.pages[0].items[0]?.id||null};},{preservePaginationCertification:true});
     state.audit={...(state.audit||{}),pagination:paged.report,overflowAudit:paged.audit};
-    setStatus(`Canonical reflow: ${paged.book.pages.length} σελίδες · 0 overflow. Αποθήκευσε για να οριστικοποιηθεί.`,'good');
+    setStatus(`Canonical reflow: ${paged.book.pages.length} σελίδες · ${paged.audit?.overflowPages||0} overflow. Αποθήκευσε για να οριστικοποιηθεί.`,paged.audit?.ok?'good':'warn');
   }catch(error){console.error(error);setStatus('Αποτυχία canonical reflow: '+error.message,'bad');modal('Canonical reflow',`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderChrome()}
 }
 
@@ -787,14 +771,11 @@ async function openReader(){
     setStatus('Έλεγχος και δημιουργία ζωντανής εκτυπωτικής προβολής…','warn');
     const validation=M.validateBook(session.book);if(!validation.ok)throw new Error(validation.errors.join('\n'));
     const coreValidation=BookCore.validateData(session.book);if(!coreValidation.ok)throw new Error(coreValidation.errors.join('\n'));
-    const paginationManaged=isPaginationManaged(session.book);
-    const overflowAudit=paginationManaged
-      ?await P.auditOverflow(session.book,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500})
-      :{ok:true,skipped:true,reason:'manual-layout-book',pagesChecked:session.book.pages.length,overflowPages:0,pages:[],rendererVersion:BookCore.VERSION,paginationVersion:P.VERSION};
-    const printOverride=paginationManaged&&!overflowAudit.ok;
-    if(printOverride&&!await requestOverflowPrintDecision(overflowAudit,previewWindow))return;
+    const previewBook=BookCore.expandPrintSequences(M.deepClone(session.book));
+    const readerCoreValidation=BookCore.validateData(previewBook);if(!readerCoreValidation.ok)throw new Error(readerCoreValidation.errors.join('\n'));
+    const overflowAudit=await P.auditOverflow(previewBook,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
+    const printOverride=!overflowAudit.ok;
     const missingFigureAssets=[];
-    const previewBook=M.deepClone(session.book);
     const assumedBookBase=new URL(`../books/${encodeURIComponent(session.directoryHandle.name)}/`,location.href);
     for(const currentPage of previewBook.pages||[])for(const current of currentPage.items||[]){
       if(current.type==='figure'&&String(current.src||'').startsWith('images/')){
@@ -811,13 +792,13 @@ async function openReader(){
     const sceneChecks=await Promise.all(localSceneUrls.map(async src=>{try{const response=await fetch(src,{method:'HEAD',cache:'no-store'});return response.ok?null:{src,status:response.status}}catch(error){return{src,status:0,error:error.message}}}));
     const missingScenes=sceneChecks.filter(Boolean);
     if(missingScenes.length)throw new Error(`Η εκτύπωση σταμάτησε: ${missingScenes.length} σκηνές δεν είναι διαθέσιμες από τον ενεργό server. Η πρώτη είναι:\n${missingScenes[0].src}\n\nΤο βιβλίο δεν θα εκτυπωθεί με κενά πλαίσια.`);
-    previewBook.meta=previewBook.meta||{};previewBook.meta.updatedAt=new Date().toISOString();previewBook.extensions={...(previewBook.extensions||{}),paginationCertified:paginationManaged?overflowAudit.ok:(previewBook.extensions?.paginationCertified??false),paginationStatus:paginationManaged?(overflowAudit.ok?'print-audit-ok':'print-override-overflow'):(previewBook.extensions?.paginationStatus||'manual-layout'),lastPrintOverflowAudit:overflowAudit,printOverride,printOverrideAt:printOverride?new Date().toISOString():null};
+    previewBook.meta=previewBook.meta||{};previewBook.meta.updatedAt=new Date().toISOString();previewBook.extensions={...(previewBook.extensions||{}),lastPrintOverflowAudit:overflowAudit,printOverride,printOverrideAt:printOverride?new Date().toISOString():null};for(const key of['paginationRequired','paginationCertified','paginationStatus','paginationCertifiedAt','paginationCurrentPageCount','paginationCertifiedPageCount','paginationStaleReason','paginationStaleAt'])delete previewBook.extensions[key];
     const runtimeAudit=BookCore.auditData(previewBook);
-    previewBook.extensions={...(previewBook.extensions||{}),livePrintReport:{generatedAt:new Date().toISOString(),sourceSchema:session.book.schemaVersion,sourceMode:state.mode,rendererVersion:BookCore.VERSION,paginationVersion:P.VERSION,renderPath:'bookwriter-v4 → in-memory Blob → standalone BookCore reader',productionBookUntouched:true,printOverride,pages:previewBook.pages.length,items:previewBook.pages.reduce((sum,current)=>sum+(current.items||[]).length,0),overflowAudit,runtimeAudit,validation,coreValidation}};
+    previewBook.extensions={...(previewBook.extensions||{}),livePrintReport:{generatedAt:new Date().toISOString(),sourceSchema:session.book.schemaVersion,sourceMode:state.mode,rendererVersion:BookCore.VERSION,paginationVersion:P.VERSION,renderPath:'bookwriter-v4 → current book snapshot → in-memory Blob → standalone BookCore reader',productionBookUntouched:true,printOverride,pages:previewBook.pages.length,items:previewBook.pages.reduce((sum,current)=>sum+(current.items||[]).length,0),overflowAudit,runtimeAudit,validation,coreValidation,readerCoreValidation}};
     const blobUrl=URL.createObjectURL(new Blob([JSON.stringify(previewBook)],{type:'application/json'}));
     const url=new URL('../reader/index.html',location.href);url.searchParams.set('book',blobUrl);url.searchParams.set('bookBase',assumedBookBase.href);url.searchParams.set('lang','el');url.searchParams.set('_v4print',String(Date.now()));
     previewWindow.location.replace(url.href);setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
-    setStatus(printOverride?`Εκτυπωτική προβολή με άδεια: ${previewBook.pages.length} σελίδες · ${overflowAudit.overflowPages} overflow.`:paginationManaged?`Ζωντανό αυτόνομο βιβλίο: ${previewBook.pages.length} σελίδες · 0 overflow.`:`Ζωντανό αυτόνομο βιβλίο: ${previewBook.pages.length} σελίδες · χειροκίνητη διάταξη.`,printOverride?'warn':'good');
+    setStatus(printOverride?`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · προειδοποίηση ${overflowAudit.overflowPages} overflow.`:`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · 0 overflow.`,printOverride?'warn':'good');
   }catch(error){console.error(error);try{previewWindow.close()}catch{}setStatus('Απέτυχε η εκτυπωτική προβολή','bad');modal('Εκτύπωση / PDF',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
 /* v4.2 Full Editor Core overrides */
@@ -1004,8 +985,8 @@ async function deleteSelected(){
   if(mode) mutate('Διαγραφή σελίδας',book=>C.Operations.deletePage(book,page().id,mode));
 }
 
-function createPreviewPageWrapper(candidatePage,index){
-  const wrapper=BookCore.renderPageNode(session.book,candidatePage,index,{
+function createPreviewPageWrapper(candidatePage,index,renderBook=session.book){
+  const wrapper=BookCore.renderPageNode(renderBook,candidatePage,index,{
     lang:'el',preview:false,editor:true,
     sceneSource:src=>state.realScenes?resolveSceneSource(src):'',
     imageCandidates
@@ -1017,11 +998,11 @@ function createPreviewPageWrapper(candidatePage,index){
   candidatePage.items.forEach((current,itemIdx)=>{
     const rendered=renderedItems[itemIdx];
     if(!rendered) return;
-    rendered.dataset.previewItem=current.id;
+    rendered.dataset.previewItem=current.extensions?.sourceCalloutId||current.id;
     rendered.classList.add('preview-hit-target');
     rendered.addEventListener('click',event=>{
       event.stopPropagation();
-      select(candidatePage.id,current.id,'preview');
+      select(candidatePage.id,current.extensions?.sourceCalloutId||current.id,'preview');
     });
   });
   return wrapper;
@@ -1036,7 +1017,9 @@ function renderPreview(){
     banner.innerHTML=`<b>Migration candidate:</b> ${state.candidateSaved?'αποθηκευμένος':'μόνο στη μνήμη'} · το production book.json δεν άλλαξε.`;
     host.appendChild(banner);
   }
-  session.book.pages.forEach((candidatePage,index)=>host.appendChild(createPreviewPageWrapper(candidatePage,index)));
+  const renderBook=BookCore.expandScreenSequences(session.book);
+  renderBook.pages.forEach((candidatePage,index)=>host.appendChild(createPreviewPageWrapper(candidatePage,index,renderBook)));
+  BookCore.bindCalloutSequences(host);
   if(state.previewZoomMode==='fit') requestAnimationFrame(()=>fitPreviewToWidth(false)); else applyPreviewZoom(false);
   $('#previewCaption').textContent=`BookCore ${BookCore.VERSION} · canonical print DOM · ${Math.round(state.previewZoom*100)}%`;
   updateSelection();
@@ -1045,15 +1028,17 @@ function renderPreview(){
 }
 
 function renderPreviewPageOnly(pageId){
-  const p=session.book.pages.find(x=>x.id===pageId);
+  const renderBook=BookCore.expandScreenSequences(session.book),p=renderBook.pages.find(x=>x.id===pageId);
   if(!p) return;
   const old=document.querySelector(`[data-preview-page="${CSS.escape(pageId)}"]`);
   if(!old){renderPreview();return;}
-  const index=session.book.pages.indexOf(p);
-  const replacement=createPreviewPageWrapper(p,index);
+  const index=renderBook.pages.indexOf(p);
+  const replacement=createPreviewPageWrapper(p,index,renderBook);
   old.replaceWith(replacement);
+  BookCore.bindCalloutSequences(replacement);
   updateSelection();
   requestAnimationFrame(updateSelectionOverlay);
+  schedulePreviewOverflowAudit();
 }
 
 function updateTreeItemLabel(current){
@@ -1864,7 +1849,7 @@ async function createBookFromDocx(){
     const built=D.makeBook(state.docx.result,entries,id,title,{generateToc:$('#docxGenerateToc').checked,tocDepth:Number($('#docxTocDepth').value),preserveHeadingColors:$('#docxPreserveColors').checked});
     built.book.meta={...(built.book.meta||{}),library:{discipline:$('#docxBookDiscipline').value.trim(),level:$('#docxBookLevel').value.trim(),category:$('#docxBookCategory').value.trim(),status:$('#docxBookStatus').value.trim(),tags:$('#docxBookTags').value.split(',').map(x=>x.trim()).filter(Boolean)},authoringVersion:APP_AUTHORING_VERSION};
     const localAssets=new Map();for(const[path,name]of built.imageMap){const url=state.docx.blobUrls.get(path);if(url)localAssets.set('images/'+name,url)}
-    const paged=await P.paginateBook(built.book,{imageCandidates:src=>localAssets.has(src)?[localAssets.get(src)]:src?[src]:[],rejectOverflow:true,tolerancePx:1,assetTimeout:2500});
+    const paged=await P.paginateBook(built.book,{imageCandidates:src=>localAssets.has(src)?[localAssets.get(src)]:src?[src]:[],rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     const finalValidation=M.validateBook(paged.book);if(!finalValidation.ok)throw Error(finalValidation.errors.join('\n'));
     const dir=await root.getDirectoryHandle(id,{create:true}),images=await dir.getDirectoryHandle('images',{create:true});
     for(const[path,name]of built.imageMap){const blob=state.docx.result.imageBlobs.get(path);if(blob)await BookServiceV4.writeNamed(images,name,blob)}
@@ -1872,7 +1857,7 @@ async function createBookFromDocx(){
     await BookServiceV4.writeNamed(dir,'index.html',D.launcher(title,id,false));await BookServiceV4.writeNamed(dir,'Editor.html',D.launcher(title,id,true));
     const report={...D.audit(state.docx.result,entries),bookId:id,title,createdAt:new Date().toISOString(),canonicalValidation:finalValidation,pagination:paged.report,overflowAudit:paged.audit};
     await BookServiceV4.writeNamed(dir,'docx_import_report.json',JSON.stringify(report,null,2));
-    resetDocxState();await attachOpened(dir,fh,paged.book,'canonical',id);await scanLibrary();setStatus(`Το βιβλίο δημιουργήθηκε στη Βιβλιοθήκη: ${paged.book.pages.length} σελίδες · 0 overflow.`,'good');
+    resetDocxState();await attachOpened(dir,fh,paged.book,'canonical',id);await scanLibrary();setStatus(`Το βιβλίο δημιουργήθηκε στη Βιβλιοθήκη: ${paged.book.pages.length} σελίδες · ${paged.audit?.overflowPages||0} overflow.`,paged.audit?.ok?'good':'warn');
   }catch(error){if(error.name==='AbortError')return;console.error(error);setStatus('Αποτυχία δημιουργίας: '+error.message,'bad');modal('Αποτυχία δημιουργίας',`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderChrome()}
 }
 function rebuildGeneratedToc(book){
@@ -1881,7 +1866,7 @@ function rebuildGeneratedToc(book){
   if(!headings.length)return 0;const min=Math.min(...headings.map(h=>h.level)),nodes=[];for(const h of headings){const indent=' '.repeat(Math.max(0,h.level-min)*4);nodes.push({type:'link',href:'#'+h.id,children:[M.createTextRun(indent+h.title,{bold:h.level===min})]},{type:'line_break'})}if(nodes.at(-1)?.type==='line_break')nodes.pop();toc.body=M.createRichText(nodes);toc.extensions={...(toc.extensions||{}),generatedActiveToc:true,regeneratedAt:new Date().toISOString(),headingCount:headings.length};return headings.length
 }
 function certifyInsertionAudit(book,audit,localReport){
-  const now=new Date().toISOString();book.importManifest={...(book.importManifest||{}),pagination:{...(book.importManifest?.pagination||{}),generatedAt:now,outputPages:(book.pages||[]).length,audit,localInsertionPagination:localReport||null}};book.extensions={...(book.extensions||{}),paginationRequired:true,paginationCertified:!!audit?.ok,paginationStatus:audit?.ok?'insertion-audit-ok':'insertion-overflow',paginationCertifiedAt:audit?.ok?now:null,paginationCurrentPageCount:(book.pages||[]).length,lastInsertionAudit:audit};return book
+  const now=new Date().toISOString();book.importManifest={...(book.importManifest||{})};delete book.importManifest.pagination;delete book.importManifest.paginationRequired;book.extensions={...(book.extensions||{}),lastInsertionAudit:audit,lastInsertionAuditAt:now,lastInsertionLocalReport:localReport||null};for(const key of['paginationRequired','paginationCertified','paginationStatus','paginationCertifiedAt','paginationCurrentPageCount','paginationCertifiedPageCount','paginationStaleReason','paginationStaleAt'])delete book.extensions[key];return book
 }
 function insertionImageCandidates(draft){
   const inserted=new Map();for(const[path,name]of draft.imageMap){const url=state.docx.blobUrls.get(path);if(url)inserted.set('images/'+name,url)}
@@ -1898,7 +1883,7 @@ async function previewDocxInsertion(){
     insertion.position=$('#insertPosition').value;
     const draft=D.buildInsertionDraft(session.book,state.docx.result,entries,insertion.anchor,insertion.position,{preserveHeadingColors:$('#docxPreserveColors').checked});
     const sourcePage=draft.book.pages[draft.pageIndex],temporary=clone(draft.book);temporary.pages=[clone(sourcePage)];
-    const paged=await P.paginateBook(temporary,{imageCandidates:insertionImageCandidates(draft),rejectOverflow:true,tolerancePx:1,assetTimeout:2500});
+    const paged=await P.paginateBook(temporary,{imageCandidates:insertionImageCandidates(draft),rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     uniqueInsertionPageIds(draft,paged.book.pages);draft.generatedPages=paged.book.pages;draft.generatedPageIds=paged.book.pages.map(current=>current.id);draft.localPagination={report:paged.report,audit:paged.audit};
     draft.book.pages.splice(draft.pageIndex,1,...paged.book.pages);draft.tocHeadingCount=rebuildGeneratedToc(draft.book);
     draft.fullAudit=await P.auditOverflow(draft.book,{imageCandidates:insertionImageCandidates(draft),tolerancePx:1,assetTimeout:2500});certifyInsertionAudit(draft.book,draft.fullAudit,draft.localPagination);
@@ -1908,7 +1893,7 @@ async function previewDocxInsertion(){
 async function applyDocxInsertion(){
   const draft=state.docx.insertion?.draft;if(!draft)return;
   const allowDuplicate=$('#insertAllowDuplicate')?.checked;if(draft.duplicateEvidence&&!allowDuplicate)return;
-  const overflowNote=draft.fullAudit&&!draft.fullAudit.ok?`<div class="info-card warn"><b>${draft.fullAudit.overflowPages} σελίδες εμφανίζουν overflow:</b><br>${draft.fullAudit.pages.slice(0,8).map(x=>`σελ. ${x.displayPage} · ${x.overflowPx}px`).join('<br>')}<br>Η παρεμβολή επιτρέπεται, αλλά η πιστοποίηση θα μείνει σε κατάσταση insertion-overflow.</div>`:'<div class="info-card good">Ο έλεγχος όλου του βιβλίου ολοκληρώθηκε χωρίς overflow.</div>';
+  const overflowNote=draft.fullAudit&&!draft.fullAudit.ok?`<div class="info-card warn"><b>${draft.fullAudit.overflowPages} σελίδες εμφανίζουν overflow:</b><br>${draft.fullAudit.pages.slice(0,8).map(x=>`σελ. ${x.displayPage} · ${x.overflowPx}px`).join('<br>')}<br>Η παρεμβολή επιτρέπεται και το overflow μένει ως προειδοποίηση για χειροκίνητη διόρθωση.</div>`:'<div class="info-card good">Ο έλεγχος όλου του βιβλίου ολοκληρώθηκε χωρίς overflow.</div>';
   const approved=await confirmBox('Παρεμβολή από Word',`<b>Πηγή:</b> ${esc(state.docx.file.name)}<br><b>Επιλογή:</b> ${esc(docxRangeSummary())}<br><b>Θέση:</b> ${draft.position==='after'?'μετά':'πριν'} από «${esc(draft.anchor.label)}»<br><b>Περιεχόμενα:</b> ${draft.tocHeadingCount?draft.tocHeadingCount+' επικεφαλίδες επανυπολογίστηκαν':'δεν υπάρχει ενεργός generated TOC'}<br><br>${overflowNote}<br>Θα δημιουργηθεί backup, θα αντιγραφούν οι νέες εικόνες και θα αποθηκευτεί το canonical αποτέλεσμα.`,'Παρεμβολή με backup');
   if(!approved)return;
   state.busy=true;renderChrome();setStatus('Backup, αντιγραφή εικόνων και ασφαλής εγγραφή παρεμβολής…','warn');

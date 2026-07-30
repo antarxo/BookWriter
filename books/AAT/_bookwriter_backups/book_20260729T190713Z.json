@@ -1,0 +1,314 @@
+{
+  "schemaVersion": "bookwriter-v4",
+  "schemaRevision": 1,
+  "meta": {
+    "projectId": "AAT",
+    "fileName": "/AAT/book.json",
+    "title": "Απλή Αρμονική Ταλάντωση",
+    "subtitle": "",
+    "defaultLanguage": "el",
+    "authoringVersion": "bookwriter-4.5.0-rc1",
+    "createdAt": "2026-07-29T15:37:37.247Z",
+    "updatedAt": "2026-07-29T18:37:10.356640Z",
+    "library": {
+      "discipline": "Φυσική",
+      "level": "Γ΄ Λυκείου",
+      "category": "ΦΥΛΛΑΔΙΟ",
+      "status": "Προσχέδιο",
+      "tags": []
+    }
+  },
+  "layoutDefaults": {
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "pageWidthPx": 794,
+    "pageHeightPx": 1123,
+    "pagePaddingTopPx": 54,
+    "pagePaddingRightPx": 44,
+    "pagePaddingBottomPx": 54,
+    "pagePaddingLeftPx": 44,
+    "headerTopPx": 20,
+    "headerHeightPx": 16,
+    "footerBottomPx": 18,
+    "footerHeightPx": 16,
+    "headerFontSize": 11,
+    "footerFontSize": 11,
+    "bodyFontSize": 18,
+    "lineHeight": 1.3,
+    "paragraphGap": 6,
+    "sectionGap": 14,
+    "noteGap": 8,
+    "calloutGap": 7,
+    "bodyFontFamily": "serif",
+    "headingFontFamily": "serif",
+    "heroEyebrowFontSize": 13,
+    "heroTitleFontSize": 28,
+    "heroSubtitleFontSize": 16,
+    "heroTitleFontFamily": "serif",
+    "partKickerFontSize": 10,
+    "partTitleFontSize": 24,
+    "partTitleFontFamily": "classic",
+    "sectionHeadingFontSize": 18,
+    "sectionHeadingFontFamily": "serif",
+    "noteFontSize": 14,
+    "noteLineHeight": 1.42,
+    "noteLabelFontSize": 10.5,
+    "captionFontSize": 12,
+    "calloutFontSize": 11.5,
+    "calloutTitleFontSize": 10.5,
+    "calloutLabelFontSize": 10,
+    "calloutChipFontSize": 10,
+    "calloutObserveTitleFontSize": 10,
+    "showPageNumbers": true
+  },
+  "pageDefaults": {
+    "header": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": ""
+    },
+    "footer": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": "{page}"
+    },
+    "pageNumbering": {
+      "enabled": true,
+      "startAt": 1,
+      "position": "footer-right",
+      "hideOnFirstPage": false
+    }
+  },
+  "nav": {
+    "mode": "auto",
+    "showApp": true,
+    "showPrint": true,
+    "groups": []
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "hero-1",
+          "type": "hero",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "eyebrow": "",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "subtitle": "",
+          "layout": {
+            "floatInteraction": "wrap"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aat-main-page",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-main-heading",
+          "type": "section_heading",
+          "nav": {
+            "show": true,
+            "label": "Απλή Αρμονική Ταλάντωση"
+          },
+          "text": "Από τον ταλαντωτή στην κυκλική προβολή"
+        },
+        {
+          "id": "aat-main-scene",
+          "type": "scene",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "src": "https://antarxo.github.io/oscillator_scenes/?state=spring&play=1",
+          "singleSrc": "https://antarxo.github.io/oscillator_scenes/?state=spring&play=1",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "caption": "Χρησιμοποίησε τα κουμπιά στο κάτω μέρος της σκηνής.",
+          "hideCaption": false,
+          "placement": "wide",
+          "frameWidth": 706,
+          "layout": {
+            "placement": "wide",
+            "wrap": false,
+            "floatInteraction": "block",
+            "widthPx": 706,
+            "aspectRatio": 1.6666666666666667
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        },
+        {
+          "id": "aat-callout-1",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "1. Ο ταλαντωτής",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [
+            "Επαναφορά"
+          ],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "▶",
+            "⏸"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Παρατήρησε τις ακραίες θέσεις και τη θέση στην οποία η ταχύτητα γίνεται μέγιστη."
+          ]
+        },
+        {
+          "id": "aat-callout-2",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "2. Ο άξονας αναφοράς",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "Άξονας"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
+          ]
+        },
+        {
+          "id": "aat-callout-3",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "3. Η κυκλική κίνηση",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "Κύκλος"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Σύγκρινε την ακτίνα του κύκλου με το πλάτος A και τις περιόδους των δύο κινήσεων."
+          ]
+        },
+        {
+          "id": "aat-callout-4",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "4. Η προβολή",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "Προβολή"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Παρακολούθησε τη στικτή οριζόντια γραμμή: η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
+          ]
+        },
+        {
+          "id": "aat-callout-5",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "5. Το γράφημα x(t)",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "Γράφημα"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Παρακολούθησε το ενεργό σημείο του γραφήματος και την επανάληψη της κίνησης ανά περίοδο T."
+          ]
+        },
+        {
+          "id": "aat-callout-6",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "6. Η αρχική φάση",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [
+            "φ₀"
+          ],
+          "pressLabel": "Πίεσε",
+          "pressChips": [
+            "Αρχική φάση",
+            "Τώρα → t=0"
+          ],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [
+            "Συσχέτισε την αρχική θέση x₀ και το πρόσημο της υ₀ με την αρχική θέση πάνω στον κύκλο."
+          ]
+        }
+      ]
+    }
+  ],
+  "importManifest": {
+    "version": 1,
+    "insertions": []
+  },
+  "extensions": {}
+}

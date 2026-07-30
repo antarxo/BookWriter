@@ -241,13 +241,6 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
 .callout-observe-title{font:700 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#7b5c2a;margin-right:6px}
 .callout-observe ul{margin:6px 0 0 18px;padding:0}
 .callout-observe li{margin:4px 0;font-style:italic}
-.callout-sequence{padding:7px 8px}
-.callout-sequence-head{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 7px}
-.callout-sequence-dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
-.callout-sequence-arrow,.callout-sequence-dot{appearance:none;border:1px solid #c8d8e2;background:#fff;color:#29414f;border-radius:999px;min-width:24px;height:24px;padding:0 7px;font:800 11px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
-.callout-sequence-dot.active{background:#2f698f;color:#fff;border-color:#2f698f}
-.callout-sequence-step{display:none}
-.callout-sequence-step.active{display:block}
 .clear{clear:both}
 .nav-anchor{display:block;position:relative;height:0;overflow:hidden;scroll-margin-top:120px}
 .sheet-wrap[id],.sheet-body [id],.nav-anchor[id]{scroll-margin-top:120px}
@@ -315,8 +308,6 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
     font-size:var(--footer-font-size) !important;
   }
   figure.media,.note,.side-note,.callout,.hero,.part-head,.section-heading{break-inside:avoid; page-break-inside:avoid}
-  .callout-sequence-head{display:none!important}
-  .callout-sequence-step{display:block!important}
   .media-frame.print-ready iframe{display:none !important}
   .media-frame img{object-fit:contain !important; background:#fff !important}
   .media-frame.scene-frame::after{
@@ -387,6 +378,7 @@ figure.media figcaption{
       <input type="file" id="localBookInput" accept="application/json,.json">
     </div>
   </main>
+  <div id="printSandbox" aria-hidden="true" style="position:fixed;left:-20000px;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none;opacity:0"></div>
 <script src="../core/book-core.js"></script>
 <script src="../core/snapshot-transport.js"></script>
 <script>
@@ -394,6 +386,7 @@ figure.media figcaption{
 const pageStack=document.getElementById('pageStack');
 const megaNav=document.getElementById('megaNav');
 const statusEl=document.getElementById('status');
+const printSandbox=document.getElementById('printSandbox');
 const localBookLoader=document.getElementById('localBookLoader');
 const localBookInput=document.getElementById('localBookInput');
 const langElBtn=document.getElementById('langElBtn');
@@ -562,54 +555,239 @@ async function waitForFigureImages(){
 }
 const SNAPSHOT_PATHS = BookSnapshotTransport.PATHS;
 let lastSnapshotReport = null;
+let printSnapshotAttempted = false;
+let printSnapshotOverrideAccepted = false;
 
-async function captureIframeWithRetry(iframe, options={}){
-  const maxAttempts = Math.max(1, Number(options.attempts) || 1);
-  const mergedAttempts = [];
-  let lastResult = null;
-  let bestResult = null;
-  const accepts = typeof options.accepts === 'function' ? options.accepts : (()=>true);
-  for(let attemptIndex=0; attemptIndex<maxAttempts; attemptIndex++){
-    lastResult = await BookSnapshotTransport.capture(iframe, {
-      timeoutMs:options.timeoutMs
-    });
-    mergedAttempts.push(...lastResult.attempts.map(attempt=>({
-      ...attempt,
-      attemptIndex:attemptIndex+1
-    })));
-    if(lastResult.result === 'success'){
-      const accepted = accepts(lastResult);
-      if(accepted) return { ...lastResult, attempts:mergedAttempts, bestOf:attemptIndex+1 };
-      if(!bestResult || String(lastResult.dataUrl||'').length > String(bestResult.dataUrl||'').length) bestResult = lastResult;
-    }else if(lastResult.reason === 'timeout' || lastResult.reason === 'scene-load-error' || lastResult.reason === 'iframe-unavailable'){
-      break;
+function isSnapshotDataUrl(value){
+  return typeof value === 'string' && /^data:image\//i.test(value);
+}
+function promiseWithTimeout(promise, timeoutMs, reason='timeout'){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(fn,value)=>{
+      if(settled) return;
+      settled=true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    const timer=setTimeout(()=>finish(reject,new Error(reason)),Math.max(250,Number(timeoutMs)||1800));
+    Promise.resolve(promise).then(
+      value=>finish(resolve,value),
+      error=>finish(reject,error)
+    );
+  });
+}
+async function captureIframeDirect(iframe, timeoutMs=1800){
+  const started=performance?.now?.() ?? Date.now();
+  let win=null;
+  try{ win=iframe?.contentWindow || null; }catch(_e){}
+  if(!win) return null;
+
+  let candidates=[];
+  try{
+    candidates=[
+      [win?.BookScene?.getPrintSnapshot,win?.BookScene,'BookScene.getPrintSnapshot'],
+      [win?.getBookPrintSnapshot,win,'getBookPrintSnapshot'],
+      [win?.EMWaveApp?.getPrintSnapshot,win?.EMWaveApp,'EMWaveApp.getPrintSnapshot']
+    ];
+  }catch(_e){
+    // Cross-origin iframe: direct access is unavailable; caller will use postMessage.
+    return null;
+  }
+  const candidate=candidates.find(([fn])=>typeof fn==='function');
+  if(!candidate) return null;
+  const [fn,owner,label]=candidate;
+  try{
+    const dataUrl=await promiseWithTimeout(
+      Promise.resolve(fn.call(owner)),
+      timeoutMs,
+      'direct-snapshot-timeout'
+    );
+    const durationMs=Math.round((performance?.now?.() ?? Date.now())-started);
+    if(!isSnapshotDataUrl(dataUrl)){
+      return {
+        requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+        executedPath:null,
+        result:'failure',
+        reason:'direct-invalid-snapshot',
+        fallbackUsed:false,
+        attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:'direct-invalid-snapshot',transport:'same-origin-direct',directMethod:label,durationMs}],
+        dataUrl:null,
+        directAvailable:true
+      };
     }
-    if(attemptIndex < maxAttempts-1) await wait(Number(options.retryDelayMs)||450);
-  }
-  if(bestResult){
-    return { ...bestResult, attempts:mergedAttempts, bestOf:maxAttempts };
-  }
-  return {
-    ...(lastResult || {
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      result:'success',
+      reason:null,
+      fallbackUsed:false,
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'success',reason:null,transport:'same-origin-direct',directMethod:label,durationMs}],
+      dataUrl,
+      directAvailable:true
+    };
+  }catch(error){
+    const durationMs=Math.round((performance?.now?.() ?? Date.now())-started);
+    return {
       requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
       executedPath:null,
       result:'failure',
-      reason:'no-attempt',
+      reason:String(error?.message || error || 'direct-snapshot-error'),
       fallbackUsed:false,
-      dataUrl:null
-    }),
-    attempts:mergedAttempts
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:String(error?.message || error || 'direct-snapshot-error'),transport:'same-origin-direct',directMethod:label,durationMs}],
+      dataUrl:null,
+      directAvailable:true
+    };
+  }
+}
+async function captureIframeFast(iframe, options={}){
+  const direct=await captureIframeDirect(iframe,options.directTimeoutMs || 1800);
+  if(direct?.directAvailable) return direct;
+  return await BookSnapshotTransport.capture(iframe,{
+    timeoutMs:options.messageTimeoutMs || 2500
+  });
+}
+
+function cleanupPrintSandbox(){
+  if(!printSandbox) return;
+  printSandbox.replaceChildren();
+  printSandbox.style.width='1px';
+  printSandbox.style.height='1px';
+}
+async function captureCloneIframe(iframe, timeoutMs=5000){
+  const attempts=[];
+  for(let retry=0; retry<3; retry++){
+    if(retry) await wait(180 + retry * 120);
+    const direct=await captureIframeDirect(iframe,timeoutMs);
+    if(direct){
+      attempts.push(...(direct.attempts || []));
+      if(direct.result==='success' && isSnapshotDataUrl(direct.dataUrl)){
+        return {
+          ...direct,
+          attempts,
+          cloneRetry:retry,
+          sourceMode:'isolated-clone'
+        };
+      }
+    }
+  }
+
+  const viaMessage=await BookSnapshotTransport.capture(iframe,{timeoutMs});
+  attempts.push(...(viaMessage?.attempts || []));
+  if(viaMessage?.result==='success' && isSnapshotDataUrl(viaMessage.dataUrl)){
+    return {
+      ...viaMessage,
+      attempts,
+      cloneRetry:3,
+      sourceMode:'isolated-clone'
+    };
+  }
+  return {
+    requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+    executedPath:null,
+    result:'failure',
+    reason:viaMessage?.reason || attempts.at(-1)?.reason || 'isolated-clone-snapshot-failed',
+    fallbackUsed:false,
+    attempts,
+    dataUrl:null,
+    directAvailable:true,
+    sourceMode:'isolated-clone'
   };
 }
+async function buildSceneSnapshotFromValidatedClone(src='', sourceFrame=null){
+  if(!printSandbox || !src){
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:'isolated-clone-unavailable',
+      fallbackUsed:false,
+      attempts:[],
+      dataUrl:null,
+      sourceMode:'isolated-clone'
+    };
+  }
+  cleanupPrintSandbox();
 
-function sceneSnapshotGraphPass(result){
-  const expectedGraphs = Array.isArray(result?.meta?.expectedGraphKeys) ? result.meta.expectedGraphKeys : [];
-  const visibleGraphs = Array.isArray(result?.meta?.visibleGraphKeys) ? result.meta.visibleGraphKeys : [];
-  return !expectedGraphs.length || expectedGraphs.every(key=>visibleGraphs.includes(key));
+  const liveRect=sourceFrame?.getBoundingClientRect ? sourceFrame.getBoundingClientRect() : null;
+  const liveW=Math.max(1,Math.round(liveRect?.width || 340));
+  const liveH=Math.max(1,Math.round(liveRect?.height || Math.round(liveW * 1.15)));
+
+  const maxSandboxW=1600;
+  const maxSandboxH=2200;
+  const scale=Math.max(2,Math.min(4,Math.floor(maxSandboxW / liveW) || 2));
+  let cloneW=Math.max(liveW * scale,liveW);
+  let cloneH=Math.max(liveH * scale,liveH);
+
+  if(cloneW > maxSandboxW){
+    const k=maxSandboxW / cloneW;
+    cloneW=Math.round(cloneW * k);
+    cloneH=Math.round(cloneH * k);
+  }
+  if(cloneH > maxSandboxH){
+    const k=maxSandboxH / cloneH;
+    cloneW=Math.round(cloneW * k);
+    cloneH=Math.round(cloneH * k);
+  }
+
+  printSandbox.style.width=`${cloneW}px`;
+  printSandbox.style.height=`${cloneH}px`;
+
+  const holder=document.createElement('div');
+  holder.style.cssText=`width:${cloneW}px;height:${cloneH}px;overflow:hidden;background:#fff;display:block`;
+
+  const iframe=document.createElement('iframe');
+  iframe.loading='eager';
+  iframe.referrerPolicy='no-referrer';
+  iframe.allow='fullscreen';
+  iframe.dataset.sceneLoadState='loading';
+  iframe.addEventListener('load',()=>{iframe.dataset.sceneLoadState='loaded';},{once:true});
+  iframe.addEventListener('error',()=>{iframe.dataset.sceneLoadState='error';},{once:true});
+  iframe.style.cssText=`width:${cloneW}px;height:${cloneH}px;border:0;display:block;background:#fff`;
+  iframe.src=withCacheBust(src);
+
+  holder.appendChild(iframe);
+  printSandbox.appendChild(holder);
+
+  try{
+    const loadState=await waitForIframeLoad(iframe,5000);
+    if(loadState==='error'){
+      return {
+        requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+        executedPath:null,
+        result:'failure',
+        reason:'isolated-clone-load-error',
+        fallbackUsed:false,
+        attempts:[],
+        dataUrl:null,
+        sourceMode:'isolated-clone'
+      };
+    }
+
+    // This 650 ms settling delay is the value used by the validated pre-cleanup print path.
+    await wait(650);
+    const capture=await captureCloneIframe(iframe,5000);
+    const taggedAttempts=(capture.attempts || []).map(attempt=>({
+      ...attempt,
+      transport:attempt.transport==='same-origin-direct'
+        ? 'isolated-clone-direct'
+        : (attempt.transport || 'isolated-clone-message')
+    }));
+    return {
+      ...capture,
+      fallbackUsed:false,
+      attempts:taggedAttempts,
+      sourceMode:'isolated-clone',
+      cloneSource:src
+    };
+  }finally{
+    holder.remove();
+    cleanupPrintSandbox();
+    await wait(80);
+  }
 }
-
 async function captureSceneFrame(frame){
-  const liveIframe = frame?.querySelector('iframe');
+  const liveIframe=frame?.querySelector('iframe');
   if(!liveIframe){
     return {
       requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
@@ -621,27 +799,49 @@ async function captureSceneFrame(frame){
       dataUrl:null
     };
   }
-  const loadState = await waitForIframeLoad(liveIframe);
-  if(loadState === 'error'){
+
+  const loadState=await waitForIframeLoad(liveIframe,2500);
+  if(loadState!=='error'){
+    const liveCapture=await captureIframeFast(liveIframe,{
+      directTimeoutMs:2200,
+      messageTimeoutMs:2800
+    });
+    if(liveCapture?.result==='success' && isSnapshotDataUrl(liveCapture.dataUrl)){
+      return {
+        ...liveCapture,
+        fallbackUsed:false,
+        sourceMode:'live-iframe'
+      };
+    }
+
+    // The validated implementation did not stop when a live WebGL iframe had
+    // lost its context. It rebuilt exactly that scene in one temporary iframe.
+    const exactSource=liveIframe.src || normalizeAppSrc(liveIframe.getAttribute('src') || '');
+    const cloneCapture=await buildSceneSnapshotFromValidatedClone(exactSource,frame);
+    if(cloneCapture?.result==='success' && isSnapshotDataUrl(cloneCapture.dataUrl)){
+      return {
+        ...cloneCapture,
+        fallbackUsed:false,
+        attempts:[
+          ...(liveCapture?.attempts || []),
+          ...(cloneCapture.attempts || [])
+        ],
+        recoveredFrom:liveCapture?.reason || liveCapture?.result || 'live-snapshot-failed'
+      };
+    }
     return {
-      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
-      executedPath:null,
-      result:'failure',
-      reason:'scene-load-error',
+      ...cloneCapture,
       fallbackUsed:false,
-      attempts:[],
-      dataUrl:null
+      attempts:[
+        ...(liveCapture?.attempts || []),
+        ...(cloneCapture?.attempts || [])
+      ],
+      reason:`live:${liveCapture?.reason || liveCapture?.result || 'failed'}; clone:${cloneCapture?.reason || cloneCapture?.result || 'failed'}`
     };
   }
-  const attempts = Math.max(1, Math.min(5, Number(frame?.dataset?.snapshotAttempts) || 3));
-  const timeoutMs = Math.max(1200, Math.min(12000, Number(frame?.dataset?.snapshotTimeoutMs) || 6000));
-  const retryDelayMs = Math.max(120, Math.min(3000, Number(frame?.dataset?.snapshotRetryDelayMs) || 550));
-  return captureIframeWithRetry(liveIframe, {
-    attempts,
-    timeoutMs,
-    retryDelayMs,
-    accepts:sceneSnapshotGraphPass
-  });
+
+  const exactSource=liveIframe.src || normalizeAppSrc(liveIframe.getAttribute('src') || '');
+  return buildSceneSnapshotFromValidatedClone(exactSource,frame);
 }
 let printSnapshotsPrepared = false;
 let printFlowRunning = false;
@@ -654,7 +854,10 @@ function clearPrintSnapshots(){
 }
 function cleanupPrintSnapshots(){
   clearPrintSnapshots();
+  cleanupPrintSandbox();
   printFlowRunning = false;
+  printSnapshotAttempted = false;
+  printSnapshotOverrideAccepted = false;
 }
 async function preparePrintSnapshots(forceOrOptions=false){
   const force = forceOrOptions && typeof forceOrOptions === 'object'
@@ -665,6 +868,8 @@ async function preparePrintSnapshots(forceOrOptions=false){
     return lastSnapshotReport.successes;
   }
   clearPrintSnapshots();
+  printSnapshotAttempted = true;
+  printSnapshotOverrideAccepted = false;
   await waitForFigureImages();
 
   const frames = Array.from(document.querySelectorAll('.media-frame.scene-frame'));
@@ -675,10 +880,12 @@ async function preparePrintSnapshots(forceOrOptions=false){
     const frame = frames[sceneIndex];
     const liveIframe = frame.querySelector('iframe');
     if(!liveIframe) continue;
+    setStatus(contentLang==='en'
+      ? `Preparing scene snapshot ${sceneIndex+1}/${frames.length}…`
+      : `Ετοιμάζεται στιγμιότυπο σκηνής ${sceneIndex+1}/${frames.length}…`);
 
     const capture = await captureSceneFrame(frame);
     const exactPath = capture.executedPath === requestedPath;
-    const graphPass = sceneSnapshotGraphPass(capture);
     const sceneReport = {
       sceneIndex:sceneIndex+1,
       source:liveIframe.getAttribute('src') || '',
@@ -687,11 +894,11 @@ async function preparePrintSnapshots(forceOrOptions=false){
       attempts:capture.attempts,
       result:capture.result,
       reason:capture.reason || null,
-      meta:capture.meta || null,
       fallbackUsed:Boolean(capture.fallbackUsed),
-      pass:capture.result === 'success' && exactPath && graphPass
+      sourceMode:capture.sourceMode || null,
+      recoveredFrom:capture.recoveredFrom || null,
+      pass:capture.result === 'success' && exactPath
     };
-    if(!graphPass) sceneReport.reason = 'incomplete-scene-graph-render';
     sceneReports.push(sceneReport);
     if(!capture.dataUrl) continue;
 
@@ -750,6 +957,8 @@ window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
     scenes: document.querySelectorAll('.media-frame.scene-frame').length,
     preparedSnapshots: document.querySelectorAll('.media-frame.scene-frame.print-ready .print-scene-snapshot').length,
     ready: printSnapshotsPrepared,
+    attempted:printSnapshotAttempted,
+    overrideAccepted:printSnapshotOverrideAccepted,
     lastReport:lastSnapshotReport
   })
 });
@@ -790,22 +999,12 @@ function requestSnapshotPrintOverride(error=null){
     : '\n\nContinue printing?';
   return window.confirm(`${title}\n${counts}${details}${consequence}${question}`);
 }
-function ensurePrintSequenceExpansion(){
-  if(!bookData) return;
-  const expanded = BookCore.expandPrintSequences(bookData);
-  if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
-  bookData = expanded;
-  renderPages(bookData);
-  deriveNav(bookData);
-  updateActiveNav();
-}
 async function beginPrintFlow(){
   if(printFlowRunning) return;
   printFlowRunning = true;
   setStatus('Ετοιμάζονται στατικά στιγμιότυπα για την εκτύπωση…');
   let snapshotOverride = false;
   try{
-    ensurePrintSequenceExpansion();
     await preparePrintSnapshots(true);
     if(!lastSnapshotReport?.pass){
       console.warn('book-scene-v1 incomplete snapshot report',lastSnapshotReport);
@@ -829,6 +1028,7 @@ async function beginPrintFlow(){
     }
     snapshotOverride = true;
   }
+  printSnapshotOverrideAccepted = snapshotOverride;
   setStatus(snapshotOverride
     ? (contentLang==='en'
       ? 'Printing continues with explicit permission despite incomplete scene snapshots.'
@@ -841,9 +1041,8 @@ function resolveAppHref(){
 }
 window.addEventListener('beforeprint', ()=>{
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
-  if(!printSnapshotsPrepared){
-    try{ preparePrintSnapshots(false); }catch(_e){}
-  }
+  // Never start a second asynchronous snapshot pass from beforeprint.
+  // The visible print command, File menu and Ctrl+P already run beginPrintFlow().
 });
 window.addEventListener('afterprint', ()=>{
   cleanupPrintSnapshots();
@@ -930,29 +1129,11 @@ function applyReaderOverflowMarkers(data){
   pageStack.querySelectorAll('.render-overflow-marker').forEach(node=>node.remove());pageStack.querySelectorAll('.reader-overflow-page').forEach(node=>node.classList.remove('reader-overflow-page'));
   const audit=data?.extensions?.lastPrintOverflowAudit;for(const entry of audit?.pages||[]){const wrapper=(data.pages||[])[entry.pageIndex]?pageStack.children[entry.pageIndex]:null;if(wrapper)addReaderOverflowMarker(wrapper,entry)}
 }
-function renderReaderOverflowSummary(audit){
-  if(!audit||!audit.overflowPages){setStatus(`${contentLang==='en'?'Pages':'Σελίδες'}: ${(bookData.pages||[]).length}`);return}
-  const pages=(audit.pages||[]).slice(0,8).map(entry=>Number(entry.displayPage||entry.pageIndex+1)).join(', ');
-  setStatus(`${contentLang==='en'?'Pages':'Σελίδες'}: ${(bookData.pages||[]).length} · overflow: ${pages}${audit.pages.length>8?` +${audit.pages.length-8}`:''}`);
-}
 function collectRenderMetrics(){
   return [...pageStack.querySelectorAll('.book-page-root')].map((root,pageIndex)=>{const sheet=root.querySelector('.sheet'),body=root.querySelector('.sheet-body'),cs=getComputedStyle(root),s=sheet.getBoundingClientRect(),b=body.getBoundingClientRect(),sw=parseFloat(cs.getPropertyValue('--sheet-width'))||794,sh=parseFloat(cs.getPropertyValue('--sheet-height'))||1123,pb=parseFloat(cs.getPropertyValue('--sheet-pad-bottom'))||0,scale=s.width/sw,safe=s.top+(sh-pb)*scale,last=[...body.children].at(-1),lr=last?.getBoundingClientRect();return{pageIndex,pageId:root.id,scale,usedPx:(b.bottom-b.top)/scale,overflowPx:(b.bottom-safe)/scale,lastItemId:last?.dataset.bookItemId||null,lastItemType:last?.dataset.bookItemType||null,lastBottomPx:lr?(lr.bottom-s.top)/scale:null}})
 }
 const readerRenderDiagnostics={screen:null,print:null,diff:null};
 function refreshScreenDiagnostics(){readerRenderDiagnostics.screen=collectRenderMetrics();window.BookRenderDiagnostics=readerRenderDiagnostics}
-function refreshReaderOverflowFromScreen(){
-  const pages=collectRenderMetrics().filter(entry=>entry.overflowPx>1).map(entry=>({
-    pageIndex:entry.pageIndex,
-    displayPage:entry.pageIndex+1,
-    overflowPx:Math.round(entry.overflowPx*10)/10,
-    pageId:entry.pageId,
-    bottomItemId:entry.lastItemId,
-    bottomItemType:entry.lastItemType
-  }));
-  const audit={ok:pages.length===0,pagesChecked:(bookData.pages||[]).length,overflowPages:pages.length,pages};
-  applyReaderOverflowMarkers({pages:bookData.pages,extensions:{lastPrintOverflowAudit:audit}});
-  renderReaderOverflowSummary(audit);
-}
 
 function renderPages(data){
   const count=BookCore.renderPages(pageStack, data, {
@@ -960,8 +1141,7 @@ function renderPages(data){
     sceneSource:src=>withCacheBust(normalizeAppSrc(src)),
     imageCandidates:src=>imageSrcCandidates(src)
   });
-  BookCore.bindCalloutSequences(pageStack);
-  applyReaderOverflowMarkers(data);requestAnimationFrame(()=>{refreshScreenDiagnostics();refreshReaderOverflowFromScreen();});return count;
+  applyReaderOverflowMarkers(data);requestAnimationFrame(refreshScreenDiagnostics);return count;
 }
 
 function appendNavTools(data){
@@ -1315,8 +1495,7 @@ function applyLayoutDefaults(defs){
 function mountBook(loaded){
   const validation=BookCore.validateData(loaded);
   if(!validation.ok) throw new Error(validation.errors.join(' '));
-  const normalized=BookCore.normalizeData(loaded);
-  const data=initialParams.has('_v4print') ? BookCore.expandPrintSequences(normalized) : BookCore.expandScreenSequences(normalized);
+  const data=BookCore.normalizeData(loaded);
   bookData = data;
   const defs=data.layoutDefaults || {};
   document.title = getLoc(data.meta,'title','Βιβλίο');

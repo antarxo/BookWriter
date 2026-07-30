@@ -6,10 +6,12 @@
     "fileName": "/book_445/book.json",
     "title": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026",
     "subtitle": "Εισαγωγή από DOCX",
+    "eyebrow": "",
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T00:45:40.774Z",
     "updatedAt": "2026-07-29T15:12:31.681Z",
+    "appHref": "",
     "library": {
       "discipline": "Φυσική",
       "level": "Γ΄ Λυκείου",
@@ -62484,7 +62486,6 @@
       }
     ],
     "mergeReady": true,
-    "paginationRequired": true,
     "converter": "author-workspace-v4.4.5-numbering-media-flow-probe",
     "metrics": {
       "sourcePages": 42,
@@ -62504,26 +62505,7 @@
       "textBoxesImported": 2,
       "textBoxLabelsRetained": 29
     },
-    "pagination": {
-      "version": "1.1.0-canonical-reflow-fast",
-      "generatedAt": "2026-07-29T00:45:45.791Z",
-      "sourcePages": 2,
-      "outputPages": 50,
-      "splitItems": 0,
-      "splitByType": {},
-      "resizedFigures": 0,
-      "oversizeItems": [],
-      "hardBreaks": 0,
-      "rendererVersion": "0.2.2-direct-v4-numbering-media-flow",
-      "audit": {
-        "ok": true,
-        "pagesChecked": 50,
-        "overflowPages": 0,
-        "pages": [],
-        "rendererVersion": "0.2.2-direct-v4-numbering-media-flow",
-        "paginationVersion": "1.1.0-canonical-reflow-fast"
-      }
-    }
+    "insertions": []
   },
   "extensions": {
     "docxHeadingPalette": {
@@ -62603,12 +62585,6 @@
       "bodyFontSize": 14.666666666666666,
       "lineHeight": 1.15,
       "paragraphGap": 13.333333333333334
-    },
-    "paginationRequired": true,
-    "paginationCertified": false,
-    "paginationStatus": "stale",
-    "paginationStaleReason": "stored-pagination-page-count-mismatch",
-    "paginationCurrentPageCount": 42,
-    "paginationCertifiedPageCount": 50
+    }
   }
 }

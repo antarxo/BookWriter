@@ -1,0 +1,320 @@
+{
+  "schemaVersion": "bookwriter-v4",
+  "schemaRevision": 1,
+  "meta": {
+    "projectId": "AAT",
+    "fileName": "/AAT/book.json",
+    "title": "Απλή Αρμονική Ταλάντωση",
+    "subtitle": "Από τον ταλαντωτή (m, k) στην κυκλική προβολή και την αρχική φάση",
+    "defaultLanguage": "el",
+    "authoringVersion": "bookwriter-4.5.0-rc1",
+    "createdAt": "2026-07-29T15:37:37.247Z",
+    "updatedAt": "2026-07-29T17:13:05.489Z",
+    "library": {
+      "discipline": "Φυσική",
+      "level": "Γ΄ Λυκείου",
+      "category": "ΦΥΛΛΑΔΙΟ",
+      "status": "Προσχέδιο",
+      "tags": []
+    }
+  },
+  "layoutDefaults": {
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "pageWidthPx": 794,
+    "pageHeightPx": 1123,
+    "pagePaddingTopPx": 54,
+    "pagePaddingRightPx": 44,
+    "pagePaddingBottomPx": 54,
+    "pagePaddingLeftPx": 44,
+    "headerTopPx": 20,
+    "headerHeightPx": 16,
+    "footerBottomPx": 18,
+    "footerHeightPx": 16,
+    "headerFontSize": 11,
+    "footerFontSize": 11,
+    "bodyFontSize": 18,
+    "lineHeight": 1.3,
+    "paragraphGap": 6,
+    "sectionGap": 14,
+    "noteGap": 8,
+    "calloutGap": 7,
+    "bodyFontFamily": "serif",
+    "headingFontFamily": "serif",
+    "heroEyebrowFontSize": 13,
+    "heroTitleFontSize": 28,
+    "heroSubtitleFontSize": 16,
+    "heroTitleFontFamily": "serif",
+    "partKickerFontSize": 10,
+    "partTitleFontSize": 24,
+    "partTitleFontFamily": "classic",
+    "sectionHeadingFontSize": 18,
+    "sectionHeadingFontFamily": "serif",
+    "noteFontSize": 14,
+    "noteLineHeight": 1.42,
+    "noteLabelFontSize": 10.5,
+    "captionFontSize": 12,
+    "calloutFontSize": 11.5,
+    "calloutTitleFontSize": 10.5,
+    "calloutLabelFontSize": 10,
+    "calloutChipFontSize": 10,
+    "calloutObserveTitleFontSize": 10,
+    "showPageNumbers": true
+  },
+  "pageDefaults": {
+    "header": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": ""
+    },
+    "footer": {
+      "inherit": false,
+      "left": "",
+      "center": "",
+      "right": "{page}"
+    },
+    "pageNumbering": {
+      "enabled": true,
+      "startAt": 1,
+      "position": "footer-right",
+      "hideOnFirstPage": false
+    }
+  },
+  "nav": {
+    "mode": "auto",
+    "showApp": true,
+    "showPrint": true,
+    "groups": []
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "hero-1",
+          "type": "hero",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "eyebrow": "",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "subtitle": ""
+        }
+      ]
+    },
+    {
+      "id": "aat-main-page",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-main-heading",
+          "type": "section_heading",
+          "nav": {
+            "show": true,
+            "label": "Απλή Αρμονική Ταλάντωση"
+          },
+          "title": "Από τον ταλαντωτή στην κυκλική προβολή",
+          "level": 2
+        },
+        {
+          "id": "aat-guided-callout",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "Διερεύνησε βήμα προς βήμα",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [],
+          "sequenceSceneId": "aat-main-scene",
+          "sequenceInitialStep": 0,
+          "sequenceSteps": [
+            {
+              "title": "1. Ο ταλαντωτής",
+              "preset": "spring",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "setupChips": [
+                "Επαναφορά"
+              ],
+              "pressChips": [
+                "▶ Έναρξη",
+                "⏸ Παύση"
+              ],
+              "observeItems": [
+                "Εντόπισε τη θέση ισορροπίας και τις ακραίες θέσεις ±A.",
+                "Παρατήρησε πού η ταχύτητα είναι μέγιστη και πού μηδενίζεται."
+              ]
+            },
+            {
+              "title": "2. Ο άξονας αναφοράς",
+              "preset": "spring",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Άξονας"
+              ],
+              "observeItems": [
+                "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
+              ]
+            },
+            {
+              "title": "3. Η κυκλική κίνηση",
+              "preset": "spring_axis",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Κύκλος",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Σύγκρινε την ακτίνα του κύκλου με το πλάτος A.",
+                "Έλεγξε ότι η κυκλική κίνηση και η ταλάντωση έχουν την ίδια περίοδο."
+              ]
+            },
+            {
+              "title": "4. Η προβολή",
+              "preset": "spring_circle",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Προβολή",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Παρακολούθησε τη στικτή οριζόντια γραμμή.",
+                "Έλεγξε ότι η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
+              ]
+            },
+            {
+              "title": "5. Το γράφημα x(t)",
+              "preset": "spring_projection",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Γράφημα",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Παρακολούθησε το ενεργό σημείο του γραφήματος.",
+                "Έλεγξε την επανάληψη της παράστασης ανά περίοδο T."
+              ]
+            },
+            {
+              "title": "6. Η αρχική φάση",
+              "preset": "spring_graph",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Αρχική φάση",
+                "Τώρα → t=0"
+              ],
+              "observeItems": [
+                "Άλλαξε τη φ₀ και συσχέτισε την x₀ και το πρόσημο της υ₀ με την αρχική θέση στον κύκλο.",
+                "Πάτησε «Τώρα → t=0» σε διαφορετικές στιγμές και έλεγξε ότι αλλάζει η αρχή της περιγραφής, όχι η ίδια η κίνηση."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "aat-main-scene",
+          "type": "scene",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "src": "https://antarxo.github.io/oscillator_scenes/?state=spring&play=0",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
+          "hideCaption": false,
+          "layout": {
+            "placement": "wide",
+            "wrap": false,
+            "floatInteraction": "block",
+            "widthPx": 706,
+            "aspectRatio": "1.44"
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        }
+      ]
+    }
+  ],
+  "importManifest": {
+    "version": 1,
+    "insertions": []
+  },
+  "extensions": {
+    "aatScene": {
+      "version": 1,
+      "mode": "one-live-scene",
+      "application": "https://antarxo.github.io/oscillator_scenes/",
+      "states": [
+        "spring",
+        "spring_axis",
+        "spring_circle",
+        "spring_projection",
+        "spring_graph",
+        "spring_phase"
+      ],
+      "printExpansionStatus": "not-yet-bound-to-bookwriter-print-contract"
+    }
+  }
+}

@@ -67,6 +67,7 @@
           reason:valid ? null : (reason || 'invalid-snapshot'),
           responseType:message?.type || null,
           telemetryPath:message?.executedPath || null,
+          meta:message?.meta || null,
           durationMs:Math.round(now()-started)
         };
         if(!valid){
@@ -80,6 +81,7 @@
           result:'success',
           reason:null,
           fallbackUsed:false,
+          meta:message?.meta || null,
           dataUrl
         });
       };

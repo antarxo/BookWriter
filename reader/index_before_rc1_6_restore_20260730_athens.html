@@ -227,6 +227,46 @@ figure.media.wide{clear:both;width:100%;max-width:100%;margin:14px 0}
 .media-frame.natural img{position:static;inset:auto;width:100%;height:auto;object-fit:contain;display:block}
 .media-placeholder{display:grid;place-items:center;text-align:center;padding:22px;background:linear-gradient(135deg,#f7fbfd,#e1ebf1);color:#465666;font:600 15px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
 .print-scene-snapshot{display:none;object-fit:contain;background:#fff}
+.scene-frame .scene-cache-image{
+  display:block;
+  object-fit:contain;
+  background:#fff;
+}
+.scene-frame.scene-live .scene-cache-image{display:none}
+.scene-frame:not(.scene-live) iframe{display:none}
+.scene-frame.scene-live iframe{display:block}
+.scene-deferred-placeholder{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:16px;
+  text-align:center;
+  color:#536572;
+  background:#f2f6f8;
+  font:600 13px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+.scene-frame.scene-cache-ready .scene-deferred-placeholder,
+.scene-frame.scene-live .scene-deferred-placeholder{display:none}
+.scene-activate-btn{
+  position:absolute;
+  z-index:5;
+  right:8px;
+  bottom:8px;
+  border:1px solid rgba(26,46,61,.35);
+  border-radius:999px;
+  padding:6px 10px;
+  background:rgba(255,255,255,.93);
+  color:#1b3342;
+  font:700 12px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  cursor:pointer;
+  box-shadow:0 2px 7px rgba(0,0,0,.18);
+}
+.scene-activate-btn:disabled{opacity:.55;cursor:wait}
+.scene-frame.scene-cache-failed .scene-deferred-placeholder{
+  color:#8b2e2e;
+  background:#fff2f2;
+}
 figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--muted);border-top:1px solid rgba(0,0,0,.07)}
 
 .callout{
@@ -241,13 +281,6 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
 .callout-observe-title{font:700 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#7b5c2a;margin-right:6px}
 .callout-observe ul{margin:6px 0 0 18px;padding:0}
 .callout-observe li{margin:4px 0;font-style:italic}
-.callout-sequence{padding:7px 8px}
-.callout-sequence-head{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 7px}
-.callout-sequence-dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
-.callout-sequence-arrow,.callout-sequence-dot{appearance:none;border:1px solid #c8d8e2;background:#fff;color:#29414f;border-radius:999px;min-width:24px;height:24px;padding:0 7px;font:800 11px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
-.callout-sequence-dot.active{background:#2f698f;color:#fff;border-color:#2f698f}
-.callout-sequence-step{display:none}
-.callout-sequence-step.active{display:block}
 .clear{clear:both}
 .nav-anchor{display:block;position:relative;height:0;overflow:hidden;scroll-margin-top:120px}
 .sheet-wrap[id],.sheet-body [id],.nav-anchor[id]{scroll-margin-top:120px}
@@ -271,7 +304,7 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
     line-height:var(--body-leading) !important;
     font-family:var(--body-font-family) !important;
   }
-  .topbar,.status,.local-book-loader{display:none !important}
+  .topbar,.status,.local-book-loader,.scene-activate-btn,.scene-deferred-placeholder{display:none !important}
   .viewport{padding:0 !important; max-width:none !important}
   .page-stack{gap:0 !important}
   .sheet-wrap{
@@ -315,8 +348,6 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
     font-size:var(--footer-font-size) !important;
   }
   figure.media,.note,.side-note,.callout,.hero,.part-head,.section-heading{break-inside:avoid; page-break-inside:avoid}
-  .callout-sequence-head{display:none!important}
-  .callout-sequence-step{display:block!important}
   .media-frame.print-ready iframe{display:none !important}
   .media-frame img{object-fit:contain !important; background:#fff !important}
   .media-frame.scene-frame::after{
@@ -562,180 +593,553 @@ async function waitForFigureImages(){
 }
 const SNAPSHOT_PATHS = BookSnapshotTransport.PATHS;
 let lastSnapshotReport = null;
+let printSnapshotAttempted = false;
+let printSnapshotOverrideAccepted = false;
 
-async function captureIframeWithRetry(iframe, options={}){
-  const maxAttempts = Math.max(1, Number(options.attempts) || 1);
-  const mergedAttempts = [];
-  let lastResult = null;
-  let bestResult = null;
-  const accepts = typeof options.accepts === 'function' ? options.accepts : (()=>true);
-  for(let attemptIndex=0; attemptIndex<maxAttempts; attemptIndex++){
-    lastResult = await BookSnapshotTransport.capture(iframe, {
-      timeoutMs:options.timeoutMs
-    });
-    mergedAttempts.push(...lastResult.attempts.map(attempt=>({
-      ...attempt,
-      attemptIndex:attemptIndex+1
-    })));
-    if(lastResult.result === 'success'){
-      const accepted = accepts(lastResult);
-      if(accepted) return { ...lastResult, attempts:mergedAttempts, bestOf:attemptIndex+1 };
-      if(!bestResult || String(lastResult.dataUrl||'').length > String(bestResult.dataUrl||'').length) bestResult = lastResult;
-    }else if(lastResult.reason === 'timeout' || lastResult.reason === 'scene-load-error' || lastResult.reason === 'iframe-unavailable'){
-      break;
-    }
-    if(attemptIndex < maxAttempts-1) await wait(Number(options.retryDelayMs)||450);
+function isSnapshotDataUrl(value){
+  return typeof value === 'string' && /^data:image\//i.test(value);
+}
+function promiseWithTimeout(promise, timeoutMs, reason='timeout'){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(fn,value)=>{
+      if(settled) return;
+      settled=true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    const timer=setTimeout(()=>finish(reject,new Error(reason)),Math.max(250,Number(timeoutMs)||1800));
+    Promise.resolve(promise).then(
+      value=>finish(resolve,value),
+      error=>finish(reject,error)
+    );
+  });
+}
+async function captureIframeDirect(iframe, timeoutMs=1800){
+  const started=performance?.now?.() ?? Date.now();
+  let win=null;
+  try{ win=iframe?.contentWindow || null; }catch(_e){}
+  if(!win) return null;
+
+  let candidates=[];
+  try{
+    candidates=[
+      [win?.BookScene?.getPrintSnapshot,win?.BookScene,'BookScene.getPrintSnapshot'],
+      [win?.getBookPrintSnapshot,win,'getBookPrintSnapshot'],
+      [win?.EMWaveApp?.getPrintSnapshot,win?.EMWaveApp,'EMWaveApp.getPrintSnapshot']
+    ];
+  }catch(_e){
+    // Cross-origin iframe: direct access is unavailable; caller will use postMessage.
+    return null;
   }
-  if(bestResult){
-    return { ...bestResult, attempts:mergedAttempts, bestOf:maxAttempts };
+  const candidate=candidates.find(([fn])=>typeof fn==='function');
+  if(!candidate) return null;
+  const [fn,owner,label]=candidate;
+  try{
+    const dataUrl=await promiseWithTimeout(
+      Promise.resolve(fn.call(owner)),
+      timeoutMs,
+      'direct-snapshot-timeout'
+    );
+    const durationMs=Math.round((performance?.now?.() ?? Date.now())-started);
+    if(!isSnapshotDataUrl(dataUrl)){
+      return {
+        requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+        executedPath:null,
+        result:'failure',
+        reason:'direct-invalid-snapshot',
+        fallbackUsed:false,
+        attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:'direct-invalid-snapshot',transport:'same-origin-direct',directMethod:label,durationMs}],
+        dataUrl:null,
+        directAvailable:true
+      };
+    }
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      result:'success',
+      reason:null,
+      fallbackUsed:false,
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'success',reason:null,transport:'same-origin-direct',directMethod:label,durationMs}],
+      dataUrl,
+      directAvailable:true
+    };
+  }catch(error){
+    const durationMs=Math.round((performance?.now?.() ?? Date.now())-started);
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:String(error?.message || error || 'direct-snapshot-error'),
+      fallbackUsed:false,
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:String(error?.message || error || 'direct-snapshot-error'),transport:'same-origin-direct',directMethod:label,durationMs}],
+      dataUrl:null,
+      directAvailable:true
+    };
+  }
+}
+async function captureIframeFast(iframe, options={}){
+  const direct=await captureIframeDirect(iframe,options.directTimeoutMs || 2200);
+  if(direct?.result === 'success') return direct;
+
+  const viaMessage=await BookSnapshotTransport.capture(iframe,{
+    timeoutMs:options.messageTimeoutMs || 3500
+  });
+  if(viaMessage?.result === 'success'){
+    return {
+      ...viaMessage,
+      attempts:[
+        ...(direct?.attempts || []),
+        ...(viaMessage?.attempts || [])
+      ],
+      recoveredFrom:direct?.reason || null
+    };
   }
   return {
-    ...(lastResult || {
-      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
-      executedPath:null,
-      result:'failure',
-      reason:'no-attempt',
-      fallbackUsed:false,
-      dataUrl:null
-    }),
-    attempts:mergedAttempts
+    ...(viaMessage || direct || {}),
+    requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+    result:'failure',
+    reason:`direct:${direct?.reason || 'unavailable'}; message:${viaMessage?.reason || 'failed'}`,
+    fallbackUsed:false,
+    attempts:[
+      ...(direct?.attempts || []),
+      ...(viaMessage?.attempts || [])
+    ],
+    dataUrl:null
   };
-}
-
-function sceneSnapshotGraphPass(result){
-  const expectedGraphs = Array.isArray(result?.meta?.expectedGraphKeys) ? result.meta.expectedGraphKeys : [];
-  const visibleGraphs = Array.isArray(result?.meta?.visibleGraphKeys) ? result.meta.visibleGraphKeys : [];
-  return !expectedGraphs.length || expectedGraphs.every(key=>visibleGraphs.includes(key));
-}
-
-async function captureSceneFrame(frame){
-  const liveIframe = frame?.querySelector('iframe');
-  if(!liveIframe){
-    return {
-      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
-      executedPath:null,
-      result:'failure',
-      reason:'live-iframe-unavailable',
-      fallbackUsed:false,
-      attempts:[],
-      dataUrl:null
-    };
-  }
-  const loadState = await waitForIframeLoad(liveIframe);
-  if(loadState === 'error'){
-    return {
-      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
-      executedPath:null,
-      result:'failure',
-      reason:'scene-load-error',
-      fallbackUsed:false,
-      attempts:[],
-      dataUrl:null
-    };
-  }
-  const attempts = Math.max(1, Math.min(5, Number(frame?.dataset?.snapshotAttempts) || 3));
-  const timeoutMs = Math.max(1200, Math.min(12000, Number(frame?.dataset?.snapshotTimeoutMs) || 6000));
-  const retryDelayMs = Math.max(120, Math.min(3000, Number(frame?.dataset?.snapshotRetryDelayMs) || 550));
-  return captureIframeWithRetry(liveIframe, {
-    attempts,
-    timeoutMs,
-    retryDelayMs,
-    accepts:sceneSnapshotGraphPass
-  });
 }
 let printSnapshotsPrepared = false;
 let printFlowRunning = false;
 let bookData = null;
+let screenBookData = null;
+let printModeRestoreData = null;
+let lastPrintExpansionReport = null;
+let scenePrimePromise = Promise.resolve(null);
+let scenePrimeGeneration = 0;
+let activeSceneFrame = null;
 
-function clearPrintSnapshots(){
-  document.querySelectorAll('.print-scene-snapshot').forEach(img=>img.remove());
-  document.querySelectorAll('.media-frame.print-ready').forEach(el=>el.classList.remove('print-ready'));
-  printSnapshotsPrepared = false;
+function sceneFrames(){
+  return Array.from(document.querySelectorAll('.media-frame.scene-frame'));
 }
-function cleanupPrintSnapshots(){
-  clearPrintSnapshots();
-  printFlowRunning = false;
+function sceneSource(frame){
+  const iframe=frame?.querySelector('iframe');
+  return String(
+    frame?.dataset?.sceneSource ||
+    iframe?.dataset?.sceneSource ||
+    iframe?.getAttribute?.('src') ||
+    ''
+  ).trim();
 }
-async function preparePrintSnapshots(forceOrOptions=false){
-  const force = forceOrOptions && typeof forceOrOptions === 'object'
-    ? forceOrOptions.force !== false
-    : Boolean(forceOrOptions);
-  const requestedPath = SNAPSHOT_PATHS.BOOK_SCENE_V1;
-  if(printSnapshotsPrepared && !force){
-    return lastSnapshotReport.successes;
-  }
-  clearPrintSnapshots();
-  await waitForFigureImages();
-
-  const frames = Array.from(document.querySelectorAll('.media-frame.scene-frame'));
-  let readyCount = 0;
-  const sceneReports = [];
-
-  for(let sceneIndex=0; sceneIndex<frames.length; sceneIndex++){
-    const frame = frames[sceneIndex];
-    const liveIframe = frame.querySelector('iframe');
-    if(!liveIframe) continue;
-
-    const capture = await captureSceneFrame(frame);
-    const exactPath = capture.executedPath === requestedPath;
-    const graphPass = sceneSnapshotGraphPass(capture);
-    const sceneReport = {
-      sceneIndex:sceneIndex+1,
-      source:liveIframe.getAttribute('src') || '',
-      requestedPath,
-      executedPath:capture.executedPath,
-      attempts:capture.attempts,
-      result:capture.result,
-      reason:capture.reason || null,
-      meta:capture.meta || null,
-      fallbackUsed:Boolean(capture.fallbackUsed),
-      pass:capture.result === 'success' && exactPath && graphPass
-    };
-    if(!graphPass) sceneReport.reason = 'incomplete-scene-graph-render';
-    sceneReports.push(sceneReport);
-    if(!capture.dataUrl) continue;
-
-    const img = document.createElement('img');
-    img.className = 'print-scene-snapshot';
-    img.alt = 'Στιγμιότυπο σκηνής';
-    img.src = capture.dataUrl;
-    frame.appendChild(img);
-    const imageReady = await waitForImage(img);
-    if(!imageReady){
-      img.remove();
-      sceneReport.result = 'failure';
-      sceneReport.reason = 'snapshot-image-decode-failed';
-      sceneReport.pass = false;
-      continue;
+function sceneButton(frame){
+  let button=frame.querySelector('.scene-activate-btn');
+  if(button) return button;
+  button=document.createElement('button');
+  button.type='button';
+  button.className='scene-activate-btn';
+  button.textContent=contentLang==='en' ? 'Open scene' : 'Άνοιγμα σκηνής';
+  button.addEventListener('click',async event=>{
+    event.preventDefault();
+    event.stopPropagation();
+    button.disabled=true;
+    try{
+      await scenePrimePromise;
+      if(frame.classList.contains('scene-live')){
+        await deactivateLiveScene(frame,{refreshCache:true});
+      }else{
+        await activateLiveScene(frame);
+      }
+    }finally{
+      button.disabled=false;
     }
-    frame.classList.add('print-ready');
-    readyCount += 1;
-  }
-
-  await wait(120);
-  const byExecutedPath = {};
-  sceneReports.forEach(scene=>{
-    const key = scene.executedPath || 'none';
-    byExecutedPath[key] = (byExecutedPath[key] || 0) + 1;
   });
-  const mismatches = sceneReports.filter(scene=>!scene.pass).length;
-  const fallbacksUsed = sceneReports.filter(scene=>scene.fallbackUsed).length;
-  lastSnapshotReport = {
+  frame.appendChild(button);
+  return button;
+}
+function markSceneButton(frame,live=false){
+  const button=sceneButton(frame);
+  button.textContent=live
+    ? (contentLang==='en' ? 'Close scene' : 'Κλείσιμο σκηνής')
+    : (contentLang==='en' ? 'Open scene' : 'Άνοιγμα σκηνής');
+}
+function removeSceneIframe(frame){
+  const iframe=frame?.querySelector('iframe');
+  if(!iframe) return;
+  try{ iframe.src='about:blank'; }catch(_e){}
+  iframe.remove();
+}
+function createSceneIframe(frame){
+  const source=sceneSource(frame);
+  if(!source) return null;
+  removeSceneIframe(frame);
+
+  const iframe=document.createElement('iframe');
+  iframe.loading='eager';
+  iframe.referrerPolicy='no-referrer';
+  iframe.allow='fullscreen';
+  iframe.dataset.sceneProtocol='book-scene-v1';
+  iframe.dataset.sceneSource=source;
+  iframe.dataset.sceneLoadState='loading';
+  iframe.addEventListener('load',()=>{iframe.dataset.sceneLoadState='loaded';},{once:true});
+  iframe.addEventListener('error',()=>{iframe.dataset.sceneLoadState='error';},{once:true});
+  iframe.src=source;
+  frame.appendChild(iframe);
+  return iframe;
+}
+async function cacheSceneImage(frame,dataUrl){
+  if(!isSnapshotDataUrl(dataUrl)) return false;
+  let img=frame.querySelector('.scene-cache-image');
+  if(!img){
+    img=document.createElement('img');
+    img.className='print-scene-snapshot scene-cache-image';
+    img.alt=contentLang==='en' ? 'Static scene view' : 'Στατική εικόνα σκηνής';
+    frame.appendChild(img);
+  }
+  img.src=dataUrl;
+  const ready=await waitForImage(img,8000);
+  if(!ready){
+    img.remove();
+    return false;
+  }
+  frame.classList.add('scene-cache-ready','print-ready');
+  frame.classList.remove('scene-cache-failed');
+  frame.dataset.sceneCacheState='ready';
+  frame.dataset.sceneCacheReason='';
+  return true;
+}
+function sceneReportFromFrame(frame,index){
+  const attempts=(()=>{
+    try{return JSON.parse(frame.dataset.sceneCacheAttempts || '[]')}catch(_e){return []}
+  })();
+  const ready=frame.dataset.sceneCacheState==='ready' &&
+    !!frame.querySelector('.scene-cache-image');
+  return {
+    sceneIndex:index+1,
+    source:sceneSource(frame),
+    requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+    executedPath:ready ? SNAPSHOT_PATHS.BOOK_SCENE_V1 : null,
+    attempts,
+    result:ready ? 'success' : 'failure',
+    reason:ready ? null : (frame.dataset.sceneCacheReason || 'scene-cache-unavailable'),
+    fallbackUsed:false,
+    sourceMode:frame.dataset.sceneCacheMode || null,
+    pass:ready
+  };
+}
+function rebuildSnapshotReport(){
+  const frames=sceneFrames();
+  const reports=frames.map(sceneReportFromFrame);
+  const successes=reports.filter(row=>row.pass).length;
+  lastSnapshotReport={
     generatedAt:new Date().toISOString(),
-    requestedPath,
+    requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
     expectedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
     fallbacksDisabled:true,
     scenes:frames.length,
-    successes:readyCount,
-    failures:frames.length-readyCount,
-    mismatches,
-    fallbacksUsed,
-    byExecutedPath,
-    sceneReports,
-    pass:readyCount === frames.length && mismatches === 0 && fallbacksUsed === 0
+    successes,
+    failures:frames.length-successes,
+    mismatches:frames.length-successes,
+    fallbacksUsed:0,
+    byExecutedPath:{
+      [SNAPSHOT_PATHS.BOOK_SCENE_V1]:successes,
+      none:frames.length-successes
+    },
+    sceneReports:reports,
+    pass:successes===frames.length
   };
-  printSnapshotsPrepared = lastSnapshotReport.pass;
-  return readyCount;
+  printSnapshotsPrepared=lastSnapshotReport.pass;
+  return lastSnapshotReport;
+}
+async function captureFrameIntoCache(frame,{keepLive=false,reason='prime'}={}){
+  const source=sceneSource(frame);
+  if(!source){
+    frame.dataset.sceneCacheState='failed';
+    frame.dataset.sceneCacheReason='missing-scene-source';
+    return false;
+  }
+
+  const iframe=frame.querySelector('iframe') || createSceneIframe(frame);
+  if(!iframe){
+    frame.dataset.sceneCacheState='failed';
+    frame.dataset.sceneCacheReason='iframe-create-failed';
+    return false;
+  }
+
+  frame.dataset.sceneCacheState='loading';
+  frame.classList.remove('scene-cache-failed');
+  const loadState=await waitForIframeLoad(iframe,8000);
+  if(loadState==='error'){
+    frame.dataset.sceneCacheState='failed';
+    frame.dataset.sceneCacheReason='scene-load-error';
+    frame.classList.add('scene-cache-failed');
+    if(!keepLive) removeSceneIframe(frame);
+    return false;
+  }
+
+  await wait(650);
+  const capture=await captureIframeFast(iframe,{
+    directTimeoutMs:2600,
+    messageTimeoutMs:3800
+  });
+  frame.dataset.sceneCacheAttempts=JSON.stringify(capture?.attempts || []);
+  frame.dataset.sceneCacheMode=reason;
+
+  const ok=capture?.result==='success' &&
+    capture.executedPath===SNAPSHOT_PATHS.BOOK_SCENE_V1 &&
+    await cacheSceneImage(frame,capture.dataUrl);
+
+  if(!ok){
+    frame.dataset.sceneCacheState='failed';
+    frame.dataset.sceneCacheReason=capture?.reason || 'snapshot-failed';
+    frame.classList.add('scene-cache-failed');
+  }
+
+  if(!keepLive){
+    removeSceneIframe(frame);
+    frame.classList.remove('scene-live');
+    markSceneButton(frame,false);
+    await wait(140);
+  }
+  return ok;
+}
+async function primeSceneCaches({retryFailed=false}={}){
+  const generation=++scenePrimeGeneration;
+  const frames=sceneFrames();
+  if(!frames.length){
+    rebuildSnapshotReport();
+    return lastSnapshotReport;
+  }
+
+  for(let index=0;index<frames.length;index++){
+    if(generation!==scenePrimeGeneration) return rebuildSnapshotReport();
+    const frame=frames[index];
+    sceneButton(frame);
+
+    const alreadyReady=frame.dataset.sceneCacheState==='ready' &&
+      !!frame.querySelector('.scene-cache-image');
+    if(alreadyReady) continue;
+
+    setStatus(contentLang==='en'
+      ? `Preparing scene image ${index+1}/${frames.length}…`
+      : `Προετοιμάζεται εικόνα σκηνής ${index+1}/${frames.length}…`);
+    await captureFrameIntoCache(frame,{keepLive:false,reason:'screen-cache-prime'});
+  }
+
+  const report=rebuildSnapshotReport();
+  setStatus(contentLang==='en'
+    ? `Pages: ${(bookData?.pages||[]).length} · scene images: ${report.successes}/${report.scenes}`
+    : `Σελίδες: ${(bookData?.pages||[]).length} · εικόνες σκηνών: ${report.successes}/${report.scenes}`);
+  return report;
+}
+function startSceneCachePriming(){
+  scenePrimeGeneration++;
+  activeSceneFrame=null;
+  const frames=sceneFrames();
+  frames.forEach(frame=>{
+    sceneButton(frame);
+    frame.dataset.sceneCacheState='pending';
+    frame.dataset.sceneCacheReason='';
+  });
+  scenePrimePromise=primeSceneCaches({retryFailed:false}).catch(error=>{
+    console.warn('scene cache priming failed',error);
+    rebuildSnapshotReport();
+    return lastSnapshotReport;
+  });
+  return scenePrimePromise;
+}
+async function deactivateLiveScene(frame,{refreshCache=true}={}){
+  if(!frame?.classList.contains('scene-live')){
+    if(activeSceneFrame===frame) activeSceneFrame=null;
+    return;
+  }
+  if(refreshCache){
+    await captureFrameIntoCache(frame,{keepLive:true,reason:'interactive-close'});
+  }
+  removeSceneIframe(frame);
+  frame.classList.remove('scene-live');
+  markSceneButton(frame,false);
+  if(activeSceneFrame===frame) activeSceneFrame=null;
+  await wait(140);
+}
+async function activateLiveScene(frame){
+  if(activeSceneFrame && activeSceneFrame!==frame){
+    await deactivateLiveScene(activeSceneFrame,{refreshCache:true});
+  }
+  const iframe=createSceneIframe(frame);
+  if(!iframe) return;
+  frame.classList.add('scene-live');
+  markSceneButton(frame,true);
+  activeSceneFrame=frame;
+  const loadState=await waitForIframeLoad(iframe,8000);
+  if(loadState==='error'){
+    frame.classList.remove('scene-live');
+    markSceneButton(frame,false);
+    activeSceneFrame=null;
+    removeSceneIframe(frame);
+    frame.dataset.sceneCacheReason='interactive-load-error';
+  }
+}
+function clearPrintSnapshots(){
+  document.querySelectorAll('.print-scene-snapshot:not(.scene-cache-image)').forEach(img=>img.remove());
+  document.querySelectorAll('.media-frame.print-ready:not(.scene-cache-ready)')
+    .forEach(el=>el.classList.remove('print-ready'));
+  printSnapshotsPrepared=false;
+}
+function cloneBookData(value){
+  if(typeof structuredClone === 'function'){
+    try{return structuredClone(value);}catch(_e){}
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+function queryValue(value){
+  if(value === true) return '1';
+  if(value === false) return '0';
+  if(value == null) return '';
+  return String(value);
+}
+function sceneSourceForStep(source, step={}){
+  const raw=String(source || '').trim();
+  if(!raw) return raw;
+  let url=null;
+  try{ url=new URL(raw, bookBaseUrl); }catch(_e){ return raw; }
+  const preset=step.printPreset ?? step.preset ?? step.state?.state;
+  if(preset != null && preset !== '') url.searchParams.set('state', String(preset));
+  const state=step.state && typeof step.state === 'object' ? step.state : {};
+  Object.entries(state).forEach(([key,value])=>{
+    if(key === 'state' || value == null || typeof value === 'object') return;
+    url.searchParams.set(key, queryValue(value));
+  });
+  const printQuery=step.printQuery && typeof step.printQuery === 'object' ? step.printQuery : {};
+  Object.entries(printQuery).forEach(([key,value])=>{
+    if(value == null) return;
+    url.searchParams.set(key, queryValue(value));
+  });
+  if(!url.searchParams.has('play')) url.searchParams.set('play','0');
+  return url.toString();
+}
+function calloutForStep(callout, step={}, index=0){
+  const copy=cloneBookData(callout);
+  copy.id=`${callout.id || 'callout'}-print-step-${index+1}`;
+  copy.title=step.title || callout.title || copy.title;
+  copy.setupChips=Array.isArray(step.setupChips) ? [...step.setupChips] : [];
+  copy.pressChips=Array.isArray(step.pressChips) ? [...step.pressChips] : [];
+  copy.observeItems=Array.isArray(step.observeItems) ? [...step.observeItems] : [];
+  copy.sequenceSteps=[];
+  copy.sequenceInitialStep=0;
+  copy.extensions={...(copy.extensions || {}),printSequenceStep:index+1,printPreset:step.printPreset || step.preset || null};
+  return copy;
+}
+function sceneForStep(scene, step={}, index=0){
+  const copy=cloneBookData(scene);
+  copy.id=`${scene.id || 'scene'}-print-step-${index+1}`;
+  copy.src=sceneSourceForStep(scene.src || scene.singleSrc || '', step);
+  copy.singleSrc=copy.src;
+  copy.print={...(copy.print || {}),snapshot:true};
+  copy.extensions={...(copy.extensions || {}),printSequenceStep:index+1,printPreset:step.printPreset || step.preset || null};
+  return copy;
+}
+function buildPrintExpansionBook(data){
+  const expanded=cloneBookData(data);
+  const sourcePages=Array.isArray(expanded.pages) ? expanded.pages : [];
+  const resultPages=[];
+  let generatedStepPages=0;
+  const expandedFrom=[];
+
+  sourcePages.forEach((page,pageIndex)=>{
+    const items=Array.isArray(page.items) ? page.items : [];
+    const calloutIndex=items.findIndex(item=>item?.type === 'interactive_callout' && Array.isArray(item.sequenceSteps) && item.sequenceSteps.length && item.sequenceSceneId);
+    if(calloutIndex < 0){
+      resultPages.push(page);
+      return;
+    }
+    const callout=items[calloutIndex];
+    const sceneIndex=items.findIndex(item=>item?.type === 'scene' && item.id === callout.sequenceSceneId);
+    if(sceneIndex < 0){
+      resultPages.push(page);
+      return;
+    }
+    const scene=items[sceneIndex];
+    callout.sequenceSteps.forEach((step,stepIndex)=>{
+      const printPage=cloneBookData(page);
+      printPage.id=`${page.id || `page-${pageIndex+1}`}-print-step-${stepIndex+1}`;
+      printPage.extensions={...(printPage.extensions || {}),printExpansionStep:stepIndex+1,sourcePageId:page.id || null};
+      printPage.items=items.map((item,itemIndex)=>{
+        if(itemIndex === calloutIndex) return calloutForStep(callout, step, stepIndex);
+        if(itemIndex === sceneIndex) return sceneForStep(scene, step, stepIndex);
+        const copy=cloneBookData(item);
+        if(copy?.id) copy.id=`${copy.id}-print-step-${stepIndex+1}`;
+        return copy;
+      });
+      resultPages.push(printPage);
+      generatedStepPages++;
+    });
+    expandedFrom.push({
+      pageIndex,
+      pageId:page.id || null,
+      calloutId:callout.id || null,
+      sceneId:scene.id || null,
+      steps:callout.sequenceSteps.length
+    });
+  });
+
+  expanded.pages=resultPages;
+  expanded.extensions={...(expanded.extensions || {}),printExpansion:{
+    applied:generatedStepPages>0,
+    generatedAt:new Date().toISOString(),
+    sourcePages:sourcePages.length,
+    resultPages:resultPages.length,
+    generatedStepPages,
+    expandedFrom
+  }};
+  return {book:expanded,report:expanded.extensions.printExpansion};
+}
+function enterPrintExpansionMode(){
+  if(printModeRestoreData) return lastPrintExpansionReport;
+  const expansion=buildPrintExpansionBook(screenBookData || bookData);
+  lastPrintExpansionReport=expansion.report;
+  if(!expansion.report.applied) return expansion.report;
+  printModeRestoreData=bookData;
+  bookData=expansion.book;
+  renderPages(bookData);
+  deriveNav(bookData);
+  updateActiveNav();
+  setStatus(contentLang==='en'
+    ? `Print pages: ${(bookData.pages||[]).length} · preparing scene images…`
+    : `Σελίδες εκτύπωσης: ${(bookData.pages||[]).length} · ετοιμάζονται εικόνες σκηνών…`);
+  return expansion.report;
+}
+function exitPrintExpansionMode(){
+  if(!printModeRestoreData) return;
+  bookData=printModeRestoreData;
+  printModeRestoreData=null;
+  renderPages(bookData);
+  deriveNav(bookData);
+  updateActiveNav();
+}
+function cleanupPrintSnapshots(){
+  printFlowRunning=false;
+  printSnapshotAttempted=false;
+  printSnapshotOverrideAccepted=false;
+  rebuildSnapshotReport();
+}
+async function preparePrintSnapshots(forceOrOptions=false){
+  const force=forceOrOptions && typeof forceOrOptions==='object'
+    ? forceOrOptions.force!==false
+    : Boolean(forceOrOptions);
+  printSnapshotAttempted=true;
+  await waitForFigureImages();
+  await scenePrimePromise;
+
+  if(activeSceneFrame){
+    await deactivateLiveScene(activeSceneFrame,{refreshCache:true});
+  }
+
+  let report=rebuildSnapshotReport();
+  if(force && !report.pass){
+    scenePrimePromise=primeSceneCaches({retryFailed:true});
+    await scenePrimePromise;
+    report=rebuildSnapshotReport();
+  }
+  return report.successes;
 }
 window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
   prepare: (force=true)=>preparePrintSnapshots(force),
@@ -750,6 +1154,10 @@ window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
     scenes: document.querySelectorAll('.media-frame.scene-frame').length,
     preparedSnapshots: document.querySelectorAll('.media-frame.scene-frame.print-ready .print-scene-snapshot').length,
     ready: printSnapshotsPrepared,
+    attempted:printSnapshotAttempted,
+    overrideAccepted:printSnapshotOverrideAccepted,
+    cachedScenes:document.querySelectorAll('.media-frame.scene-frame.scene-cache-ready .scene-cache-image').length,
+    liveScenes:document.querySelectorAll('.media-frame.scene-frame.scene-live iframe').length,
     lastReport:lastSnapshotReport
   })
 });
@@ -790,27 +1198,19 @@ function requestSnapshotPrintOverride(error=null){
     : '\n\nContinue printing?';
   return window.confirm(`${title}\n${counts}${details}${consequence}${question}`);
 }
-function ensurePrintSequenceExpansion(){
-  if(!bookData) return;
-  const expanded = BookCore.expandPrintSequences(bookData);
-  if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
-  bookData = expanded;
-  renderPages(bookData);
-  deriveNav(bookData);
-  updateActiveNav();
-}
 async function beginPrintFlow(){
   if(printFlowRunning) return;
   printFlowRunning = true;
   setStatus('Ετοιμάζονται στατικά στιγμιότυπα για την εκτύπωση…');
   let snapshotOverride = false;
   try{
-    ensurePrintSequenceExpansion();
+    enterPrintExpansionMode();
     await preparePrintSnapshots(true);
     if(!lastSnapshotReport?.pass){
       console.warn('book-scene-v1 incomplete snapshot report',lastSnapshotReport);
       if(!requestSnapshotPrintOverride()){
         printFlowRunning = false;
+        exitPrintExpansionMode();
         setStatus(contentLang==='en'
           ? 'Printing was cancelled because scene snapshots were incomplete.'
           : 'Η εκτύπωση ακυρώθηκε επειδή τα στιγμιότυπα σκηνών ήταν ελλιπή.');
@@ -822,6 +1222,7 @@ async function beginPrintFlow(){
     console.warn('book-scene-v1 snapshot preparation error',err,lastSnapshotReport);
     if(!requestSnapshotPrintOverride(err)){
       printFlowRunning = false;
+      exitPrintExpansionMode();
       setStatus(contentLang==='en'
         ? 'Printing was cancelled after a scene-snapshot error.'
         : 'Η εκτύπωση ακυρώθηκε μετά από σφάλμα στιγμιοτύπων σκηνών.');
@@ -829,6 +1230,7 @@ async function beginPrintFlow(){
     }
     snapshotOverride = true;
   }
+  printSnapshotOverrideAccepted = snapshotOverride;
   setStatus(snapshotOverride
     ? (contentLang==='en'
       ? 'Printing continues with explicit permission despite incomplete scene snapshots.'
@@ -841,12 +1243,12 @@ function resolveAppHref(){
 }
 window.addEventListener('beforeprint', ()=>{
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
-  if(!printSnapshotsPrepared){
-    try{ preparePrintSnapshots(false); }catch(_e){}
-  }
+  // Never start a second asynchronous snapshot pass from beforeprint.
+  // The visible print command, File menu and Ctrl+P already run beginPrintFlow().
 });
 window.addEventListener('afterprint', ()=>{
   cleanupPrintSnapshots();
+  exitPrintExpansionMode();
   setStatus('');
 });
 
@@ -930,38 +1332,23 @@ function applyReaderOverflowMarkers(data){
   pageStack.querySelectorAll('.render-overflow-marker').forEach(node=>node.remove());pageStack.querySelectorAll('.reader-overflow-page').forEach(node=>node.classList.remove('reader-overflow-page'));
   const audit=data?.extensions?.lastPrintOverflowAudit;for(const entry of audit?.pages||[]){const wrapper=(data.pages||[])[entry.pageIndex]?pageStack.children[entry.pageIndex]:null;if(wrapper)addReaderOverflowMarker(wrapper,entry)}
 }
-function renderReaderOverflowSummary(audit){
-  if(!audit||!audit.overflowPages){setStatus(`${contentLang==='en'?'Pages':'Σελίδες'}: ${(bookData.pages||[]).length}`);return}
-  const pages=(audit.pages||[]).slice(0,8).map(entry=>Number(entry.displayPage||entry.pageIndex+1)).join(', ');
-  setStatus(`${contentLang==='en'?'Pages':'Σελίδες'}: ${(bookData.pages||[]).length} · overflow: ${pages}${audit.pages.length>8?` +${audit.pages.length-8}`:''}`);
-}
 function collectRenderMetrics(){
   return [...pageStack.querySelectorAll('.book-page-root')].map((root,pageIndex)=>{const sheet=root.querySelector('.sheet'),body=root.querySelector('.sheet-body'),cs=getComputedStyle(root),s=sheet.getBoundingClientRect(),b=body.getBoundingClientRect(),sw=parseFloat(cs.getPropertyValue('--sheet-width'))||794,sh=parseFloat(cs.getPropertyValue('--sheet-height'))||1123,pb=parseFloat(cs.getPropertyValue('--sheet-pad-bottom'))||0,scale=s.width/sw,safe=s.top+(sh-pb)*scale,last=[...body.children].at(-1),lr=last?.getBoundingClientRect();return{pageIndex,pageId:root.id,scale,usedPx:(b.bottom-b.top)/scale,overflowPx:(b.bottom-safe)/scale,lastItemId:last?.dataset.bookItemId||null,lastItemType:last?.dataset.bookItemType||null,lastBottomPx:lr?(lr.bottom-s.top)/scale:null}})
 }
 const readerRenderDiagnostics={screen:null,print:null,diff:null};
 function refreshScreenDiagnostics(){readerRenderDiagnostics.screen=collectRenderMetrics();window.BookRenderDiagnostics=readerRenderDiagnostics}
-function refreshReaderOverflowFromScreen(){
-  const pages=collectRenderMetrics().filter(entry=>entry.overflowPx>1).map(entry=>({
-    pageIndex:entry.pageIndex,
-    displayPage:entry.pageIndex+1,
-    overflowPx:Math.round(entry.overflowPx*10)/10,
-    pageId:entry.pageId,
-    bottomItemId:entry.lastItemId,
-    bottomItemType:entry.lastItemType
-  }));
-  const audit={ok:pages.length===0,pagesChecked:(bookData.pages||[]).length,overflowPages:pages.length,pages};
-  applyReaderOverflowMarkers({pages:bookData.pages,extensions:{lastPrintOverflowAudit:audit}});
-  renderReaderOverflowSummary(audit);
-}
 
 function renderPages(data){
   const count=BookCore.renderPages(pageStack, data, {
     lang:contentLang,
     sceneSource:src=>withCacheBust(normalizeAppSrc(src)),
-    imageCandidates:src=>imageSrcCandidates(src)
+    imageCandidates:src=>imageSrcCandidates(src),
+    deferScenes:true
   });
-  BookCore.bindCalloutSequences(pageStack);
-  applyReaderOverflowMarkers(data);requestAnimationFrame(()=>{refreshScreenDiagnostics();refreshReaderOverflowFromScreen();});return count;
+  applyReaderOverflowMarkers(data);
+  requestAnimationFrame(refreshScreenDiagnostics);
+  startSceneCachePriming();
+  return count;
 }
 
 function appendNavTools(data){
@@ -1315,8 +1702,8 @@ function applyLayoutDefaults(defs){
 function mountBook(loaded){
   const validation=BookCore.validateData(loaded);
   if(!validation.ok) throw new Error(validation.errors.join(' '));
-  const normalized=BookCore.normalizeData(loaded);
-  const data=initialParams.has('_v4print') ? BookCore.expandPrintSequences(normalized) : BookCore.expandScreenSequences(normalized);
+  const data=BookCore.normalizeData(loaded);
+  screenBookData = data;
   bookData = data;
   const defs=data.layoutDefaults || {};
   document.title = getLoc(data.meta,'title','Βιβλίο');
@@ -1326,7 +1713,9 @@ function mountBook(loaded){
   renderPages(data);
   deriveNav(data);
   updateActiveNav();
-  setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(data.pages||[]).length}`);
+  if(!sceneFrames().length){
+    setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(data.pages||[]).length}`);
+  }
   localBookLoader.hidden=true;
   window.BookAuthorRuntime=Object.freeze({
     protocol:'book-author-v2',
