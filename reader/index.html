@@ -537,6 +537,18 @@ function waitForImage(img, timeoutMs=8000){
   });
 }
 function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+function nextFrame(){
+  return new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+}
+async function warmSceneFrameForSnapshot(frame, iframe){
+  if(!frame || !iframe) return;
+  const settleMs = Math.max(250, Math.min(3500, Number(frame?.dataset?.snapshotSettleMs) || 1100));
+  try{ frame.scrollIntoView({block:'center', inline:'center', behavior:'instant'}); }catch{ frame.scrollIntoView({block:'center', inline:'center'}); }
+  try{ iframe.focus?.(); }catch(_error){}
+  await nextFrame();
+  await nextFrame();
+  await wait(settleMs);
+}
 function waitForIframeLoad(iframe, timeoutMs=6000){
   return new Promise(resolve=>{
     if(!iframe) return resolve('unavailable');
@@ -710,6 +722,7 @@ async function captureSceneFrame(frame){
       dataUrl:null
     };
   }
+  await warmSceneFrameForSnapshot(frame, liveIframe);
   const attempts = Math.max(1, Math.min(5, Number(frame?.dataset?.snapshotAttempts) || 3));
   const timeoutMs = Math.max(1200, Math.min(12000, Number(frame?.dataset?.snapshotTimeoutMs) || 6000));
   const retryDelayMs = Math.max(120, Math.min(3000, Number(frame?.dataset?.snapshotRetryDelayMs) || 550));
