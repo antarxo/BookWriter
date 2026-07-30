@@ -1332,11 +1332,12 @@ function pushDirectEdit(label,beforeBook,beforeSelection){
 }
 
 function richTextToEditorHtml(rich){
+  const editorSourceForMath = node => node.source || mathMlToEditorSource(node.mathml || '') || '';
   const renderNodes=nodes=>(nodes||[]).map(node=>{
     if(!node||typeof node!=='object') return esc(node??'');
     if(node.type==='line_break') return '<br>';
     if(node.type==='math_inline'){
-      const source=esc(node.source||'');
+      const source=esc(editorSourceForMath(node));
       const mathml=node.mathml||`<span class="math-inline-source">${source||'εξίσωση'}</span>`;
       return `<span class="bw-inline-math" contenteditable="false" data-math-source="${source}" title="Διπλό κλικ για επεξεργασία">${mathml}</span>`;
     }
@@ -1362,11 +1363,56 @@ function richTextToEditorHtml(rich){
   return renderNodes(rich?.nodes);
 }
 
+function mathMlToEditorSource(mathml=''){
+  const raw=String(mathml||'').trim();
+  if(!raw) return '';
+  let root;
+  try{
+    const doc=new DOMParser().parseFromString(raw,'application/xml');
+    if(doc.querySelector('parsererror')) return '';
+    root=doc.documentElement;
+  }catch(_error){return '';}
+  const normalize=value=>String(value||'').replace(/\s+/g,' ').trim();
+  const childElements=node=>[...node.childNodes].filter(child=>child.nodeType===Node.ELEMENT_NODE);
+  const wrap=value=>`{${value}}`;
+  const simple=node=>{
+    if(!node) return '';
+    if(node.nodeType===Node.TEXT_NODE) return normalize(node.nodeValue);
+    if(node.nodeType!==Node.ELEMENT_NODE) return '';
+    const tag=node.localName;
+    const children=childElements(node);
+    if(tag==='math') return children.map(simple).filter(Boolean).join(' ');
+    if(tag==='mrow'||tag==='mstyle') return children.map(simple).filter(Boolean).join(' ');
+    if(tag==='mi'||tag==='mn') return normalize(node.textContent);
+    if(tag==='mo'){
+      const text=normalize(node.textContent);
+      if(text==='−') return '-';
+      if(text==='·') return '⋅';
+      return text;
+    }
+    if(tag==='mtext') return `\\text{${normalize(node.textContent)}}`;
+    if(tag==='mspace') return '';
+    if(tag==='mfrac') return `\\frac${wrap(simple(children[0]))}${wrap(simple(children[1]))}`;
+    if(tag==='msqrt') return `\\sqrt${wrap(children.map(simple).filter(Boolean).join(' '))}`;
+    if(tag==='msup') return `${simple(children[0])}^${wrap(simple(children[1]))}`;
+    if(tag==='msub') return `${simple(children[0])}_${wrap(simple(children[1]))}`;
+    if(tag==='msubsup') return `${simple(children[0])}_${wrap(simple(children[1]))}^${wrap(simple(children[2]))}`;
+    if(tag==='mfenced'){
+      const open=node.getAttribute('open') || '(';
+      const close=node.getAttribute('close') || ')';
+      return `${open}${children.map(simple).filter(Boolean).join(' ')}${close}`;
+    }
+    if(tag==='mover'||tag==='munder'||tag==='munderover') return children.map(simple).filter(Boolean).join(' ');
+    return normalize(node.textContent);
+  };
+  return normalize(simple(root));
+}
+
 function createInlineMathElement(source,mathml){
   const span=document.createElement('span');
   span.className='bw-inline-math';
   span.contentEditable='false';
-  span.dataset.mathSource=source||'';
+  span.dataset.mathSource=source||mathMlToEditorSource(mathml)||'';
   span.title='Διπλό κλικ για επεξεργασία';
   span.innerHTML=mathml||`<span class="math-inline-source">${esc(source||'εξίσωση')}</span>`;
   return span;
@@ -1444,7 +1490,8 @@ function equationComposer({source='',display='inline',title='Εξίσωση',acc
 
 async function editInlineMathElement(context,element){
   saveRichSelection(context);
-  const result=await equationComposer({source:element.dataset.mathSource||'',display:'inline',title:'Επεξεργασία inline εξίσωσης',acceptLabel:'Εφαρμογή'});
+  const mathml=element.querySelector('math')?.outerHTML || '';
+  const result=await equationComposer({source:element.dataset.mathSource||mathMlToEditorSource(mathml)||'',display:'inline',title:'Επεξεργασία inline εξίσωσης',acceptLabel:'Εφαρμογή'});
   if(!result) return;
   const replacement=createInlineMathElement(result.source,result.mathml);
   element.replaceWith(replacement);
@@ -1543,7 +1590,7 @@ function richEditor(current){
 
 async function editSelectedDisplayEquation(){
   const current=item();if(!current||current.type!=='equation')return;
-  const result=await equationComposer({source:current.source||'',display:'block',title:'Αυτόνομη εξίσωση',acceptLabel:'Εφαρμογή'});
+  const result=await equationComposer({source:current.source||mathMlToEditorSource(current.mathml)||'',display:'block',title:'Αυτόνομη εξίσωση',acceptLabel:'Εφαρμογή'});
   if(!result)return;
   mutate('Επεξεργασία αυτόνομης εξίσωσης',book=>{
     const target=book.pages[pageIndex()].items[itemIndex()];target.source=result.source;target.mathml=result.mathml;
@@ -1555,8 +1602,9 @@ function renderEquationEditor(cf,current,base){
   const preview=document.createElement('div');preview.className='display-equation-editor-preview';preview.innerHTML=current.mathml||'<span class="muted">Δεν έχει οριστεί εξίσωση.</span>';
   const edit=button(current.source?'Επεξεργασία εξίσωσης…':'Δημιουργία εξίσωσης…',editSelectedDisplayEquation,'primary-action');
   const actions=document.createElement('div');actions.className='asset-actions';actions.appendChild(edit);
+  const editorSource=current.source||mathMlToEditorSource(current.mathml)||'';
   cf.append(preview,actions,
-    field('Πηγή',current.source||'',v=>{
+    field('Πηγή',editorSource,v=>{
       try{const mathml=X.sourceToMathML(v,'block');mutate('Πηγή εξίσωσης',book=>{const target=book.pages[pageIndex()].items[itemIndex()];target.source=v;target.mathml=mathml;return{pageId:page().id,itemId:target.id};});}
       catch(error){modal('Άκυρη εξίσωση',`<div class="info-card bad">${esc(error.message)}</div>`);}
     },'textarea',null,{rows:4,monospace:true}),
