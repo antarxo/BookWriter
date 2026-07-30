@@ -280,6 +280,38 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
 .status{max-width:var(--sheet-width);margin:16px auto 0;color:var(--muted);font:500 14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
 .local-book-loader{max-width:680px;margin:24px auto;padding:18px;border:1px solid var(--line);border-radius:18px;background:#fffdf9;text-align:center;font:600 14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
 .local-book-loader input{display:block;margin:12px auto 0}
+.reader-scroll-nav{
+  position:fixed;
+  right:clamp(8px,2vw,24px);
+  top:50%;
+  transform:translateY(-50%);
+  z-index:28;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:7px;
+  border:1px solid rgba(0,0,0,.14);
+  border-radius:18px;
+  background:rgba(255,253,249,.78);
+  box-shadow:0 16px 34px rgba(0,0,0,.14);
+  backdrop-filter:blur(12px) saturate(130%);
+}
+.reader-scroll-nav button{
+  width:38px;
+  height:38px;
+  border:1px solid rgba(31,95,139,.22);
+  border-radius:13px;
+  background:#fff;
+  color:#17425f;
+  display:grid;
+  place-items:center;
+  font:800 18px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  cursor:pointer;
+  box-shadow:0 5px 14px rgba(31,95,139,.10);
+}
+.reader-scroll-nav button:hover{background:#f0f7fb;border-color:#9fbdd0}
+.reader-scroll-nav button:focus-visible{outline:3px solid rgba(47,105,143,.28);outline-offset:2px}
+.reader-scroll-nav button:disabled{opacity:.36;cursor:default;box-shadow:none}
 
 .math-inline math{font-size:1em}
 @media (max-width:980px){
@@ -289,6 +321,10 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
   .mega-nav{grid-template-columns:repeat(2,minmax(120px,1fr))}
   .menu-dropdown{position:static;display:block;min-width:0;width:100%;margin-top:8px}
 }
+@media (max-width:640px){
+  .reader-scroll-nav{right:8px;gap:5px;padding:5px;border-radius:14px}
+  .reader-scroll-nav button{width:32px;height:32px;border-radius:11px;font-size:15px}
+}
 @media print{
   @page{size:A4 portrait; margin:0}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
@@ -297,7 +333,7 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
     line-height:var(--body-leading) !important;
     font-family:var(--body-font-family) !important;
   }
-  .topbar,.status,.local-book-loader,.print-preparing-overlay{display:none !important}
+  .topbar,.status,.local-book-loader,.print-preparing-overlay,.reader-scroll-nav{display:none !important}
   .viewport{padding:0 !important; max-width:none !important}
   .page-stack{gap:0 !important}
   .sheet-wrap{
@@ -411,6 +447,12 @@ figure.media figcaption{
       <input type="file" id="localBookInput" accept="application/json,.json">
     </div>
   </main>
+  <div class="reader-scroll-nav" id="readerScrollNav" aria-label="Πλοήγηση κειμένου">
+    <button type="button" data-scroll-nav="start" title="Αρχή κειμένου" aria-label="Αρχή κειμένου">↟</button>
+    <button type="button" data-scroll-nav="prev" title="Προηγούμενη σελίδα" aria-label="Προηγούμενη σελίδα">↑</button>
+    <button type="button" data-scroll-nav="next" title="Επόμενη σελίδα" aria-label="Επόμενη σελίδα">↓</button>
+    <button type="button" data-scroll-nav="end" title="Τέλος κειμένου" aria-label="Τέλος κειμένου">↡</button>
+  </div>
   <div class="print-preparing-overlay" id="printPreparingOverlay" role="status" aria-live="polite" aria-hidden="true">
     <div class="print-preparing-card">
       <p class="print-preparing-title" id="printPreparingTitle">Η εκτύπωση ετοιμάζεται.</p>
@@ -432,6 +474,7 @@ const localBookLoader=document.getElementById('localBookLoader');
 const localBookInput=document.getElementById('localBookInput');
 const langElBtn=document.getElementById('langElBtn');
 const langEnBtn=document.getElementById('langEnBtn');
+const readerScrollNav=document.getElementById('readerScrollNav');
 const readerZoomOut=document.getElementById('readerZoomOut'),readerZoomFit=document.getElementById('readerZoomFit'),readerZoom100=document.getElementById('readerZoom100'),readerZoomIn=document.getElementById('readerZoomIn'),readerZoomValue=document.getElementById('readerZoomValue');
 const printPreparingOverlay=document.getElementById('printPreparingOverlay');
 const printPreparingTitle=document.getElementById('printPreparingTitle');
@@ -480,6 +523,7 @@ function rerenderBook(){
   renderPages(bookData);
   deriveNav(bookData);
   updateActiveNav();
+  updateReaderScrollNav();
   setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(bookData.pages||[]).length}`);
 }
 langElBtn?.addEventListener('click', ()=>{ contentLang='el'; writeLocalPreference('bookContentLang',contentLang); updateLangButtons(); rerenderBook(); });
@@ -515,6 +559,61 @@ readerZoomOut?.addEventListener('click',()=>changeReaderScale(-.08));readerZoomI
 pageStack.addEventListener('wheel',event=>{if(!(event.ctrlKey||event.metaKey))return;event.preventDefault();changeReaderScale(event.deltaY<0?.08:-.08)},{passive:false});
 window.addEventListener('keydown',event=>{if(!event.ctrlKey)return;if(event.key==='0'){event.preventDefault();readerZoomMode='fit';applyScreenScale(true)}else if(event.key==='1'){event.preventDefault();setReaderScale(1,'manual',true)}else if(event.key==='+'||event.key==='='){event.preventDefault();changeReaderScale(.08)}else if(event.key==='-'){event.preventDefault();changeReaderScale(-.08)}});
 window.addEventListener('resize',()=>{if(readerZoomMode==='fit')applyScreenScale(false)},{passive:true});
+
+function readerTopOffset(){
+  return Math.ceil((document.querySelector('.topbar')?.getBoundingClientRect().height || 0) + 14);
+}
+function scrollToReaderY(y){
+  window.scrollTo({top:Math.max(0, y), behavior:'smooth'});
+}
+function pageTopY(page){
+  return page.getBoundingClientRect().top + window.scrollY - readerTopOffset();
+}
+function scrollReaderToEdge(edge){
+  if(edge === 'end'){
+    scrollToReaderY(document.documentElement.scrollHeight - window.innerHeight);
+    return;
+  }
+  scrollToReaderY(0);
+}
+function scrollReaderByBookPage(direction){
+  const pages = [...pageStack.querySelectorAll('.sheet-wrap')];
+  if(!pages.length){
+    window.scrollBy({top:direction * Math.round(window.innerHeight * .86), behavior:'smooth'});
+    return;
+  }
+  const current = window.scrollY + readerTopOffset();
+  if(direction > 0){
+    const next = pages.find(page => (page.getBoundingClientRect().top + window.scrollY) > current + 8);
+    if(next) scrollToReaderY(pageTopY(next));
+    else scrollReaderToEdge('end');
+    return;
+  }
+  const prev = pages.toReversed
+    ? pages.toReversed().find(page => (page.getBoundingClientRect().top + window.scrollY) < current - 8)
+    : [...pages].reverse().find(page => (page.getBoundingClientRect().top + window.scrollY) < current - 8);
+  if(prev) scrollToReaderY(pageTopY(prev));
+  else scrollReaderToEdge('start');
+}
+function updateReaderScrollNav(){
+  if(!readerScrollNav) return;
+  const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  const atStart = window.scrollY <= 2;
+  const atEnd = window.scrollY >= maxY - 2;
+  readerScrollNav.querySelector('[data-scroll-nav="start"]')?.toggleAttribute('disabled', atStart);
+  readerScrollNav.querySelector('[data-scroll-nav="prev"]')?.toggleAttribute('disabled', atStart);
+  readerScrollNav.querySelector('[data-scroll-nav="next"]')?.toggleAttribute('disabled', atEnd);
+  readerScrollNav.querySelector('[data-scroll-nav="end"]')?.toggleAttribute('disabled', atEnd);
+}
+readerScrollNav?.addEventListener('click', event=>{
+  const button = event.target.closest('button[data-scroll-nav]');
+  if(!button || button.disabled) return;
+  const action = button.dataset.scrollNav;
+  if(action === 'start' || action === 'end') scrollReaderToEdge(action);
+  else scrollReaderByBookPage(action === 'next' ? 1 : -1);
+});
+window.addEventListener('scroll', updateReaderScrollNav, {passive:true});
+window.addEventListener('resize', updateReaderScrollNav, {passive:true});
 
 function withCacheBust(url){
   try{
@@ -1579,6 +1678,7 @@ function mountBook(loaded){
   renderPages(data);
   deriveNav(data);
   updateActiveNav();
+  requestAnimationFrame(updateReaderScrollNav);
   setStatus(`${contentLang==='en' ? 'Pages' : 'Σελίδες'}: ${(data.pages||[]).length}`);
   localBookLoader.hidden=true;
   window.BookAuthorRuntime=Object.freeze({

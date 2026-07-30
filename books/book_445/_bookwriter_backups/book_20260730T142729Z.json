@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T00:45:40.774Z",
-    "updatedAt": "2026-07-30T14:27:29.194Z",
+    "updatedAt": "2026-07-29T15:12:31.681Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -19540,25 +19540,96 @@
           "start": 1,
           "items": [
             {
+              "level": 0,
+              "value": 0,
               "body": {
                 "format": "rich-text-v1",
                 "nodes": [
                   {
+                    "type": "math_inline",
+                    "source": "",
+                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>&lt;</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
+                  },
+                  {
                     "type": "text_run",
-                    "text": "[εξίσωση], δεν έχουμε εκπομπή φωτοηλεκτρονίου."
+                    "text": ",",
+                    "bold": true
+                  },
+                  {
+                    "type": "text_run",
+                    "text": " δεν έχουμε εκπομπή φωτοηλεκτρονίου."
                   }
                 ]
+              },
+              "style": {
+                "align": "justify",
+                "hyphenate": true,
+                "fontFamily": "Calibri",
+                "fontSizePx": 14.666666666666666,
+                "lineHeight": 1,
+                "marginBottomPx": 2.6666666666666665
               }
             },
             {
+              "level": 0,
+              "value": 0,
               "body": {
                 "format": "rich-text-v1",
                 "nodes": [
                   {
+                    "type": "math_inline",
+                    "source": "",
+                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>=</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
+                  },
+                  {
                     "type": "text_run",
-                    "text": "[εξίσωση], το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει."
+                    "text": ",",
+                    "bold": true
+                  },
+                  {
+                    "type": "text_run",
+                    "text": " το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει."
                   }
                 ]
+              },
+              "style": {
+                "align": "justify",
+                "hyphenate": true,
+                "fontFamily": "Calibri",
+                "fontSizePx": 14.666666666666666,
+                "lineHeight": 1,
+                "marginBottomPx": 2.6666666666666665
+              }
+            },
+            {
+              "level": 0,
+              "value": 0,
+              "body": {
+                "format": "rich-text-v1",
+                "nodes": [
+                  {
+                    "type": "math_inline",
+                    "source": "",
+                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>&gt;</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
+                  },
+                  {
+                    "type": "text_run",
+                    "text": ",",
+                    "bold": true
+                  },
+                  {
+                    "type": "text_run",
+                    "text": " η περίσσεια ενέργειας εμφανίζεται ως κινητική ενέργεια του φωτοηλεκτρονίου."
+                  }
+                ]
+              },
+              "style": {
+                "align": "justify",
+                "hyphenate": true,
+                "fontFamily": "Calibri",
+                "fontSizePx": 14.666666666666666,
+                "lineHeight": 1,
+                "marginBottomPx": 2.6666666666666665
               }
             }
           ],
@@ -19616,53 +19687,6 @@
         "hide": false
       },
       "items": [
-        {
-          "id": "document-flow-r17-list-list-19",
-          "type": "list",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "ordered": false,
-          "start": 1,
-          "items": [
-            {
-              "body": {
-                "format": "rich-text-v1",
-                "nodes": [
-                  {
-                    "type": "text_run",
-                    "text": "[εξίσωση], η περίσσεια ενέργειας εμφανίζεται ως κινητική ενέργεια του φωτοηλεκτρονίου."
-                  }
-                ]
-              }
-            }
-          ],
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 2.6666666666666665,
-            "listStylePosition": "outside"
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
-            "sourcePage": 15,
-            "sourceParagraph": 303
-          },
-          "provenance": {
-            "sourceStyle": "List Paragraph",
-            "sourceNumId": "26",
-            "sourceNumFmt": "bullet",
-            "sourceLvlText": ""
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4"
-          }
-        },
         {
           "id": "_Toc229872251",
           "type": "section_heading",
@@ -37764,36 +37788,7 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationSection": "document-flow",
-        "paginationGenerated": true,
-        "paginationPagePart": 30
-      }
-    },
-    {
-      "id": "document-flow-r31",
-      "sourcePage": "26-27",
-      "header": {
-        "inherit": false,
-        "left": "",
-        "center": "",
-        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
-      },
-      "footer": {
-        "inherit": false,
-        "left": "© antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": false,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "docx-item-453",
           "type": "paragraph",
@@ -37860,7 +37855,36 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationSection": "document-flow",
+        "paginationGenerated": true,
+        "paginationPagePart": 30
+      }
+    },
+    {
+      "id": "document-flow-r31",
+      "sourcePage": "26-27",
+      "header": {
+        "inherit": false,
+        "left": "",
+        "center": "",
+        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
+      },
+      "footer": {
+        "inherit": false,
+        "left": "© antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": false,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-item-454",
           "type": "paragraph",
@@ -44969,6 +44993,9 @@
             "docxSourceHtml": "μέταλλο που έχει έργο εξόδου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi mathvariant=\"normal\">hc</mi></mrow></mrow><mrow><mrow><mn>6</mn></mrow><mrow><mi mathvariant=\"normal\">λ</mi></mrow></mrow></mfrac></mrow></math></span>, όπου h είναι η σταθερά του Planck και c είναι η ταχύτητα του φωτός στο κενό. Στο μέταλλο γίνεται φωτοηλεκτρικό φαινόμενο και βγαίνει ηλεκτρόνιο κινητικής ενέργειας <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">Κ</mi></mrow></mrow><mrow><mrow><mtext>ηλ</mtext></mrow></mrow></msub></mrow></math></span>. Για τις ενέργειες ισχύει:",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
+          },
+          "layout": {
+            "placement": "left"
           }
         },
         {
@@ -54376,7 +54403,8 @@
             "wrap": true,
             "floatInteraction": "wrap",
             "widthPx": 334,
-            "aspectRatio": "natural"
+            "aspectRatio": "natural",
+            "heightPx": null
           },
           "style": {
             "align": "justify",
