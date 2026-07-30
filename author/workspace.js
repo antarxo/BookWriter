@@ -313,7 +313,7 @@ async function openLibraryEntry(entry,reader=false){
     try{await openStaticBookUrl(entry.staticBookUrl,entry.staticBookBase,entry.name);if(reader)await openUserBook()}catch(error){modal('Άνοιγμα στατικού βιβλίου',`<div class="info-card bad">${esc(error.message)}</div>`)}
     return;
   }
-  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί v4 candidate στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία candidate');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε migration candidate από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα το candidate ως canonical v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Άνοιξε από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openUserBook()}
+  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί v4 candidate στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία candidate');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε migration candidate από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα το candidate ως canonical v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Έχει ανοιχθεί από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openUserBook()}
   }catch(error){modal('Άνοιγμα από Βιβλιοθήκη',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
 async function requireLibraryBooksHandle(interactive=true){if(!state.library.booksHandle&&interactive)await chooseLibrary();if(!state.library.booksHandle)return null;if(await permissionFor(state.library.booksHandle,interactive)!=='granted'){if(interactive)await chooseLibrary();}return state.library.booksHandle}
@@ -745,6 +745,7 @@ function applyPreviewZoom(announce=false){
   document.documentElement.style.setProperty('--preview-zoom',String(state.previewZoom));
   storage.set('bw-v4_4-zoom',String(state.previewZoom));
   storage.set('bw-v4_4-zoom-mode',state.previewZoomMode);
+  updatePreviewCaption();
   requestAnimationFrame(updateSelectionOverlay);
   if(announce) setStatus(`Μεγέθυνση ${Math.round(state.previewZoom*100)}%${state.previewZoomMode==='fit'?' · προσαρμογή στο πλάτος':''}.`);
 }
@@ -762,6 +763,12 @@ function changeZoom(delta){
   state.previewZoom=Math.max(.35,Math.min(2,state.previewZoom+delta));
   applyPreviewZoom(true);
 }
+function updatePreviewCaption(){
+  const caption=$('#previewCaption');
+  if(!caption)return;
+  const pageCount=has()?BookCore.expandScreenSequences(session.book).pages.length:0;
+  caption.textContent=`${pageCount} σελ. · ${Math.round(state.previewZoom*100)}%`;
+}
 function addOverflowMarker(wrapper,entry){
   wrapper.classList.add('preview-overflow-page');
   wrapper.dataset.overflowPx=String(entry.overflowPx||0);
@@ -776,11 +783,13 @@ function applyPreviewOverflowMarkers(audit){
   (audit?.pages||[]).forEach(entry=>{const wrapper=document.querySelector(`[data-preview-page="${CSS.escape(entry.pageId||'')}"]`);if(wrapper)addOverflowMarker(wrapper,entry)});
 }
 function renderPreviewOverflowSummary(audit){
-  const caption=$('#previewCaption'),base=`BookCore ${BookCore.VERSION} · canonical print DOM · ${Math.round(state.previewZoom*100)}%`;
-  if(!audit||!audit.overflowPages){caption.textContent=`${base} · 0 overflow`;return}
+  updatePreviewCaption();
+  const summary=$('#previewOverflowSummary');
+  if(!summary)return;
+  if(!audit||!audit.overflowPages){summary.innerHTML='<span class="overflow-ok">0 overflow</span>';return}
   const pages=(audit.pages||[]).slice(0,8);
-  caption.innerHTML=`${esc(base)} · <span class="overflow-summary">overflow: ${pages.map(entry=>`<button type="button" class="overflow-page-link" data-overflow-page="${esc(entry.pageId||'')}">σελ. ${Number(entry.displayPage||entry.pageIndex+1)}</button>`).join(', ')}${audit.pages.length>pages.length?` +${audit.pages.length-pages.length}`:''}</span>`;
-  caption.querySelectorAll('[data-overflow-page]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();const pageId=button.dataset.overflowPage;if(pageId){select(pageId,null,'overflow');document.querySelector(`[data-preview-page="${CSS.escape(pageId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'});}}));
+  summary.innerHTML=`<span class="overflow-summary">Υπερχείλιση: ${pages.map(entry=>`<button type="button" class="overflow-page-link" data-overflow-page="${esc(entry.pageId||'')}">σελ. ${Number(entry.displayPage||entry.pageIndex+1)}</button>`).join(', ')}${audit.pages.length>pages.length?` +${audit.pages.length-pages.length}`:''}</span>`;
+  summary.querySelectorAll('[data-overflow-page]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();const pageId=button.dataset.overflowPage;if(pageId){select(pageId,null,'overflow');document.querySelector(`[data-preview-page="${CSS.escape(pageId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'});}}));
 }
 function schedulePreviewOverflowAudit(delay=180){
   if(!has())return;
@@ -1157,7 +1166,8 @@ function renderPreview(){
   renderBook.pages.forEach((candidatePage,index)=>host.appendChild(createPreviewPageWrapper(candidatePage,index,renderBook)));
   BookCore.bindCalloutSequences(host);
   if(state.previewZoomMode==='fit') requestAnimationFrame(()=>fitPreviewToWidth(false)); else applyPreviewZoom(false);
-  $('#previewCaption').textContent=`BookCore ${BookCore.VERSION} · canonical print DOM · ${Math.round(state.previewZoom*100)}%`;
+  updatePreviewCaption();
+  $('#previewOverflowSummary').innerHTML='';
   updateSelection();
   requestAnimationFrame(updateSelectionOverlay);
   schedulePreviewOverflowAudit();

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-toolbar-icons-1">
-<link rel="stylesheet" href="workspace.css?v=20260730-toolbar-icons-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-preview-status-1">
+<link rel="stylesheet" href="workspace.css?v=20260730-preview-status-1">
 </head>
 <body>
 <div id="app" class="app-shell">
@@ -269,7 +269,7 @@
       </aside>
 
       <section class="pane preview-pane">
-        <div class="pane-title"><span>Canonical προεπισκόπηση · BookWriter v4.5.0 RC1</span><span class="preview-zoom-tools"><button data-command="zoom-out" title="Σμίκρυνση">−</button><button data-command="zoom-fit" title="Προσαρμογή στο πλάτος">Πλάτος</button><button data-command="zoom-100" title="100%">100%</button><button data-command="zoom-in" title="Μεγέθυνση">+</button></span><span id="previewCaption" class="muted"></span></div>
+        <div class="pane-title preview-titlebar"><span class="preview-title">Προεπισκόπηση</span><span class="preview-zoom-tools"><button data-command="zoom-out" title="Σμίκρυνση" aria-label="Σμίκρυνση">−</button><button data-command="zoom-fit" title="Προσαρμογή στο πλάτος" aria-label="Προσαρμογή στο πλάτος">↔</button><button data-command="zoom-100" title="100%" aria-label="100%">100</button><button data-command="zoom-in" title="Μεγέθυνση" aria-label="Μεγέθυνση">+</button></span><span id="previewCaption" class="preview-caption"></span><span id="previewOverflowSummary" class="preview-overflow-summary" aria-live="polite"></span></div>
         <div id="bookPreviewScroller" class="preview-scroller"><div id="bookPreviewPages" class="book-preview-pages"></div></div>
       </section>
 
@@ -301,7 +301,7 @@
 <div id="selectionOverlay" class="selection-overlay hidden"><span id="selectionOverlayLabel"></span></div>
 <div id="modalBackdrop" class="modal-backdrop hidden"><div class="modal-dialog" role="dialog" aria-modal="true"><div id="modalTitle" class="modal-title"></div><div id="modalBody" class="modal-body"></div><div id="modalButtons" class="modal-buttons"></div></div></div>
 
-<script src="../core/book-core.js?v=20260730-toolbar-icons-1"></script>
+<script src="../core/book-core.js?v=20260730-preview-status-1"></script>
 <script src="../core/vendor/jszip.min.js"></script>
 <script src="../core/v4/book-model-v4.js?v=20260730-author-static-library-2"></script>
 <script src="../core/v4/math-expression-v4.js"></script>
@@ -309,7 +309,7 @@
 <script src="../core/v4/book-service-v4.js"></script>
 <script src="../core/v4/docx-core-v4.js"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-toolbar-icons-1"></script>
+<script src="workspace.js?v=20260730-preview-status-1"></script>
 </body>
 </html>
 

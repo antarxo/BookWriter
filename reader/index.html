@@ -122,16 +122,17 @@ a:hover{color:#173f5b}
 .page-stack{display:flex; flex-direction:column; align-items:center; gap:26px}
 .print-preparing-overlay{
   position:fixed; inset:0; z-index:2000; display:none; place-items:center;
-  background:rgba(118,124,130,.92); backdrop-filter:blur(2px);
-  font:700 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:#173f5b;
+  background:rgba(7,10,13,.96); backdrop-filter:blur(9px) saturate(120%);
+  font:700 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:#f4f7fb;
 }
 .print-preparing .print-preparing-overlay{display:grid}
 .print-preparing-card{
-  width:min(420px,calc(100vw - 36px)); padding:22px 24px; border:1px solid rgba(31,95,139,.20);
-  border-radius:8px; background:#fffdf9; box-shadow:0 18px 46px rgba(0,0,0,.18); text-align:center;
+  width:min(420px,calc(100vw - 36px)); padding:24px 26px; border:1px solid rgba(255,255,255,.26);
+  border-radius:8px; background:rgba(255,255,255,.12); box-shadow:0 24px 70px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.20); text-align:center;
+  backdrop-filter:blur(18px) saturate(135%);
 }
 .print-preparing-title{margin:0 0 8px;font-size:18px}
-.print-preparing-text{margin:0;color:var(--muted);font-weight:650}
+.print-preparing-text{margin:0;color:rgba(244,247,251,.78);font-weight:650}
 .sheet-wrap{
   width:calc(var(--sheet-width) * var(--screen-scale));
   min-height:calc(var(--sheet-height) * var(--screen-scale));
@@ -375,7 +376,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-flow-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-curtain-1">
 </head>
 <body>
   <div class="topbar">
@@ -403,8 +404,8 @@ figure.media figcaption{
       <p class="print-preparing-text" id="printPreparingText">Παρακαλώ περιμένετε…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-print-flow-1"></script>
-<script src="../core/snapshot-transport.js?v=20260730-print-flow-1"></script>
+<script src="../core/book-core.js?v=20260730-print-curtain-1"></script>
+<script src="../core/snapshot-transport.js?v=20260730-print-curtain-1"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');

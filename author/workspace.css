@@ -142,8 +142,12 @@
 .docx-warning-list{font-size:11px;color:#7a4a00}
 @media(max-width:1150px){.docx-view{grid-template-columns:250px minmax(380px,1fr) 300px}}
 
-.preview-zoom-tools{display:inline-flex;align-items:center;gap:4px;margin-left:10px}
-.preview-zoom-tools button{height:24px;min-width:28px;padding:0 7px;border:1px solid #aaa;background:#fff;border-radius:5px;cursor:pointer;font:600 12px system-ui}
+.preview-titlebar{gap:7px;overflow:visible}
+.preview-title{white-space:nowrap}
+.preview-caption{color:#667085;font:600 12px system-ui;white-space:nowrap}
+.preview-overflow-summary{margin-left:auto;display:flex;align-items:center;gap:5px;min-width:0;max-width:54%;overflow:hidden;white-space:nowrap}
+.preview-zoom-tools{display:inline-flex;align-items:center;gap:3px;margin-left:4px}
+.preview-zoom-tools button{height:24px;min-width:28px;padding:0 7px;border:1px solid #aaa;background:#fff;border-radius:5px;cursor:pointer;font:700 12px system-ui}
 .preview-zoom-tools button:hover{background:#eef5fb}
 .book-preview-pages .preview-overflow-page .sheet{outline:3px solid #d92d20;outline-offset:2px}
 .book-preview-pages .preview-overflow-page{margin-bottom:24px}
@@ -174,7 +178,8 @@
 #insertBookPreviewPages .flow-inserted-item{outline:6px solid #2fa86e!important;outline-offset:3px}
 #insertBookPreviewPages .insertion-marker{clear:both;margin:12px 0 16px}
 .insert-source-preview-pane .pane-title{height:34px;flex-basis:34px}
-.overflow-summary{color:var(--bad);font-weight:650}
+.overflow-ok{display:inline-block;color:#067647;background:#ecfdf3;border:1px solid #9ad8b2;border-radius:10px;padding:2px 7px;font:750 11px system-ui}
+.overflow-summary{display:inline-flex;align-items:center;gap:4px;color:var(--bad);background:#fff1f0;border:1px solid #f0a7a0;border-radius:10px;padding:2px 7px;font:750 11px system-ui}
 .overflow-page-link{appearance:none;border:0;background:transparent;color:var(--bad);font:inherit;font-weight:750;padding:0 2px;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .overflow-page-link:hover{background:#fde8e7;border-radius:4px}
 #insertDocxPreview{background:#f8f7f3;padding:10px}
