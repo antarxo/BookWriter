@@ -114,9 +114,9 @@ function setStatus(text,kind=''){
 }
 
 function modeLabel(){
-  if(state.mode==='migration') return 'migration candidate';
-  if(state.mode==='candidate') return 'v4 candidate';
-  if(state.mode==='canonical') return 'canonical v4';
+  if(state.mode==='migration') return 'δοκιμαστική μετατροπή v4';
+  if(state.mode==='candidate') return 'δοκιμαστική v4';
+  if(state.mode==='canonical') return 'κανονικό v4';
   if(state.mode==='static') return 'στατικό v4';
   if(state.mode==='new') return 'νέο v4';
   return '—';
@@ -126,7 +126,7 @@ function viewTitle(){
   if(state.view==='home')return 'Βιβλιοθήκη';
   if(state.view==='insert')return 'Παρεμβολή από Word';
   if(state.view==='docx')return 'Νέο βιβλίο από Word';
-  return 'Χώρος βιβλίου';
+  return 'Επεξεργασία βιβλίου';
 }
 
 function setView(name){
@@ -280,10 +280,10 @@ async function openStaticBookUrl(bookUrl,bookBase=null,name=''){
   }
   const migration=M.migratePagesV1(data,{language:'el',includeTranslations:false});
   const defaultsAdded=ensureMigratedLayoutDefaults(migration.book);
-  migration.report.fieldMappings.push('static URL → migration candidate στη μνήμη');
+  migration.report.fieldMappings.push('static URL → δοκιμαστική μετατροπή v4 στη μνήμη');
   migration.report.layoutInteractionDefaultsAssigned=defaultsAdded;
   await attachStaticBook(migration.book,'migration',name||libraryBookTitle(migration.book,''),absoluteBookUrl,absoluteBookBase,clone(data),migration.report);
-  setStatus(`Άνοιξε στατικό migration candidate · ${defaultsAdded} explicit float rules.`,'warn');
+  setStatus(`Άνοιξε στατική δοκιμαστική μετατροπή v4 · ${defaultsAdded} κανόνες ροής.`,'warn');
 }
 async function scanStaticLibrary(rootUrl=configuredStaticLibraryRoot(),quiet=false){
   state.library.loading=true;state.library.error='';state.library.staticRootUrl=rootUrl.href;state.library.booksHandle=null;renderLibrary();const entries=[];
@@ -358,7 +358,7 @@ async function openLibraryEntry(entry,reader=false){
     try{await openStaticBookUrl(entry.staticBookUrl,entry.staticBookBase,entry.name);if(reader)await openUserBook()}catch(error){modal('Άνοιγμα στατικού βιβλίου',`<div class="info-card bad">${esc(error.message)}</div>`)}
     return;
   }
-  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί v4 candidate στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία candidate');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε migration candidate από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα το candidate ως canonical v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Έχει ανοιχθεί από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openUserBook()}
+  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί δοκιμαστική μετατροπή v4 στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία δοκιμαστικής μετατροπής');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε δοκιμαστική μετατροπή v4 από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα τη δοκιμαστική μετατροπή ως κανονικό v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Έχει ανοιχθεί από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openUserBook()}
   }catch(error){modal('Άνοιγμα από Βιβλιοθήκη',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
 async function requireLibraryBooksHandle(interactive=true){if(!state.library.booksHandle&&interactive)await chooseLibrary();if(!state.library.booksHandle)return null;if(await permissionFor(state.library.booksHandle,interactive)!=='granted'){if(interactive)await chooseLibrary();}return state.library.booksHandle}
@@ -458,14 +458,14 @@ async function openBook(){
       setStatus(reconciled?.changed?'Άνοιξε canonical v4 βιβλίο · καθαρίστηκε παλιά κατάσταση σελιδοποίησης.':'Άνοιξε canonical v4 βιβλίο.',reconciled?.changed?'warn':'good');
       return;
     }
-    const proceed=await confirmBox('Μετάβαση σε v4',`<div class="info-card warn">Το <b>book.json</b> είναι <b>${esc(opened.data.schemaVersion||'άγνωστο')}</b>. Θα δημιουργηθεί ελληνικό-only v4 candidate στη μνήμη. Το production book.json δεν αλλάζει.</div>`,'Δημιουργία candidate');
+    const proceed=await confirmBox('Μετάβαση σε v4',`<div class="info-card warn">Το <b>book.json</b> είναι <b>${esc(opened.data.schemaVersion||'άγνωστο')}</b>. Θα δημιουργηθεί δοκιμαστική μετατροπή v4 στη μνήμη. Το κανονικό book.json δεν αλλάζει.</div>`,'Δημιουργία δοκιμαστικής μετατροπής');
     if(!proceed) return;
     const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});
     const defaultsAdded=ensureMigratedLayoutDefaults(migration.book);
     migration.report.fieldMappings.push('all content items → wrap by default; explicit clear/avoid preserved');
     migration.report.layoutInteractionDefaultsAssigned=defaultsAdded;
     await attachOpened(dir,opened.handle,migration.book,'migration',dir.name,clone(opened.data),migration.report);
-    setStatus(`Δημιουργήθηκε v4 migration candidate στη μνήμη · ${defaultsAdded} explicit float rules.`,'good');
+    setStatus(`Δημιουργήθηκε δοκιμαστική μετατροπή v4 στη μνήμη · ${defaultsAdded} κανόνες ροής.`,'good');
   }catch(error){
     if(error.name==='AbortError') return;
     console.error(error);
@@ -475,17 +475,17 @@ async function openBook(){
 }
 
 async function openCandidate(){
-  if(!await allowReplaceCurrentBook('άνοιγμα candidate'))return;
-  if(!filesystemAccessAvailable()){modal('Άνοιγμα candidate','<div class="info-card bad">Το άνοιγμα candidate από φάκελο απαιτεί Chrome ή Edge μέσω localhost. Στο τρέχον παράθυρο υπάρχει μόνο στατική Βιβλιοθήκη.</div>');return}
+  if(!await allowReplaceCurrentBook('άνοιγμα δοκιμαστικής μετατροπής v4'))return;
+  if(!filesystemAccessAvailable()){modal('Άνοιγμα δοκιμαστικής μετατροπής v4','<div class="info-card bad">Το άνοιγμα δοκιμαστικής μετατροπής από φάκελο απαιτεί Chrome ή Edge μέσω localhost. Στο τρέχον παράθυρο υπάρχει μόνο στατική Βιβλιοθήκη.</div>');return}
   try{
     const dir=await showDirectoryPicker({mode:'readwrite'});
     const opened=await readNamedJson(dir,'book_v4_candidate.json');
-    if(opened.data.schemaVersion!==M.SCHEMA_VERSION) throw new Error('Το book_v4_candidate.json δεν είναι canonical v4.');
+    if(opened.data.schemaVersion!==M.SCHEMA_VERSION) throw new Error('Το book_v4_candidate.json δεν είναι έγκυρο βιβλίο v4.');
     await attachOpened(dir,opened.handle,opened.data,'candidate',dir.name);
-    setStatus('Άνοιξε το αποθηκευμένο v4 candidate.','good');
+    setStatus('Άνοιξε η αποθηκευμένη δοκιμαστική μετατροπή v4.','good');
   }catch(error){
     if(error.name==='AbortError') return;
-    modal('Άνοιγμα candidate',`<div class="info-card bad">${esc(error.message)}</div>`);
+    modal('Άνοιγμα δοκιμαστικής μετατροπής v4',`<div class="info-card bad">${esc(error.message)}</div>`);
   }
 }
 
@@ -533,7 +533,7 @@ async function saveCandidate(){
     setStatus(`Αποθηκεύτηκαν ${result.candidateName}, ${result.reportName}, ${result.originalBackup}.`,'good');
     return true;
   }catch(error){
-    await modal('Αποτυχία candidate',`<div class="info-card bad">${esc(error.message)}</div>`);
+    await modal('Αποτυχία δοκιμαστικής μετατροπής',`<div class="info-card bad">${esc(error.message)}</div>`);
     return false;
   }
 }
@@ -751,17 +751,17 @@ function renderAuditProperties(host){
 
 function renderMigrationProperties(host){
   if(state.mode!=='migration'){
-    host.innerHTML='<div class="info-card">Το ανοιχτό βιβλίο δεν είναι ενεργό migration candidate.</div>';
+    host.innerHTML='<div class="info-card">Το ανοιχτό βιβλίο δεν είναι ενεργή δοκιμαστική μετατροπή v4.</div>';
     return;
   }
   const report=state.report||{};
   const counts=report.counts||{};
   host.innerHTML=`
-    <div class="info-card warn"><b>${esc(report.sourceSchema)} → ${esc(report.targetSchema)}</b><br>Assigned IDs: ${(report.assignedIds||[]).length}<br>English fields εκτός candidate: ${(report.droppedTranslations||[]).length}<br>Explicit float rules: ${report.layoutInteractionDefaultsAssigned||0}</div>
+    <div class="info-card warn"><b>${esc(report.sourceSchema)} → ${esc(report.targetSchema)}</b><br>Νέα IDs: ${(report.assignedIds||[]).length}<br>Αγγλικά πεδία εκτός δοκιμής: ${(report.droppedTranslations||[]).length}<br>Κανόνες ροής: ${report.layoutInteractionDefaultsAssigned||0}</div>
     <section class="property-section"><h3>Mappings</h3><div class="property-form"><ul>${(report.fieldMappings||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></section>
     <section class="property-section"><h3>Τύποι</h3><pre class="code-block">${esc(JSON.stringify(counts,null,2))}</pre></section>
-    <div class="action-grid"><button id="saveCandidateButton">Αποθήκευση candidate + report + backup</button></div>
-    <div class="info-card">Δεν υπάρχει προαγωγή σε production book.json.</div>`;
+    <div class="action-grid"><button id="saveCandidateButton">Αποθήκευση δοκιμαστικής v4 + αναφορά</button></div>
+    <div class="info-card">Δεν αλλάζει αυτόματα το κανονικό book.json.</div>`;
   $('#saveCandidateButton').onclick=saveCandidate;
 }
 
@@ -1204,7 +1204,7 @@ function renderPreview(){
   if(state.mode==='migration'){
     const banner=document.createElement('div');
     banner.className='migration-banner';
-    banner.innerHTML=`<b>Migration candidate:</b> ${state.candidateSaved?'αποθηκευμένος':'μόνο στη μνήμη'} · το production book.json δεν άλλαξε.`;
+    banner.innerHTML=`<b>Δοκιμαστική μετατροπή v4:</b> ${state.candidateSaved?'αποθηκευμένη':'μόνο στη μνήμη'} · το κανονικό book.json δεν άλλαξε.`;
     host.appendChild(banner);
   }
   const renderBook=BookCore.expandScreenSequences(session.book);

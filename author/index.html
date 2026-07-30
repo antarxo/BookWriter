@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-author-icons-2">
-<link rel="stylesheet" href="workspace.css?v=20260730-author-icons-2">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-author-simple-1">
+<link rel="stylesheet" href="workspace.css?v=20260730-author-simple-1">
 </head>
 <body>
 <svg class="bw-icon-sprite" aria-hidden="true" focusable="false">
@@ -71,10 +71,8 @@
       <button class="menu-command" data-command="choose-library"><span class="bw-icon bw-icon-library" aria-hidden="true"></span><span>Σύνδεση Βιβλιοθήκης…</span><kbd></kbd></button>
       <button class="menu-command" data-command="refresh-library"><span class="bw-icon bw-icon-refresh" aria-hidden="true"></span><span>Ανανέωση Βιβλιοθήκης</span><kbd></kbd></button>
       <button class="menu-command" data-command="open-book"><span class="bw-icon bw-icon-folder" aria-hidden="true"></span><span>Άνοιγμα βιβλίου εκτός Βιβλιοθήκης…</span><kbd>Ctrl+O</kbd></button>
-      <button class="menu-command" data-command="open-candidate"><span>◫</span><span>Άνοιγμα v4 candidate…</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="save"><span class="bw-icon bw-icon-save" aria-hidden="true"></span><span>Αποθήκευση</span><kbd>Ctrl+S</kbd></button>
-      <button class="menu-command" data-command="save-candidate"><span>⇥</span><span>Αποθήκευση candidate + report + backup</span><kbd></kbd></button>
       <button class="menu-command" data-command="backup"><span>⧉</span><span>Δημιουργία backup</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="reader"><span class="bw-icon bw-icon-reader" aria-hidden="true"></span><span>Προβολή βιβλίου</span><kbd></kbd></button>
@@ -117,7 +115,7 @@
     </div></div>
 
     <div class="menu"><button class="menu-button">Βιβλίο</button><div class="menu-popup">
-      <button class="menu-command" data-command="book-view"><span>▤</span><span>Χώρος βιβλίου</span><kbd>Esc</kbd></button>
+      <button class="menu-command" data-command="book-view"><span>▤</span><span>Επεξεργασία βιβλίου</span><kbd>Esc</kbd></button>
       <button class="menu-command" data-command="tab-book"><span>⚙</span><span>Ρυθμίσεις βιβλίου</span><kbd></kbd></button>
       <button class="menu-command" data-command="tab-page"><span>▧</span><span>Ρυθμίσεις σελίδας</span><kbd></kbd></button>
       <button class="menu-command" data-command="tab-item"><span>¶</span><span>Ιδιότητες στοιχείου</span><kbd>F2</kbd></button>
@@ -128,7 +126,7 @@
 
     <div class="menu"><button class="menu-button">Προβολή</button><div class="menu-popup">
       <button class="menu-command" data-command="home"><span>⌂</span><span>Αρχική</span><kbd></kbd></button>
-      <button class="menu-command" data-command="book-view"><span>▤</span><span>Χώρος βιβλίου</span><kbd></kbd></button>
+      <button class="menu-command" data-command="book-view"><span>▤</span><span>Επεξεργασία βιβλίου</span><kbd></kbd></button>
       <button class="menu-command" data-command="toggle-properties"><span>▥</span><span>Ιδιότητες</span><kbd>F4</kbd></button>
       <button class="menu-command" data-command="toggle-scenes"><span>▶</span><span>Σκηνές ON/OFF</span><kbd></kbd></button>
       <button class="menu-command" data-command="zoom-in"><span>＋</span><span>Μεγέθυνση</span><kbd>Ctrl++</kbd></button>
@@ -138,7 +136,6 @@
     </div></div>
 
     <div class="menu"><button class="menu-button">Εργαλεία</button><div class="menu-popup">
-      <button class="menu-command" data-command="migration"><span>⇄</span><span>Συμβατότητα και μετάβαση</span><kbd></kbd></button>
       <button class="menu-command" data-command="audit"><span>✓</span><span>Έλεγχος IDs, συνδέσμων και renderer</span><kbd></kbd></button>
       <button class="menu-command" data-command="reflow"><span>↯</span><span>Canonical reflow και νέα σελιδοποίηση</span><kbd></kbd></button>
       <button class="menu-command" data-command="selftest"><span>⚒</span><span>Transaction self-test</span><kbd></kbd></button>
@@ -160,7 +157,7 @@
     <button class="tool-button reader-tool-button" data-command="reader" title="Προβολή βιβλίου" aria-label="Προβολή βιβλίου"><span class="bw-icon bw-icon-reader" aria-hidden="true"></span></button>
     <button class="tool-button print-tool-button" data-command="print" title="Εκτύπωση ή PDF (Ctrl+P)" aria-label="Εκτύπωση ή PDF"><span class="bw-icon bw-icon-print" aria-hidden="true"></span></button>
     <span class="tool-separator"></span>
-    <button class="tool-button" data-command="book-view" title="Χώρος βιβλίου" aria-label="Χώρος βιβλίου"><span class="bw-icon bw-icon-page" aria-hidden="true"></span></button>
+    <button class="tool-button" data-command="book-view" title="Επεξεργασία βιβλίου" aria-label="Επεξεργασία βιβλίου"><span class="bw-icon bw-icon-page" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="tab-item" title="Ιδιότητες στοιχείου" aria-label="Ιδιότητες στοιχείου"><span class="bw-icon bw-icon-properties" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="insert-item-before" title="Νέο στοιχείο πριν" aria-label="Νέο στοιχείο πριν"><span class="bw-icon bw-icon-insert-before" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="insert-item-after" title="Νέο στοιχείο μετά" aria-label="Νέο στοιχείο μετά"><span class="bw-icon bw-icon-insert-after" aria-hidden="true"></span></button>
@@ -206,7 +203,6 @@
           <button data-command="new-book"><span class="bw-icon bw-icon-new-book" aria-hidden="true"></span><span>Νέο κενό βιβλίο</span></button>
           <button data-command="new-docx"><span class="bw-icon bw-icon-word" aria-hidden="true"></span><span>Νέο βιβλίο από Word…</span></button>
           <button data-command="open-book"><span class="bw-icon bw-icon-folder" aria-hidden="true"></span><span>Άνοιγμα φακέλου εκτός Βιβλιοθήκης…</span></button>
-          <button data-command="migration"><span class="bw-icon bw-icon-migrate" aria-hidden="true"></span><span>Συμβατότητα / μετάβαση…</span></button>
         </div>
         <datalist id="libraryDisciplineSuggestions"><option value="Φυσική"><option value="Χημεία"><option value="Μαθηματικά"><option value="Βιολογία"><option value="Διεπιστημονικό"></datalist>
         <datalist id="libraryLevelSuggestions"><option value="Δημοτικό"><option value="Γυμνάσιο"><option value="Λύκειο"><option value="Γ΄ Λυκείου"><option value="Πανεπιστήμιο"><option value="Γενικό"></datalist>
@@ -329,7 +325,6 @@
           <button data-tab="item">Στοιχείο</button>
           <button data-tab="nav">Μενού</button>
           <button data-tab="audit">Έλεγχοι</button>
-          <button data-tab="migration">Μετάβαση</button>
         </div>
         <div id="propertiesContent" class="properties-content"></div>
       </aside>
@@ -357,7 +352,7 @@
 <script src="../core/v4/book-service-v4.js"></script>
 <script src="../core/v4/docx-core-v4.js"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-author-icons-2"></script>
+<script src="workspace.js?v=20260730-author-simple-1"></script>
 </body>
 </html>
 
