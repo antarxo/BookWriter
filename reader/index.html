@@ -376,7 +376,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-curtain-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-speed-1">
 </head>
 <body>
   <div class="topbar">
@@ -404,8 +404,8 @@ figure.media figcaption{
       <p class="print-preparing-text" id="printPreparingText">Παρακαλώ περιμένετε…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-print-curtain-1"></script>
-<script src="../core/snapshot-transport.js?v=20260730-print-curtain-1"></script>
+<script src="../core/book-core.js?v=20260730-print-speed-1"></script>
+<script src="../core/snapshot-transport.js?v=20260730-print-speed-1"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');
@@ -541,7 +541,7 @@ function applyImageWithFallback(img, rawSrc=''){
   img.addEventListener('error', tryNext);
   tryNext();
 }
-function waitForImage(img, timeoutMs=8000){
+function waitForImage(img, timeoutMs=3500){
   return new Promise(resolve=>{
     if(!img) return resolve(false);
     const isReady = ()=>img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
@@ -555,7 +555,7 @@ function waitForImage(img, timeoutMs=8000){
     };
     img.addEventListener('load', ()=>finish(isReady()), {once:true});
     img.addEventListener('error', ()=>finish(false), {once:true});
-    const timer = setTimeout(()=>finish(isReady()), Math.max(500, Number(timeoutMs) || 8000));
+    const timer = setTimeout(()=>finish(isReady()), Math.max(500, Number(timeoutMs) || 3500));
   });
 }
 function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
@@ -564,14 +564,14 @@ function nextFrame(){
 }
 async function warmSceneFrameForSnapshot(frame, iframe){
   if(!frame || !iframe) return;
-  const settleMs = Math.max(250, Math.min(3500, Number(frame?.dataset?.snapshotSettleMs) || 1100));
+  const settleMs = Math.max(180, Math.min(2500, Number(frame?.dataset?.snapshotSettleMs) || 550));
   try{ frame.scrollIntoView({block:'center', inline:'center', behavior:'instant'}); }catch{ frame.scrollIntoView({block:'center', inline:'center'}); }
   try{ iframe.focus?.(); }catch(_error){}
   await nextFrame();
   await nextFrame();
   await wait(settleMs);
 }
-function waitForIframeLoad(iframe, timeoutMs=6000){
+function waitForIframeLoad(iframe, timeoutMs=3500){
   return new Promise(resolve=>{
     if(!iframe) return resolve('unavailable');
     const current = iframe.dataset.sceneLoadState;
@@ -585,12 +585,12 @@ function waitForIframeLoad(iframe, timeoutMs=6000){
     };
     iframe.addEventListener('load', ()=>finish('loaded'), {once:true});
     iframe.addEventListener('error', ()=>finish('error'), {once:true});
-    const timer = setTimeout(()=>finish('timeout'), Math.max(500, Number(timeoutMs) || 6000));
+    const timer = setTimeout(()=>finish('timeout'), Math.max(500, Number(timeoutMs) || 3500));
   });
 }
 async function waitForFigureImages(){
   const imgs = Array.from(document.querySelectorAll('.media-frame img:not(.print-scene-snapshot)'));
-  for(const img of imgs) await waitForImage(img);
+  await Promise.all(imgs.map(img=>waitForImage(img, 2500)));
 }
 const SNAPSHOT_PATHS = BookSnapshotTransport.PATHS;
 let lastSnapshotReport = null;
@@ -604,7 +604,7 @@ function promiseWithTimeout(promise, timeoutMs, reason='timeout'){
     Promise.resolve(promise).then(value=>{ clearTimeout(timer); resolve(value); }, error=>{ clearTimeout(timer); reject(error); });
   });
 }
-async function captureIframeDirect(iframe, timeoutMs=2200){
+async function captureIframeDirect(iframe, timeoutMs=1200){
   const started = performance?.now?.() ?? Date.now();
   let win = null;
   try{ win = iframe?.contentWindow || null; }catch(_e){}
@@ -662,7 +662,7 @@ async function captureIframeDirect(iframe, timeoutMs=2200){
   }
 }
 async function captureIframeFast(iframe, options={}){
-  const direct = await captureIframeDirect(iframe, options.directTimeoutMs || 2200);
+  const direct = await captureIframeDirect(iframe, options.directTimeoutMs || 1200);
   if(direct?.result === 'success') return direct;
   const viaMessage = await BookSnapshotTransport.capture(iframe, {
     timeoutMs:options.timeoutMs
@@ -732,7 +732,8 @@ async function captureSceneFrame(frame){
       dataUrl:null
     };
   }
-  const loadState = await waitForIframeLoad(liveIframe);
+  const loadTimeoutMs = Math.max(700, Math.min(6000, Number(frame?.dataset?.snapshotLoadTimeoutMs) || 3500));
+  const loadState = await waitForIframeLoad(liveIframe, loadTimeoutMs);
   if(loadState === 'error'){
     return {
       requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
@@ -745,12 +746,13 @@ async function captureSceneFrame(frame){
     };
   }
   await warmSceneFrameForSnapshot(frame, liveIframe);
-  const attempts = Math.max(1, Math.min(5, Number(frame?.dataset?.snapshotAttempts) || 3));
-  const timeoutMs = Math.max(1200, Math.min(12000, Number(frame?.dataset?.snapshotTimeoutMs) || 6000));
-  const retryDelayMs = Math.max(120, Math.min(3000, Number(frame?.dataset?.snapshotRetryDelayMs) || 550));
+  const attempts = Math.max(1, Math.min(5, Number(frame?.dataset?.snapshotAttempts) || 1));
+  const timeoutMs = Math.max(900, Math.min(12000, Number(frame?.dataset?.snapshotTimeoutMs) || 3800));
+  const retryDelayMs = Math.max(80, Math.min(3000, Number(frame?.dataset?.snapshotRetryDelayMs) || 250));
   return captureIframeWithRetry(liveIframe, {
     attempts,
     timeoutMs,
+    directTimeoutMs:Math.max(600, Math.min(5000, Number(frame?.dataset?.snapshotDirectTimeoutMs) || 1200)),
     retryDelayMs,
     accepts:()=>true
   });
