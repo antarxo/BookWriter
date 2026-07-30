@@ -645,6 +645,7 @@ async function captureSceneFrame(frame){
 }
 let printSnapshotsPrepared = false;
 let printFlowRunning = false;
+let sourceBookData = null;
 let bookData = null;
 
 function clearPrintSnapshots(){
@@ -750,6 +751,15 @@ window.BOOK_PRINT_DIAGNOSTICS = Object.freeze({
     preparedSnapshots: document.querySelectorAll('.media-frame.scene-frame.print-ready .print-scene-snapshot').length,
     ready: printSnapshotsPrepared,
     lastReport:lastSnapshotReport
+  }),
+  sequenceStatus: ()=>({
+    sourcePages: sourceBookData?.pages?.length || 0,
+    currentPages: bookData?.pages?.length || 0,
+    sourceExpansion: sourceBookData ? BookCore.expandPrintSequences(sourceBookData).extensions?.printSequenceExpansion || null : null,
+    currentExpansion: bookData?.extensions?.printSequenceExpansion || null,
+    domPages: document.querySelectorAll('.sheet-wrap').length,
+    domScenes: document.querySelectorAll('.media-frame.scene-frame').length,
+    domCallouts: document.querySelectorAll('[data-book-item-type="interactive_callout"]').length
   })
 });
 function snapshotFailureSummary(report=lastSnapshotReport, error=null){
@@ -790,9 +800,11 @@ function requestSnapshotPrintOverride(error=null){
   return window.confirm(`${title}\n${counts}${details}${consequence}${question}`);
 }
 function ensurePrintSequenceExpansion(){
-  if(!bookData) return;
-  const expanded = BookCore.expandPrintSequences(bookData);
+  const source = sourceBookData || bookData;
+  if(!source) return;
+  const expanded = BookCore.expandPrintSequences(source);
   if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
+  clearPrintSnapshots();
   bookData = expanded;
   renderPages(bookData);
   deriveNav(bookData);
@@ -839,6 +851,7 @@ function resolveAppHref(){
   return normalizeAppSrc(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
 }
 window.addEventListener('beforeprint', ()=>{
+  ensurePrintSequenceExpansion();
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
   if(!printSnapshotsPrepared){
     try{ preparePrintSnapshots(false); }catch(_e){}
@@ -1315,6 +1328,7 @@ function mountBook(loaded){
   const validation=BookCore.validateData(loaded);
   if(!validation.ok) throw new Error(validation.errors.join(' '));
   const normalized=BookCore.normalizeData(loaded);
+  sourceBookData = normalized;
   const data=initialParams.has('_v4print') ? BookCore.expandPrintSequences(normalized) : BookCore.expandScreenSequences(normalized);
   bookData = data;
   const defs=data.layoutDefaults || {};
