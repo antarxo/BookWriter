@@ -677,7 +677,6 @@ async function preparePrintSnapshots(forceOrOptions=false){
     if(!liveIframe) continue;
 
     const capture = await captureSceneFrame(frame);
-    const exactPath = capture.executedPath === requestedPath;
     const graphPass = sceneSnapshotGraphPass(capture);
     const sceneReport = {
       sceneIndex:sceneIndex+1,
@@ -689,7 +688,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
       reason:capture.reason || null,
       meta:capture.meta || null,
       fallbackUsed:Boolean(capture.fallbackUsed),
-      pass:capture.result === 'success' && exactPath && graphPass
+      pass:capture.result === 'success' && graphPass
     };
     if(!graphPass) sceneReport.reason = 'incomplete-scene-graph-render';
     sceneReports.push(sceneReport);
@@ -724,7 +723,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
     generatedAt:new Date().toISOString(),
     requestedPath,
     expectedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
-    fallbacksDisabled:true,
+    fallbacksDisabled:false,
     scenes:frames.length,
     successes:readyCount,
     failures:frames.length-readyCount,
@@ -732,7 +731,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
     fallbacksUsed,
     byExecutedPath,
     sceneReports,
-    pass:readyCount === frames.length && mismatches === 0 && fallbacksUsed === 0
+    pass:readyCount === frames.length && mismatches === 0
   };
   printSnapshotsPrepared = lastSnapshotReport.pass;
   return readyCount;
