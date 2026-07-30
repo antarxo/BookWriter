@@ -13,6 +13,30 @@ const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#39;'}[ch]));
 const clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
+const ICON_SYMBOLS={
+  'bw-icon-library':'bw-i-library',
+  'bw-icon-folder':'bw-i-folder',
+  'bw-icon-save':'bw-i-save',
+  'bw-icon-reader':'bw-i-reader',
+  'bw-icon-print':'bw-i-print',
+  'bw-icon-page':'bw-i-page',
+  'bw-icon-properties':'bw-i-properties',
+  'bw-icon-word':'bw-i-word',
+  'bw-icon-new-book':'bw-i-new-book',
+  'bw-icon-insert-before':'bw-i-insert-before',
+  'bw-icon-insert-after':'bw-i-insert-after',
+  'bw-icon-new-page':'bw-i-new-page',
+  'bw-icon-migrate':'bw-i-migrate'
+};
+function hydrateIconSprites(root=document){
+  root.querySelectorAll?.('.bw-icon').forEach(node=>{
+    if(node.querySelector('svg'))return;
+    const key=Object.keys(ICON_SYMBOLS).find(cls=>node.classList.contains(cls));
+    if(!key)return;
+    node.classList.add('has-svg');
+    node.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#${ICON_SYMBOLS[key]}"></use></svg>`;
+  });
+}
 const storage={get(k,d=''){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 const APP_VERSION='4.5.0-rc1';
 const APP_AUTHORING_VERSION='bookwriter-4.5.0-rc1';
@@ -186,6 +210,7 @@ function renderChrome(){
   $('#statusView').textContent=viewTitle();
   const sceneToggle=$('#sceneToggleButton');
   sceneToggle.innerHTML=`<span class="bw-icon ${state.realScenes?'bw-icon-scenes-on':'bw-icon-scenes-off'}" aria-hidden="true"></span>`;
+  hydrateIconSprites(sceneToggle);
   sceneToggle.classList.toggle('is-off',!state.realScenes);
   sceneToggle.title=`Σκηνές: ${state.realScenes?'ON':'OFF'}`;
   sceneToggle.setAttribute('aria-label',state.realScenes?'Σκηνές ενεργές':'Σκηνές ανενεργές');
@@ -2197,6 +2222,7 @@ window.addEventListener('beforeunload',event=>{if(has()&&session.isDirty()){even
 
 window.BookWriterApp={version:APP_VERSION,getBook:()=>clone(session.book),getSelection:()=>clone(session.selection),getMode:()=>state.mode,getDocx:()=>({mode:state.docx.mode,file:state.docx.file?.name||'',entries:state.docx.entries.length,range:docxRange().map(x=>x.key),report:clone(state.docx.report),insertion:clone(state.docx.insertion)}),testLoadBookUrl,testLoadBookObject,startInsertWorkspace:startDocxInsert,math:X,docx:D};
 
+hydrateIconSprites();
 renderChrome();
 applyPreviewZoom(false);
 loadInitialBookFromUrl().then(opened=>{
