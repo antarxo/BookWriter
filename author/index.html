@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-reader-print-split-1">
-<link rel="stylesheet" href="workspace.css?v=20260730-reader-print-split-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-toolbar-icons-1">
+<link rel="stylesheet" href="workspace.css?v=20260730-toolbar-icons-1">
 </head>
 <body>
 <div id="app" class="app-shell">
@@ -34,8 +34,8 @@
       <button class="menu-command" data-command="close-book"><span>×</span><span>Κλείσιμο βιβλίου</span><kbd></kbd></button>
     </div></div>
 
-    <button class="menu-direct-command" data-command="reader" title="Άνοιγμα όπως θα το δει ο αναγνώστης">📖 Βιβλίο</button>
-    <button class="menu-direct-command print-command" data-command="print" title="Εκτύπωση ή δημιουργία PDF (Ctrl+P)">🖨 Εκτύπωση / PDF</button>
+    <button class="menu-direct-command icon-command" data-command="reader" title="Άνοιγμα όπως θα το δει ο αναγνώστης" aria-label="Προβολή βιβλίου"><span aria-hidden="true">📖</span></button>
+    <button class="menu-direct-command icon-command print-command" data-command="print" title="Εκτύπωση ή δημιουργία PDF (Ctrl+P)" aria-label="Εκτύπωση ή PDF"><span aria-hidden="true">🖨</span></button>
 
     <div class="menu"><button class="menu-button">Επεξεργασία</button><div class="menu-popup">
       <button class="menu-command" data-command="undo"><span>↶</span><span>Αναίρεση</span><kbd>Ctrl+Z</kbd></button>
@@ -106,32 +106,32 @@
   </nav>
 
   <div class="toolbar">
-    <button class="tool-button" data-command="home">▦ Βιβλιοθήκη</button>
-    <button class="tool-button" data-command="open-book">📂 Άνοιγμα</button>
-    <button class="tool-button" data-command="save">💾 Αποθήκευση</button>
-    <button class="tool-button" data-command="reader" title="Άνοιγμα όπως θα το δει ο αναγνώστης">📖 Βιβλίο</button>
-    <button class="tool-button print-tool-button" data-command="print" title="Εκτύπωση ή δημιουργία PDF (Ctrl+P)">🖨 Εκτύπωση / PDF</button>
+    <button class="tool-button" data-command="home" title="Βιβλιοθήκη" aria-label="Βιβλιοθήκη"><span aria-hidden="true">▦</span></button>
+    <button class="tool-button" data-command="open-book" title="Άνοιγμα βιβλίου" aria-label="Άνοιγμα βιβλίου"><span aria-hidden="true">📂</span></button>
+    <button class="tool-button" data-command="save" title="Αποθήκευση (Ctrl+S)" aria-label="Αποθήκευση"><span aria-hidden="true">💾</span></button>
+    <button class="tool-button" data-command="reader" title="Προβολή βιβλίου" aria-label="Προβολή βιβλίου"><span aria-hidden="true">📖</span></button>
+    <button class="tool-button print-tool-button" data-command="print" title="Εκτύπωση ή PDF (Ctrl+P)" aria-label="Εκτύπωση ή PDF"><span aria-hidden="true">🖨</span></button>
     <span class="tool-separator"></span>
-    <button class="tool-button" data-command="book-view">▤ Χώρος βιβλίου</button>
-    <button class="tool-button" data-command="tab-item">¶ Item</button>
-    <button class="tool-button" data-command="insert-item-before" title="Νέο item πριν">＋ Item πριν</button>
-    <button class="tool-button" data-command="insert-item-after" title="Νέο item μετά">＋ Item μετά</button>
-    <button class="tool-button" data-command="insert-page-after" title="Νέα σελίδα μετά">＋ Σελίδα</button>
-    <button class="tool-button primary-action" data-command="insert-docx" title="Παρεμβολή τμήματος Word πριν ή μετά από επιλεγμένο block">W Παρεμβολή Word</button>
+    <button class="tool-button" data-command="book-view" title="Χώρος βιβλίου" aria-label="Χώρος βιβλίου"><span aria-hidden="true">▤</span></button>
+    <button class="tool-button" data-command="tab-item" title="Ιδιότητες item" aria-label="Ιδιότητες item"><span aria-hidden="true">¶</span></button>
+    <button class="tool-button" data-command="insert-item-before" title="Νέο item πριν" aria-label="Νέο item πριν"><span aria-hidden="true">＋↑</span></button>
+    <button class="tool-button" data-command="insert-item-after" title="Νέο item μετά" aria-label="Νέο item μετά"><span aria-hidden="true">＋↓</span></button>
+    <button class="tool-button" data-command="insert-page-after" title="Νέα σελίδα μετά" aria-label="Νέα σελίδα μετά"><span aria-hidden="true">＋▤</span></button>
+    <button class="tool-button primary-action" data-command="insert-docx" title="Παρεμβολή από Word" aria-label="Παρεμβολή από Word"><span aria-hidden="true">W</span></button>
     <span class="tool-separator"></span>
-    <button class="tool-button" data-command="undo">↶</button>
-    <button class="tool-button" data-command="redo">↷</button>
-    <button class="tool-button" data-command="move-up">↑</button>
-    <button class="tool-button" data-command="move-down">↓</button>
-    <button class="tool-button" data-command="move-prev-page">⇡</button>
-    <button class="tool-button" data-command="move-next-page">⇣</button>
-    <button class="tool-button" data-command="split-page">✂</button>
-    <button class="tool-button" data-command="inline-equation" title="Inline εξίσωση στη θέση του δρομέα (Alt+M)">∑ Inline</button>
-    <button class="tool-button" data-command="display-equation" title="Νέα αυτόνομη εξίσωση">∫ Εξίσωση</button>
-    <button class="tool-button" data-command="clone">Κλων.</button>
-    <button class="tool-button" data-command="delete">Διαγραφή</button>
+    <button class="tool-button" data-command="undo" title="Αναίρεση (Ctrl+Z)" aria-label="Αναίρεση"><span aria-hidden="true">↶</span></button>
+    <button class="tool-button" data-command="redo" title="Επανάληψη (Ctrl+Y)" aria-label="Επανάληψη"><span aria-hidden="true">↷</span></button>
+    <button class="tool-button" data-command="move-up" title="Μετακίνηση item πάνω" aria-label="Μετακίνηση item πάνω"><span aria-hidden="true">↑</span></button>
+    <button class="tool-button" data-command="move-down" title="Μετακίνηση item κάτω" aria-label="Μετακίνηση item κάτω"><span aria-hidden="true">↓</span></button>
+    <button class="tool-button" data-command="move-prev-page" title="Μεταφορά στην προηγούμενη σελίδα" aria-label="Μεταφορά στην προηγούμενη σελίδα"><span aria-hidden="true">⇡</span></button>
+    <button class="tool-button" data-command="move-next-page" title="Μεταφορά στην επόμενη σελίδα" aria-label="Μεταφορά στην επόμενη σελίδα"><span aria-hidden="true">⇣</span></button>
+    <button class="tool-button" data-command="split-page" title="Νέα σελίδα από εδώ" aria-label="Νέα σελίδα από εδώ"><span aria-hidden="true">✂</span></button>
+    <button class="tool-button" data-command="inline-equation" title="Inline εξίσωση (Alt+M)" aria-label="Inline εξίσωση"><span aria-hidden="true">∑</span></button>
+    <button class="tool-button" data-command="display-equation" title="Αυτόνομη εξίσωση" aria-label="Αυτόνομη εξίσωση"><span aria-hidden="true">∫</span></button>
+    <button class="tool-button" data-command="clone" title="Κλωνοποίηση" aria-label="Κλωνοποίηση"><span aria-hidden="true">⧉</span></button>
+    <button class="tool-button" data-command="delete" title="Διαγραφή" aria-label="Διαγραφή"><span aria-hidden="true">⌫</span></button>
     <div class="toolbar-spacer"></div>
-    <button id="sceneToggleButton" class="tool-button" data-command="toggle-scenes">Σκηνές: ON</button>
+    <button id="sceneToggleButton" class="tool-button" data-command="toggle-scenes" title="Σκηνές: ON" aria-label="Σκηνές ενεργές"><span aria-hidden="true">◉</span></button>
   </div>
 
   <main class="workspace-host">
@@ -301,7 +301,7 @@
 <div id="selectionOverlay" class="selection-overlay hidden"><span id="selectionOverlayLabel"></span></div>
 <div id="modalBackdrop" class="modal-backdrop hidden"><div class="modal-dialog" role="dialog" aria-modal="true"><div id="modalTitle" class="modal-title"></div><div id="modalBody" class="modal-body"></div><div id="modalButtons" class="modal-buttons"></div></div></div>
 
-<script src="../core/book-core.js?v=20260730-reader-print-split-1"></script>
+<script src="../core/book-core.js?v=20260730-toolbar-icons-1"></script>
 <script src="../core/vendor/jszip.min.js"></script>
 <script src="../core/v4/book-model-v4.js?v=20260730-author-static-library-2"></script>
 <script src="../core/v4/math-expression-v4.js"></script>
@@ -309,7 +309,7 @@
 <script src="../core/v4/book-service-v4.js"></script>
 <script src="../core/v4/docx-core-v4.js"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-reader-print-split-1"></script>
+<script src="workspace.js?v=20260730-toolbar-icons-1"></script>
 </body>
 </html>
 

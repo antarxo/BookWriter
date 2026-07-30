@@ -165,7 +165,10 @@ function renderChrome(){
   $('#statusSelection').textContent=currentSummary();
   $('#statusSelection').className='selection-state';
   $('#statusView').textContent=viewTitle();
-  $('#sceneToggleButton').textContent=`Σκηνές: ${state.realScenes?'ON':'OFF'}`;
+  const sceneToggle=$('#sceneToggleButton');
+  sceneToggle.textContent=state.realScenes?'◉':'○';
+  sceneToggle.title=`Σκηνές: ${state.realScenes?'ON':'OFF'}`;
+  sceneToggle.setAttribute('aria-label',state.realScenes?'Σκηνές ενεργές':'Σκηνές ανενεργές');
   $('#bookView').classList.toggle('properties-hidden',!state.propertiesOpen);
   updateCommands();
 }
