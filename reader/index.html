@@ -120,6 +120,18 @@ a:hover{color:#173f5b}
 .menu-item.menu-tool::after{display:none}
 .viewport{max-width:1200px; margin:0 auto; padding:24px 18px 60px}
 .page-stack{display:flex; flex-direction:column; align-items:center; gap:26px}
+.print-preparing-overlay{
+  position:fixed; inset:0; z-index:2000; display:none; place-items:center;
+  background:rgba(236,230,217,.72); backdrop-filter:blur(6px);
+  font:700 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:#173f5b;
+}
+.print-preparing .print-preparing-overlay{display:grid}
+.print-preparing-card{
+  width:min(420px,calc(100vw - 36px)); padding:22px 24px; border:1px solid rgba(31,95,139,.20);
+  border-radius:8px; background:#fffdf9; box-shadow:0 18px 46px rgba(0,0,0,.18); text-align:center;
+}
+.print-preparing-title{margin:0 0 8px;font-size:18px}
+.print-preparing-text{margin:0;color:var(--muted);font-weight:650}
 .sheet-wrap{
   width:calc(var(--sheet-width) * var(--screen-scale));
   min-height:calc(var(--sheet-height) * var(--screen-scale));
@@ -271,7 +283,7 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
     line-height:var(--body-leading) !important;
     font-family:var(--body-font-family) !important;
   }
-  .topbar,.status,.local-book-loader{display:none !important}
+  .topbar,.status,.local-book-loader,.print-preparing-overlay{display:none !important}
   .viewport{padding:0 !important; max-width:none !important}
   .page-stack{gap:0 !important}
   .sheet-wrap{
@@ -385,6 +397,12 @@ figure.media figcaption{
       <input type="file" id="localBookInput" accept="application/json,.json">
     </div>
   </main>
+  <div class="print-preparing-overlay" id="printPreparingOverlay" role="status" aria-live="polite" aria-hidden="true">
+    <div class="print-preparing-card">
+      <p class="print-preparing-title" id="printPreparingTitle">Η εκτύπωση ετοιμάζεται.</p>
+      <p class="print-preparing-text" id="printPreparingText">Παρακαλώ περιμένετε…</p>
+    </div>
+  </div>
 <script src="../core/book-core.js?v=20260730-hm-print-5"></script>
 <script src="../core/snapshot-transport.js?v=20260730-hm-print-5"></script>
 <script>
@@ -397,6 +415,9 @@ const localBookInput=document.getElementById('localBookInput');
 const langElBtn=document.getElementById('langElBtn');
 const langEnBtn=document.getElementById('langEnBtn');
 const readerZoomOut=document.getElementById('readerZoomOut'),readerZoomFit=document.getElementById('readerZoomFit'),readerZoom100=document.getElementById('readerZoom100'),readerZoomIn=document.getElementById('readerZoomIn'),readerZoomValue=document.getElementById('readerZoomValue');
+const printPreparingOverlay=document.getElementById('printPreparingOverlay');
+const printPreparingTitle=document.getElementById('printPreparingTitle');
+const printPreparingText=document.getElementById('printPreparingText');
 let printPageStyleEl = null;
 const BOOK_QUERY_PARAM='book';
 const DEFAULT_BOOK_URL='../book/book.json';
@@ -735,9 +756,91 @@ async function captureSceneFrame(frame){
 }
 let printSnapshotsPrepared = false;
 let printFlowRunning = false;
+let activePrintSession = null;
 let sourceBookData = null;
 let bookData = null;
 
+function showPrintPreparingOverlay(){
+  if(contentLang === 'en'){
+    printPreparingTitle.textContent = 'Print is being prepared.';
+    printPreparingText.textContent = 'Please wait...';
+  }else{
+    printPreparingTitle.textContent = 'Η εκτύπωση ετοιμάζεται.';
+    printPreparingText.textContent = 'Παρακαλώ περιμένετε...';
+  }
+  printPreparingOverlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('print-preparing');
+}
+function hidePrintPreparingOverlay(){
+  document.body.classList.remove('print-preparing');
+  printPreparingOverlay.setAttribute('aria-hidden','true');
+}
+function elementByBookItemId(id){
+  const key = String(id || '').trim();
+  if(!key) return null;
+  return pageStack.querySelector(`[data-book-item-id="${CSS.escape(key)}"]`);
+}
+function captureReaderState(){
+  return {
+    bookData,
+    scrollX:window.scrollX,
+    scrollY:window.scrollY,
+    status:statusEl.textContent || '',
+    sequences:Array.from(pageStack.querySelectorAll('.callout-sequence')).map((node,index)=>({
+      itemId:node.dataset.bookItemId || '',
+      index,
+      active:Number(node.dataset.sequenceActive || node.querySelector('.callout-sequence-step.active')?.dataset.sequenceIndex || 0) || 0
+    })),
+    scenes:Array.from(pageStack.querySelectorAll('.media-frame.scene-frame')).map((frame,index)=>{
+      const item = frame.closest('[data-book-item-id]');
+      const iframe = frame.querySelector('iframe');
+      return {
+        itemId:item?.dataset?.bookItemId || '',
+        index,
+        src:iframe?.getAttribute('src') || frame.dataset.sceneSource || ''
+      };
+    })
+  };
+}
+function restoreReaderState(state){
+  if(!state) return;
+  clearPrintSnapshots();
+  if(state.bookData && bookData !== state.bookData){
+    bookData = state.bookData;
+    renderPages(bookData);
+    deriveNav(bookData);
+    updateActiveNav();
+  }
+  const sequenceNodes = Array.from(pageStack.querySelectorAll('.callout-sequence'));
+  state.sequences?.forEach(saved=>{
+    const node = elementByBookItemId(saved.itemId) || sequenceNodes[saved.index];
+    const button = node?.querySelector?.(`[data-sequence-goto="${Number(saved.active)||0}"]`);
+    if(button) button.click();
+  });
+  const sceneFrames = Array.from(pageStack.querySelectorAll('.media-frame.scene-frame'));
+  state.scenes?.forEach(saved=>{
+    const frame = elementByBookItemId(saved.itemId)?.querySelector?.('.media-frame.scene-frame') || sceneFrames[saved.index];
+    const iframe = frame?.querySelector?.('iframe');
+    if(!frame || !iframe || !saved.src) return;
+    frame.dataset.sceneSource = saved.src;
+    iframe.dataset.sceneSource = saved.src;
+    if(iframe.getAttribute('src') !== saved.src){
+      iframe.dataset.sceneLoadState = 'loading';
+      iframe.addEventListener('load', ()=>{ iframe.dataset.sceneLoadState = 'loaded'; }, {once:true});
+      iframe.addEventListener('error', ()=>{ iframe.dataset.sceneLoadState = 'error'; }, {once:true});
+      iframe.src = saved.src;
+    }
+  });
+  setStatus(state.status);
+  requestAnimationFrame(()=>window.scrollTo(state.scrollX || 0, state.scrollY || 0));
+}
+function finishPrintFlow(){
+  const session = activePrintSession;
+  activePrintSession = null;
+  hidePrintPreparingOverlay();
+  restoreReaderState(session?.state);
+  printFlowRunning = false;
+}
 function clearPrintSnapshots(){
   document.querySelectorAll('.print-scene-snapshot').forEach(img=>img.remove());
   document.querySelectorAll('.media-frame.print-ready').forEach(el=>el.classList.remove('print-ready'));
@@ -854,43 +957,6 @@ const BOOK_PRINT_DIAGNOSTICS = Object.freeze({
   })
 });
 globalThis.BOOK_PRINT_DIAGNOSTICS = BOOK_PRINT_DIAGNOSTICS;
-function snapshotFailureSummary(report=lastSnapshotReport, error=null){
-  const rows = Array.isArray(report?.sceneReports)
-    ? report.sceneReports.filter(scene=>!scene.pass)
-    : [];
-  const total = Number(report?.scenes ?? document.querySelectorAll('.media-frame.scene-frame').length ?? 0);
-  const successes = Number(report?.successes ?? 0);
-  const failures = Number(report?.failures ?? Math.max(0,total-successes));
-  const maxRows = 8;
-  const details = rows.slice(0,maxRows).map((scene,index)=>{
-    const sceneNumber = Number(scene.sceneIndex || index + 1);
-    const rawSource = String(scene.source || '').trim();
-    const source = rawSource.length > 180 ? `${rawSource.slice(0,177)}…` : rawSource;
-    const reason = String(scene.reason || scene.result || 'unknown').trim();
-    return `${sceneNumber}. ${source || 'σκηνή χωρίς δηλωμένο URL'}\n   λόγος: ${reason}`;
-  });
-  if(rows.length > maxRows) details.push(`…και ${rows.length-maxRows} ακόμη αποτυχίες.`);
-  if(error) details.unshift(`Τεχνικό μήνυμα: ${error?.message || error}`);
-  return { total, successes, failures, details };
-}
-function requestSnapshotPrintOverride(error=null){
-  const summary = snapshotFailureSummary(lastSnapshotReport,error);
-  const greek = contentLang !== 'en';
-  const title = greek
-    ? 'Δεν δημιουργήθηκαν όλα τα στιγμιότυπα σκηνών.'
-    : 'Not all scene snapshots were created.';
-  const counts = greek
-    ? `Σκηνές: ${summary.total} · επιτυχίες: ${summary.successes} · αποτυχίες: ${summary.failures}`
-    : `Scenes: ${summary.total} · successes: ${summary.successes} · failures: ${summary.failures}`;
-  const details = summary.details.length ? `\n\n${summary.details.join('\n')}` : '';
-  const consequence = greek
-    ? '\n\nΟι σκηνές που απέτυχαν θα εκτυπωθούν με το ουδέτερο πλαίσιο της ψηφιακής σκηνής. Οι επιτυχημένες θα χρησιμοποιήσουν το στατικό στιγμιότυπό τους.'
-    : '\n\nFailed scenes will print with the neutral digital-scene placeholder. Successful scenes will use their static snapshots.';
-  const question = greek
-    ? '\n\nΘέλεις να συνεχιστεί η εκτύπωση;'
-    : '\n\nContinue printing?';
-  return window.confirm(`${title}\n${counts}${details}${consequence}${question}`);
-}
 function ensurePrintSequenceExpansion(){
   const source = sourceBookData || bookData;
   if(!source) return;
@@ -906,36 +972,47 @@ function ensurePrintSequenceExpansion(){
 async function beginPrintFlow(){
   if(printFlowRunning) return;
   printFlowRunning = true;
+  activePrintSession = {state:captureReaderState()};
+  showPrintPreparingOverlay();
   setStatus('Ετοιμάζονται στατικά στιγμιότυπα για την εκτύπωση…');
-  let snapshotOverride = false;
+  let snapshotWarning = false;
   try{
+    await nextFrame();
     ensurePrintSequenceExpansion();
     await preparePrintSnapshots(true);
     if(!lastSnapshotReport?.pass){
       console.warn('book-scene-v1 incomplete snapshot report',lastSnapshotReport);
-      snapshotOverride = true;
+      snapshotWarning = true;
     }
   }catch(err){
     console.warn('book-scene-v1 snapshot preparation error',err,lastSnapshotReport);
-    snapshotOverride = true;
+    snapshotWarning = true;
   }
-  setStatus(snapshotOverride
+  setStatus(snapshotWarning
     ? (contentLang==='en'
       ? 'Printing continues with scene-snapshot warnings.'
       : 'Η εκτύπωση συνεχίζεται με προειδοποιήσεις στιγμιοτύπων σκηνών.')
     : '');
-  window.print();
+  hidePrintPreparingOverlay();
+  try{
+    window.print();
+  }catch(err){
+    finishPrintFlow();
+    throw err;
+  }
 }
 function resolveAppHref(){
   return normalizeAppSrc(bookData?.meta?.appHref || bookData?.nav?.appHref || '../index.html');
 }
 window.addEventListener('beforeprint', ()=>{
-  if(!printSnapshotsPrepared) ensurePrintSequenceExpansion();
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
 });
 window.addEventListener('afterprint', ()=>{
-  cleanupPrintSnapshots();
-  setStatus('');
+  if(activePrintSession) finishPrintFlow();
+  else{
+    cleanupPrintSnapshots();
+    setStatus('');
+  }
 });
 
 function slugifyForId(value=''){
