@@ -16,6 +16,25 @@ const clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v));
 const storage={get(k,d=''){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 const APP_VERSION='4.5.0-rc1';
 const APP_AUTHORING_VERSION='bookwriter-4.5.0-rc1';
+const ITEM_TYPE_LABELS={
+  hero:'Επικεφαλίδα 1',
+  part_title:'Τίτλος μέρους',
+  section_heading:'Επικεφαλίδα ενότητας',
+  paragraph:'Παράγραφος',
+  note:'Σημείωση',
+  side_note:'Πλευρική σημείωση',
+  figure:'Εικόνα',
+  scene:'Ζωντανή σκηνή',
+  interactive_callout:'Πλαίσιο οδηγιών',
+  nav_anchor:'Σημείο πλοήγησης',
+  clear:'Τέλος ενότητας',
+  table:'Πίνακας',
+  list:'Λίστα',
+  equation:'Εξίσωση'
+};
+function itemTypeLabel(type){
+  return ITEM_TYPE_LABELS[type] || type || 'Στοιχείο';
+}
 
 function resolveSceneSource(value='',fallbackBase=location.href){
   const raw=String(value||'').trim();
@@ -151,7 +170,7 @@ $$('.menu').forEach(menu=>{
 document.addEventListener('click',closeMenus);
 
 function currentSummary(){
-  if(item()) return `${item().type} · ${item().id}`;
+  if(item()) return `${itemTypeLabel(item().type)} · ${item().id}`;
   if(page()) return `Σελίδα · ${page().id}`;
   return '—';
 }
@@ -561,15 +580,15 @@ function mutate(label,operation,options={}){
 }
 
 async function chooseItemType(){
-  const options=M.ITEM_TYPES.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('');
-  const ok=await modal('Νέο item',`<label class="field-row"><span>Τύπος</span><select id="newItemType">${options}</select></label>`,[{label:'Ακύρωση',value:false},{label:'Δημιουργία',value:true,primary:true}]);
+  const options=M.ITEM_TYPES.map(type=>`<option value="${esc(type)}">${esc(itemTypeLabel(type))}</option>`).join('');
+  const ok=await modal('Νέο στοιχείο',`<label class="field-row"><span>Τύπος</span><select id="newItemType">${options}</select></label>`,[{label:'Ακύρωση',value:false},{label:'Δημιουργία',value:true,primary:true}]);
   return ok?$('#newItemType').value:null;
 }
 
-function moveItem(direction){mutate(direction<0?'Item πάνω':'Item κάτω',book=>C.Operations.moveItem(book,page().id,item().id,direction));}
+function moveItem(direction){mutate(direction<0?'Στοιχείο πάνω':'Στοιχείο κάτω',book=>C.Operations.moveItem(book,page().id,item().id,direction));}
 function moveAcross(direction){mutate(direction==='prev'?'Μεταφορά στην προηγούμενη σελίδα':'Μεταφορά στην επόμενη σελίδα',book=>C.Operations.moveItemToPage(book,page().id,item().id,direction));}
 function splitPage(){mutate('Νέα σελίδα από εδώ',book=>C.Operations.splitPage(book,page().id,item().id));}
-function cloneSelected(){if(item())mutate('Κλωνοποίηση item',book=>C.Operations.cloneItem(book,page().id,item().id));else mutate('Κλωνοποίηση σελίδας',book=>C.Operations.clonePage(book,page().id));}
+function cloneSelected(){if(item())mutate('Κλωνοποίηση στοιχείου',book=>C.Operations.cloneItem(book,page().id,item().id));else mutate('Κλωνοποίηση σελίδας',book=>C.Operations.clonePage(book,page().id));}
 
 function undo(){if(session.undo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Αναίρεση.');}}
 function redo(){if(session.redo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Επανάληψη.');}}
@@ -609,13 +628,13 @@ function renderTree(){
       const row=document.createElement('div');
       row.className='tree-row item-type';
       row.dataset.treeItem=current.id;
-      row.dataset.search=(current.type+' '+itemSummary(current)+' '+current.id).toLowerCase();
-      row.innerHTML=`<span class="tree-type">${esc(current.type)}</span><span class="tree-label">${esc(itemSummary(current))}</span>`;
+      row.dataset.search=(current.type+' '+itemTypeLabel(current.type)+' '+itemSummary(current)+' '+current.id).toLowerCase();
+      row.innerHTML=`<span class="tree-type" title="${esc(current.type)}">${esc(itemTypeLabel(current.type))}</span><span class="tree-label">${esc(itemSummary(current))}</span>`;
       row.onclick=event=>{event.stopPropagation();select(p.id,current.id,'tree');};
       host.appendChild(row);
     });
   });
-  $('#bookCounts').textContent=`${session.book.pages.length} σελίδες · ${itemCount} items`;
+  $('#bookCounts').textContent=`${session.book.pages.length} σελίδες · ${itemCount} στοιχεία`;
   filterTree();
   updateSelection();
 }
@@ -666,7 +685,7 @@ function updateSelectionOverlay(){
   overlay.style.top=`${Math.max(r.top,s.top)}px`;
   overlay.style.width=`${Math.max(8,Math.min(r.right,s.right)-Math.max(r.left,s.left))}px`;
   overlay.style.height=`${Math.max(8,Math.min(r.bottom,s.bottom)-Math.max(r.top,s.top))}px`;
-  $('#selectionOverlayLabel').textContent=`${current.type} · ${current.layout?.floatInteraction||defaultFloatInteraction(current.type)}`;
+  $('#selectionOverlayLabel').textContent=`${itemTypeLabel(current.type)} · ${current.layout?.floatInteraction||defaultFloatInteraction(current.type)}`;
   overlay.classList.remove('hidden');
 }
 
@@ -1073,7 +1092,7 @@ function insertItem(forcedType=null,placement='after'){
   return (async()=>{
     const type=forcedType||await chooseItemType();
     if(!type) return;
-    mutate(`Νέο ${type} ${placement==='before'?'πριν':'μετά'}`,book=>{
+    mutate(`Νέο ${itemTypeLabel(type)} ${placement==='before'?'πριν':'μετά'}`,book=>{
       const p=page();
       let index;
       if(item()) index=itemIndex()+(placement==='after'?1:0);
@@ -1592,12 +1611,12 @@ function renderBookProperties(host){
     field('Μέγεθος σώματος',l.bodyFontSize,v=>prop('Μέγεθος σώματος',['layoutDefaults','bodyFontSize'],v),'number'),
     field('Διάστιχο',l.lineHeight,v=>prop('Διάστιχο',['layoutDefaults','lineHeight'],v),'number'),
     field('Κενό παραγράφων',l.paragraphGap,v=>prop('Κενό παραγράφων',['layoutDefaults','paragraphGap'],v),'number'),
-    field('Γραμματοσειρά headings',l.headingFontFamily||'serif',v=>prop('Γραμματοσειρά headings',['layoutDefaults','headingFontFamily'],v)),
-    field('Hero τίτλος',l.heroTitleFontSize,v=>prop('Hero τίτλος',['layoutDefaults','heroTitleFontSize'],v),'number'),
-    field('Part τίτλος',l.partTitleFontSize,v=>prop('Part τίτλος',['layoutDefaults','partTitleFontSize'],v),'number'),
-    field('Section heading',l.sectionHeadingFontSize,v=>prop('Section heading',['layoutDefaults','sectionHeadingFontSize'],v),'number'),
-    field('Note μέγεθος',l.noteFontSize,v=>prop('Note μέγεθος',['layoutDefaults','noteFontSize'],v),'number'),
-    field('Callout μέγεθος',l.calloutFontSize,v=>prop('Callout μέγεθος',['layoutDefaults','calloutFontSize'],v),'number'),
+    field('Γραμματοσειρά επικεφαλίδων',l.headingFontFamily||'serif',v=>prop('Γραμματοσειρά επικεφαλίδων',['layoutDefaults','headingFontFamily'],v)),
+    field('Μέγεθος Επικεφαλίδας 1',l.heroTitleFontSize,v=>prop('Μέγεθος Επικεφαλίδας 1',['layoutDefaults','heroTitleFontSize'],v),'number'),
+    field('Τίτλος μέρους',l.partTitleFontSize,v=>prop('Τίτλος μέρους',['layoutDefaults','partTitleFontSize'],v),'number'),
+    field('Επικεφαλίδα ενότητας',l.sectionHeadingFontSize,v=>prop('Επικεφαλίδα ενότητας',['layoutDefaults','sectionHeadingFontSize'],v),'number'),
+    field('Μέγεθος σημείωσης',l.noteFontSize,v=>prop('Μέγεθος σημείωσης',['layoutDefaults','noteFontSize'],v),'number'),
+    field('Μέγεθος πλαισίου οδηγιών',l.calloutFontSize,v=>prop('Μέγεθος πλαισίου οδηγιών',['layoutDefaults','calloutFontSize'],v),'number'),
     field('Λεζάντα μέγεθος',l.captionFontSize,v=>prop('Λεζάντα μέγεθος',['layoutDefaults','captionFontSize'],v),'number')
   );host.appendChild(type);
 
@@ -1707,8 +1726,8 @@ function renderItemProperties(host){
   const identity=section('Ταυτότητα item');
   const form=identity.querySelector('.property-form');
   form.append(
-    field('ID',current.id,v=>mutate('Αλλαγή ID item',book=>{const r=C.Operations.renameId(book,current.id,v);return{pageId:page().id,itemId:r.id};})),
-    field('Τύπος',current.type,v=>mutate('Αλλαγή τύπου',book=>C.Operations.changeItemType(book,page().id,current.id,v)),'text',M.ITEM_TYPES.map(v=>({value:v,label:v}))),
+    field('ID',current.id,v=>mutate('Αλλαγή ID στοιχείου',book=>{const r=C.Operations.renameId(book,current.id,v);return{pageId:page().id,itemId:r.id};})),
+    field('Τύπος',current.type,v=>mutate('Αλλαγή τύπου',book=>C.Operations.changeItemType(book,page().id,current.id,v)),'text',M.ITEM_TYPES.map(v=>({value:v,label:itemTypeLabel(v)}))),
     check('Εμφάνιση στο μενού',current.nav?.show,v=>prop('Συμμετοχή στο μενού',[...base,'nav','show'],v)),
     field('Ετικέτα μενού',current.nav?.label||'',v=>prop('Ετικέτα μενού',[...base,'nav','label'],v))
   );host.appendChild(identity);
@@ -1773,7 +1792,7 @@ function renderItemProperties(host){
   );
   else if(current.type==='table') renderTableEditor(cf,current,base);
   else if(current.type==='equation') renderEquationEditor(cf,current,base);
-  else if(current.type==='clear') cf.innerHTML='<div class="info-card">Το clear κλείνει ενεργά floats και δεν έχει περιεχόμενο.</div>';
+  else if(current.type==='clear') cf.innerHTML='<div class="info-card">Το στοιχείο αυτό δηλώνει τέλος ενότητας και δεν έχει δικό του περιεχόμενο.</div>';
   else cf.appendChild(document.createTextNode('Δεν υπάρχουν ειδικά πεδία για αυτόν τον τύπο.'));
   host.appendChild(content);
 
@@ -1858,9 +1877,9 @@ function renderNavProperties(host){
     const row=document.createElement('div');row.className='nav-target-row';
     const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=target.item.nav?.show!==false;
     checkbox.onchange=()=>prop('Συμμετοχή στο μενού',['pages',target.pageIndex,'items',target.itemIndex,'nav','show'],checkbox.checked);
-    const type=document.createElement('code');type.textContent=target.item.type;
+    const type=document.createElement('code');type.textContent=itemTypeLabel(target.item.type);type.title=target.item.type;
     const label=document.createElement('input');label.value=target.item.nav?.label||target.title||'';label.onchange=()=>prop('Ετικέτα στόχου',['pages',target.pageIndex,'items',target.itemIndex,'nav','label'],label.value);
-    const jump=button('↗',()=>select(target.page.id,target.item.id,'tree'));jump.title='Μετάβαση στο item';
+    const jump=button('↗',()=>select(target.page.id,target.item.id,'tree'));jump.title='Μετάβαση στο στοιχείο';
     row.append(checkbox,type,label,jump);tf.appendChild(row);
   });host.appendChild(targets);
   renderManualNavGroups(host);
@@ -1893,13 +1912,13 @@ function insertTreeHtml(){
   const anchor=state.docx.insertion?.anchor,query=String($('#insertBookSearch')?.value||'').trim().toLowerCase();let count=0,html='';
   session.book.pages.forEach((currentPage,pageIdx)=>{
     const pageText=`${pageIdx+1} ${currentPage.id}`.toLowerCase();
-    const pageVisible=!query||pageText.includes(query)||(currentPage.items||[]).some(current=>`${current.type} ${itemSummary(current)} ${current.id}`.toLowerCase().includes(query));
+    const pageVisible=!query||pageText.includes(query)||(currentPage.items||[]).some(current=>`${current.type} ${itemTypeLabel(current.type)} ${itemSummary(current)} ${current.id}`.toLowerCase().includes(query));
     if(!pageVisible)return;
     html+=`<div class="tree-row page" data-insert-tree-page="${esc(currentPage.id)}"><span class="tree-icon">▤</span><span class="tree-label">${pageIdx+1}. ${esc(currentPage.id)}</span></div>`;
-    (currentPage.items||[]).forEach(current=>{const text=`${current.type} ${itemSummary(current)} ${current.id}`.toLowerCase();if(query&&!text.includes(query))return;count++;const selected=anchor?.pageId===currentPage.id&&anchor?.itemId===current.id?' anchor-selected':'';html+=`<div class="tree-row item-type${selected}" data-insert-tree-page-id="${esc(currentPage.id)}" data-insert-tree-item="${esc(current.id)}"><span class="tree-type">${esc(current.type)}</span><span class="tree-label">${esc(itemSummary(current))}</span></div>`});
+    (currentPage.items||[]).forEach(current=>{const text=`${current.type} ${itemTypeLabel(current.type)} ${itemSummary(current)} ${current.id}`.toLowerCase();if(query&&!text.includes(query))return;count++;const selected=anchor?.pageId===currentPage.id&&anchor?.itemId===current.id?' anchor-selected':'';html+=`<div class="tree-row item-type${selected}" data-insert-tree-page-id="${esc(currentPage.id)}" data-insert-tree-item="${esc(current.id)}"><span class="tree-type" title="${esc(current.type)}">${esc(itemTypeLabel(current.type))}</span><span class="tree-label">${esc(itemSummary(current))}</span></div>`});
   });
-  $('#insertBookCounts').textContent=`${session.book.pages.length} σελίδες · ${count} ορατά items`;
-  return html||'<div class="tree-empty">Δεν βρέθηκαν items.</div>';
+  $('#insertBookCounts').textContent=`${session.book.pages.length} σελίδες · ${count} ορατά στοιχεία`;
+  return html||'<div class="tree-empty">Δεν βρέθηκαν στοιχεία.</div>';
 }
 function bindInsertBookTree(){
   $$('[data-insert-tree-item]').forEach(row=>row.onclick=()=>setInsertionTarget(row.dataset.insertTreePageId,row.dataset.insertTreeItem));

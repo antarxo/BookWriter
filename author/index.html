@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-preview-status-1">
-<link rel="stylesheet" href="workspace.css?v=20260730-preview-status-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-greek-types-2">
+<link rel="stylesheet" href="workspace.css?v=20260730-greek-types-2">
 </head>
 <body>
 <div id="app" class="app-shell">
@@ -43,8 +43,8 @@
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="clone"><span>⧉</span><span>Κλωνοποίηση επιλογής</span><kbd>Ctrl+D</kbd></button>
       <button class="menu-command" data-command="delete"><span>⌫</span><span>Διαγραφή επιλογής</span><kbd>Del</kbd></button>
-      <button class="menu-command" data-command="move-up"><span>↑</span><span>Μετακίνηση item πάνω</span><kbd></kbd></button>
-      <button class="menu-command" data-command="move-down"><span>↓</span><span>Μετακίνηση item κάτω</span><kbd></kbd></button>
+      <button class="menu-command" data-command="move-up"><span>↑</span><span>Μετακίνηση στοιχείου πάνω</span><kbd></kbd></button>
+      <button class="menu-command" data-command="move-down"><span>↓</span><span>Μετακίνηση στοιχείου κάτω</span><kbd></kbd></button>
       <button class="menu-command" data-command="move-prev-page"><span>⇡</span><span>Μεταφορά στην προηγούμενη σελίδα</span><kbd></kbd></button>
       <button class="menu-command" data-command="move-next-page"><span>⇣</span><span>Μεταφορά στην επόμενη σελίδα</span><kbd></kbd></button>
       <button class="menu-command" data-command="split-page"><span>✂</span><span>Νέα σελίδα από εδώ</span><kbd></kbd></button>
@@ -57,8 +57,8 @@
     </div></div>
 
     <div class="menu"><button class="menu-button">Εισαγωγή</button><div class="menu-popup">
-      <button class="menu-command" data-command="insert-item-before"><span>＋</span><span>Νέο item πριν από την επιλογή…</span><kbd>Shift+Insert</kbd></button>
-      <button class="menu-command" data-command="insert-item-after"><span>＋</span><span>Νέο item μετά την επιλογή…</span><kbd>Insert</kbd></button>
+      <button class="menu-command" data-command="insert-item-before"><span>＋</span><span>Νέο στοιχείο πριν από την επιλογή…</span><kbd>Shift+Insert</kbd></button>
+      <button class="menu-command" data-command="insert-item-after"><span>＋</span><span>Νέο στοιχείο μετά την επιλογή…</span><kbd>Insert</kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="insert-page-before"><span>▤</span><span>Νέα σελίδα πριν</span><kbd></kbd></button>
       <button class="menu-command" data-command="insert-page-after"><span>▤</span><span>Νέα σελίδα μετά</span><kbd></kbd></button>
@@ -72,7 +72,7 @@
       <button class="menu-command" data-command="book-view"><span>▤</span><span>Χώρος βιβλίου</span><kbd>Esc</kbd></button>
       <button class="menu-command" data-command="tab-book"><span>⚙</span><span>Ρυθμίσεις βιβλίου</span><kbd></kbd></button>
       <button class="menu-command" data-command="tab-page"><span>▧</span><span>Ρυθμίσεις σελίδας</span><kbd></kbd></button>
-      <button class="menu-command" data-command="tab-item"><span>¶</span><span>Ιδιότητες item</span><kbd>F2</kbd></button>
+      <button class="menu-command" data-command="tab-item"><span>¶</span><span>Ιδιότητες στοιχείου</span><kbd>F2</kbd></button>
       <button class="menu-command" data-command="tab-nav"><span>≡</span><span>Μενού και πλοήγηση</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="audit"><span>✓</span><span>Έλεγχος βιβλίου</span><kbd></kbd></button>
@@ -113,16 +113,16 @@
     <button class="tool-button print-tool-button" data-command="print" title="Εκτύπωση ή PDF (Ctrl+P)" aria-label="Εκτύπωση ή PDF"><span aria-hidden="true">🖨</span></button>
     <span class="tool-separator"></span>
     <button class="tool-button" data-command="book-view" title="Χώρος βιβλίου" aria-label="Χώρος βιβλίου"><span aria-hidden="true">▤</span></button>
-    <button class="tool-button" data-command="tab-item" title="Ιδιότητες item" aria-label="Ιδιότητες item"><span aria-hidden="true">¶</span></button>
-    <button class="tool-button" data-command="insert-item-before" title="Νέο item πριν" aria-label="Νέο item πριν"><span aria-hidden="true">＋↑</span></button>
-    <button class="tool-button" data-command="insert-item-after" title="Νέο item μετά" aria-label="Νέο item μετά"><span aria-hidden="true">＋↓</span></button>
+    <button class="tool-button" data-command="tab-item" title="Ιδιότητες στοιχείου" aria-label="Ιδιότητες στοιχείου"><span aria-hidden="true">¶</span></button>
+    <button class="tool-button" data-command="insert-item-before" title="Νέο στοιχείο πριν" aria-label="Νέο στοιχείο πριν"><span aria-hidden="true">＋↑</span></button>
+    <button class="tool-button" data-command="insert-item-after" title="Νέο στοιχείο μετά" aria-label="Νέο στοιχείο μετά"><span aria-hidden="true">＋↓</span></button>
     <button class="tool-button" data-command="insert-page-after" title="Νέα σελίδα μετά" aria-label="Νέα σελίδα μετά"><span aria-hidden="true">＋▤</span></button>
     <button class="tool-button primary-action" data-command="insert-docx" title="Παρεμβολή από Word" aria-label="Παρεμβολή από Word"><span aria-hidden="true">W</span></button>
     <span class="tool-separator"></span>
     <button class="tool-button" data-command="undo" title="Αναίρεση (Ctrl+Z)" aria-label="Αναίρεση"><span aria-hidden="true">↶</span></button>
     <button class="tool-button" data-command="redo" title="Επανάληψη (Ctrl+Y)" aria-label="Επανάληψη"><span aria-hidden="true">↷</span></button>
-    <button class="tool-button" data-command="move-up" title="Μετακίνηση item πάνω" aria-label="Μετακίνηση item πάνω"><span aria-hidden="true">↑</span></button>
-    <button class="tool-button" data-command="move-down" title="Μετακίνηση item κάτω" aria-label="Μετακίνηση item κάτω"><span aria-hidden="true">↓</span></button>
+    <button class="tool-button" data-command="move-up" title="Μετακίνηση στοιχείου πάνω" aria-label="Μετακίνηση στοιχείου πάνω"><span aria-hidden="true">↑</span></button>
+    <button class="tool-button" data-command="move-down" title="Μετακίνηση στοιχείου κάτω" aria-label="Μετακίνηση στοιχείου κάτω"><span aria-hidden="true">↓</span></button>
     <button class="tool-button" data-command="move-prev-page" title="Μεταφορά στην προηγούμενη σελίδα" aria-label="Μεταφορά στην προηγούμενη σελίδα"><span aria-hidden="true">⇡</span></button>
     <button class="tool-button" data-command="move-next-page" title="Μεταφορά στην επόμενη σελίδα" aria-label="Μεταφορά στην επόμενη σελίδα"><span aria-hidden="true">⇣</span></button>
     <button class="tool-button" data-command="split-page" title="Νέα σελίδα από εδώ" aria-label="Νέα σελίδα από εδώ"><span aria-hidden="true">✂</span></button>
@@ -177,7 +177,7 @@
         <div id="docxSourcePreview" class="docx-preview"></div>
       </section>
       <aside class="pane docx-options-pane">
-        <div id="docxOptionsTitle" class="pane-title">Νέο canonical v4 βιβλίο</div>
+        <div id="docxOptionsTitle" class="pane-title">Νέο βιβλίο BookWriter v4</div>
         <div class="docx-form-stack">
           <div id="docxCreateOptions">
             <label>Τίτλος βιβλίου<input id="docxBookTitle" type="text"></label>
@@ -208,7 +208,7 @@
       <section class="insert-document destination-document">
         <div class="document-head">
           <span>Βιβλίο προορισμού</span>
-          <span id="insertTargetCaption" class="muted">Επίλεξε block αριστερά</span>
+          <span id="insertTargetCaption" class="muted">Επίλεξε στοιχείο αριστερά</span>
           <span class="insert-zoom-tools">
             <button id="insertBookZoomOut" type="button" title="Σμίκρυνση βιβλίου">−</button>
             <button id="insertBookZoomFit" type="button" title="Προσαρμογή στο διαθέσιμο πλάτος">Πλάτος</button>
@@ -252,7 +252,7 @@
       <div class="insert-actionbar">
         <span id="insertSummary" class="insert-summary">Άνοιξε DOCX και επίλεξε το τμήμα που θα παρεμβληθεί.</span>
         <label class="insert-position-label">Θέση
-          <select id="insertPosition"><option value="after" selected>Μετά το επιλεγμένο block</option><option value="before">Πριν από το επιλεγμένο block</option></select>
+          <select id="insertPosition"><option value="after" selected>Μετά το επιλεγμένο στοιχείο</option><option value="before">Πριν από το επιλεγμένο στοιχείο</option></select>
         </label>
         <label id="insertAllowDuplicateLabel" class="check-row" hidden><input id="insertAllowDuplicate" type="checkbox"> Επιτρέπω πιθανή διπλή εισαγωγή</label>
         <button id="insertPreviewButton" type="button" class="primary-action" disabled>Προεπισκόπηση στο βιβλίο</button>
@@ -278,7 +278,7 @@
         <div class="property-tabs">
           <button data-tab="book" class="active">Βιβλίο</button>
           <button data-tab="page">Σελίδα</button>
-          <button data-tab="item">Item</button>
+          <button data-tab="item">Στοιχείο</button>
           <button data-tab="nav">Μενού</button>
           <button data-tab="audit">Έλεγχοι</button>
           <button data-tab="migration">Μετάβαση</button>
@@ -301,7 +301,7 @@
 <div id="selectionOverlay" class="selection-overlay hidden"><span id="selectionOverlayLabel"></span></div>
 <div id="modalBackdrop" class="modal-backdrop hidden"><div class="modal-dialog" role="dialog" aria-modal="true"><div id="modalTitle" class="modal-title"></div><div id="modalBody" class="modal-body"></div><div id="modalButtons" class="modal-buttons"></div></div></div>
 
-<script src="../core/book-core.js?v=20260730-preview-status-1"></script>
+<script src="../core/book-core.js?v=20260730-greek-types-2"></script>
 <script src="../core/vendor/jszip.min.js"></script>
 <script src="../core/v4/book-model-v4.js?v=20260730-author-static-library-2"></script>
 <script src="../core/v4/math-expression-v4.js"></script>
@@ -309,7 +309,7 @@
 <script src="../core/v4/book-service-v4.js"></script>
 <script src="../core/v4/docx-core-v4.js"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-preview-status-1"></script>
+<script src="workspace.js?v=20260730-greek-types-2"></script>
 </body>
 </html>
 
