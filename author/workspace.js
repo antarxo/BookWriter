@@ -307,10 +307,10 @@ async function editLibraryMetadata(entry){
 async function openLibraryEntry(entry,reader=false){
   if(!await allowReplaceCurrentBook(reader?'άνοιγμα βιβλίου για ανάγνωση':'άνοιγμα άλλου βιβλίου'))return;
   if(entry.static){
-    try{await openStaticBookUrl(entry.staticBookUrl,entry.staticBookBase,entry.name);if(reader)await openReader()}catch(error){modal('Άνοιγμα στατικού βιβλίου',`<div class="info-card bad">${esc(error.message)}</div>`)}
+    try{await openStaticBookUrl(entry.staticBookUrl,entry.staticBookBase,entry.name);if(reader)await openUserBook()}catch(error){modal('Άνοιγμα στατικού βιβλίου',`<div class="info-card bad">${esc(error.message)}</div>`)}
     return;
   }
-  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί v4 candidate στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία candidate');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε migration candidate από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα το candidate ως canonical v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Άνοιξε από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openReader()}
+  try{const opened=await readNamedJson(entry.handle,'book.json');if(opened.data.schemaVersion!==M.SCHEMA_VERSION){const proceed=await confirmBox('Μετάβαση σε v4',`Το βιβλίο <b>${esc(entry.title)}</b> είναι ${esc(opened.data.schemaVersion||'άγνωστης δομής')}. Θα δημιουργηθεί v4 candidate στη μνήμη χωρίς αλλαγή του book.json.`,'Δημιουργία candidate');if(!proceed)return;const migration=M.migratePagesV1(opened.data,{language:'el',includeTranslations:false});ensureMigratedLayoutDefaults(migration.book);await attachOpened(entry.handle,opened.handle,migration.book,'migration',entry.name,clone(opened.data),migration.report);setStatus('Δημιουργήθηκε migration candidate από τη Βιβλιοθήκη.','warn');if(reader){modal('Άνοιγμα βιβλίου','<div class="info-card warn">Αποθήκευσε πρώτα το candidate ως canonical v4 και μετά άνοιξέ το ως βιβλίο.</div>');return}}else{await attachOpened(entry.handle,opened.handle,opened.data,'canonical',entry.name);setStatus(`Άνοιξε από τη Βιβλιοθήκη: ${entry.title}.`,'good');if(reader)await openUserBook()}
   }catch(error){modal('Άνοιγμα από Βιβλιοθήκη',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
 async function requireLibraryBooksHandle(interactive=true){if(!state.library.booksHandle&&interactive)await chooseLibrary();if(!state.library.booksHandle)return null;if(await permissionFor(state.library.booksHandle,interactive)!=='granted'){if(interactive)await chooseLibrary();}return state.library.booksHandle}
@@ -892,23 +892,9 @@ async function openReader(){
     const printCoreValidation=BookCore.validateData(printBook);if(!printCoreValidation.ok)throw new Error(printCoreValidation.errors.join('\n'));
     const overflowAudit=await P.auditOverflow(printBook,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     const printOverride=!overflowAudit.ok;
-    const assumedBookBase=state.staticBookBase?new URL(state.staticBookBase,location.href):new URL(`../books/${encodeURIComponent(session.directoryHandle.name)}/`,location.href);
-    const missingFigureAssets=new Set();
-    const resolveRuntimeSources=targetBook=>{
-      for(const currentPage of targetBook.pages||[])for(const current of currentPage.items||[]){
-        if(current.type==='figure'&&String(current.src||'').startsWith('images/')){
-          const resolved=state.assets.get(String(current.src));
-          if(resolved) current.src=resolved;
-          else if(state.staticBookBase) current.src=resolveSceneSource(current.src,assumedBookBase);
-          else missingFigureAssets.add(String(current.src));
-        }
-        if(current.type==='scene'&&String(current.src||'').trim()){
-          current.src=resolveSceneSource(current.src,assumedBookBase);
-        }
-      }
-    };
-    resolveRuntimeSources(previewBook);
-    resolveRuntimeSources(printBook);
+    const assumedBookBase=currentBookBaseUrl();
+    const missingFigureAssets=resolveRuntimeBookSources(previewBook,assumedBookBase);
+    resolveRuntimeBookSources(printBook,assumedBookBase).forEach(src=>missingFigureAssets.add(src));
     if(missingFigureAssets.size)throw new Error(`Η εκτύπωση σταμάτησε: λείπουν ${missingFigureAssets.size} αρχεία εικόνων από τον φάκελο του βιβλίου:\n${[...missingFigureAssets].join('\n')}`);
     const localSceneUrls=[...new Set((printBook.pages||[]).flatMap(currentPage=>(currentPage.items||[]).filter(current=>current.type==='scene').map(current=>String(current.src||'').trim()).filter(Boolean)).filter(src=>{try{return new URL(src).origin===location.origin}catch{return false}}))];
     const sceneChecks=await Promise.all(localSceneUrls.map(async src=>{try{const response=await fetch(src,{method:'HEAD',cache:'no-store'});return response.ok?null:{src,status:response.status}}catch(error){return{src,status:0,error:error.message}}}));
@@ -923,6 +909,30 @@ async function openReader(){
     setStatus(printOverride?`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · προειδοποίηση ${overflowAudit.overflowPages} overflow.`:`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · 0 overflow.`,printOverride?'warn':'good');
   }catch(error){console.error(error);try{previewWindow.close()}catch{}setStatus('Απέτυχε η εκτυπωτική προβολή','bad');modal('Εκτύπωση / PDF',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
+
+async function openUserBook(){
+  if((!session.directoryHandle&&!state.staticBookBase) || !session.book) return;
+  const readerWindow=window.open('about:blank','_blank');
+  if(!readerWindow){modal('Προβολή βιβλίου','<div class="info-card bad">Ο browser μπλόκαρε το νέο παράθυρο. Επίτρεψε αναδυόμενα παράθυρα για το localhost και ξαναδοκίμασε.</div>');return;}
+  readerWindow.document.write('<!doctype html><html lang="el"><meta charset="utf-8"><title>Βιβλίο</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;font:16px system-ui;background:#f5f2ea;color:#263746"><p>Ετοιμάζεται το βιβλίο…</p></body></html>');
+  readerWindow.document.close();
+  try{
+    setStatus('Άνοιγμα βιβλίου όπως θα το δει ο αναγνώστης…','warn');
+    const validation=M.validateBook(session.book);if(!validation.ok)throw new Error(validation.errors.join('\n'));
+    const readerBook=BookCore.expandScreenSequences(M.deepClone(session.book));
+    const readerCoreValidation=BookCore.validateData(readerBook);if(!readerCoreValidation.ok)throw new Error(readerCoreValidation.errors.join('\n'));
+    const assumedBookBase=currentBookBaseUrl();
+    const missingFigureAssets=resolveRuntimeBookSources(readerBook,assumedBookBase);
+    if(missingFigureAssets.size)throw new Error(`Το βιβλίο δεν άνοιξε: λείπουν ${missingFigureAssets.size} αρχεία εικόνων από τον φάκελο του βιβλίου:\n${[...missingFigureAssets].join('\n')}`);
+    readerBook.meta=readerBook.meta||{};
+    readerBook.meta.updatedAt=new Date().toISOString();
+    readerBook.extensions={...(readerBook.extensions||{}),readerViewReport:{generatedAt:new Date().toISOString(),sourceSchema:session.book.schemaVersion,sourceMode:state.mode,rendererVersion:BookCore.VERSION,renderPath:'bookwriter-v4 → current book snapshot → in-memory Blob → standalone BookCore reader',productionBookUntouched:true,pages:readerBook.pages.length,items:readerBook.pages.reduce((sum,current)=>sum+(current.items||[]).length,0),validation,readerCoreValidation}};
+    const blobUrl=URL.createObjectURL(new Blob([JSON.stringify(readerBook)],{type:'application/json'}));
+    const url=new URL('../reader/index.html',location.href);url.searchParams.set('book',blobUrl);url.searchParams.set('bookBase',assumedBookBase.href);url.searchParams.set('lang','el');
+    readerWindow.location.replace(url.href);setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
+    setStatus(`Άνοιξε το βιβλίο: ${readerBook.pages.length} σελίδες.`, 'good');
+  }catch(error){console.error(error);try{readerWindow.close()}catch{}setStatus('Απέτυχε το άνοιγμα βιβλίου','bad');modal('Προβολή βιβλίου',`<div class="info-card bad">${esc(error.message)}</div>`)}
+}
 /* v4.2 Full Editor Core overrides */
 
 function commandEnabled(cmd){
@@ -935,6 +945,7 @@ function commandEnabled(cmd){
     'save':has()&&state.mode!=='migration'&&(session.isDirty()||state.mode==='new'||state.mode==='candidate'),
     'save-candidate':has()&&state.mode==='migration',
     'backup':has()&&!!session.directoryHandle,
+    'reader':has()&&!!(session.directoryHandle||state.staticBookBase),
     'print':has()&&!!(session.directoryHandle||state.staticBookBase),
     'close-book':has(),
     'undo':has()&&session.commandStack.undoStack.length>0,
@@ -2061,7 +2072,7 @@ async function executeCommand(cmd){
   }
   const map={
     'new-docx':startDocxCreate,'insert-docx':startDocxInsert,'docx-audit':()=>state.view==='docx'?downloadDocxReport():startDocxCreate,
-    'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'print':openReader,'close-book':closeBook,
+    'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'reader':openUserBook,'print':openReader,'close-book':closeBook,
     'undo':undo,'redo':redo,'clone':cloneSelected,'delete':deleteSelected,'move-up':()=>moveItem(-1),'move-down':()=>moveItem(1),'move-prev-page':()=>moveAcross('prev'),'move-next-page':()=>moveAcross('next'),'split-page':splitPage,
     'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),
     'insert-page':()=>insertPage('after'),'insert-page-before':()=>insertPage('before'),'insert-page-after':()=>insertPage('after'),
