@@ -228,11 +228,7 @@
         const steps = sequenceSteps(item);
         if(steps.length){
           changed = true;
-          steps.forEach((step,stepIndex)=>{
-            const callout = calloutForSequenceStep(item, step, stepIndex);
-            callout.extensions = Object.assign({}, callout.extensions || {}, {sequenceScreenGenerated:true});
-            items.push(callout);
-          });
+          items.push(item);
           return;
         }
         items.push(item);

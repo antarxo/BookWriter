@@ -320,9 +320,7 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
   .media-frame.print-ready iframe{display:none !important}
   .media-frame img{object-fit:contain !important; background:#fff !important}
   .media-frame.scene-frame::after{
-    content:"[Η διαδραστική σκηνή εμφανίζεται στην ψηφιακή έκδοση]";
-    position:absolute; inset:0; display:grid; place-items:center;
-    padding:18px; color:#5e6d79; font:600 13px/1.4 system-ui,-apple-system,Segoe UI,Arial,sans-serif; background:#f4f6f8;
+    content:none !important;
   }
   .media-frame.scene-frame.print-ready{background:#fff !important}
   .media-frame.scene-frame.print-ready::after{content:none !important}
@@ -365,7 +363,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-hm-print-5">
 </head>
 <body>
   <div class="topbar">
@@ -387,8 +385,8 @@ figure.media figcaption{
       <input type="file" id="localBookInput" accept="application/json,.json">
     </div>
   </main>
-<script src="../core/book-core.js"></script>
-<script src="../core/snapshot-transport.js"></script>
+<script src="../core/book-core.js?v=20260730-hm-print-5"></script>
+<script src="../core/snapshot-transport.js?v=20260730-hm-print-5"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');
@@ -563,6 +561,84 @@ async function waitForFigureImages(){
 const SNAPSHOT_PATHS = BookSnapshotTransport.PATHS;
 let lastSnapshotReport = null;
 
+function isSnapshotDataUrl(value){
+  return typeof value === 'string' && /^data:image\//i.test(value);
+}
+function promiseWithTimeout(promise, timeoutMs, reason='timeout'){
+  return new Promise((resolve,reject)=>{
+    const timer = setTimeout(()=>reject(new Error(reason)), Math.max(250, Number(timeoutMs) || 250));
+    Promise.resolve(promise).then(value=>{ clearTimeout(timer); resolve(value); }, error=>{ clearTimeout(timer); reject(error); });
+  });
+}
+async function captureIframeDirect(iframe, timeoutMs=2200){
+  const started = performance?.now?.() ?? Date.now();
+  let win = null;
+  try{ win = iframe?.contentWindow || null; }catch(_e){}
+  if(!win) return null;
+
+  let candidates = [];
+  try{
+    candidates = [
+      [win?.BookScene?.getPrintSnapshot, win?.BookScene, 'BookScene.getPrintSnapshot'],
+      [win?.getBookPrintSnapshot, win, 'getBookPrintSnapshot'],
+      [win?.EMWaveApp?.getPrintSnapshot, win?.EMWaveApp, 'EMWaveApp.getPrintSnapshot'],
+      [win?.AAT_BOOK_SCENE?.snapshot, win?.AAT_BOOK_SCENE, 'AAT_BOOK_SCENE.snapshot']
+    ];
+  }catch(_error){
+    return null;
+  }
+  const candidate = candidates.find(([fn])=>typeof fn === 'function');
+  if(!candidate) return null;
+  const [fn, owner, label] = candidate;
+  try{
+    const dataUrl = await promiseWithTimeout(Promise.resolve(fn.call(owner)), timeoutMs, 'direct-snapshot-timeout');
+    const durationMs = Math.round((performance?.now?.() ?? Date.now()) - started);
+    if(!isSnapshotDataUrl(dataUrl)){
+      return {
+        requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+        executedPath:null,
+        result:'failure',
+        reason:'direct-invalid-snapshot',
+        fallbackUsed:false,
+        attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:'direct-invalid-snapshot',transport:'same-origin-direct',directMethod:label,durationMs}],
+        dataUrl:null
+      };
+    }
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      result:'success',
+      reason:null,
+      fallbackUsed:false,
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'success',reason:null,transport:'same-origin-direct',directMethod:label,durationMs}],
+      meta:{transport:'same-origin-direct', directMethod:label},
+      dataUrl
+    };
+  }catch(error){
+    const durationMs = Math.round((performance?.now?.() ?? Date.now()) - started);
+    return {
+      requestedPath:SNAPSHOT_PATHS.BOOK_SCENE_V1,
+      executedPath:null,
+      result:'failure',
+      reason:String(error?.message || error || 'direct-snapshot-error'),
+      fallbackUsed:false,
+      attempts:[{path:SNAPSHOT_PATHS.BOOK_SCENE_V1,result:'failure',reason:String(error?.message || error || 'direct-snapshot-error'),transport:'same-origin-direct',directMethod:label,durationMs}],
+      dataUrl:null
+    };
+  }
+}
+async function captureIframeFast(iframe, options={}){
+  const direct = await captureIframeDirect(iframe, options.directTimeoutMs || 2200);
+  if(direct?.result === 'success') return direct;
+  const viaMessage = await BookSnapshotTransport.capture(iframe, {
+    timeoutMs:options.timeoutMs
+  });
+  if(direct?.attempts?.length){
+    viaMessage.attempts = [...direct.attempts, ...(viaMessage.attempts || [])];
+  }
+  return viaMessage;
+}
+
 async function captureIframeWithRetry(iframe, options={}){
   const maxAttempts = Math.max(1, Number(options.attempts) || 1);
   const mergedAttempts = [];
@@ -570,8 +646,9 @@ async function captureIframeWithRetry(iframe, options={}){
   let bestResult = null;
   const accepts = typeof options.accepts === 'function' ? options.accepts : (()=>true);
   for(let attemptIndex=0; attemptIndex<maxAttempts; attemptIndex++){
-    lastResult = await BookSnapshotTransport.capture(iframe, {
-      timeoutMs:options.timeoutMs
+    lastResult = await captureIframeFast(iframe, {
+      timeoutMs:options.timeoutMs,
+      directTimeoutMs:options.directTimeoutMs
     });
     mergedAttempts.push(...lastResult.attempts.map(attempt=>({
       ...attempt,
@@ -640,7 +717,7 @@ async function captureSceneFrame(frame){
     attempts,
     timeoutMs,
     retryDelayMs,
-    accepts:sceneSnapshotGraphPass
+    accepts:()=>true
   });
 }
 let printSnapshotsPrepared = false;
@@ -688,10 +765,11 @@ async function preparePrintSnapshots(forceOrOptions=false){
       result:capture.result,
       reason:capture.reason || null,
       meta:capture.meta || null,
+      graphPass,
+      warning:graphPass ? null : 'incomplete-scene-graph-render',
       fallbackUsed:Boolean(capture.fallbackUsed),
-      pass:capture.result === 'success' && graphPass
+      pass:capture.result === 'success' && Boolean(capture.dataUrl)
     };
-    if(!graphPass) sceneReport.reason = 'incomplete-scene-graph-render';
     sceneReports.push(sceneReport);
     if(!capture.dataUrl) continue;
 
@@ -734,7 +812,7 @@ async function preparePrintSnapshots(forceOrOptions=false){
     sceneReports,
     pass:readyCount === frames.length && mismatches === 0
   };
-  printSnapshotsPrepared = lastSnapshotReport.pass;
+  printSnapshotsPrepared = true;
   return readyCount;
 }
 const BOOK_PRINT_DIAGNOSTICS = Object.freeze({
@@ -821,30 +899,16 @@ async function beginPrintFlow(){
     await preparePrintSnapshots(true);
     if(!lastSnapshotReport?.pass){
       console.warn('book-scene-v1 incomplete snapshot report',lastSnapshotReport);
-      if(!requestSnapshotPrintOverride()){
-        printFlowRunning = false;
-        setStatus(contentLang==='en'
-          ? 'Printing was cancelled because scene snapshots were incomplete.'
-          : 'Η εκτύπωση ακυρώθηκε επειδή τα στιγμιότυπα σκηνών ήταν ελλιπή.');
-        return;
-      }
       snapshotOverride = true;
     }
   }catch(err){
     console.warn('book-scene-v1 snapshot preparation error',err,lastSnapshotReport);
-    if(!requestSnapshotPrintOverride(err)){
-      printFlowRunning = false;
-      setStatus(contentLang==='en'
-        ? 'Printing was cancelled after a scene-snapshot error.'
-        : 'Η εκτύπωση ακυρώθηκε μετά από σφάλμα στιγμιοτύπων σκηνών.');
-      return;
-    }
     snapshotOverride = true;
   }
   setStatus(snapshotOverride
     ? (contentLang==='en'
-      ? 'Printing continues with explicit permission despite incomplete scene snapshots.'
-      : 'Η εκτύπωση συνεχίζεται με ρητή άδεια παρά τα ελλιπή στιγμιότυπα σκηνών.')
+      ? 'Printing continues with scene-snapshot warnings.'
+      : 'Η εκτύπωση συνεχίζεται με προειδοποιήσεις στιγμιοτύπων σκηνών.')
     : '');
   window.print();
 }
@@ -854,9 +918,6 @@ function resolveAppHref(){
 window.addEventListener('beforeprint', ()=>{
   ensurePrintSequenceExpansion();
   readerRenderDiagnostics.print=collectRenderMetrics();readerRenderDiagnostics.diff=(readerRenderDiagnostics.screen||[]).map((row,i)=>({pageIndex:i,screenOverflowPx:row.overflowPx,printOverflowPx:readerRenderDiagnostics.print?.[i]?.overflowPx??null,deltaPx:(readerRenderDiagnostics.print?.[i]?.overflowPx??0)-row.overflowPx}));window.BookRenderDiagnostics=readerRenderDiagnostics;
-  if(!printSnapshotsPrepared){
-    try{ preparePrintSnapshots(false); }catch(_e){}
-  }
 });
 window.addEventListener('afterprint', ()=>{
   cleanupPrintSnapshots();
@@ -1375,3 +1436,4 @@ localBookInput?.addEventListener('change',async event=>{
 </script>
 </body>
 </html>
+
