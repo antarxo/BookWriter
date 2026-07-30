@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "id": "save-20260729T171305Z-38f52",
+  "id": "save-20260730T182345Z-t2d9z",
   "target": "book.json",
   "temp": ".bookwriter-save.tmp",
   "status": "complete",
-  "startedAt": "2026-07-29T17:13:05.727Z",
-  "backupPath": "_bookwriter_backups/book_20260729T171305Z.json",
-  "completedAt": "2026-07-29T17:13:07.020Z"
+  "startedAt": "2026-07-30T18:23:45.595Z",
+  "backupPath": "_bookwriter_backups/book_20260730T182345Z.json",
+  "completedAt": "2026-07-30T18:23:46.673Z"
 }

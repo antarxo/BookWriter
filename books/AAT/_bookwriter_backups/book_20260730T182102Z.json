@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-07-30T18:23:45.252Z",
+    "updatedAt": "2026-07-30T17:59:23.111Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1039,6 +1039,195 @@
           }
         },
         {
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-10",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Τι φανταζόμαστε όταν μιλάμε για Απλή Αρμονική Ταλάντωση;",
+                "bold": true,
+                "color": "#000000"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 4
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 2,
+            "sourceParagraph": 17,
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both",
+              "bold": true
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "<strong>Τι φανταζόμαστε όταν μιλάμε για Απλή Αρμονική Ταλάντωση;</strong>",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-11",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Πιθανές απαντήσεις:",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " ΑΑΤ είναι η κίνηση που κάνει ένα εκκρεμές, ένα σώμα δεμένο σε ελατήριο, μια σημαδούρα στην επιφάνεια της θάλασσας! ",
+                "color": "#000000"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 4
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 2,
+            "sourceParagraph": 18,
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both",
+              "bold": true
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "<strong>Πιθανές απαντήσεις:</strong> ΑΑΤ είναι η κίνηση που κάνει ένα εκκρεμές, ένα σώμα δεμένο σε ελατήριο, μια σημαδούρα στην επιφάνεια της θάλασσας! ",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-12",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Θα ασχοληθούμε κυρίως με την περίπτωση σώματος δεμένου σε ελατήριο.",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " Θυμόμαστε ότι τα ελατήρια είναι μηχανισμοί άσκησης ελαστικών δυνάμεων που υπακούουν στο Νόμο του Hook και όχι σώματα (δεν έχουν μάζα είναι ιδανικά όπως λέμε). Σώμα (μάζας m) και ελατήριο (σταθεράς Κ) αποτελούν μαζί ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "τον ταλαντωτή ",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "(",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "m,K",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ")",
+                "bold": true,
+                "color": "#000000"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 4
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 2,
+            "sourceParagraph": 19,
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both"
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "<strong>Θα ασχοληθούμε κυρίως με την περίπτωση σώματος δεμένου σε ελατήριο.</strong> Θυμόμαστε ότι τα ελατήρια είναι μηχανισμοί άσκησης ελαστικών δυνάμεων που υπακούουν στο Νόμο του Hook και όχι σώματα (δεν έχουν μάζα είναι ιδανικά όπως λέμε). Σώμα (μάζας m) και ελατήριο (σταθεράς Κ) αποτελούν μαζί <strong>τον ταλαντωτή </strong><strong>(</strong><strong>m,K</strong><strong>)</strong>",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-13",
           "type": "paragraph",
           "nav": {
@@ -1511,6 +1700,160 @@
           }
         },
         {
+          "id": "aat-guided-callout",
+          "type": "interactive_callout",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "title": "Διερεύνησε βήμα προς βήμα",
+          "setupLabel": "Ρύθμισε",
+          "setupChips": [],
+          "pressLabel": "Πίεσε",
+          "pressChips": [],
+          "observeTitle": "Παρατήρησε",
+          "observeItems": [],
+          "sequenceSceneId": "aat-main-scene",
+          "sequenceDisplayMode": "expanded",
+          "sequenceInitialStep": 0,
+          "sequenceSteps": [
+            {
+              "title": "1. Ο ταλαντωτής",
+              "preset": "spring",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "setupChips": [
+                "Επαναφορά"
+              ],
+              "pressChips": [
+                "▶ Έναρξη",
+                "⏸ Παύση"
+              ],
+              "observeItems": [
+                "Εντόπισε τη θέση ισορροπίας και τις ακραίες θέσεις ±A.",
+                "Παρατήρησε πού η ταχύτητα είναι μέγιστη και πού μηδενίζεται."
+              ],
+              "printPreset": "spring"
+            },
+            {
+              "title": "2. Ο άξονας αναφοράς",
+              "preset": "spring",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Άξονας"
+              ],
+              "observeItems": [
+                "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
+              ],
+              "printPreset": "spring_axis"
+            },
+            {
+              "title": "3. Η κυκλική κίνηση",
+              "preset": "spring_axis",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Κύκλος",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Σύγκρινε την ακτίνα του κύκλου με το πλάτος A.",
+                "Έλεγξε ότι η κυκλική κίνηση και η ταλάντωση έχουν την ίδια περίοδο."
+              ],
+              "printPreset": "spring_circle"
+            },
+            {
+              "title": "4. Η προβολή",
+              "preset": "spring_circle",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Προβολή",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Παρακολούθησε τη στικτή οριζόντια γραμμή.",
+                "Έλεγξε ότι η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
+              ],
+              "printPreset": "spring_projection"
+            },
+            {
+              "title": "5. Το γράφημα x(t)",
+              "preset": "spring_projection",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Γράφημα",
+                "▶ Έναρξη"
+              ],
+              "observeItems": [
+                "Παρακολούθησε το ενεργό σημείο του γραφήματος.",
+                "Έλεγξε την επανάληψη της παράστασης ανά περίοδο T."
+              ],
+              "printPreset": "spring_graph"
+            },
+            {
+              "title": "6. Η αρχική φάση",
+              "preset": "spring_graph",
+              "state": {
+                "play": false,
+                "t": 0
+              },
+              "pressChips": [
+                "Αρχική φάση",
+                "Τώρα → t=0"
+              ],
+              "observeItems": [
+                "Άλλαξε τη φ₀ και συσχέτισε την x₀ και το πρόσημο της υ₀ με την αρχική θέση στον κύκλο.",
+                "Πάτησε «Τώρα → t=0» σε διαφορετικές στιγμές και έλεγξε ότι αλλάζει η αρχή της περιγραφής, όχι η ίδια η κίνηση."
+              ],
+              "printPreset": "spring_phase",
+              "printQuery": {
+                "phi": 35,
+                "play": 0
+              }
+            }
+          ],
+          "print": {
+            "expand": "per-step",
+            "snapshotScene": true
+          }
+        },
+        {
+          "id": "aat-main-scene",
+          "type": "scene",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "src": "https://aatscene.netlify.app/?state=spring&play=0",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
+          "hideCaption": false,
+          "layout": {
+            "placement": "wide",
+            "wrap": false,
+            "floatInteraction": "block",
+            "widthPx": 706,
+            "aspectRatio": "1.44"
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
+        },
+        {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-16",
           "type": "paragraph",
           "nav": {
@@ -1866,7 +2209,35 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationGenerated": true,
+        "paginationPagePart": 2
+      }
+    },
+    {
+      "id": "page-1-r3",
+      "sourcePage": "3-4",
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-21",
           "type": "list",
@@ -2110,401 +2481,6 @@
             "mathSourceFormat": "omml-mathml"
           }
         },
-        {
-          "id": "docx-insert-ms7nl0tf-0yrz6-item-10",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Τι φανταζόμαστε όταν μιλάμε για Απλή Αρμονική Ταλάντωση;",
-                "bold": true,
-                "color": "#000000"
-              }
-            ]
-          },
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 4
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-            "sourcePage": 2,
-            "sourceParagraph": 17,
-            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
-          },
-          "provenance": {
-            "sourceStyle": "Normal",
-            "sourceParagraphStyle": {
-              "marginBottomPx": 4,
-              "lineHeight": 1,
-              "fontFamily": "Calibri",
-              "fontSizePx": 14.666666666666666,
-              "align": "both",
-              "bold": true
-            },
-            "sourceHyphenation": true
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<strong>Τι φανταζόμαστε όταν μιλάμε για Απλή Αρμονική Ταλάντωση;</strong>",
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.4"
-          }
-        },
-        {
-          "id": "docx-insert-ms7nl0tf-0yrz6-item-11",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Πιθανές απαντήσεις:",
-                "bold": true,
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": " ΑΑΤ είναι η κίνηση που κάνει ένα εκκρεμές, ένα σώμα δεμένο σε ελατήριο, μια σημαδούρα στην επιφάνεια της θάλασσας! ",
-                "color": "#000000"
-              }
-            ]
-          },
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 4
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-            "sourcePage": 2,
-            "sourceParagraph": 18,
-            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
-          },
-          "provenance": {
-            "sourceStyle": "Normal",
-            "sourceParagraphStyle": {
-              "marginBottomPx": 4,
-              "lineHeight": 1,
-              "fontFamily": "Calibri",
-              "fontSizePx": 14.666666666666666,
-              "align": "both",
-              "bold": true
-            },
-            "sourceHyphenation": true
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<strong>Πιθανές απαντήσεις:</strong> ΑΑΤ είναι η κίνηση που κάνει ένα εκκρεμές, ένα σώμα δεμένο σε ελατήριο, μια σημαδούρα στην επιφάνεια της θάλασσας! ",
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.4"
-          }
-        },
-        {
-          "id": "docx-insert-ms7nl0tf-0yrz6-item-12",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Θα ασχοληθούμε κυρίως με την περίπτωση σώματος δεμένου σε ελατήριο.",
-                "bold": true,
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": " Θυμόμαστε ότι τα ελατήρια είναι μηχανισμοί άσκησης ελαστικών δυνάμεων που υπακούουν στο Νόμο του Hook και όχι σώματα (δεν έχουν μάζα είναι ιδανικά όπως λέμε). Σώμα (μάζας m) και ελατήριο (σταθεράς Κ) αποτελούν μαζί ",
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": "τον ταλαντωτή ",
-                "bold": true,
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": "(",
-                "bold": true,
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": "m,K",
-                "bold": true,
-                "color": "#000000"
-              },
-              {
-                "type": "text_run",
-                "text": ")",
-                "bold": true,
-                "color": "#000000"
-              }
-            ]
-          },
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 4
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-            "sourcePage": 2,
-            "sourceParagraph": 19,
-            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
-          },
-          "provenance": {
-            "sourceStyle": "Normal",
-            "sourceParagraphStyle": {
-              "marginBottomPx": 4,
-              "lineHeight": 1,
-              "fontFamily": "Calibri",
-              "fontSizePx": 14.666666666666666,
-              "align": "both"
-            },
-            "sourceHyphenation": true
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<strong>Θα ασχοληθούμε κυρίως με την περίπτωση σώματος δεμένου σε ελατήριο.</strong> Θυμόμαστε ότι τα ελατήρια είναι μηχανισμοί άσκησης ελαστικών δυνάμεων που υπακούουν στο Νόμο του Hook και όχι σώματα (δεν έχουν μάζα είναι ιδανικά όπως λέμε). Σώμα (μάζας m) και ελατήριο (σταθεράς Κ) αποτελούν μαζί <strong>τον ταλαντωτή </strong><strong>(</strong><strong>m,K</strong><strong>)</strong>",
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.4"
-          }
-        }
-      ],
-      "extensions": {
-        "paginationGenerated": true,
-        "paginationPagePart": 2
-      }
-    },
-    {
-      "id": "page-1-r2-split",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-guided-callout",
-          "type": "interactive_callout",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "title": "Διερεύνησε βήμα προς βήμα",
-          "setupLabel": "Ρύθμισε",
-          "setupChips": [],
-          "pressLabel": "Πίεσε",
-          "pressChips": [],
-          "observeTitle": "Παρατήρησε",
-          "observeItems": [],
-          "sequenceSceneId": "aat-main-scene",
-          "sequenceDisplayMode": "expanded",
-          "sequenceInitialStep": 0,
-          "sequenceSteps": [
-            {
-              "title": "1. Ο ταλαντωτής",
-              "preset": "spring",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "setupChips": [
-                "Επαναφορά"
-              ],
-              "pressChips": [
-                "▶ Έναρξη",
-                "⏸ Παύση"
-              ],
-              "observeItems": [
-                "Εντόπισε τη θέση ισορροπίας και τις ακραίες θέσεις ±A.",
-                "Παρατήρησε πού η ταχύτητα είναι μέγιστη και πού μηδενίζεται."
-              ],
-              "printPreset": "spring"
-            },
-            {
-              "title": "2. Ο άξονας αναφοράς",
-              "preset": "spring",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "pressChips": [
-                "Άξονας"
-              ],
-              "observeItems": [
-                "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
-              ],
-              "printPreset": "spring_axis"
-            },
-            {
-              "title": "3. Η κυκλική κίνηση",
-              "preset": "spring_axis",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "pressChips": [
-                "Κύκλος",
-                "▶ Έναρξη"
-              ],
-              "observeItems": [
-                "Σύγκρινε την ακτίνα του κύκλου με το πλάτος A.",
-                "Έλεγξε ότι η κυκλική κίνηση και η ταλάντωση έχουν την ίδια περίοδο."
-              ],
-              "printPreset": "spring_circle"
-            },
-            {
-              "title": "4. Η προβολή",
-              "preset": "spring_circle",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "pressChips": [
-                "Προβολή",
-                "▶ Έναρξη"
-              ],
-              "observeItems": [
-                "Παρακολούθησε τη στικτή οριζόντια γραμμή.",
-                "Έλεγξε ότι η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
-              ],
-              "printPreset": "spring_projection"
-            },
-            {
-              "title": "5. Το γράφημα x(t)",
-              "preset": "spring_projection",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "pressChips": [
-                "Γράφημα",
-                "▶ Έναρξη"
-              ],
-              "observeItems": [
-                "Παρακολούθησε το ενεργό σημείο του γραφήματος.",
-                "Έλεγξε την επανάληψη της παράστασης ανά περίοδο T."
-              ],
-              "printPreset": "spring_graph"
-            },
-            {
-              "title": "6. Η αρχική φάση",
-              "preset": "spring_graph",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "pressChips": [
-                "Αρχική φάση",
-                "Τώρα → t=0"
-              ],
-              "observeItems": [
-                "Άλλαξε τη φ₀ και συσχέτισε την x₀ και το πρόσημο της υ₀ με την αρχική θέση στον κύκλο.",
-                "Πάτησε «Τώρα → t=0» σε διαφορετικές στιγμές και έλεγξε ότι αλλάζει η αρχή της περιγραφής, όχι η ίδια η κίνηση."
-              ],
-              "printPreset": "spring_phase",
-              "printQuery": {
-                "phi": 35,
-                "play": 0
-              }
-            }
-          ],
-          "print": {
-            "expand": "per-step",
-            "snapshotScene": true
-          }
-        },
-        {
-          "id": "aat-main-scene",
-          "type": "scene",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "src": "https://aatscene.netlify.app/?state=spring&play=0",
-          "title": "Απλή Αρμονική Ταλάντωση",
-          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
-          "hideCaption": false,
-          "layout": {
-            "placement": "wide",
-            "wrap": false,
-            "floatInteraction": "block",
-            "widthPx": 706,
-            "aspectRatio": "1.44"
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
-        }
-      ]
-    },
-    {
-      "id": "page-1-r3",
-      "sourcePage": "3-4",
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
         {
           "id": "_Toc235669429",
           "type": "section_heading",
@@ -2751,12 +2727,12 @@
                 "type": "text_run",
                 "text": " ",
                 "italic": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
                 "source": "",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mfenced open=\"{\" close=\"\"><mrow><mtable><mtr><mtd><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1</mn><mo>)</mo><mspace width=\".24em\"></mspace></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><msub><mrow><mrow><mi mathvariant=\"normal\">Α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"></mspace><mtext>συν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>2</mn><mspace width=\".24em\"></mspace></mrow></mtd></mtr><mtr><mtd><mtable><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>3</mn><mo>)</mo><mspace width=\".24em\"></mspace></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>3</mn><mo>)</mo><mo>'</mo></mrow></mtd></mtr></mtable></mtd></mtr></mtable></mrow></mfenced></mrow></math>"
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mfenced open=\"{\" close=\"\"><mrow><mtable><mtr><mtd><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><msub><mrow><mrow><mi mathvariant=\"normal\">Α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mtext>συν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>2</mn><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><mtable><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>3</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>3</mn><mo>)</mo><mo>'</mo></mrow></mtd></mtr></mtable></mtd></mtr></mtable></mrow></mfenced></mrow></math>"
               }
             ]
           },
@@ -2785,16 +2761,13 @@
               "align": "both",
               "italic": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T18:23:45.026Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"font-family:&quot;Calibri&quot;\"><em> </em></span><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mfenced open=\"{\" close=\"\"><mrow><mtable><mtr><mtd><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><msub><mrow><mrow><mi mathvariant=\"normal\">Α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mtext>συν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>2</mn><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><mtable><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>3</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mtd></mtr><mtr><mtd><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>3</mn><mo>)</mo><mo>&#39;</mo></mrow></mtd></mtr></mtable></mtd></mtr></mtable></mrow></mfenced></mrow></math></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3675,7 +3648,35 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationGenerated": true,
+        "paginationPagePart": 3
+      }
+    },
+    {
+      "id": "page-1-r4",
+      "sourcePage": 4,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-41",
           "type": "list",
@@ -4114,35 +4115,7 @@
             "docxCanonicalImport": "v4.4",
             "mathSourceFormat": "omml-mathml"
           }
-        }
-      ],
-      "extensions": {
-        "paginationGenerated": true,
-        "paginationPagePart": 3
-      }
-    },
-    {
-      "id": "page-1-r4",
-      "sourcePage": 4,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-45",
           "type": "list",
@@ -4936,7 +4909,35 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationGenerated": true,
+        "paginationPagePart": 4
+      }
+    },
+    {
+      "id": "aat-main-page",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-55",
           "type": "list",
@@ -5962,35 +5963,7 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationGenerated": true,
-        "paginationPagePart": 4
-      }
-    },
-    {
-      "id": "aat-main-page",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-59",
           "type": "paragraph",
