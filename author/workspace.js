@@ -336,6 +336,26 @@ function imageCandidates(src){
   if(state.assets.has(src))return[state.assets.get(src)];
   return src?[resolveBookUrl(src)]:[];
 }
+function currentBookBaseUrl(){
+  if(state.staticBookBase)return new URL(state.staticBookBase,location.href);
+  if(session.directoryHandle)return new URL(`../books/${encodeURIComponent(session.directoryHandle.name)}/`,location.href);
+  return new URL(location.href);
+}
+function resolveRuntimeBookSources(targetBook,assumedBookBase=currentBookBaseUrl()){
+  const missingFigureAssets=new Set();
+  for(const currentPage of targetBook.pages||[])for(const current of currentPage.items||[]){
+    if(current.type==='figure'&&String(current.src||'').startsWith('images/')){
+      const resolved=state.assets.get(String(current.src));
+      if(resolved) current.src=resolved;
+      else if(state.staticBookBase) current.src=resolveSceneSource(current.src,assumedBookBase);
+      else missingFigureAssets.add(String(current.src));
+    }
+    if(current.type==='scene'&&String(current.src||'').trim()){
+      current.src=resolveSceneSource(current.src,assumedBookBase);
+    }
+  }
+  return missingFigureAssets;
+}
 
 function defaultFloatInteraction(type){
   return type==='clear'?'clear':'wrap';
@@ -865,33 +885,40 @@ async function openReader(){
     setStatus('Έλεγχος και δημιουργία ζωντανής εκτυπωτικής προβολής…','warn');
     const validation=M.validateBook(session.book);if(!validation.ok)throw new Error(validation.errors.join('\n'));
     const coreValidation=BookCore.validateData(session.book);if(!coreValidation.ok)throw new Error(coreValidation.errors.join('\n'));
-    const previewBook=BookCore.expandPrintSequences(M.deepClone(session.book));
+    const sourceBook=M.deepClone(session.book);
+    const previewBook=BookCore.expandScreenSequences(M.deepClone(sourceBook));
+    const printBook=BookCore.expandPrintSequences(M.deepClone(sourceBook));
     const readerCoreValidation=BookCore.validateData(previewBook);if(!readerCoreValidation.ok)throw new Error(readerCoreValidation.errors.join('\n'));
-    const overflowAudit=await P.auditOverflow(previewBook,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
+    const printCoreValidation=BookCore.validateData(printBook);if(!printCoreValidation.ok)throw new Error(printCoreValidation.errors.join('\n'));
+    const overflowAudit=await P.auditOverflow(printBook,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     const printOverride=!overflowAudit.ok;
-    const missingFigureAssets=[];
     const assumedBookBase=state.staticBookBase?new URL(state.staticBookBase,location.href):new URL(`../books/${encodeURIComponent(session.directoryHandle.name)}/`,location.href);
-    for(const currentPage of previewBook.pages||[])for(const current of currentPage.items||[]){
-      if(current.type==='figure'&&String(current.src||'').startsWith('images/')){
-        const resolved=state.assets.get(String(current.src));
-        if(resolved) current.src=resolved;
-        else if(state.staticBookBase) current.src=resolveSceneSource(current.src,assumedBookBase);
-        else missingFigureAssets.push(String(current.src));
+    const missingFigureAssets=new Set();
+    const resolveRuntimeSources=targetBook=>{
+      for(const currentPage of targetBook.pages||[])for(const current of currentPage.items||[]){
+        if(current.type==='figure'&&String(current.src||'').startsWith('images/')){
+          const resolved=state.assets.get(String(current.src));
+          if(resolved) current.src=resolved;
+          else if(state.staticBookBase) current.src=resolveSceneSource(current.src,assumedBookBase);
+          else missingFigureAssets.add(String(current.src));
+        }
+        if(current.type==='scene'&&String(current.src||'').trim()){
+          current.src=resolveSceneSource(current.src,assumedBookBase);
+        }
       }
-      if(current.type==='scene'&&String(current.src||'').trim()){
-        current.src=resolveSceneSource(current.src,assumedBookBase);
-      }
-    }
-    if(missingFigureAssets.length)throw new Error(`Η εκτύπωση σταμάτησε: λείπουν ${missingFigureAssets.length} αρχεία εικόνων από τον φάκελο του βιβλίου:\n${[...new Set(missingFigureAssets)].join('\n')}`);
-    const localSceneUrls=[...new Set((previewBook.pages||[]).flatMap(currentPage=>(currentPage.items||[]).filter(current=>current.type==='scene').map(current=>String(current.src||'').trim()).filter(Boolean)).filter(src=>{try{return new URL(src).origin===location.origin}catch{return false}}))];
+    };
+    resolveRuntimeSources(previewBook);
+    resolveRuntimeSources(printBook);
+    if(missingFigureAssets.size)throw new Error(`Η εκτύπωση σταμάτησε: λείπουν ${missingFigureAssets.size} αρχεία εικόνων από τον φάκελο του βιβλίου:\n${[...missingFigureAssets].join('\n')}`);
+    const localSceneUrls=[...new Set((printBook.pages||[]).flatMap(currentPage=>(currentPage.items||[]).filter(current=>current.type==='scene').map(current=>String(current.src||'').trim()).filter(Boolean)).filter(src=>{try{return new URL(src).origin===location.origin}catch{return false}}))];
     const sceneChecks=await Promise.all(localSceneUrls.map(async src=>{try{const response=await fetch(src,{method:'HEAD',cache:'no-store'});return response.ok?null:{src,status:response.status}}catch(error){return{src,status:0,error:error.message}}}));
     const missingScenes=sceneChecks.filter(Boolean);
     if(missingScenes.length)throw new Error(`Η εκτύπωση σταμάτησε: ${missingScenes.length} σκηνές δεν είναι διαθέσιμες από τον ενεργό server. Η πρώτη είναι:\n${missingScenes[0].src}\n\nΤο βιβλίο δεν θα εκτυπωθεί με κενά πλαίσια.`);
     previewBook.meta=previewBook.meta||{};previewBook.meta.updatedAt=new Date().toISOString();previewBook.extensions={...(previewBook.extensions||{}),lastPrintOverflowAudit:overflowAudit,printOverride,printOverrideAt:printOverride?new Date().toISOString():null};for(const key of['paginationRequired','paginationCertified','paginationStatus','paginationCertifiedAt','paginationCurrentPageCount','paginationCertifiedPageCount','paginationStaleReason','paginationStaleAt'])delete previewBook.extensions[key];
     const runtimeAudit=BookCore.auditData(previewBook);
-    previewBook.extensions={...(previewBook.extensions||{}),livePrintReport:{generatedAt:new Date().toISOString(),sourceSchema:session.book.schemaVersion,sourceMode:state.mode,rendererVersion:BookCore.VERSION,paginationVersion:P.VERSION,renderPath:'bookwriter-v4 → current book snapshot → in-memory Blob → standalone BookCore reader',productionBookUntouched:true,printOverride,pages:previewBook.pages.length,items:previewBook.pages.reduce((sum,current)=>sum+(current.items||[]).length,0),overflowAudit,runtimeAudit,validation,coreValidation,readerCoreValidation}};
+    previewBook.extensions={...(previewBook.extensions||{}),livePrintReport:{generatedAt:new Date().toISOString(),sourceSchema:session.book.schemaVersion,sourceMode:state.mode,rendererVersion:BookCore.VERSION,paginationVersion:P.VERSION,renderPath:'bookwriter-v4 → current book snapshot → in-memory Blob → standalone BookCore reader → print expansion on book print button',productionBookUntouched:true,printOverride,pages:previewBook.pages.length,items:previewBook.pages.reduce((sum,current)=>sum+(current.items||[]).length,0),printPages:printBook.pages.length,overflowAudit,runtimeAudit,validation,coreValidation,readerCoreValidation,printCoreValidation}};
     const blobUrl=URL.createObjectURL(new Blob([JSON.stringify(previewBook)],{type:'application/json'}));
-    const url=new URL('../reader/index.html',location.href);url.searchParams.set('book',blobUrl);url.searchParams.set('bookBase',assumedBookBase.href);url.searchParams.set('lang','el');url.searchParams.set('_v4print',String(Date.now()));
+    const url=new URL('../reader/index.html',location.href);url.searchParams.set('book',blobUrl);url.searchParams.set('bookBase',assumedBookBase.href);url.searchParams.set('lang','el');
     previewWindow.location.replace(url.href);setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
     setStatus(printOverride?`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · προειδοποίηση ${overflowAudit.overflowPages} overflow.`:`Ζωντανή εκτυπωτική προβολή: ${previewBook.pages.length} σελίδες · 0 overflow.`,printOverride?'warn':'good');
   }catch(error){console.error(error);try{previewWindow.close()}catch{}setStatus('Απέτυχε η εκτυπωτική προβολή','bad');modal('Εκτύπωση / PDF',`<div class="info-card bad">${esc(error.message)}</div>`)}

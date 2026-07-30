@@ -122,7 +122,7 @@ a:hover{color:#173f5b}
 .page-stack{display:flex; flex-direction:column; align-items:center; gap:26px}
 .print-preparing-overlay{
   position:fixed; inset:0; z-index:2000; display:none; place-items:center;
-  background:rgba(236,230,217,.72); backdrop-filter:blur(6px);
+  background:rgba(118,124,130,.92); backdrop-filter:blur(2px);
   font:700 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif; color:#173f5b;
 }
 .print-preparing .print-preparing-overlay{display:grid}
@@ -375,7 +375,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-hm-print-5">
+<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-flow-1">
 </head>
 <body>
   <div class="topbar">
@@ -403,8 +403,8 @@ figure.media figcaption{
       <p class="print-preparing-text" id="printPreparingText">Παρακαλώ περιμένετε…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-hm-print-5"></script>
-<script src="../core/snapshot-transport.js?v=20260730-hm-print-5"></script>
+<script src="../core/book-core.js?v=20260730-print-flow-1"></script>
+<script src="../core/snapshot-transport.js?v=20260730-print-flow-1"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');
@@ -1482,7 +1482,7 @@ function mountBook(loaded){
   if(!validation.ok) throw new Error(validation.errors.join(' '));
   const normalized=BookCore.normalizeData(loaded);
   sourceBookData = normalized;
-  const data=initialParams.has('_v4print') ? BookCore.expandPrintSequences(normalized) : BookCore.expandScreenSequences(normalized);
+  const data=BookCore.expandScreenSequences(normalized);
   bookData = data;
   const defs=data.layoutDefaults || {};
   document.title = getLoc(data.meta,'title','Βιβλίο');
