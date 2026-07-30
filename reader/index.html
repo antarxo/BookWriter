@@ -133,6 +133,19 @@ a:hover{color:#173f5b}
 }
 .print-preparing-title{margin:0 0 8px;font-size:18px}
 .print-preparing-text{margin:0;color:rgba(244,247,251,.78);font-weight:650}
+.print-progress{
+  height:8px; margin:18px 0 10px; border:1px solid rgba(255,255,255,.22); border-radius:999px;
+  background:rgba(255,255,255,.10); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,.28);
+}
+.print-progress-bar{
+  height:100%; width:0%; border-radius:999px;
+  background:linear-gradient(90deg,#67e8f9,#86efac,#fde68a);
+  box-shadow:0 0 18px rgba(103,232,249,.38); transition:width .22s ease;
+}
+.print-progress-label{
+  margin:0; color:rgba(244,247,251,.68);
+  font:650 12px/1.35 system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+}
 .sheet-wrap{
   width:calc(var(--sheet-width) * var(--screen-scale));
   min-height:calc(var(--sheet-height) * var(--screen-scale));
@@ -402,10 +415,14 @@ figure.media figcaption{
     <div class="print-preparing-card">
       <p class="print-preparing-title" id="printPreparingTitle">Η εκτύπωση ετοιμάζεται.</p>
       <p class="print-preparing-text" id="printPreparingText">Παρακαλώ περιμένετε…</p>
+      <div class="print-progress" aria-hidden="true">
+        <div class="print-progress-bar" id="printProgressBar"></div>
+      </div>
+      <p class="print-progress-label" id="printProgressLabel">Προετοιμασία βιβλίου…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-print-speed-1"></script>
-<script src="../core/snapshot-transport.js?v=20260730-print-speed-1"></script>
+<script src="../core/book-core.js?v=20260730-print-progress-1"></script>
+<script src="../core/snapshot-transport.js?v=20260730-print-progress-1"></script>
 <script>
 'use strict';
 const pageStack=document.getElementById('pageStack');
@@ -419,6 +436,8 @@ const readerZoomOut=document.getElementById('readerZoomOut'),readerZoomFit=docum
 const printPreparingOverlay=document.getElementById('printPreparingOverlay');
 const printPreparingTitle=document.getElementById('printPreparingTitle');
 const printPreparingText=document.getElementById('printPreparingText');
+const printProgressBar=document.getElementById('printProgressBar');
+const printProgressLabel=document.getElementById('printProgressLabel');
 let printPageStyleEl = null;
 const BOOK_QUERY_PARAM='book';
 const DEFAULT_BOOK_URL='../book/book.json';
@@ -763,6 +782,47 @@ let activePrintSession = null;
 let sourceBookData = null;
 let bookData = null;
 
+function printProgressText(key, fallback){
+  if(contentLang === 'en'){
+    return ({
+      preparing:'Preparing book...',
+      saving:'Saving current book state...',
+      expanding:'Preparing print layout...',
+      images:'Checking images...',
+      scenes:'Preparing scene snapshots...',
+      composing:'Composing print preview...',
+      opening:'Opening print preview...'
+    })[key] || fallback || '';
+  }
+  return ({
+    preparing:'Προετοιμασία βιβλίου...',
+    saving:'Αποθήκευση κατάστασης βιβλίου...',
+    expanding:'Προετοιμασία εκτυπωτικής μορφής...',
+    images:'Έλεγχος εικόνων...',
+    scenes:'Προετοιμασία στιγμιοτύπων σκηνών...',
+    composing:'Σύνθεση προεπισκόπησης εκτύπωσης...',
+    opening:'Άνοιγμα προεπισκόπησης εκτύπωσης...'
+  })[key] || fallback || '';
+}
+function updatePrintProgress(value=0,label=''){
+  const pct = Math.max(0, Math.min(100, Number(value) || 0));
+  if(printProgressBar) printProgressBar.style.width = `${pct}%`;
+  if(printProgressLabel) printProgressLabel.textContent = label || `${Math.round(pct)}%`;
+}
+function describeSnapshotProgress(info={}){
+  const total = Math.max(0, Number(info.total) || 0);
+  if(info.stage === 'images') return printProgressText('images');
+  if(info.stage === 'finalize') return printProgressText('composing');
+  if(info.stage === 'scene'){
+    const done = Math.max(0, Math.min(total, Number(info.done) || 0));
+    return contentLang === 'en'
+      ? `Scene snapshots: ${done} of ${total}`
+      : `Στιγμιότυπα σκηνών: ${done} από ${total}`;
+  }
+  return total
+    ? printProgressText('scenes')
+    : printProgressText('composing');
+}
 function showPrintPreparingOverlay(){
   if(contentLang === 'en'){
     printPreparingTitle.textContent = 'Print is being prepared.';
@@ -771,12 +831,14 @@ function showPrintPreparingOverlay(){
     printPreparingTitle.textContent = 'Η εκτύπωση ετοιμάζεται.';
     printPreparingText.textContent = 'Παρακαλώ περιμένετε...';
   }
+  updatePrintProgress(4, printProgressText('preparing'));
   printPreparingOverlay.setAttribute('aria-hidden','false');
   document.body.classList.add('print-preparing');
 }
 function hidePrintPreparingOverlay(){
   document.body.classList.remove('print-preparing');
   printPreparingOverlay.setAttribute('aria-hidden','true');
+  updatePrintProgress(0, printProgressText('preparing'));
 }
 function elementByBookItemId(id){
   const key = String(id || '').trim();
@@ -857,22 +919,31 @@ async function preparePrintSnapshots(forceOrOptions=false){
   const force = forceOrOptions && typeof forceOrOptions === 'object'
     ? forceOrOptions.force !== false
     : Boolean(forceOrOptions);
+  const onProgress = forceOrOptions && typeof forceOrOptions === 'object' && typeof forceOrOptions.onProgress === 'function'
+    ? forceOrOptions.onProgress
+    : null;
   const requestedPath = SNAPSHOT_PATHS.BOOK_SCENE_V1;
   if(printSnapshotsPrepared && !force){
     return lastSnapshotReport.successes;
   }
   clearPrintSnapshots();
+  onProgress?.({stage:'images',done:0,total:0});
   await waitForFigureImages();
 
   const frames = Array.from(document.querySelectorAll('.media-frame.scene-frame'));
   let readyCount = 0;
   const sceneReports = [];
+  onProgress?.({stage:'scenes',done:0,total:frames.length});
 
   for(let sceneIndex=0; sceneIndex<frames.length; sceneIndex++){
     const frame = frames[sceneIndex];
     const liveIframe = frame.querySelector('iframe');
-    if(!liveIframe) continue;
+    if(!liveIframe){
+      onProgress?.({stage:'scene',done:sceneIndex+1,total:frames.length,sceneIndex:sceneIndex+1,pass:false});
+      continue;
+    }
 
+    onProgress?.({stage:'scene',done:sceneIndex,total:frames.length,sceneIndex:sceneIndex+1});
     const capture = await captureSceneFrame(frame);
     const graphPass = sceneSnapshotGraphPass(capture);
     const sceneReport = {
@@ -890,7 +961,10 @@ async function preparePrintSnapshots(forceOrOptions=false){
       pass:capture.result === 'success' && Boolean(capture.dataUrl)
     };
     sceneReports.push(sceneReport);
-    if(!capture.dataUrl) continue;
+    if(!capture.dataUrl){
+      onProgress?.({stage:'scene',done:sceneIndex+1,total:frames.length,sceneIndex:sceneIndex+1,pass:false});
+      continue;
+    }
 
     const img = document.createElement('img');
     img.className = 'print-scene-snapshot';
@@ -903,12 +977,15 @@ async function preparePrintSnapshots(forceOrOptions=false){
       sceneReport.result = 'failure';
       sceneReport.reason = 'snapshot-image-decode-failed';
       sceneReport.pass = false;
+      onProgress?.({stage:'scene',done:sceneIndex+1,total:frames.length,sceneIndex:sceneIndex+1,pass:false});
       continue;
     }
     frame.classList.add('print-ready');
     readyCount += 1;
+    onProgress?.({stage:'scene',done:sceneIndex+1,total:frames.length,sceneIndex:sceneIndex+1,pass:sceneReport.pass});
   }
 
+  onProgress?.({stage:'finalize',done:frames.length,total:frames.length});
   await wait(120);
   const byExecutedPath = {};
   sceneReports.forEach(scene=>{
@@ -977,12 +1054,32 @@ async function beginPrintFlow(){
   printFlowRunning = true;
   activePrintSession = {state:captureReaderState()};
   showPrintPreparingOverlay();
+  updatePrintProgress(8, printProgressText('saving'));
   setStatus('Ετοιμάζονται στατικά στιγμιότυπα για την εκτύπωση…');
   let snapshotWarning = false;
   try{
     await nextFrame();
+    updatePrintProgress(14, printProgressText('expanding'));
     ensurePrintSequenceExpansion();
-    await preparePrintSnapshots(true);
+    await nextFrame();
+    await preparePrintSnapshots({
+      force:true,
+      onProgress:(info={})=>{
+        const total = Math.max(1, Number(info.total) || 1);
+        if(info.stage === 'images'){
+          updatePrintProgress(18, describeSnapshotProgress(info));
+          return;
+        }
+        if(info.stage === 'scene' || info.stage === 'scenes'){
+          const done = Math.max(0, Math.min(total, Number(info.done) || 0));
+          updatePrintProgress(22 + (done / total) * 68, describeSnapshotProgress(info));
+          return;
+        }
+        if(info.stage === 'finalize'){
+          updatePrintProgress(94, describeSnapshotProgress(info));
+        }
+      }
+    });
     if(!lastSnapshotReport?.pass){
       console.warn('book-scene-v1 incomplete snapshot report',lastSnapshotReport);
       snapshotWarning = true;
@@ -996,6 +1093,8 @@ async function beginPrintFlow(){
       ? 'Printing continues with scene-snapshot warnings.'
       : 'Η εκτύπωση συνεχίζεται με προειδοποιήσεις στιγμιοτύπων σκηνών.')
     : '');
+  updatePrintProgress(100, printProgressText('opening'));
+  await wait(160);
   hidePrintPreparingOverlay();
   try{
     window.print();
