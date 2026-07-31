@@ -434,7 +434,7 @@ async function openLabRegistryEditor(){
   }
 }
 function labPresetBadge(preset={}){
-  if(preset.discovered)return'εύρημα';
+  if(preset.discovered)return'από βιβλίο';
   if(preset.custom)return'προσωπικό';
   return preset.status==='planned'?'προβλεπόμενο':'έτοιμο';
 }
@@ -844,7 +844,8 @@ const LAB_PARAM_LABELS={
   showAcceleration:'Επιτάχυνση',
   showForce:'Δύναμη',
   showEnergy:'Ενέργεια',
-  showClock:'Χρονόμετρο'
+  showClock:'Χρονόμετρο',
+  inheritDefaultQuery:'Κληρονόμηση προεπιλογών εργαστηρίου'
 };
 function labParamLabel(key){
   return LAB_PARAM_LABELS[key]||key;
@@ -877,11 +878,38 @@ function srcWithQuery(baseSrc,query={}){
   });
   return url.href;
 }
+function normalizedSceneUrl(value=''){
+  try{
+    const url=new URL(value,location.href);
+    const pairs=[];
+    url.searchParams.forEach((entry,key)=>pairs.push([key,entry]));
+    pairs.sort((a,b)=>a[0]===b[0]?String(a[1]).localeCompare(String(b[1])):a[0].localeCompare(b[0]));
+    url.search='';
+    pairs.forEach(([key,entry])=>url.searchParams.append(key,entry));
+    url.hash='';
+    return url.href;
+  }catch(_error){
+    return String(value||'').trim();
+  }
+}
+function labPresetCompareKeys(lab,preset){
+  const keys=new Set();
+  const base=lab?.baseUrl||location.href;
+  if(preset?.url||preset?.path){
+    try{keys.add(normalizedSceneUrl(new URL(preset.url||preset.path,base).href))}catch(_error){}
+  }
+  try{keys.add(normalizedSceneUrl(buildLabSceneSrc(lab,preset,false)))}catch(_error){}
+  keys.delete('');
+  return keys;
+}
 function appendLabPreset(lab,preset){
   if(!lab||!preset)return;
   lab.presets=Array.isArray(lab.presets)?lab.presets:[];
-  const src=String(preset.url||'');
-  if(src&&lab.presets.some(current=>String(current.url||'')===src))return;
+  const keys=labPresetCompareKeys(lab,preset);
+  if(keys.size&&lab.presets.some(current=>{
+    const currentKeys=labPresetCompareKeys(lab,current);
+    return [...keys].some(key=>currentKeys.has(key));
+  }))return;
   const id=String(preset.id||'').trim();
   if(id&&lab.presets.some(current=>current.id===id))return;
   lab.presets.push(preset);
@@ -955,7 +983,7 @@ function selectedLabPreset(registry,labId,presetId){
 function buildLabSceneSrc(lab,preset,print=false){
   const base=lab?.baseUrl||location.href;
   const url=new URL(preset?.url||preset?.path||'',base);
-  const query=Object.assign({},lab?.defaultQuery||{},preset?.query||{},print?preset?.printQuery||{}:{});
+  const query=Object.assign({},preset?.inheritDefaultQuery===false?{}:lab?.defaultQuery||{},preset?.query||{},print?preset?.printQuery||{}:{});
   Object.entries(query).forEach(([key,value])=>{
     if(value===undefined||value===null||value==='') url.searchParams.delete(key);
     else url.searchParams.set(key,String(value));

@@ -255,6 +255,7 @@
           "id": "electrostatic_charge_appear",
           "title": "Ηλεκτροστατικό: εμφάνιση φορτίου",
           "status": "ready",
+          "inheritDefaultQuery": false,
           "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge&lang=el&t=5",
           "layout": {
             "placement": "right",
@@ -266,6 +267,7 @@
           "id": "electrostatic_charge_vanish",
           "title": "Ηλεκτροστατικό: εξαφάνιση φορτίου",
           "status": "ready",
+          "inheritDefaultQuery": false,
           "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge_vanish&lang=el&disappearAt=5&t=10",
           "layout": {
             "placement": "right",
@@ -277,6 +279,7 @@
           "id": "electrostatic_dipole_appear",
           "title": "Ηλεκτροστατικό: εμφάνιση διπόλου",
           "status": "ready",
+          "inheritDefaultQuery": false,
           "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=dipole&lang=el&t=5",
           "layout": {
             "placement": "right",
