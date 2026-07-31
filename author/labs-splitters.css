@@ -130,6 +130,12 @@ body .labs-preset-row.discovered{
   border-left-color:#6f42c1!important;
 }
 
+body .labs-preset-row.archived{
+  border-left-color:#8a8f98!important;
+  background:#f3f3f3!important;
+  opacity:.78;
+}
+
 body .labs-preset-head{
   display:flex!important;
   align-items:center;
@@ -169,6 +175,12 @@ body .labs-preset-row.planned .labs-preset-badge{
   border-color:#e0b15b;
   background:#fff2cc;
   color:#805700;
+}
+
+body .labs-preset-row.archived .labs-preset-badge{
+  border-color:#b8bec6;
+  background:#eceff1;
+  color:#5f6670;
 }
 
 body .labs-preset-row small{
@@ -235,6 +247,11 @@ body .labs-editor-status b{
 body .labs-editor-status.planned b{
   background:#fff2cc;
   color:#805700;
+}
+
+body .labs-editor-status.archived b{
+  background:#eceff1;
+  color:#5f6670;
 }
 
 body .labs-editor-status span,

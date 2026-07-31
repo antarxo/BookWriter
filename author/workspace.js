@@ -436,11 +436,13 @@ async function openLabRegistryEditor(){
 function labPresetBadge(preset={}){
   if(preset.discovered)return'από βιβλίο';
   if(preset.custom)return'προσωπικό';
+  if(preset.status==='archived')return'κάδος';
   return preset.status==='planned'?'προβλεπόμενο':'έτοιμο';
 }
 function labPresetStatusClass(preset={}){
   if(preset.discovered)return'discovered';
   if(preset.custom)return'custom';
+  if(preset.status==='archived')return'archived';
   return preset.status==='planned'?'planned':'ready';
 }
 function labParamValueLabel(value){
@@ -469,6 +471,7 @@ function labPresetSearchText(lab,preset){
 function labPresetVisible(lab,preset){
   const query=String(state.labs.filters.query||'').trim().toLocaleLowerCase('el');
   const status=state.labs.filters.status||'';
+  if(!status&&labPresetStatusClass(preset)==='archived')return false;
   if(status&&labPresetStatusClass(preset)!==status)return false;
   if(query&&!labPresetSearchText(lab,preset).includes(query))return false;
   return true;
@@ -499,10 +502,10 @@ function ensureLabsSelection(registry){
   const labs=registry.labs||[];
   if(!labs.length){state.labs.selectedLabId='';state.labs.selectedPresetId='';return{lab:null,preset:null}}
   let lab=labs.find(current=>current.id===state.labs.selectedLabId)||labs[0];
-  let preset=(lab.presets||[]).find(current=>current.id===state.labs.selectedPresetId)||lab.presets?.[0]||null;
+  let preset=(lab.presets||[]).find(current=>current.id===state.labs.selectedPresetId&&labPresetVisible(lab,current))||lab.presets?.find(current=>labPresetVisible(lab,current))||null;
   if(!preset){
-    lab=labs.find(current=>(current.presets||[]).length)||lab;
-    preset=lab.presets?.[0]||null;
+    lab=labs.find(current=>(current.presets||[]).some(preset=>labPresetVisible(current,preset)))||lab;
+    preset=lab.presets?.find(current=>labPresetVisible(lab,current))||null;
   }
   state.labs.selectedLabId=lab?.id||'';
   state.labs.selectedPresetId=preset?.id||'';
@@ -573,7 +576,7 @@ function fillLabsEditor(registry){
   const src=lab&&preset?buildLabSceneSrc(lab,preset,false):'';
   $('#labsEditorTitle').value=insertMode?(preset?.title||lab?.title||'Ζωντανή σκηνή'):labPresetTitleForCopy(preset);
   $('#labsEditorId').value=M.normalizeId(`${preset?.id||'preset'}_copy`).slice(0,60);
-  $('#labsEditorStatus').value=preset?.status==='planned'?'planned':'ready';
+  $('#labsEditorStatus').value=['planned','archived'].includes(preset?.status)?preset.status:'ready';
   $('#labsEditorDescription').value=preset?.description||'';
   const titleLabel=$('#labsEditorTitle')?.closest('label')?.firstChild;
   if(titleLabel)titleLabel.textContent=insertMode?'Τίτλος σκηνής':'Τίτλος νέου preset';
@@ -591,10 +594,17 @@ function fillLabsEditor(registry){
   if(insertButton){
     const placement=state.labs.insertTarget?.placement==='before'?'πριν':'μετά';
     insertButton.textContent=state.labs.insertTarget?`Εισαγωγή ${placement} από την επιλογή`:'Εισαγωγή στο βιβλίο';
-    insertButton.disabled=!has()||!page()||preset?.status==='planned';
-    insertButton.title=preset?.status==='planned'?'Το preset είναι προβλεπόμενο και δεν εισάγεται ακόμη.':'Εισαγωγή της επιλεγμένης σκηνής στο ανοιχτό βιβλίο';
+    insertButton.disabled=!has()||!page()||['planned','archived'].includes(preset?.status);
+    insertButton.title=preset?.status==='archived'?'Το preset βρίσκεται στον κάδο και δεν εισάγεται.':preset?.status==='planned'?'Το preset είναι προβλεπόμενο και δεν εισάγεται ακόμη.':'Εισαγωγή της επιλεγμένης σκηνής στο ανοιχτό βιβλίο';
   }
-  $('#labsEditorInfo').innerHTML=lab&&preset?`<div class="labs-editor-status ${esc(labPresetStatusClass(preset))}"><b>${esc(labPresetBadge(preset))}</b><span>${esc(preset.description||'')}</span><code>${esc(buildLabSceneSrc(lab,preset,false))}</code>${preset.status==='planned'?'<em>Δεν φορτώνεται ως πραγματική σκηνή μέχρι να υποστηριχθεί από την εξωτερική εφαρμογή.</em>':''}</div>`:'Δεν υπάρχει επιλεγμένη σκηνή.';
+  const archiveButton=$('#labsArchivePreset');
+  if(archiveButton){
+    const archived=preset?.status==='archived';
+    archiveButton.textContent=archived?'Επαναφορά από κάδο':'Αρχειοθέτηση';
+    archiveButton.disabled=!lab||!preset||!!preset.discovered||!!preset.custom;
+    archiveButton.title=preset?.discovered?'Οι σκηνές που βρέθηκαν από βιβλίο δεν ανήκουν στο μητρώο για αρχειοθέτηση.':archived?'Επαναφορά του preset στην προηγούμενη κατάσταση.':'Μετακίνηση του preset στον κάδο.';
+  }
+  $('#labsEditorInfo').innerHTML=lab&&preset?`<div class="labs-editor-status ${esc(labPresetStatusClass(preset))}"><b>${esc(labPresetBadge(preset))}</b><span>${esc(preset.description||'')}</span><code>${esc(buildLabSceneSrc(lab,preset,false))}</code>${preset.status==='planned'?'<em>Δεν φορτώνεται ως πραγματική σκηνή μέχρι να υποστηριχθεί από την εξωτερική εφαρμογή.</em>':preset.status==='archived'?'<em>Το preset βρίσκεται στον κάδο: δεν εμφανίζεται στην καθημερινή λίστα και δεν εισάγεται σε βιβλίο μέχρι να επανέλθει.</em>':''}</div>`:'Δεν υπάρχει επιλεγμένη σκηνή.';
 }
 function currentLabsEditorUrl(){
   const raw=$('#labsEditorUrl')?.value.trim()||'';
@@ -711,6 +721,7 @@ function bindLabsView(registry){
   bindLabsParamRows();
   $('#labsPreviewRefresh').onclick=renderLabsPreview;
   $('#labsInsertScene').onclick=insertSelectedLabSceneFromWorkspace;
+  $('#labsArchivePreset').onclick=archiveSelectedLabPreset;
   $('#labsZoomOut').onclick=()=>changeLabsPreviewZoom(-.08);
   $('#labsZoomIn').onclick=()=>changeLabsPreviewZoom(.08);
   $('#labsZoom100').onclick=()=>changeLabsPreviewZoom(0,'100');
@@ -812,6 +823,53 @@ async function saveLabPresetFromWorkspace(){
     modal('Αποθήκευση preset σκηνής',`<div class="info-card bad">${esc(error.message)}</div>`);
   }
 }
+async function archiveSelectedLabPreset(){
+  try{
+    const registry=runtimeLabRegistry(state.labs.registry);
+    const {lab,preset}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
+    if(!lab||!preset)return;
+    if(preset.discovered||preset.custom){
+      modal('Κάδος εργαστηρίων','<div class="info-card warn">Αυτό το preset δεν είναι μόνιμη εγγραφή του μητρώου, άρα δεν αρχειοθετείται από εδώ.</div>');
+      return;
+    }
+    const archived=preset.status==='archived';
+    const ok=await confirmBox(
+      archived?'Επαναφορά preset':'Αρχειοθέτηση preset',
+      archived
+        ? `Να επανέλθει το preset <b>${esc(preset.title||preset.id)}</b> από τον κάδο;`
+        : `Να μετακινηθεί το preset <b>${esc(preset.title||preset.id)}</b> στον κάδο; Δεν θα εμφανίζεται στην καθημερινή λίστα και δεν θα εισάγεται σε βιβλίο μέχρι να επανέλθει.`,
+      archived?'Επαναφορά':'Αρχειοθέτηση'
+    );
+    if(!ok)return;
+    const labsDir=await writableLabRegistryDirectory();
+    const opened=await readNamedJson(labsDir,'registry.json');
+    const raw=validateLabRegistry(opened.data);
+    const before=clone(raw);
+    const rawLab=(raw.labs||[]).find(current=>current.id===lab.id);
+    const rawPreset=rawLab?.presets?.find(current=>current.id===preset.id);
+    if(!rawPreset)throw new Error('Δεν βρέθηκε το preset στο ενεργό μητρώο.');
+    if(archived){
+      rawPreset.status=rawPreset.previousStatus&&rawPreset.previousStatus!=='archived'?rawPreset.previousStatus:'ready';
+      delete rawPreset.previousStatus;
+      delete rawPreset.archivedAt;
+    }else{
+      rawPreset.previousStatus=rawPreset.status||'ready';
+      rawPreset.status='archived';
+      rawPreset.archivedAt=new Date().toISOString();
+    }
+    raw.updatedAt=new Date().toISOString();
+    await writeJsonFile(labsDir,'registry.json',raw);
+    pushLabRegistryHistory(archived?'Επαναφορά preset εργαστηρίου':'Αρχειοθέτηση preset εργαστηρίου',before,raw);
+    invalidateLabRegistry();
+    await loadLabRegistry();
+    if(!archived&&state.labs.filters.status!=='archived')state.labs.selectedPresetId='';
+    renderLabsView();
+    renderChrome();
+    setStatus(archived?`Επανήλθε το preset: ${rawPreset.title||rawPreset.id}.`:`Αρχειοθετήθηκε το preset: ${rawPreset.title||rawPreset.id}.`,'good');
+  }catch(error){
+    modal('Κάδος εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
 async function insertSelectedLabSceneFromWorkspace(){
   if(!has()||!page())return;
   let registry;
@@ -819,8 +877,8 @@ async function insertSelectedLabSceneFromWorkspace(){
   catch(error){modal('Εργαστήρια',`<div class="info-card bad">${esc(error.message)}</div>`);return}
   const {lab,preset}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
   if(!lab||!preset)return;
-  if(preset.status==='planned'){
-    modal('Προβλεπόμενη σκηνή',`<div class="info-card warn">Το preset «${esc(preset.title||preset.id)}» υπάρχει στο μητρώο ως ανάγκη/σχέδιο, αλλά η εξωτερική εφαρμογή δεν το υποστηρίζει ακόμα. Δεν θα εισαχθεί σκηνή που θα έδειχνε λάθος προεπιλογή.</div>`);
+  if(['planned','archived'].includes(preset.status)){
+    modal(preset.status==='archived'?'Preset στον κάδο':'Προβλεπόμενη σκηνή',`<div class="info-card warn">Το preset «${esc(preset.title||preset.id)}» ${preset.status==='archived'?'βρίσκεται στον κάδο':'υπάρχει στο μητρώο ως ανάγκη/σχέδιο, αλλά η εξωτερική εφαρμογή δεν το υποστηρίζει ακόμα'}. Δεν θα εισαχθεί σκηνή που θα έδειχνε λάθος ή ανενεργή προεπιλογή.</div>`);
     return;
   }
   const target=state.labs.insertTarget||{placement:'after',pageId:page().id,itemId:item()?.id||''};

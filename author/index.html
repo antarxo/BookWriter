@@ -229,6 +229,7 @@
             <option value="ready">έτοιμα</option>
             <option value="planned">προβλεπόμενα</option>
             <option value="discovered">από βιβλίο</option>
+            <option value="archived">κάδος</option>
           </select>
         </div>
         <div id="labsTree" class="labs-tree"></div>
@@ -253,7 +254,7 @@
           <label>Preset βάσης<select id="labsEditorPreset"></select></label>
           <label>Τίτλος νέου preset<input id="labsEditorTitle"></label>
           <label>id νέου preset<input id="labsEditorId" class="monospace-input"></label>
-          <label>Κατάσταση<select id="labsEditorStatus"><option value="ready">έτοιμο</option><option value="planned">προβλεπόμενο</option></select></label>
+          <label>Κατάσταση<select id="labsEditorStatus"><option value="ready">έτοιμο</option><option value="planned">προβλεπόμενο</option><option value="archived">κάδος</option></select></label>
           <label>Περιγραφή<textarea id="labsEditorDescription"></textarea></label>
           <div class="labs-param-editor">
             <div class="labs-param-title">Παράμετροι σκηνής</div>
@@ -271,6 +272,7 @@
             <button id="labsInsertScene" type="button" class="primary-action">Εισαγωγή στο βιβλίο</button>
             <button id="labsPreviewRefresh" type="button">Προεπισκόπηση</button>
             <button id="labsSavePreset" type="button" class="primary-action">Αποθήκευση ως νέο preset</button>
+            <button id="labsArchivePreset" type="button">Αρχειοθέτηση</button>
             <button data-command="home" type="button">Βιβλιοθήκη</button>
             <button data-command="open-lab-registry" type="button">JSON</button>
           </div>

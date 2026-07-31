@@ -24,7 +24,8 @@
     ],
     "statusValues": [
       "ready",
-      "planned"
+      "planned",
+      "archived"
     ]
   },
   "labs": [
