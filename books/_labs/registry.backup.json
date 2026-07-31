@@ -1,0 +1,282 @@
+{
+  "schemaVersion": "bookwriter-lab-registry-v1",
+  "title": "Βιβλιοθήκη εργαστηρίων BookWriter",
+  "updatedAt": "2026-07-31",
+  "contract": {
+    "principle": "Ο Συγγραφέας διαβάζει κοινές δηλωτικές ιδιότητες και δεν γνωρίζει ειδικά τη φυσική κάθε εφαρμογής.",
+    "commonKeys": [
+      "view",
+      "layout",
+      "time",
+      "timePreset",
+      "play",
+      "graphs",
+      "layers",
+      "controlsMode",
+      "allowedControls",
+      "showPosition",
+      "showVelocity",
+      "showAcceleration",
+      "showForce",
+      "showEnergy",
+      "showClock",
+      "zoom"
+    ],
+    "statusValues": [
+      "ready",
+      "planned"
+    ]
+  },
+  "labs": [
+    {
+      "id": "aat",
+      "title": "Απλή Αρμονική Ταλάντωση",
+      "discipline": "Φυσική",
+      "baseUrl": "https://aatscene.netlify.app/",
+      "parameterMap": {
+        "view": "preset",
+        "legacyView": "state",
+        "play": "play",
+        "time": "t",
+        "showPosition": "showPosition",
+        "showVelocity": "showVelocity",
+        "showAcceleration": "showAcceleration",
+        "showForce": "showForce",
+        "showEnergy": "showEnergy",
+        "showClock": "showClock",
+        "zoom": "zoom"
+      },
+      "defaultQuery": {
+        "play": 0
+      },
+      "presets": [
+        {
+          "id": "spring",
+          "title": "Πλήρης ταλαντωτής με ελατήριο",
+          "status": "ready",
+          "description": "Η υπάρχουσα σκηνή ΑΑΤ με ελατήριο, σώμα και βασικά στοιχεία.",
+          "query": {
+            "state": "spring"
+          },
+          "layout": {
+            "placement": "wide",
+            "widthPx": 620,
+            "aspectRatio": "16/9"
+          }
+        },
+        {
+          "id": "body_axis_position_time",
+          "title": "Οριζόντια κίνηση: θέση και χρόνος",
+          "status": "planned",
+          "description": "Μικρό οριζόντιο πλαίσιο με σώμα, άξονα αναφοράς, θέση x και χρονόμετρο.",
+          "query": {
+            "preset": "body_axis",
+            "showPosition": 1,
+            "showClock": 1,
+            "showVelocity": 0,
+            "showAcceleration": 0,
+            "showForce": 0,
+            "showEnergy": 0
+          },
+          "layout": {
+            "placement": "wide",
+            "widthPx": 520,
+            "aspectRatio": "3/1"
+          }
+        },
+        {
+          "id": "body_axis_position_velocity",
+          "title": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα",
+          "status": "planned",
+          "description": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο και βέλος ταχύτητας υ.",
+          "query": {
+            "preset": "body_axis",
+            "showPosition": 1,
+            "showClock": 1,
+            "showVelocity": 1,
+            "showAcceleration": 0,
+            "showForce": 0,
+            "showEnergy": 0
+          },
+          "layout": {
+            "placement": "wide",
+            "widthPx": 520,
+            "aspectRatio": "3/1"
+          }
+        },
+        {
+          "id": "body_axis_position_velocity_acceleration",
+          "title": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα, επιτάχυνση",
+          "status": "planned",
+          "description": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο, υ και α.",
+          "query": {
+            "preset": "body_axis",
+            "showPosition": 1,
+            "showClock": 1,
+            "showVelocity": 1,
+            "showAcceleration": 1,
+            "showForce": 0,
+            "showEnergy": 0
+          },
+          "layout": {
+            "placement": "wide",
+            "widthPx": 520,
+            "aspectRatio": "3/1"
+          }
+        },
+        {
+          "id": "body_axis_force_energy",
+          "title": "Οριζόντια κίνηση: δύναμη και ενέργειες",
+          "status": "planned",
+          "description": "Μελλοντική λιτή όψη με συνισταμένη δύναμη και ενεργειακές μπάρες.",
+          "query": {
+            "preset": "body_axis",
+            "showPosition": 1,
+            "showClock": 1,
+            "showVelocity": 1,
+            "showAcceleration": 1,
+            "showForce": 1,
+            "showEnergy": 1
+          },
+          "layout": {
+            "placement": "wide",
+            "widthPx": 560,
+            "aspectRatio": "3/1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "em_wave",
+      "title": "Γέννηση και διάδοση του ΗΜ κύματος",
+      "discipline": "Φυσική",
+      "baseUrl": "https://emkyma.netlify.app/",
+      "parameterMap": {
+        "view": "scene",
+        "layout": "layout",
+        "timePreset": "timePreset",
+        "play": "play",
+        "graphs": "graphs",
+        "layers": "layers",
+        "controlsMode": "controlsMode",
+        "allowedControls": "allowedControls",
+        "zoom": "zoom"
+      },
+      "defaultQuery": {
+        "play": 0
+      },
+      "presets": [
+        {
+          "id": "relations_vq_t0",
+          "title": "Ράβδος με γραφήματα V και Q",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=V%2CQ&availableGraphs=V%2CQ%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow&timePreset=t0&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphV%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB&play=0&zoom=1620",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "phase_0_T4",
+          "title": "Φάση 0→T/4: E και B",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q1&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "phase_T4_T2",
+          "title": "Φάση T/4→T/2: E και B",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q2&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "phase_T2_3T4",
+          "title": "Φάση T/2→3T/4: E και B",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "phase_3T4_T",
+          "title": "Φάση 3T/4→T: E και B",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=Q%2CI%2CE%2CB&layers=rod%2Ccharges%2CcurrentArrow%2CeFieldLines&timePreset=q4&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphQ%2CtoggleGraphI%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELines%2CtoggleBLines%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "near_attenuation",
+          "title": "Κοντινή περιοχή: εξασθένηση",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2Ccharges%2CcurrentArrow%2ClinearPropagation&region=nearAtt&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleCurrent%2CtoggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=0.98",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "far_real_wave",
+          "title": "Πραγματικό ΗΜ κύμα",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/index.html?scene=book_multiscene&layout=rod_2graphs&graphs=E%2CB&availableGraphs=E%2CB&layers=rod%2ClinearPropagation&region=far&timePreset=t0&emitPeriods=3&controlsMode=guided&allowedControls=toggleGraphE%2CtoggleGraphB%2CtoggleELinear%2CtoggleBLinear&play=0&zoom=1620&rotY=1.05",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "electrostatic_charge_appear",
+          "title": "Ηλεκτροστατικό: εμφάνιση φορτίου",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge&lang=el&t=5",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "electrostatic_charge_vanish",
+          "title": "Ηλεκτροστατικό: εξαφάνιση φορτίου",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=charge_vanish&lang=el&disappearAt=5&t=10",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        },
+        {
+          "id": "electrostatic_dipole_appear",
+          "title": "Ηλεκτροστατικό: εμφάνιση διπόλου",
+          "status": "ready",
+          "url": "https://emkyma.netlify.app/electrostatic_field_book_ready.html?p=dipole&lang=el&t=5",
+          "layout": {
+            "placement": "right",
+            "widthPx": 360,
+            "aspectRatio": "9/16"
+          }
+        }
+      ]
+    }
+  ]
+}

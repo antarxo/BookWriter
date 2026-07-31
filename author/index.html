@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-author-wordplus-1">
-<link rel="stylesheet" href="workspace.css?v=20260730-insert-docx-scroll-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260731-extras-hidden-fix-1">
+<link rel="stylesheet" href="workspace.css?v=20260731-scene-previewer-splitters-1">
+<link rel="stylesheet" href="labs-splitters.css?v=20260731-scene-previewer-splitters-1">
 </head>
 <body>
 <svg class="bw-icon-sprite" aria-hidden="true" focusable="false">
@@ -76,6 +77,9 @@
       <button class="menu-command" data-command="new-docx"><span class="bw-icon bw-icon-word" aria-hidden="true"></span><span>Νέο βιβλίο από Word…</span><kbd></kbd></button>
       <button class="menu-command" data-command="choose-library"><span class="bw-icon bw-icon-library" aria-hidden="true"></span><span>Σύνδεση Βιβλιοθήκης…</span><kbd></kbd></button>
       <button class="menu-command" data-command="refresh-library"><span class="bw-icon bw-icon-refresh" aria-hidden="true"></span><span>Ανανέωση Βιβλιοθήκης</span><kbd></kbd></button>
+      <button class="menu-command" data-command="reload-lab-registry"><span class="bw-icon bw-icon-lab" aria-hidden="true"></span><span>Επαναφόρτωση εργαστηρίων</span><kbd></kbd></button>
+      <button class="menu-command" data-command="backup-lab-registry"><span class="bw-icon bw-icon-lab-backup" aria-hidden="true"></span><span>Αντίγραφο μητρώου εργαστηρίων</span><kbd></kbd></button>
+      <button class="menu-command" data-command="restore-lab-registry"><span class="bw-icon bw-icon-lab-restore" aria-hidden="true"></span><span>Επαναφορά μητρώου εργαστηρίων</span><kbd></kbd></button>
       <button class="menu-command" data-command="open-book"><span class="bw-icon bw-icon-folder" aria-hidden="true"></span><span>Άνοιγμα βιβλίου εκτός Βιβλιοθήκης…</span><kbd>Ctrl+O</kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="save"><span class="bw-icon bw-icon-save" aria-hidden="true"></span><span>Αποθήκευση</span><kbd>Ctrl+S</kbd></button>
@@ -111,6 +115,8 @@
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="insert-page-before"><span>▤</span><span>Νέα σελίδα πριν</span><kbd></kbd></button>
       <button class="menu-command" data-command="insert-page-after"><span>▤</span><span>Νέα σελίδα μετά</span><kbd></kbd></button>
+      <div class="menu-separator"></div>
+      <button class="menu-command" data-command="insert-lab-scene"><span class="bw-icon bw-icon-lab" aria-hidden="true"></span><span>Σκηνή από βιβλιοθήκη εργαστηρίων…</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="insert-docx"><span class="bw-icon bw-icon-word-plus" aria-hidden="true"></span><span>Παρεμβολή από Word…</span><kbd></kbd></button>
       <button class="menu-command" data-command="inline-equation"><span>∑</span><span>Inline εξίσωση στη θέση δρομέα</span><kbd></kbd></button>
@@ -189,6 +195,7 @@
           <div><h1>Βιβλιοθήκη</h1><p>Τα βιβλία του φακέλου <code>BookWriter/books</code> σε ένα σημείο.</p></div>
           <div class="library-heading-actions">
             <button class="primary-action library-connect-action" data-command="choose-library"><span class="bw-icon bw-icon-library" aria-hidden="true"></span><span>Σύνδεση φακέλου books…</span></button>
+            <button class="icon-label-button" data-command="labs-workspace"><span class="bw-icon bw-icon-lab" aria-hidden="true"></span><span>Εργαστήρια</span></button>
             <button class="icon-label-button" data-command="refresh-library"><span class="bw-icon bw-icon-refresh" aria-hidden="true"></span><span>Ανανέωση</span></button>
           </div>
         </div>
@@ -210,6 +217,56 @@
         <datalist id="libraryDisciplineSuggestions"><option value="Φυσική"><option value="Χημεία"><option value="Μαθηματικά"><option value="Βιολογία"><option value="Διεπιστημονικό"></datalist>
         <datalist id="libraryLevelSuggestions"><option value="Δημοτικό"><option value="Γυμνάσιο"><option value="Λύκειο"><option value="Γ΄ Λυκείου"><option value="Πανεπιστήμιο"><option value="Γενικό"></datalist>
       </div>
+    </section>
+
+    <section id="labsView" class="workspace-view labs-view">
+      <aside class="pane labs-list-pane">
+        <div class="pane-title">Εργαστήρια</div>
+        <div id="labsTree" class="labs-tree"></div>
+      </aside>
+      <div id="labsLeftSplitter" class="labs-splitter" role="separator" aria-label="Αλλαγή πλάτους λίστας εργαστηρίων"></div>
+      <section class="pane labs-preview-pane">
+        <div class="pane-title"><span>Προεπισκόπηση σκηνής</span><span id="labsPreviewTitle" class="muted"></span></div>
+        <div class="labs-preview-stage">
+          <div id="labsPreviewPage" class="labs-preview-page">
+            <div id="labsPreviewSceneBox" class="labs-preview-scene-box">
+              <iframe id="labsPreviewFrame" title="Προεπισκόπηση σκηνής"></iframe>
+              <div id="labsPreviewPlaceholder" class="labs-preview-placeholder" hidden></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div id="labsRightSplitter" class="labs-splitter" role="separator" aria-label="Αλλαγή πλάτους ιδιοτήτων preset"></div>
+      <aside class="pane labs-editor-pane">
+        <div class="pane-title">Ιδιότητες preset</div>
+        <div class="labs-form">
+          <label>Εργαστήριο<select id="labsEditorLab"></select></label>
+          <label>Preset βάσης<select id="labsEditorPreset"></select></label>
+          <label>Τίτλος νέου preset<input id="labsEditorTitle"></label>
+          <label>id νέου preset<input id="labsEditorId" class="monospace-input"></label>
+          <label>Κατάσταση<select id="labsEditorStatus"><option value="ready">έτοιμο</option><option value="planned">προβλεπόμενο</option></select></label>
+          <label>Περιγραφή<textarea id="labsEditorDescription"></textarea></label>
+          <div class="labs-param-editor">
+            <div class="labs-param-title">Παράμετροι σκηνής</div>
+            <div id="labsParamRows" class="labs-param-rows"></div>
+            <button id="labsAddParam" type="button">Προσθήκη παραμέτρου</button>
+          </div>
+          <label class="labs-technical-field">Τεχνικές παράμετροι URL<textarea id="labsEditorParams" class="monospace-input"></textarea></label>
+          <label>URL προεπισκόπησης<textarea id="labsEditorUrl" class="monospace-input"></textarea></label>
+          <div class="labs-layout-grid">
+            <label>Πλάτος<input id="labsEditorWidth" type="number" min="120" step="10"></label>
+            <label>Αναλογία<input id="labsEditorAspect" placeholder="16/9"></label>
+          </div>
+          <label>Θέση<select id="labsEditorPlacement"><option value="wide">φαρδιά</option><option value="inline">μέσα στη ροή</option><option value="full">πλήρης</option></select></label>
+          <div class="labs-actions">
+            <button id="labsPreviewRefresh" type="button">Προεπισκόπηση</button>
+            <button id="labsSavePreset" type="button" class="primary-action">Αποθήκευση ως νέο preset</button>
+            <button data-command="home" type="button">Βιβλιοθήκη</button>
+            <button data-command="open-lab-registry" type="button">JSON</button>
+          </div>
+          <div id="labsEditorInfo" class="info-card"></div>
+        </div>
+      </aside>
     </section>
 
 
@@ -347,15 +404,15 @@
 <div id="selectionOverlay" class="selection-overlay hidden"><span id="selectionOverlayLabel"></span></div>
 <div id="modalBackdrop" class="modal-backdrop hidden"><div class="modal-dialog" role="dialog" aria-modal="true"><div id="modalTitle" class="modal-title"></div><div id="modalBody" class="modal-body"></div><div id="modalButtons" class="modal-buttons"></div></div></div>
 
-<script src="../core/book-core.js?v=20260730-greek-types-2"></script>
+<script src="../core/book-core.js?v=20260731-callout-answer-toggle-1"></script>
 <script src="../core/vendor/jszip.min.js"></script>
-<script src="../core/v4/book-model-v4.js?v=20260730-author-static-library-2"></script>
-<script src="../core/v4/math-expression-v4.js"></script>
+<script src="../core/v4/book-model-v4.js?v=20260731-callout-extras-1"></script>
+<script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
 <script src="../core/v4/book-commands-v4.js"></script>
 <script src="../core/v4/book-service-v4.js"></script>
-<script src="../core/v4/docx-core-v4.js"></script>
+<script src="../core/v4/docx-core-v4.js?v=20260730-docx-visible-fences-1"></script>
 <script src="../core/v4/pagination-core-v4.js"></script>
-<script src="workspace.js?v=20260730-equation-source-1"></script>
+<script src="workspace.js?v=20260731-scene-previewer-splitters-1"></script>
 </body>
 </html>
 

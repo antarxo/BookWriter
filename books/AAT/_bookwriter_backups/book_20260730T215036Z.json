@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-07-31T12:18:17.402Z",
+    "updatedAt": "2026-07-30T21:45:14.370Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1082,49 +1082,49 @@
               {
                 "type": "text_run",
                 "text": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "x",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": " του σώματος είναι αρμονική συνάρτηση του χρόνου ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "t",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": ", δηλαδή δίνεται από την σχέση:  ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "x = \\text{Aημ} ( \\text{ωt} + ϕ_{0} ) ( 1.5 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"></mspace><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": "  ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "τότε η κίνηση του σώματος ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "λέγεται απλή αρμονική ταλάντωση-ΑΑΤ. ",
+                "text": "λέγεται απλή αρμονική ταλάντωση. ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -1153,16 +1153,13 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:54:32.625Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math></span> του σώματος είναι αρμονική συνάρτηση του χρόνου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math></span>, δηλαδή δίνεται από την σχέση:&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math></span><strong>  </strong>τότε η κίνηση του σώματος <strong>λέγεται απλή αρμονική ταλάντωση. </strong>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -1391,7 +1388,7 @@
           "start": 1,
           "items": [
             {
-              "level": 0,
+              "level": 1,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -1446,7 +1443,7 @@
               }
             },
             {
-              "level": 1,
+              "level": 2,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -1492,7 +1489,7 @@
               }
             },
             {
-              "level": 1,
+              "level": 2,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -2362,29 +2359,6 @@
       },
       "items": [
         {
-          "id": "aat-main-scene",
-          "type": "scene",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "src": "https://aatscene.netlify.app/?state=spring&play=0",
-          "title": "Απλή Αρμονική Ταλάντωση",
-          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
-          "hideCaption": true,
-          "layout": {
-            "placement": "wide",
-            "wrap": false,
-            "floatInteraction": "block",
-            "widthPx": 706,
-            "aspectRatio": "1.3"
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
-        },
-        {
           "id": "aat-guided-callout",
           "type": "interactive_callout",
           "nav": {
@@ -2398,21 +2372,6 @@
           "pressChips": [],
           "observeTitle": "Παρατήρησε",
           "observeItems": [],
-          "conclusionTitle": "Συμπέρασμα",
-          "conclusionItems": [],
-          "extras": {
-            "title": "Πρόσθετο υλικό",
-            "collapsedInBook": true,
-            "print": true,
-            "items": [
-              {
-                "type": "question",
-                "label": "",
-                "text": "Πρόσθετο Γενικό",
-                "answerLines": 0
-              }
-            ]
-          },
           "sequenceSceneId": "aat-main-scene",
           "sequenceDisplayMode": "expanded",
           "sequenceInitialStep": 0,
@@ -2435,23 +2394,7 @@
                 "Εντόπισε τη θέση ισορροπίας και τις ακραίες θέσεις ±A.",
                 "Παρατήρησε πού η ταχύτητα είναι μέγιστη και πού μηδενίζεται."
               ],
-              "printPreset": "spring",
-              "conclusionItems": [
-                "Συμπέρασμα 1.",
-                "Συμπέρασμα 2."
-              ],
-              "extras": {
-                "items": [
-                  {
-                    "type": "question",
-                    "label": "",
-                    "text": "πρόσθετο του βήματος 1",
-                    "answerLines": 0,
-                    "answer": "Απάντηση 1"
-                  }
-                ],
-                "collapsedInBook": false
-              }
+              "printPreset": "spring"
             },
             {
               "title": "2. Ο άξονας αναφοράς",
@@ -2466,10 +2409,7 @@
               "observeItems": [
                 "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
               ],
-              "printPreset": "spring_axis",
-              "extras": {
-                "collapsedInBook": true
-              }
+              "printPreset": "spring_axis"
             },
             {
               "title": "3. Η κυκλική κίνηση",
@@ -2503,10 +2443,7 @@
                 "Παρακολούθησε τη στικτή οριζόντια γραμμή.",
                 "Έλεγξε ότι η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
               ],
-              "printPreset": "spring_projection",
-              "extras": {
-                "print": true
-              }
+              "printPreset": "spring_projection"
             },
             {
               "title": "5. Το γράφημα x(t)",
@@ -2551,6 +2488,29 @@
             "expand": "per-step",
             "snapshotScene": true
           }
+        },
+        {
+          "id": "aat-main-scene",
+          "type": "scene",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "src": "https://aatscene.netlify.app/?state=spring&play=0",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
+          "hideCaption": false,
+          "layout": {
+            "placement": "wide",
+            "wrap": false,
+            "floatInteraction": "block",
+            "widthPx": 706,
+            "aspectRatio": "1.44"
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
         }
       ]
     },
@@ -3245,8 +3205,8 @@
             "nodes": [
               {
                 "type": "math_inline",
-                "source": "( 4 ) ( 3 ) ⇔ 2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F_{1} = - m_{1} ω_{1}^{2} A_{1} \\text{ημ} ( ω_{1} t + φ_{01} ) ( 5 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>4</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>3</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mo>⇔</mo><msup><mn>2</mn><mrow><mtext>ος</mtext></mrow></msup><mtext>Νόμος</mtext><mtext>του</mtext><mtext>Νεύτωνα</mtext><mo>:</mo><mi>Σ</mi><msub><mi>F</mi><mrow><mn>1</mn></mrow></msub><mo>=</mo><mo>-</mo><msub><mi>m</mi><mrow><mn>1</mn></mrow></msub><msubsup><mi>ω</mi><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></msubsup><msub><mi>A</mi><mrow><mn>1</mn></mrow></msub><mtext>ημ</mtext><mrow><mo stretchy=\"true\">(</mo><mrow><msub><mi>ω</mi><mrow><mn>1</mn></mrow></msub><mi>t</mi><mo>+</mo><msub><mi>φ</mi><mrow><mn>01</mn></mrow></msub></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>5</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>4</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>5</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math>"
               }
             ]
           },
@@ -3275,16 +3235,13 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:49:26.743Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>4</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>5</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3294,8 +3251,8 @@
             "show": false,
             "label": ""
           },
-          "source": "( 4 ) ( 3 ) ' ⇔ 2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F_{1} = - m_{1} ω_{1}^{2} x_{1} ( 6 )",
-          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>4</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>3</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mi>&apos;</mi><mo>⇔</mo><msup><mn>2</mn><mrow><mtext>ος</mtext></mrow></msup><mtext>Νόμος</mtext><mtext>του</mtext><mtext>Νεύτωνα</mtext><mo>:</mo><mi>Σ</mi><msub><mi>F</mi><mrow><mn>1</mn></mrow></msub><mo>=</mo><mo>-</mo><msub><mi>m</mi><mrow><mn>1</mn></mrow></msub><msubsup><mi>ω</mi><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></msubsup><msub><mi>x</mi><mrow><mn>1</mn></mrow></msub><mrow><mo stretchy=\"true\">(</mo><mrow><mn>6</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></math>",
+          "source": "",
+          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><msup><mrow><mrow><mo>(</mo><mn>4</mn><mo>)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo><mo>'</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>6</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mrow></math>",
           "number": "",
           "caption": "",
           "style": {
@@ -3319,8 +3276,7 @@
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
-            "mathSourceFormat": "omml-mathml",
-            "mathSyntax": "bookwriter-math-v1"
+            "mathSourceFormat": "omml-mathml"
           }
         },
         {

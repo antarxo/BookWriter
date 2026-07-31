@@ -44,6 +44,9 @@ const unsupportedMath=new Set();
 function mathChildren(n){return elems(n).filter(c=>!lname(c).endsWith('Pr')).map(mathNode).join('')}
 function mathPart(n,name){const x=elems(n).find(c=>lname(c)===name);return x?'<mrow>'+mathChildren(x)+'</mrow>':'<mrow></mrow>'}
 function mathChr(n,def){const p=elems(n).find(c=>lname(c).endsWith('Pr'));const c=p&&first(p,NS.m,'chr');return attr(c,NS.m,'val')||def}
+const functionNamesWithArguments=new Set(['ημ','συν','εφ','σφ','sin','cos','tan','cot','sec','csc','sinh','cosh','tanh','ln','log']);
+function fencedMath(open,close,body){return '<mrow>'+(open?'<mo fence="true" stretchy="true">'+esc(open)+'</mo>':'')+body+(close?'<mo fence="true" stretchy="true">'+esc(close)+'</mo>':'')+'</mrow>'}
+function hasOuterParens(mathml=''){return /^<mrow>\s*(?:<mrow>\s*)?(?:<mfenced\b|<mo\b[^>]*>\s*\()/i.test(String(mathml||''))}
 function mathRunStyle(n){const p=first(n,NS.m,'rPr');return attr(first(p,NS.m,'sty'),NS.m,'val')||''}
 function mathTokenNodes(text,run){
   const style=mathRunStyle(run), plain=style==='p';
@@ -73,13 +76,18 @@ function mathNode(n){
   if(l==='sSubSup')return '<msubsup>'+mathPart(n,'e')+mathPart(n,'sub')+mathPart(n,'sup')+'</msubsup>';
   if(l==='sPre')return '<mmultiscripts>'+mathPart(n,'e')+'<mprescripts/>'+mathPart(n,'sub')+mathPart(n,'sup')+'</mmultiscripts>';
   if(l==='rad'){const deg=elems(n).find(c=>lname(c)==='deg');return deg&&allText(deg).trim()?'<mroot>'+mathPart(n,'e')+mathChildren(deg)+'</mroot>':'<msqrt>'+mathPart(n,'e')+'</msqrt>'}
-  if(l==='d'){const p=elems(n).find(c=>lname(c)==='dPr');const beg=attr(first(p,NS.m,'begChr'),NS.m,'val')||'(';const endNode=first(p,NS.m,'endChr');const end=endNode?attr(endNode,NS.m,'val'):(beg==='{'?'':')');return '<mfenced open="'+esc(beg)+'" close="'+esc(end)+'">'+mathPart(n,'e')+'</mfenced>'}
+  if(l==='d'){const p=elems(n).find(c=>lname(c)==='dPr');const beg=attr(first(p,NS.m,'begChr'),NS.m,'val')||'(';const endNode=first(p,NS.m,'endChr');const end=endNode?attr(endNode,NS.m,'val'):(beg==='{'?'':')');return fencedMath(beg,end,mathPart(n,'e'))}
   if(l==='nary'){const ch=mathChr(n,'∑');return '<mrow><munderover><mo>'+esc(ch)+'</mo>'+mathPart(n,'sub')+mathPart(n,'sup')+'</munderover>'+mathPart(n,'e')+'</mrow>'}
   if(l==='limLow')return '<munder>'+mathPart(n,'e')+mathPart(n,'lim')+'</munder>';
   if(l==='limUpp')return '<mover>'+mathPart(n,'e')+mathPart(n,'lim')+'</mover>';
   if(l==='bar')return '<mover accent="true">'+mathPart(n,'e')+'<mo>¯</mo></mover>';
   if(l==='acc')return '<mover accent="true">'+mathPart(n,'e')+'<mo>'+esc(mathChr(n,'ˆ'))+'</mo></mover>';
-  if(l==='func')return '<mrow>'+mathPart(n,'fName')+mathPart(n,'e')+'</mrow>';
+  if(l==='func'){
+    const name=allText(elems(n).find(c=>lname(c)==='fName')||n).replace(/\s+/g,'').trim();
+    const fName=mathPart(n,'fName'),arg=mathPart(n,'e');
+    if(functionNamesWithArguments.has(name)&&!hasOuterParens(arg))return '<mrow>'+fName+fencedMath('(',')',arg)+'</mrow>';
+    return '<mrow>'+fName+arg+'</mrow>';
+  }
   if(l==='fName')return '<mi mathvariant="normal">'+esc(allText(n))+'</mi>';
   if(l==='eqArr')return '<mtable>'+elems(n).filter(c=>lname(c)==='e').map(e=>'<mtr><mtd>'+mathChildren(e)+'</mtd></mtr>').join('')+'</mtable>';
   if(l==='m')return '<mtable>'+elems(n).filter(c=>lname(c)==='mr').map(mathNode).join('')+'</mtable>';

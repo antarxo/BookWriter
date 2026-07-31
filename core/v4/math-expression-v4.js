@@ -31,12 +31,12 @@ function tokenize(input){
       let j=i+1;while(j<source.length&&/[A-Za-zΑ-Ωα-ωΆ-ώϐ-ϖ]/.test(source[j]))j++;
       tokens.push({type:'identifier',value:source.slice(i,j)});i=j;continue;
     }
-    if('+-=<>/⋅×·±∓≈≠≤≥→←↔∞∂∇∑∫∏()[]|,:;'.includes(ch)){tokens.push({type:'operator',value:ch});i++;continue;}
+    if('+-=<>/⋅×·±∓≈≠≤≥→←↔⇔∞∂∇∑∫∏()[]|,:;'.includes(ch)){tokens.push({type:'operator',value:ch});i++;continue;}
     tokens.push({type:'identifier',value:ch});i++;
   }
   return tokens;
 }
-function parse(source,display='inline'){
+function parseBody(source){
   const tokens=tokenize(source);let pos=0;
   const peek=()=>tokens[pos];const take=()=>tokens[pos++];
   const node=(tag,content='',attrs='')=>`<${tag}${attrs}>${content}</${tag}>`;
@@ -53,6 +53,12 @@ function parse(source,display='inline'){
     if(command==='left'||command==='right')return parseAtom();
     if(command==='frac')return node('mfrac',parseGroup()+parseGroup());
     if(command==='sqrt')return node('msqrt',parseGroup());
+    if(command==='paren'){
+      return row([node('mo','(',' stretchy="true"'),parseGroup(),node('mo',')',' stretchy="true"')]);
+    }
+    if(command==='bracket'){
+      return row([node('mo','[',' stretchy="true"'),parseGroup(),node('mo',']',' stretchy="true"')]);
+    }
     if(command==='text'){
       if(peek()?.type!=='{')throw new Error('Η \\text απαιτεί {...}');
       take();let text='';let depth=1;
@@ -76,7 +82,13 @@ function parse(source,display='inline'){
     if(t.type==='number')return node('mn',esc(t.value.replace(',','.')));
     if(t.type==='identifier')return node('mi',esc(t.value));
     if(t.type==='operator'){
-      if(t.value==='('||t.value==='['||t.value==='|')return node('mo',esc(t.value),' stretchy="true"');
+      if(t.value==='('||t.value==='['||t.value==='|'){
+        const close=t.value==='('?')':t.value==='['?']':'|';
+        const content=parseSequence({type:'operator',value:close});
+        if(peek()?.type==='operator'&&peek()?.value===close)take();
+        else throw new Error(`Λείπει κλείσιμο ${close}`);
+        return row([node('mo',esc(t.value),' stretchy="true"'),content,node('mo',esc(close),' stretchy="true"')]);
+      }
       if(t.value===')'||t.value===']')return node('mo',esc(t.value),' stretchy="true"');
       return node('mo',esc(t.value));
     }
@@ -95,21 +107,63 @@ function parse(source,display='inline'){
   }
   function parseSequence(stop=null){
     const parts=[];
-    while(pos<tokens.length&&(!stop||peek().type!==stop))parts.push(parseScripted());
+    const isStop=token=>{
+      if(!stop||!token)return false;
+      if(typeof stop==='string')return token.type===stop;
+      return token.type===stop.type&&(!stop.value||token.value===stop.value);
+    };
+    while(pos<tokens.length&&!isStop(peek()))parts.push(parseScripted());
     return row(parts);
   }
   const body=parseSequence();
   if(pos<tokens.length)throw new Error('Η εξίσωση δεν αναλύθηκε πλήρως.');
+  return body;
+}
+function parse(source,display='inline'){
   const mode=display==='block'?'block':'inline';
+  const lines=stripMath(source).split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+  const systemTable=parts=>`<mrow><mo fence="true" stretchy="true">{</mo><mtable columnalign="left">${parts.map(part=>`<mtr><mtd>${parseBody(part)}</mtd></mtr>`).join('')}</mtable></mrow>`;
+  if(lines.length===1&&lines[0].includes('||')){
+    const cells=lines[0].split(/\s*\|\|\s*/).map(cell=>cell.trim()).filter(Boolean).map(cell=>{
+      const sublines=cell.split(/\s*;\s*/).map(part=>part.trim()).filter(Boolean);
+      const content=sublines.length>1
+        ? systemTable(sublines)
+        : parseBody(cell);
+      return `<mtd>${content}</mtd>`;
+    }).join('');
+    return `<math xmlns="${NS}" display="${mode}"><mtable columnalign="left center left center left"><mtr>${cells}</mtr></mtable></math>`;
+  }
+  if(lines.length===1&&lines[0].includes(';')){
+    const parts=lines[0].split(/\s*;\s*/).map(part=>part.trim()).filter(Boolean);
+    if(parts.length>1)return `<math xmlns="${NS}" display="${mode}">${systemTable(parts)}</math>`;
+  }
+  if(lines.length>1){
+    const table=lines.map(line=>`<mtr><mtd>${parseBody(line)}</mtd></mtr>`).join('');
+    return `<math xmlns="${NS}" display="${mode}"><mtable columnalign="left">${table}</mtable></math>`;
+  }
+  const body=parseBody(source);
   return `<math xmlns="${NS}" display="${mode}">${body}</math>`;
 }
 function validate(source){try{return{ok:true,mathml:parse(source)}}catch(error){return{ok:false,error:error.message,mathml:''}}}
 const templates=[
   {label:'Κλάσμα',insert:'\\frac{a}{b}'},{label:'Ρίζα',insert:'\\sqrt{x}'},{label:'Δείκτης',insert:'x_{i}'},{label:'Εκθέτης',insert:'x^{2}'},
+  {label:'()',insert:'\\paren{x}'},{label:'()²',insert:'\\paren{x}^{2}'},{label:'[]',insert:'\\bracket{x}'},
+  {label:'x/A',insert:'\\frac{x}{A}'},{label:'υ/ωA',insert:'\\frac{υ}{\\omega A}'},{label:'x²/A²',insert:'\\frac{x^{2}}{A^{2}}'},{label:'υ²/ω²A²',insert:'\\frac{υ^{2}}{\\omega^{2} A^{2}}'},
+  {label:'ημ',insert:'\\text{ημ}(\\omega t + φ_{0})'},{label:'συν',insert:'\\text{συν}(\\omega t + φ_{0})'},
+  {label:'ημ²',insert:'\\text{ημ}^{2}(\\omega t + φ_{0})'},{label:'συν²',insert:'\\text{συν}^{2}(\\omega t + φ_{0})'},
+  {label:'ΑΑΤ x',insert:'x=A\\text{ημ}(\\omega t + φ_{0})'},{label:'ΑΑΤ υ',insert:'υ=\\omega A\\text{συν}(\\omega t + φ_{0})'},
+  {label:'γραμμή',insert:'\n'},{label:'ΑΑΤ ζεύγος',insert:'x=A\\text{ημ}(\\omega t + φ_{0})\nυ=\\omega A\\text{συν}(\\omega t + φ_{0})'},
+  {label:'στήλη ||',insert:' || '},{label:'σύστημα ;',insert:' ; '},
+  {label:'{ σύστημα',insert:'α=-\\omega^{2} A\\text{ημ}(\\omega t + φ_{0})\\text{(1)} ; υ=\\omega A\\text{συν}(\\omega t + φ_{0})\\text{(2)}'},
+  {label:'ΑΑΤ σύστημα',insert:'x=A\\text{ημ}(\\omega t + φ_{0}) ; υ=\\omega A\\text{συν}(\\omega t + φ_{0}) || ⇔ \\text{ως προς ημ και συν} || \\text{ημ}(\\omega t + φ_{0})=\\frac{x}{A} ; \\text{συν}(\\omega t + φ_{0})=\\frac{υ}{\\omega A}'},
+  {label:'ΑΑΤ τετρ.',insert:'\\text{ημ}^{2}(\\omega t + φ_{0}) = \\frac{x^{2}}{A^{2}}\n\\text{συν}^{2}(\\omega t + φ_{0}) = \\frac{υ^{2}}{\\omega^{2} A^{2}}'},
+  {label:'ΑΑΤ άθρ.',insert:'\\text{ημ}^{2}(\\omega t + φ_{0}) + \\text{συν}^{2}(\\omega t + φ_{0}) = \\frac{x^{2}}{A^{2}} + \\frac{υ^{2}}{\\omega^{2} A^{2}}'},
   {label:'Άθροισμα',insert:'\\sum_{i=1}^{n}'},{label:'Ολοκλήρωμα',insert:'\\int_{a}^{b}'},{label:'Διάνυσμα',insert:'\\mathbf{E}'},
-  {label:'α',insert:'\\alpha'},{label:'β',insert:'\\beta'},{label:'γ',insert:'\\gamma'},{label:'Δ',insert:'\\Delta'},
-  {label:'λ',insert:'\\lambda'},{label:'μ',insert:'\\mu'},{label:'π',insert:'\\pi'},{label:'ω',insert:'\\omega'},
-  {label:'±',insert:'\\pm'},{label:'×',insert:'\\times'},{label:'⋅',insert:'\\cdot'},{label:'→',insert:'\\to'},{label:'∞',insert:'\\infty'}
+  {label:'α',insert:'\\alpha'},{label:'β',insert:'\\beta'},{label:'γ',insert:'\\gamma'},{label:'δ',insert:'\\delta'},{label:'Δ',insert:'\\Delta'},
+  {label:'λ',insert:'\\lambda'},{label:'μ',insert:'\\mu'},{label:'π',insert:'\\pi'},{label:'φ',insert:'φ'},{label:'φ₀',insert:'φ_{0}'},{label:'ω',insert:'\\omega'},
+  {label:'Α',insert:'A'},{label:'υ',insert:'υ'},{label:'θ',insert:'\\theta'},{label:'Σ',insert:'\\Sigma'},
+  {label:'±',insert:'\\pm'},{label:'×',insert:'\\times'},{label:'⋅',insert:'\\cdot'},{label:'→',insert:'\\to'},{label:'⇔',insert:'⇔'},{label:'∞',insert:'\\infty'},
+  {label:'κείμενο',insert:'\\text{κείμενο}'},{label:'μονάδα',insert:'\\text{μονάδα}'}
 ];
 const api={VERSION,tokenize,sourceToMathML:parse,validate,templates};
 global.MathExpressionV4=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

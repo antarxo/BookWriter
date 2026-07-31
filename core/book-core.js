@@ -213,9 +213,32 @@
     out.pressChips = Array.isArray(step.pressChips) ? deepClone(step.pressChips) : deepClone(item?.pressChips || []);
     out.observeTitle = step.observeTitle || item?.observeTitle || out.observeTitle || '';
     out.observeItems = Array.isArray(step.observeItems) ? deepClone(step.observeItems) : deepClone(item?.observeItems || []);
+    out.conclusionTitle = step.conclusionTitle || item?.conclusionTitle || out.conclusionTitle || '';
+    out.conclusionItems = Array.isArray(step.conclusionItems) ? deepClone(step.conclusionItems) : deepClone(item?.conclusionItems || []);
+    out.extras = step.extras && typeof step.extras === 'object' ? deepClone(step.extras) : deepClone(item?.extras || null);
     out.sequenceSteps = [];
     out.extensions = Object.assign({}, out.extensions || {}, {sequenceStep:index+1, sourceCalloutId:item?.id || '', sequenceStepData:deepClone(step)});
     return out;
+  }
+
+  function calloutExtrasHtml(extras={}, lang='el'){
+    if(!extras || typeof extras !== 'object') return '';
+    const items = Array.isArray(extras.items) ? extras.items.filter(entry=>entry && typeof entry === 'object' && String(entry.text || '').trim()) : [];
+    if(!items.length) return '';
+    const title = String(extras.title || (lang === 'en' ? 'More' : 'Πρόσθετο υλικό'));
+    const collapsed = extras.collapsedInBook !== false;
+    const body = items.map(entry=>{
+      const type = String(entry.type || 'question');
+      const label = entry.label || (type === 'exercise' ? (lang === 'en' ? 'Exercise' : 'Άσκηση') : type === 'prompt' ? (lang === 'en' ? 'Think' : 'Σκέψου') : (lang === 'en' ? 'Question' : 'Ερώτηση'));
+      const lines = Math.max(0, Math.min(12, Number(entry.answerLines) || 0));
+      const answerText = String(entry.answer || '').trim();
+      const showAnswer = lang === 'en' ? 'Show answer' : 'Εμφάνιση απάντησης';
+      const hideAnswer = lang === 'en' ? 'Hide answer' : 'Απόκρυψη απάντησης';
+      const answerHtml = answerText ? `<button type="button" class="callout-extra-answer-toggle" data-callout-answer-toggle data-show-label="${escapeHtml(showAnswer)}" data-hide-label="${escapeHtml(hideAnswer)}">${escapeHtml(showAnswer)}</button><div class="callout-extra-answer" hidden>${escapeHtml(answerText).replace(/\n/g,'<br>')}</div>` : '';
+      const linesHtml = lines ? `<div class="callout-extra-lines" aria-hidden="true">${Array.from({length:lines},()=>'<span></span>').join('')}</div>` : '';
+      return `<div class="callout-extra-item"><b>${escapeHtml(label)}</b><p>${escapeHtml(entry.text)}</p>${answerHtml}${linesHtml}</div>`;
+    }).join('');
+    return `<div class="callout-extras${collapsed?' collapsed':''}" data-callout-extras data-print="${extras.print === false ? '0' : '1'}"><button type="button" class="callout-extras-toggle" data-callout-extras-toggle>${escapeHtml(title)}</button><div class="callout-extras-body" ${collapsed?'hidden':''}>${body}</div></div>`;
   }
 
   function expandScreenSequences(data, options={}){
@@ -780,7 +803,9 @@
             const setup = (callout.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.setupLabel || (lang==='en'?'Set':'Ρύθμισε'))}</span>${callout.setupChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
             const press = (callout.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.pressLabel || (lang==='en'?'Press':'Πίεσε'))}</span>${callout.pressChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
             const observe = (callout.observeItems || []).length ? `<div class="callout-observe"><span class="callout-observe-title">${escapeHtml(callout.observeTitle || (lang==='en'?'Observe':'Παρατήρησε'))}</span><ul>${callout.observeItems.map(value=>`<li>${escapeHtml(value)}</li>`).join('')}</ul></div>` : '';
-            return `<section class="callout-sequence-step${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-index="${index}" data-sequence-step="${attrJson(step)}"><div class="callout-title">${escapeHtml(callout.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}</div>${setup}${press}${observe}</section>`;
+            const conclusion = (callout.conclusionItems || []).length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${escapeHtml(callout.conclusionTitle || (lang==='en'?'Conclusion':'Συμπέρασμα'))}</span><ul>${callout.conclusionItems.map(value=>`<li>${escapeHtml(value)}</li>`).join('')}</ul></div>` : '';
+            const extras = calloutExtrasHtml(callout.extras, lang);
+            return `<section class="callout-sequence-step${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-index="${index}" data-sequence-step="${attrJson(step)}"><div class="callout-title">${escapeHtml(callout.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}</div>${setup}${press}${observe}${conclusion}${extras}</section>`;
           }).join('');
           const buttons = steps.map((step,index)=>`<button type="button" class="callout-sequence-dot${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-goto="${index}" title="${escapeHtml(step.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}">${index+1}</button>`).join('');
           node.innerHTML = `<div class="callout-sequence-head"><button type="button" class="callout-sequence-arrow" data-sequence-move="-1" title="${lang==='en'?'Previous':'Προηγούμενο'}">‹</button><div class="callout-sequence-dots">${buttons}</div><button type="button" class="callout-sequence-arrow" data-sequence-move="1" title="${lang==='en'?'Next':'Επόμενο'}">›</button></div><div class="callout-sequence-body">${stepHtml}</div>`;
@@ -789,7 +814,9 @@
           const setup = (item.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('setupLabel',lang==='en'?'Set':'Ρύθμισε')}</span>${item.setupChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
           const press = (item.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('pressLabel',lang==='en'?'Press':'Πίεσε')}</span>${item.pressChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
           const observe = list('observeItems').length ? `<div class="callout-observe"><span class="callout-observe-title">${text('observeTitle',lang==='en'?'Observe':'Παρατήρησε')}</span><ul>${list('observeItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
-          node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}`;
+          const conclusion = list('conclusionItems').length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${text('conclusionTitle',lang==='en'?'Conclusion':'Συμπέρασμα')}</span><ul>${list('conclusionItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
+          const extras = calloutExtrasHtml(item.extras, lang);
+          node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}${conclusion}${extras}`;
         }
         break;
       }
@@ -926,6 +953,29 @@
   }
 
   function bindCalloutSequences(root=global.document){
+    root.querySelectorAll?.('[data-callout-extras]').forEach(extrasNode=>{
+      if(extrasNode.dataset.extrasBound === '1') return;
+      extrasNode.dataset.extrasBound = '1';
+      extrasNode.querySelector?.('[data-callout-extras-toggle]')?.addEventListener('click',event=>{
+        event.preventDefault();
+        const body = extrasNode.querySelector('.callout-extras-body');
+        const open = body?.hasAttribute('hidden');
+        if(body) body.hidden = !open;
+        extrasNode.classList.toggle('collapsed', !open);
+      });
+    });
+    root.querySelectorAll?.('[data-callout-answer-toggle]').forEach(button=>{
+      if(button.dataset.answerBound === '1') return;
+      button.dataset.answerBound = '1';
+      button.addEventListener('click',event=>{
+        event.preventDefault();
+        const answer = button.nextElementSibling;
+        if(!answer) return;
+        const open = answer.hasAttribute('hidden');
+        answer.hidden = !open;
+        button.textContent = open ? (button.dataset.hideLabel || 'Απόκρυψη απάντησης') : (button.dataset.showLabel || 'Εμφάνιση απάντησης');
+      });
+    });
     root.querySelectorAll?.('.callout-sequence').forEach(sequenceNode=>{
       if(sequenceNode.dataset.sequenceBound === '1') return;
       sequenceNode.dataset.sequenceBound = '1';

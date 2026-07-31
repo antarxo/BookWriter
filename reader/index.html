@@ -267,6 +267,23 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
 .callout-observe-title{font:700 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#7b5c2a;margin-right:6px}
 .callout-observe ul{margin:6px 0 0 18px;padding:0}
 .callout-observe li{margin:4px 0;font-style:italic}
+.callout-conclusion{margin-top:5px;padding-top:5px;border-top:1px solid #d7e4dc;background:#f7fcf9}
+.callout-conclusion-title{font:800 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#1f6b46;margin-right:6px}
+.callout-conclusion ul{margin:6px 0 0 18px;padding:0}
+.callout-conclusion li{margin:4px 0;font-weight:600}
+.callout-extras{margin-top:7px;padding-top:6px;border-top:1px solid #d4dfeb}
+.callout-extras-toggle{appearance:none;border:1px solid #b8cad8;background:#eef6fb;color:#244b65;border-radius:999px;padding:4px 10px;font:800 10.5px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;cursor:pointer}
+.callout-extras-toggle::after{content:" +";font-weight:900}
+.callout-extras:not(.collapsed) .callout-extras-toggle::after{content:" -"}
+.callout-extras-body{margin-top:7px;display:grid;gap:7px}
+.callout-extra-item{padding:7px 8px;border:1px solid #d8e3ea;background:#fff;border-radius:6px}
+.callout-extra-item b{display:block;margin-bottom:3px;color:#31556c;font:800 10.5px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.callout-extra-item p{margin:0}
+.callout-extra-answer-toggle{appearance:none;margin-top:6px;border:1px solid #b8cad8;background:#f4f9fc;color:#244b65;border-radius:999px;padding:4px 9px;font:800 10px/1 system-ui,-apple-system,Segoe UI,Arial,sans-serif;cursor:pointer}
+.callout-extra-answer{margin-top:6px;padding:7px 8px;border-left:3px solid #6aa0bf;background:#f5fafc;color:#263d4c;border-radius:4px}
+.callout-extra-lines{display:grid;gap:9px;margin-top:8px}
+.callout-extra-lines span{display:block;border-bottom:1px solid #aebbc5;height:12px}
+@media screen{.callout-extras-body[hidden],.callout-extra-answer[hidden]{display:none!important}}
 .callout-sequence{padding:7px 8px}
 .callout-sequence-head{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 7px}
 .callout-sequence-dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
@@ -379,6 +396,9 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
   figure.media,.note,.side-note,.callout,.hero,.part-head,.section-heading{break-inside:avoid; page-break-inside:avoid}
   .callout-sequence-head{display:none!important}
   .callout-sequence-step{display:block!important}
+  .callout-extras-toggle,.callout-extra-answer-toggle{display:none!important}
+  .callout-extras-body{display:grid!important}
+  .callout-extras[data-print="0"]{display:none!important}
   .media-frame.print-ready iframe{display:none !important}
   .media-frame img{object-fit:contain !important; background:#fff !important}
   .media-frame.scene-frame::after{
@@ -402,6 +422,10 @@ figcaption{padding:12px 14px 14px;font:500 var(--caption-font-size)/1.55 system-
 .callout,
 .callout-observe,
 .callout-observe li,
+.callout-conclusion,
+.callout-conclusion li,
+.callout-extras-body,
+.callout-extra-item,
 figure.media figcaption{
   text-align:justify;
   text-justify:inter-word;
@@ -416,7 +440,10 @@ figure.media figcaption{
 .callout-title,
 .callout-row,
 .callout-label,
-.callout-chip{
+.callout-chip,
+.callout-conclusion-title,
+.callout-extras-toggle,
+.callout-extra-item b{
   text-align:initial;
   text-justify:auto;
   hyphens:manual;
@@ -425,7 +452,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css?v=20260730-print-speed-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260731-extras-hidden-fix-1">
 </head>
 <body>
   <div class="topbar">
@@ -463,7 +490,7 @@ figure.media figcaption{
       <p class="print-progress-label" id="printProgressLabel">Προετοιμασία βιβλίου…</p>
     </div>
   </div>
-<script src="../core/book-core.js?v=20260730-no-app-button-1"></script>
+<script src="../core/book-core.js?v=20260731-callout-answer-toggle-1"></script>
 <script src="../core/snapshot-transport.js?v=20260730-no-app-button-1"></script>
 <script>
 'use strict';

@@ -486,6 +486,15 @@
         "observeItems": {
           "type": "array"
         },
+        "conclusionTitle": {
+          "type": "string"
+        },
+        "conclusionItems": {
+          "type": "array"
+        },
+        "extras": {
+          "type": "object"
+        },
         "legacySourceHtml": {
           "type": "string"
         },
@@ -558,6 +567,18 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "conclusionTitle": {
+                "type": "string"
+              },
+              "conclusionItems": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "extras": {
+                "type": "object"
               }
             },
             "additionalProperties": true

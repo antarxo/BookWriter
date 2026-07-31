@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-07-31T12:18:17.402Z",
+    "updatedAt": "2026-07-30T21:17:09.781Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -18,7 +18,8 @@
       "category": "ΦΥΛΛΑΔΙΟ",
       "status": "Προσχέδιο",
       "tags": []
-    }
+    },
+    "lastDocxInsertionVersion": "bookwriter-4.5.0-rc1-docx"
   },
   "layoutDefaults": {
     "pageSize": "A4",
@@ -113,15 +114,25 @@
       },
       "items": [
         {
-          "id": "_Toc235669424",
+          "id": "hero-1",
           "type": "hero",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "eyebrow": "",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "subtitle": ""
+        },
+        {
+          "id": "_Toc235669424",
+          "type": "part_title",
           "nav": {
             "show": true,
             "label": "Ταλαντώσεις"
           },
-          "eyebrow": "",
-          "title": "Ταλαντώσεις",
-          "subtitle": "",
+          "label": "ΜΕΡΟΣ",
+          "title": "<span style=\"display:block;background:#8DB3E2;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Times New Roman&quot;;font-size:18.666666666666668px\">Ταλαντώσεις</span>",
           "sourceRef": {
             "kind": "docx",
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
@@ -146,45 +157,7 @@
             "sourceStyle": "heading 1"
           },
           "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "typeHistory": {
-              "part_title": {
-                "id": "_Toc235669424",
-                "type": "part_title",
-                "nav": {
-                  "show": true,
-                  "label": "Ταλαντώσεις"
-                },
-                "label": "ΜΕΡΟΣ",
-                "title": "<span style=\"display:block;background:#8DB3E2;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Times New Roman&quot;;font-size:18.666666666666668px\">Ταλαντώσεις</span>",
-                "sourceRef": {
-                  "kind": "docx",
-                  "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-                  "sourcePage": 2,
-                  "sourceParagraph": 2,
-                  "insertionId": "docx-insert-ms7nl0tf-0yrz6"
-                },
-                "provenance": {
-                  "sourceHeadingLevel": 1,
-                  "sourceHeadingStyle": {
-                    "marginBottomPx": 8,
-                    "lineHeight": 1.15,
-                    "fontFamily": "Times New Roman",
-                    "fontSizePx": 18.666666666666668,
-                    "backgroundColor": "#8DB3E2",
-                    "align": "center",
-                    "keepWithNext": true,
-                    "keepTogether": true,
-                    "bold": true,
-                    "italic": true
-                  },
-                  "sourceStyle": "heading 1"
-                },
-                "extensions": {
-                  "docxCanonicalImport": "v4.4"
-                }
-              }
-            }
+            "docxCanonicalImport": "v4.4"
           }
         },
         {
@@ -1070,6 +1043,99 @@
           }
         },
         {
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-13",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση ",
+                "color": "#000000"
+              },
+              {
+                "type": "math_inline",
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": " του σώματος είναι αρμονική συνάρτηση του χρόνου ",
+                "color": "#000000"
+              },
+              {
+                "type": "math_inline",
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": ", δηλαδή δίνεται από την σχέση:  ",
+                "color": "#000000"
+              },
+              {
+                "type": "math_inline",
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": "  ",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "τότε η κίνηση του σώματος ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "λέγεται απλή αρμονική ταλάντωση. ",
+                "bold": true,
+                "color": "#000000"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 4
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 2,
+            "sourceParagraph": 20,
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both",
+              "bold": true
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math></span> του σώματος είναι αρμονική συνάρτηση του χρόνου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math></span>, δηλαδή δίνεται από την σχέση:&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math></span><strong>  </strong>τότε η κίνηση του σώματος <strong>λέγεται απλή αρμονική ταλάντωση. </strong>",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
           "id": "docx-insert-ms80kyq1-4hd41-item-1",
           "type": "paragraph",
           "nav": {
@@ -1082,49 +1148,49 @@
               {
                 "type": "text_run",
                 "text": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "x",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": " του σώματος είναι αρμονική συνάρτηση του χρόνου ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "t",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": ", δηλαδή δίνεται από την σχέση:  ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "x = \\text{Aημ} ( \\text{ωt} + ϕ_{0} ) ( 1.5 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"></mspace><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": "  ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "τότε η κίνηση του σώματος ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "λέγεται απλή αρμονική ταλάντωση-ΑΑΤ. ",
+                "text": "λέγεται απλή αρμονική ταλάντωση. ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -1153,16 +1219,13 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:54:32.625Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math></span> του σώματος είναι αρμονική συνάρτηση του χρόνου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math></span>, δηλαδή δίνεται από την σχέση:&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math></span><strong>  </strong>τότε η κίνηση του σώματος <strong>λέγεται απλή αρμονική ταλάντωση. </strong>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -1360,7 +1423,7 @@
     },
     {
       "id": "page-1-r2",
-      "sourcePage": "2-3",
+      "sourcePage": 3,
       "header": {
         "inherit": true,
         "left": "",
@@ -1391,7 +1454,7 @@
           "start": 1,
           "items": [
             {
-              "level": 0,
+              "level": 1,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -1446,7 +1509,7 @@
               }
             },
             {
-              "level": 1,
+              "level": 2,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -1492,7 +1555,7 @@
               }
             },
             {
-              "level": 1,
+              "level": 2,
               "value": 0,
               "body": {
                 "format": "rich-text-v1",
@@ -1609,7 +1672,7 @@
           }
         },
         {
-          "id": "docx-insert-ms80mkgb-c06dh-item-1",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-17",
           "type": "list",
           "nav": {
             "show": false,
@@ -1659,7 +1722,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 30,
-            "insertionId": "docx-insert-ms80mkgb-c06dh"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceStyle": "List Paragraph",
@@ -1672,7 +1735,7 @@
           }
         },
         {
-          "id": "docx-insert-ms80mkgb-c06dh-item-2",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-18",
           "type": "paragraph",
           "nav": {
             "show": false,
@@ -1690,7 +1753,7 @@
               {
                 "type": "math_inline",
                 "source": "",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>"
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
@@ -1722,7 +1785,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 31,
-            "insertionId": "docx-insert-ms80mkgb-c06dh"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceStyle": "Normal",
@@ -1738,13 +1801,13 @@
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<strong> </strong><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math></span>  όπου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mtext>ωA</mtext></mrow></mrow></math></span> η μέγιστη τιμή του μέτρου της ταχύτητας του σώματος. ",
+            "docxSourceHtml": "<strong> </strong><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math></span>  όπου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mtext>ωA</mtext></mrow></mrow></math></span> η μέγιστη τιμή του μέτρου της ταχύτητας του σώματος. ",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
-          "id": "docx-insert-ms80mkgb-c06dh-item-3",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-19",
           "type": "list",
           "nav": {
             "show": false,
@@ -1824,7 +1887,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 32,
-            "insertionId": "docx-insert-ms80mkgb-c06dh"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceStyle": "List Paragraph",
@@ -1837,7 +1900,7 @@
           }
         },
         {
-          "id": "docx-insert-ms80mkgb-c06dh-item-4",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-20",
           "type": "paragraph",
           "nav": {
             "show": false,
@@ -1849,7 +1912,7 @@
               {
                 "type": "math_inline",
                 "source": "",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo><mo>-</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math>"
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mo>=</mo><mo>-</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
@@ -1881,7 +1944,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 34,
-            "insertionId": "docx-insert-ms80mkgb-c06dh"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceStyle": "Normal",
@@ -1896,13 +1959,13 @@
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo><mo>-</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math></span>  όπου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow></math></span> η μέγιστη τιμή του μέτρου της επιτάχυνσης του σώματος.",
+            "docxSourceHtml": "<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mo>=</mo><mo>-</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math></span>  όπου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow></math></span> η μέγιστη τιμή του μέτρου της επιτάχυνσης του σώματος.",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
-          "id": "docx-insert-ms80mkgb-c06dh-item-5",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-21",
           "type": "list",
           "nav": {
             "show": false,
@@ -1977,7 +2040,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 35,
-            "insertionId": "docx-insert-ms80mkgb-c06dh"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceStyle": "List Paragraph",
@@ -2037,14 +2100,14 @@
           }
         },
         {
-          "id": "docx-insert-ms80ojcr-gors4-item-1",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-22",
           "type": "equation",
           "nav": {
             "show": false,
             "label": ""
           },
           "source": "",
-          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>",
+          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
           "caption": "",
           "style": {
@@ -2061,7 +2124,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 38,
-            "insertionId": "docx-insert-ms80ojcr-gors4"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceFormat": "OMML→MathML",
@@ -2073,14 +2136,14 @@
           }
         },
         {
-          "id": "docx-insert-ms80ojcr-gors4-item-2",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-23",
           "type": "equation",
           "nav": {
             "show": false,
             "label": ""
           },
           "source": "",
-          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>",
+          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
           "caption": "",
           "style": {
@@ -2097,7 +2160,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 39,
-            "insertionId": "docx-insert-ms80ojcr-gors4"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceFormat": "OMML→MathML",
@@ -2109,14 +2172,14 @@
           }
         },
         {
-          "id": "docx-insert-ms80ojcr-gors4-item-3",
+          "id": "docx-insert-ms7nl0tf-0yrz6-item-24",
           "type": "equation",
           "nav": {
             "show": false,
             "label": ""
           },
           "source": "",
-          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math>",
+          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mtext>dυ</mtext></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mtext>Aημ</mtext></mrow><mfenced open=\"(\" close=\")\"><mrow><mrow><mtext>ωt</mtext><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow></mfenced><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.7</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
           "caption": "",
           "style": {
@@ -2133,7 +2196,7 @@
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
             "sourceParagraph": 40,
-            "insertionId": "docx-insert-ms80ojcr-gors4"
+            "insertionId": "docx-insert-ms7nl0tf-0yrz6"
           },
           "provenance": {
             "sourceFormat": "OMML→MathML",
@@ -2336,7 +2399,7 @@
       ],
       "extensions": {
         "paginationGenerated": true,
-        "paginationPagePart": 1
+        "paginationPagePart": 2
       }
     },
     {
@@ -2362,29 +2425,6 @@
       },
       "items": [
         {
-          "id": "aat-main-scene",
-          "type": "scene",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "src": "https://aatscene.netlify.app/?state=spring&play=0",
-          "title": "Απλή Αρμονική Ταλάντωση",
-          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
-          "hideCaption": true,
-          "layout": {
-            "placement": "wide",
-            "wrap": false,
-            "floatInteraction": "block",
-            "widthPx": 706,
-            "aspectRatio": "1.3"
-          },
-          "print": {
-            "snapshot": true
-          },
-          "status": "scene"
-        },
-        {
           "id": "aat-guided-callout",
           "type": "interactive_callout",
           "nav": {
@@ -2398,21 +2438,6 @@
           "pressChips": [],
           "observeTitle": "Παρατήρησε",
           "observeItems": [],
-          "conclusionTitle": "Συμπέρασμα",
-          "conclusionItems": [],
-          "extras": {
-            "title": "Πρόσθετο υλικό",
-            "collapsedInBook": true,
-            "print": true,
-            "items": [
-              {
-                "type": "question",
-                "label": "",
-                "text": "Πρόσθετο Γενικό",
-                "answerLines": 0
-              }
-            ]
-          },
           "sequenceSceneId": "aat-main-scene",
           "sequenceDisplayMode": "expanded",
           "sequenceInitialStep": 0,
@@ -2435,23 +2460,7 @@
                 "Εντόπισε τη θέση ισορροπίας και τις ακραίες θέσεις ±A.",
                 "Παρατήρησε πού η ταχύτητα είναι μέγιστη και πού μηδενίζεται."
               ],
-              "printPreset": "spring",
-              "conclusionItems": [
-                "Συμπέρασμα 1.",
-                "Συμπέρασμα 2."
-              ],
-              "extras": {
-                "items": [
-                  {
-                    "type": "question",
-                    "label": "",
-                    "text": "πρόσθετο του βήματος 1",
-                    "answerLines": 0,
-                    "answer": "Απάντηση 1"
-                  }
-                ],
-                "collapsedInBook": false
-              }
+              "printPreset": "spring"
             },
             {
               "title": "2. Ο άξονας αναφοράς",
@@ -2466,10 +2475,7 @@
               "observeItems": [
                 "Σύνδεσε τη θέση ισορροπίας με το 0 και τις ακραίες θέσεις με τα +A και −A."
               ],
-              "printPreset": "spring_axis",
-              "extras": {
-                "collapsedInBook": true
-              }
+              "printPreset": "spring_axis"
             },
             {
               "title": "3. Η κυκλική κίνηση",
@@ -2503,10 +2509,7 @@
                 "Παρακολούθησε τη στικτή οριζόντια γραμμή.",
                 "Έλεγξε ότι η προβολή και το σώμα έχουν συνεχώς την ίδια απομάκρυνση."
               ],
-              "printPreset": "spring_projection",
-              "extras": {
-                "print": true
-              }
+              "printPreset": "spring_projection"
             },
             {
               "title": "5. Το γράφημα x(t)",
@@ -2551,6 +2554,29 @@
             "expand": "per-step",
             "snapshotScene": true
           }
+        },
+        {
+          "id": "aat-main-scene",
+          "type": "scene",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "src": "https://aatscene.netlify.app/?state=spring&play=0",
+          "title": "Απλή Αρμονική Ταλάντωση",
+          "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
+          "hideCaption": false,
+          "layout": {
+            "placement": "wide",
+            "wrap": false,
+            "floatInteraction": "block",
+            "widthPx": 706,
+            "aspectRatio": "1.44"
+          },
+          "print": {
+            "snapshot": true
+          },
+          "status": "scene"
         }
       ]
     },
@@ -2583,7 +2609,7 @@
             "show": true,
             "label": "Βλέποντας την ΑΑΤ σαν παράσταση!!!(οι Θεατές!! Πατήστε έναρξη για άνοιγμα της αυλαίας)"
           },
-          "title": "<span style=\"display:block;background:#FBD4B4;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:13.333333333333334px\">Από τον Ορισμό στους Νόμους της ΑΑΤ</span>",
+          "title": "<span style=\"display:block;background:#FBD4B4;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:13.333333333333334px\">Βλέποντας την ΑΑΤ σαν παράσταση!!!(οι Θεατές!! Πατήστε έναρξη για άνοιγμα της αυλαίας)</span>",
           "level": 3,
           "style": {
             "align": "left",
@@ -2635,10 +2661,35 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "1. η Κινηματική στα … Αλγεβρικά!",
+                "text": "Πράξη 1",
                 "bold": true,
                 "italic": true,
-                "color": "rgb(0, 0, 0)"
+                "underline": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "η",
+                "bold": true,
+                "italic": true,
+                "underline": true,
+                "superscript": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " ",
+                "bold": true,
+                "italic": true,
+                "superscript": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " η Κινηματική στα … Αλγεβρικά",
+                "bold": true,
+                "italic": true,
+                "color": "#000000"
               }
             ]
           },
@@ -2671,76 +2722,13 @@
               "bold": true,
               "italic": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:25:51.809Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u>Πράξη 1</u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u><sup>η</sup></u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><sup> </sup></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em> η Κινηματική στα … Αλγεβρικά</em></strong></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          }
-        },
-        {
-          "id": "page-1-r4-r2-side_note-side-note-4",
-          "type": "side_note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "label": "",
-          "title": "",
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "το ",
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "φ",
-                "bold": true,
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "01",
-                "bold": true,
-                "italic": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": " πήρε τιμή με το ",
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "πάτημα της έναρξης από τον Παρατηρητή!",
-                "bold": true,
-                "italic": true
-              }
-            ]
-          },
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": "natural"
-          },
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:31:52.461Z"
-          },
-          "extensions": {
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -2806,9 +2794,9 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Συνειρμοί με «αλγεβρική φαντασία»!",
+                "text": "Συνειρμοί στο κοινό: (που διαθέτει «αλγεβρική φαντασία»)",
                 "italic": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -2837,106 +2825,13 @@
               "align": "both",
               "italic": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:32:22.260Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"font-family:&quot;Calibri&quot;\"><em>Συνειρμοί στο κοινό: (που διαθέτει «αλγεβρική φαντασία»)</em></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          }
-        },
-        {
-          "id": "page-1-r4-r2-side_note-side-note-6",
-          "type": "side_note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "label": "",
-          "title": "",
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "το ",
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "Aημ(ωt+φ",
-                "bold": true,
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "0",
-                "bold": true,
-                "italic": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": ")",
-                "bold": true,
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": " εμφανίζεται στις (1) και (3) άρα η (3) γράφεται και ",
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "α=-ω",
-                "bold": true,
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "2",
-                "bold": true,
-                "italic": true,
-                "superscript": true
-              },
-              {
-                "type": "text_run",
-                "text": "x",
-                "bold": true,
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": " ",
-                "italic": true
-              },
-              {
-                "type": "text_run",
-                "text": "(3)’",
-                "bold": true,
-                "italic": true
-              }
-            ]
-          },
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": "natural"
-          },
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:30:47.760Z"
-          },
-          "extensions": {
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3008,10 +2903,27 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "2. η  Δυναμική στα …Αλγεβρικά!",
+                "text": "Πράξη 2",
                 "bold": true,
                 "italic": true,
-                "color": "rgb(0, 0, 0)"
+                "underline": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "η",
+                "bold": true,
+                "italic": true,
+                "underline": true,
+                "superscript": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " η  Δυναμική στα …Αλγεβρικά",
+                "bold": true,
+                "italic": true,
+                "color": "#000000"
               }
             ]
           },
@@ -3044,16 +2956,13 @@
               "bold": true,
               "italic": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:38:03.167Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u>Πράξη 2</u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u><sup>η</sup></u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em> η  Δυναμική στα …Αλγεβρικά</em></strong></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3144,96 +3053,6 @@
           }
         },
         {
-          "id": "page-1-r4-r2-side_note-side-note-12",
-          "type": "side_note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "label": "",
-          "title": "",
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Η (4) γράφεται και αλλιώς!"
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "text_run",
-                "text": "\n\n"
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "text_run",
-                "text": "Η (4) με (3) και (3)’ \nδίνει:"
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "text_run",
-                "text": "\n\n"
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "text_run",
-                "text": "ΣF=-mω",
-                "bold": true
-              },
-              {
-                "type": "text_run",
-                "text": "2",
-                "bold": true,
-                "superscript": true
-              },
-              {
-                "type": "text_run",
-                "text": " Aημ(ωt+φ",
-                "bold": true
-              },
-              {
-                "type": "text_run",
-                "text": "0",
-                "bold": true,
-                "subscript": true
-              },
-              {
-                "type": "text_run",
-                "text": ") (5) ",
-                "bold": true
-              },
-              {
-                "type": "text_run",
-                "text": "  και "
-              }
-            ]
-          },
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": "natural"
-          },
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:35:33.589Z"
-          },
-          "extensions": {
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          }
-        },
-        {
           "id": "docx-insert-ms80gunx-df8n1-item-8",
           "type": "paragraph",
           "nav": {
@@ -3245,8 +3064,8 @@
             "nodes": [
               {
                 "type": "math_inline",
-                "source": "( 4 ) ( 3 ) ⇔ 2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F_{1} = - m_{1} ω_{1}^{2} A_{1} \\text{ημ} ( ω_{1} t + φ_{01} ) ( 5 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>4</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>3</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mo>⇔</mo><msup><mn>2</mn><mrow><mtext>ος</mtext></mrow></msup><mtext>Νόμος</mtext><mtext>του</mtext><mtext>Νεύτωνα</mtext><mo>:</mo><mi>Σ</mi><msub><mi>F</mi><mrow><mn>1</mn></mrow></msub><mo>=</mo><mo>-</mo><msub><mi>m</mi><mrow><mn>1</mn></mrow></msub><msubsup><mi>ω</mi><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></msubsup><msub><mi>A</mi><mrow><mn>1</mn></mrow></msub><mtext>ημ</mtext><mrow><mo stretchy=\"true\">(</mo><mrow><msub><mi>ω</mi><mrow><mn>1</mn></mrow></msub><mi>t</mi><mo>+</mo><msub><mi>φ</mi><mrow><mn>01</mn></mrow></msub></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>5</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>4</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>5</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math>"
               }
             ]
           },
@@ -3275,54 +3094,43 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:49:26.743Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>4</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>5</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
-        },
-        {
-          "id": "docx-insert-ms80gunx-df8n1-item-10",
-          "type": "equation",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "source": "( 4 ) ( 3 ) ' ⇔ 2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F_{1} = - m_{1} ω_{1}^{2} x_{1} ( 6 )",
-          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>4</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>3</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mi>&apos;</mi><mo>⇔</mo><msup><mn>2</mn><mrow><mtext>ος</mtext></mrow></msup><mtext>Νόμος</mtext><mtext>του</mtext><mtext>Νεύτωνα</mtext><mo>:</mo><mi>Σ</mi><msub><mi>F</mi><mrow><mn>1</mn></mrow></msub><mo>=</mo><mo>-</mo><msub><mi>m</mi><mrow><mn>1</mn></mrow></msub><msubsup><mi>ω</mi><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></msubsup><msub><mi>x</mi><mrow><mn>1</mn></mrow></msub><mrow><mo stretchy=\"true\">(</mo><mrow><mn>6</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></math>",
-          "number": "",
-          "caption": "",
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 5.333333333333333
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-            "sourcePage": 3,
-            "sourceParagraph": 55,
-            "insertionId": "docx-insert-ms80gunx-df8n1"
-          },
-          "provenance": {
-            "sourceFormat": "OMML→MathML",
-            "sourceStyle": "Normal"
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "mathSourceFormat": "omml-mathml",
-            "mathSyntax": "bookwriter-math-v1"
-          }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationGenerated": true,
+        "paginationPagePart": 1
+      }
+    },
+    {
+      "id": "page-1-r4-r2-r2",
+      "sourcePage": 3,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-insert-ms80gunx-df8n1-item-9",
           "type": "side_note",
@@ -3472,7 +3280,7 @@
           },
           "layout": {
             "placement": "right",
-            "wrap": true,
+            "wrap": false,
             "floatInteraction": "avoid",
             "widthPx": 381,
             "aspectRatio": "natural"
@@ -3500,6 +3308,41 @@
             "docxCanonicalImport": "v4.4",
             "docxTextBox": true,
             "docxSourceHtml": "<span style=\"font-size:13.333333333333334px\">Η (6) περιέχει δύο σταθερές του πρωταγων</span><span style=\"font-size:13.333333333333334px\">ι</span><span style=\"font-size:13.333333333333334px\">στή τον «</span><span style=\"font-size:13.333333333333334px\">σωματότυπο</span><span style=\"font-size:13.333333333333334px\">» (</span><span style=\"font-size:13.333333333333334px\"><strong>m</strong></span><span style=\"font-size:13.333333333333334px\">) και την εμμονή του (</span><span style=\"font-size:13.333333333333334px\"><strong>ω</strong></span><span style=\"font-size:13.333333333333334px\">). Ας κάνουμε τις δύο σταθερές μία έστω </span><span style=\"font-size:13.333333333333334px\"><strong>D</strong></span><span style=\"font-size:13.333333333333334px\"><strong>=</strong></span><span style=\"font-size:13.333333333333334px\"><strong>m</strong></span><span style=\"font-size:13.333333333333334px\"><strong>ω</strong></span><span style=\"font-size:13.333333333333334px\"><strong><sup>2</sup></strong></span><span style=\"font-size:13.333333333333334px\"> </span><span style=\"font-size:13.333333333333334px\"><strong>(σταθερά του …πρωταγωνιστή, </strong></span><span style=\"font-size:13.333333333333334px\"><strong>χμμμ</strong></span><span style=\"font-size:13.333333333333334px\"><strong> γι αυτό τον λένε και </strong></span><span style=\"color:#FF0000;font-size:13.333333333333334px\"><strong>(</strong></span><span style=\"color:#FF0000;font-size:13.333333333333334px\"><strong>m</strong></span><span style=\"color:#FF0000;font-size:13.333333333333334px\"><strong>,</strong></span><span style=\"color:#FF0000;font-size:13.333333333333334px\"><strong>D</strong></span><span style=\"color:#FF0000;font-size:13.333333333333334px\"><strong>)!</strong></span><span style=\"font-size:13.333333333333334px\"><strong>)</strong></span><span style=\"font-size:13.333333333333334px\"> οπότε η (6) γίνεται </span><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><mrow><mi>F</mi></mrow><mrow><mo>=</mo></mrow><mrow><mo>-</mo></mrow><mrow><mi>D</mi></mrow><mrow><mi>x</mi></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math></span><span style=\"background-color:#DAEEF3;font-size:13.333333333333334px\"><strong>(7)</strong></span>"
+          }
+        },
+        {
+          "id": "docx-insert-ms80gunx-df8n1-item-10",
+          "type": "equation",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "source": "",
+          "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><msup><mrow><mrow><mo>(</mo><mn>4</mn><mo>)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo><mo>'</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>6</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mrow></math>",
+          "number": "",
+          "caption": "",
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 5.333333333333333
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 3,
+            "sourceParagraph": 55,
+            "insertionId": "docx-insert-ms80gunx-df8n1"
+          },
+          "provenance": {
+            "sourceFormat": "OMML→MathML",
+            "sourceStyle": "Normal"
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "mathSourceFormat": "omml-mathml"
           }
         },
         {
@@ -3590,7 +3433,7 @@
           }
         },
         {
-          "id": "page-1-r4-r2-paragraph-2-η-δυναμικη-στα-αλγεβ-9",
+          "id": "docx-insert-ms80gunx-df8n1-item-13",
           "type": "paragraph",
           "nav": {
             "show": false,
@@ -3601,82 +3444,64 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "3. η  Ενέργεια σε 8 …Αλγεβρικά βήματα!",
+                "text": "Φουαγέ",
                 "bold": true,
                 "italic": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "πριν την 3η Πράξη",
+                "bold": true,
+                "italic": true,
+                "underline": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " (συζητήσεις, απόψεις, δημιουργική “αλγεβρική περιέργεια”)",
+                "color": "#000000"
               }
             ]
           },
           "style": {
-            "align": "left",
+            "align": "justify",
             "hyphenate": true,
-            "fontFamily": "Cambria",
-            "fontSizePx": 21.333333333333332,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
             "lineHeight": 1,
-            "marginBottomPx": 0,
-            "keepWithNext": 1,
-            "keepTogether": 1
+            "marginBottomPx": 5.333333333333333
           },
           "sourceRef": {
             "kind": "docx",
             "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
             "sourcePage": 3,
-            "sourceParagraph": 50,
+            "sourceParagraph": 61,
             "insertionId": "docx-insert-ms80gunx-df8n1"
           },
           "provenance": {
             "sourceStyle": "Normal",
             "sourceParagraphStyle": {
-              "marginBottomPx": 0,
+              "marginBottomPx": 5.333333333333333,
               "lineHeight": 1,
-              "fontFamily": "Cambria",
-              "fontSizePx": 21.333333333333332,
-              "keepWithNext": true,
-              "keepTogether": true,
-              "bold": true,
-              "italic": true
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:43:37.709Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "<span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u>Πράξη 2</u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em><u><sup>η</sup></u></em></strong></span><span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em> η  Δυναμική στα …Αλγεβρικά</em></strong></span>",
+            "docxSourceHtml": "<span style=\"font-family:&quot;Cambria&quot;;font-size:21.333333333333332px\"><strong><em>Φουαγέ</em></strong></span><span style=\"font-family:&quot;Calibri&quot;\"> </span><span style=\"font-family:&quot;Cambria&quot;\"><strong><em><u>πριν την 3η Πράξη</u></em></strong></span><span style=\"font-family:&quot;Calibri&quot;\"> (συζητήσεις, απόψεις, δημιουργική “αλγεβρική περιέργεια”)</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationGenerated": true,
-        "paginationPagePart": 1
-      }
-    },
-    {
-      "id": "page-1-r4-r2-r2",
-      "sourcePage": 3,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "docx-insert-ms80gunx-df8n1-item-14",
           "type": "paragraph",
@@ -3689,52 +3514,74 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 1",
+                "text": "Θεατής 1",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(251, 212, 180)"
+                "color": "#000000",
+                "highlight": "#fbd4b4"
               },
               {
                 "type": "text_run",
                 "text": ": Οι (1), (2), (3) και (5) μας βοηθούν να «προφητεύουμε» τη θέση, την ταχύτητα, την επιτάχυνση και την συνολική δύναμη που δέχεται κάθε στιγμή ο ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "(m",
+                "text": "(",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
-                "text": "1",
+                "text": "m",
                 "bold": true,
-                "subscript": true,
-                "color": "rgb(255, 0, 0)"
-              },
-              {
-                "type": "text_run",
-                "text": " ,D",
-                "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": "1",
                 "bold": true,
                 "subscript": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": " ,",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "1",
+                "bold": true,
+                "subscript": true,
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": ")",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
-                "text": " χωρίς να χρειαστεί να ξαναμπούμε για τη συνέχεια της παράστασης!",
-                "color": "rgb(0, 0, 0)"
+                "text": " χωρίς να χρειαστεί να ξαναμπούμε για τη συνέχεια της παρ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "ά",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "στασης!",
+                "color": "#000000"
               }
             ]
           },
@@ -3762,16 +3609,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:40:21.704Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#FBD4B4;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 1</strong></span><span style=\"font-family:&quot;Calibri&quot;\">: Οι (1), (2), (3) και (5) μας βοηθούν να «προφητεύουμε» τη θέση, την ταχύτητα, την επιτάχυνση και την συνολική δύναμη που δέχεται κάθε στιγμή ο </span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong>(</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong>m</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong><sub>1</sub></strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong> ,</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong>D</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong><sub>1</sub></strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;;font-size:13.333333333333334px\"><strong>)</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> χωρίς να χρειαστεί να ξαναμπούμε για τη συνέχεια της παρ</span><span style=\"font-family:&quot;Calibri&quot;\">ά</span><span style=\"font-family:&quot;Calibri&quot;\">στασης!</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3786,63 +3630,75 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 2",
+                "text": "Θεατής 2",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(214, 227, 188)"
+                "color": "#000000",
+                "highlight": "#d6e3bc"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Η (3)’ και η (6)  όμως μας βοηθούν να … «προφητεύουμε» την επιτάχυνση και την συνολική δύναμη που δέχεται αρκεί να ξέρουμε σε ποιο σημείο της σκηνής βρίσκεται ο ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "(m",
+                "text": "(",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
-                "text": "1",
+                "text": "m",
                 "bold": true,
-                "subscript": true,
-                "color": "rgb(255, 0, 0)"
-              },
-              {
-                "type": "text_run",
-                "text": " ,D",
-                "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": "1",
                 "bold": true,
                 "subscript": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": " ,",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "1",
+                "bold": true,
+                "subscript": true,
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": ")",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": "  ",
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": "χωρίς φυσικά και αναγκαστικά να συνεχίσουμε να είμαστε θεατές!",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -3870,16 +3726,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:40:37.686Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#D6E3BC;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 2</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Η (3)’ και η (6)  όμως μας βοηθούν να … «προφητεύουμε» την επιτάχυνση και την συνολική δύναμη που δέχεται αρκεί να ξέρουμε σε ποιο σημείο της σκηνής βρίσκεται ο </span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>(</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>m</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong><sub>1</sub></strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong> ,</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>D</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong><sub>1</sub></strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>)</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\">  </span><span style=\"font-family:&quot;Calibri&quot;\">χωρίς φυσικά και αναγκαστικά να συνεχίσουμε να είμαστε θεατές!</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -3894,21 +3747,21 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 3",
+                "text": "Θεατής 3",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(198, 217, 241)"
+                "color": "#000000",
+                "highlight": "#c6d9f1"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Λοιπόν! ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -3936,16 +3789,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:41:36.055Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#C6D9F1;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 3</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Λοιπόν! </span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -4717,6 +4567,64 @@
           }
         },
         {
+          "id": "docx-insert-ms80gunx-df8n1-item-26",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "bingo!",
+                "bold": true,
+                "italic": true,
+                "color": "#000000",
+                "highlight": "#daeef3"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Cambria Math",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 5.333333333333333,
+            "backgroundColor": "#DAEEF3"
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 4,
+            "sourceParagraph": 78,
+            "insertionId": "docx-insert-ms80gunx-df8n1"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 5.333333333333333,
+              "lineHeight": 1,
+              "fontFamily": "Cambria Math",
+              "fontSizePx": 14.666666666666666,
+              "backgroundColor": "#DAEEF3",
+              "align": "both",
+              "highlight": "#DAEEF3",
+              "bold": true,
+              "italic": true
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "<span style=\"background-color:#DAEEF3;font-family:&quot;Cambria Math&quot;\"><strong><em>bingo!</em></strong></span>",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
           "id": "docx-insert-ms80gunx-df8n1-item-27",
           "type": "paragraph",
           "nav": {
@@ -4728,32 +4636,32 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 4",
+                "text": "Θεατής 4",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(242, 219, 219)"
+                "color": "#000000",
+                "highlight": "#f2dbdb"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Θα ήταν καλύτερα αν την (8) την φέρναμε στη μορφή ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "υ= κ.λ.π.",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Δείτε:",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -4781,16 +4689,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:41:55.934Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#F2DBDB;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 4</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Θα ήταν καλύτερα αν την (8) την φέρναμε στη μορφή </span><span style=\"font-family:&quot;Calibri&quot;\"><strong>υ= κ.λ.π.</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Δείτε:</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -5108,37 +5013,37 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 5",
+                "text": "Θεατής 1",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(253, 233, 217)"
+                "color": "#000000",
+                "highlight": "#fde9d9"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Το σημείο στο οποίο διέκοψα είχε γραφτεί ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "ω^{2} Α^{2} = ω^{2} x^{2} + υ^{2}",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><msup><mrow><mrow><mi mathvariant=\"normal\">Α</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo>=</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><msup><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo>+</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": ". ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "Σκέφτομαι λοιπόν τα εξής: ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -5166,16 +5071,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:42:13.934Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#FDE9D9;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 1</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Το σημείο στο οποίο διέκοψα είχε γραφτεί </span><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><msup><mrow><mrow><mi mathvariant=\"normal\">Α</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo>=</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><msup><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo>+</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></math></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>. </strong></span><span style=\"font-family:&quot;Calibri&quot;\">Σκέφτομαι λοιπόν τα εξής: </span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -5915,43 +5817,63 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 6",
+                "text": "Θεατής 5",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(219, 229, 241)"
+                "color": "#000000",
+                "highlight": "#dbe5f1"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": " Δηλαδή γνωρίζουμε πλέον και το … budjet της παράστασης! Και, δεν έχουμε επομένως λέω εγώ, κανένα ιδιαίτερο λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3",
-                "color": "rgb(0, 0, 0)"
+                "text": " Δηλαδή γνωρίζουμε πλέον και το … ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "budjet",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " της παράστασης! Και, δεν έχουμε επομένως λέω εγώ, καν",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "έ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "να ιδιαίτερο λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "η",
                 "superscript": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "  πράξη ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "περί ενέργειας",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "! Το έργο το …ξαναείδαμε!",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -5979,16 +5901,13 @@
               "fontSizePx": 14.666666666666666,
               "align": "both"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:42:27.909Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#DBE5F1;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 5</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Δηλαδή γνωρίζουμε πλέον και το … </span><span style=\"font-family:&quot;Calibri&quot;\">budjet</span><span style=\"font-family:&quot;Calibri&quot;\"> της παράστασης! Και, δεν έχουμε επομένως λέω εγώ, καν</span><span style=\"font-family:&quot;Calibri&quot;\">έ</span><span style=\"font-family:&quot;Calibri&quot;\">να ιδιαίτερο λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3</span><span style=\"font-family:&quot;Calibri&quot;\"><sup>η</sup></span><span style=\"font-family:&quot;Calibri&quot;\">  πράξη </span><span style=\"font-family:&quot;Calibri&quot;\"><strong>περί ενέργειας</strong></span><span style=\"font-family:&quot;Calibri&quot;\">! Το έργο το …ξαναείδαμε!</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -6003,73 +5922,109 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 7",
+                "text": "Θεατής 4",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(242, 219, 219)"
+                "color": "#000000",
+                "highlight": "#f2dbdb"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Φυσικά! Αν και η “αλγεβρική περιέργεια” μας οδηγεί και σε μια πιο συμμαζεμένη έκφραση αυτής της …",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Αρχής Διατήρησης της Μηχανικής Ενέργεια του …Ταλαντωτή ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "(m,D)",
+                "text": "(",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": ",",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": ")",
+                "bold": true,
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": ".",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " Είπαμε πιο πάνω για αυτή τη  σταθερά ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "D=m",
+                "text": "D",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "=",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "bold": true,
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
                 "text": "ω",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "2",
                 "bold": true,
                 "superscript": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": " που βάλαμε και στη σχέση (7)  ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F = - D x ( 7 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"></mspace><mtext>Νόμος</mtext><mspace width=\".24em\"></mspace><mtext>του</mtext><mspace width=\".24em\"></mspace><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><mrow><mi>F</mi></mrow><mrow><mo>=</mo></mrow><mrow><mo>-</mo><mi>D</mi></mrow><mrow><mi>x</mi></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo></mrow><mrow><mn>7</mn></mrow><mrow><mo>)</mo></mrow><mrow><mspace width=\".24em\"></mspace></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><mrow><mi>F</mi></mrow><mrow><mo>=</mo></mrow><mrow><mo>-</mo><mi>D</mi></mrow><mrow><mi>x</mi></mrow><mrow><mspace width=\".24em\"/><mo>(</mo></mrow><mrow><mn>7</mn></mrow><mrow><mo>)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math>"
               }
             ]
           },
@@ -6098,16 +6053,13 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:42:45.639Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#F2DBDB;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 4</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Φυσικά! Αν και η “αλγεβρική περιέργεια” μας οδηγεί και σε μια πιο συμμαζεμένη έκφραση αυτής της …</span><span style=\"font-family:&quot;Calibri&quot;\"><strong> Αρχής Διατήρησης της Μηχανικής Ενέργεια του …Ταλαντωτή </strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>(</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>m</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>,</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>D</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>)</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>.</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Είπαμε πιο πάνω για αυτή τη  σταθερά </span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>D</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>=</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>m</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>ω</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong><sup>2</sup></strong></span><span style=\"font-family:&quot;Calibri&quot;\"> που βάλαμε και στη σχέση (7)  </span><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><mrow><mi>F</mi></mrow><mrow><mo>=</mo></mrow><mrow><mo>-</mo><mi>D</mi></mrow><mrow><mi>x</mi></mrow><mrow><mspace width=\".24em\"/><mo>(</mo></mrow><mrow><mn>7</mn></mrow><mrow><mo>)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -6245,82 +6197,212 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Σκέψη 8",
+                "text": "Θεατής 2",
                 "bold": true,
-                "color": "rgb(0, 0, 0)",
-                "highlight": "rgb(214, 227, 188)"
+                "color": "#000000",
+                "highlight": "#d6e3bc"
               },
               {
                 "type": "text_run",
                 "text": ":",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": " Να φύγουμε λέω και εγώ, αλλά με μια επίγευση από την αποψινή παράσταση του (m",
-                "color": "rgb(0, 0, 0)"
+                "text": " Να φύγουμε λέω και εγώ, αλλά με μια ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "επίγευση",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " από την αποψινή παράσταση του (",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "1",
                 "subscript": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": ",D",
-                "color": "rgb(0, 0, 0)"
+                "text": ",",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "1",
                 "subscript": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": ") συνοψίζοντας: Ο κάθε πρωταγωνιστής ταλαντωτής ",
-                "color": "rgb(0, 0, 0)"
+                "text": ") συνοψίζ",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "(m,D)",
+                "text": "ο",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "ντας: Ο κάθε πρωταγωνιστής ταλαντωτής ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "(",
                 "bold": true,
-                "color": "rgb(255, 0, 0)"
+                "color": "#ff0000"
               },
               {
                 "type": "text_run",
-                "text": " χαρακτηρίζεται απολύτως από τον «σωματότυπό του» (m) και την «χρονική» εμμονή του (ω) ή ισοδύναμα και ας το κρατήσουμε αυτό, από  τα δικά του (m,D). Θα είναι λοιπόν ",
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "text_run",
-                "text": "για μας στο εξής ο ταλαντωτής (m,D)",
+                "text": "m",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": ",",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": ")",
+                "bold": true,
+                "color": "#ff0000"
+              },
+              {
+                "type": "text_run",
+                "text": " χαρακτηρίζεται απολύτως από τον «",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "σωματότυπό",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " του» (",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ") και την «χρονική» εμμονή του (ω) ή ισοδύναμα και ας το κρατήσουμε αυτό, από  τα δικά του (",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ",",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "). Θα είναι λοιπόν ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "για μας στο εξής ο ταλαντωτής (",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "m",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ",",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "D",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ")",
+                "bold": true,
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": ", τα όρια στην παράστασή του (",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": "το μήκος σκηνής",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
                 "text": ") τα ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "καθορίζει πάντα ο κάθε κύριος … Ενεργειούλης και την έναρξή της εμείς οι θεατές!",
+                "text": "καθορίζει πάντα ο κάθε κύριος … ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "Ενεργειούλης",
+                "bold": true,
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": " και την έναρξή της εμείς οι θεατές!",
+                "bold": true,
+                "color": "#000000"
               }
             ]
           },
@@ -6349,16 +6431,13 @@
               "align": "both",
               "italic": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:43:02.310Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"background-color:#D6E3BC;font-family:&quot;Calibri&quot;;font-size:16px\"><strong>Θεατής 2</strong></span><span style=\"font-family:&quot;Calibri&quot;;font-size:16px\"><strong>:</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> Να φύγουμε λέω και εγώ, αλλά με μια </span><span style=\"font-family:&quot;Calibri&quot;\">επίγευση</span><span style=\"font-family:&quot;Calibri&quot;\"> από την αποψινή παράσταση του (</span><span style=\"font-family:&quot;Calibri&quot;\">m</span><span style=\"font-family:&quot;Calibri&quot;\"><sub>1</sub></span><span style=\"font-family:&quot;Calibri&quot;\">,</span><span style=\"font-family:&quot;Calibri&quot;\">D</span><span style=\"font-family:&quot;Calibri&quot;\"><sub>1</sub></span><span style=\"font-family:&quot;Calibri&quot;\">) συνοψίζ</span><span style=\"font-family:&quot;Calibri&quot;\">ο</span><span style=\"font-family:&quot;Calibri&quot;\">ντας: Ο κάθε πρωταγωνιστής ταλαντωτής </span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>(</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>m</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>,</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>D</strong></span><span style=\"color:#FF0000;font-family:&quot;Calibri&quot;\"><strong>)</strong></span><span style=\"font-family:&quot;Calibri&quot;\"> χαρακτηρίζεται απολύτως από τον «</span><span style=\"font-family:&quot;Calibri&quot;\">σωματότυπό</span><span style=\"font-family:&quot;Calibri&quot;\"> του» (</span><span style=\"font-family:&quot;Calibri&quot;\">m</span><span style=\"font-family:&quot;Calibri&quot;\">) και την «χρονική» εμμονή του (ω) ή ισοδύναμα και ας το κρατήσουμε αυτό, από  τα δικά του (</span><span style=\"font-family:&quot;Calibri&quot;\">m</span><span style=\"font-family:&quot;Calibri&quot;\">,</span><span style=\"font-family:&quot;Calibri&quot;\">D</span><span style=\"font-family:&quot;Calibri&quot;\">). Θα είναι λοιπόν </span><span style=\"font-family:&quot;Calibri&quot;\"><strong>για μας στο εξής ο ταλαντωτής (</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>m</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>,</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>D</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>)</strong></span><span style=\"font-family:&quot;Calibri&quot;\">, τα όρια στην παράστασή του (</span><span style=\"font-family:&quot;Calibri&quot;\"><strong>το μήκος σκηνής</strong></span><span style=\"font-family:&quot;Calibri&quot;\">) τα </span><span style=\"font-family:&quot;Calibri&quot;\"><strong>καθορίζει πάντα ο κάθε κύριος … </strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong>Ενεργειούλης</strong></span><span style=\"font-family:&quot;Calibri&quot;\"><strong> και την έναρξή της εμείς οι θεατές!</strong></span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         }
       ],
@@ -6521,54 +6600,6 @@
         "imagesAdded": 0,
         "backup": "",
         "tool": "bookwriter-4.5.0-rc1-docx"
-      },
-      {
-        "id": "docx-insert-ms80mkgb-c06dh",
-        "createdAt": "2026-07-30T21:18:29.691Z",
-        "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-        "selection": {
-          "startPage": 3,
-          "endPage": 3,
-          "startBlock": "3:2",
-          "endBlock": "3:6",
-          "firstLabel": "σ.3 · Λίστα · Η ταχύτητα του σώματος κάθε χρονική στιγμή θα δίνεται από την σχέση:",
-          "lastLabel": "σ.3 · Λίστα · Το σώμα έχει μέγιστη επιτάχυνση, όταν βρισκεται στις ακραίες θέσης της ταλάντωσης (x=±A). · Οι χρονικέ…"
-        },
-        "target": {
-          "pageId": "page-1-r2",
-          "itemId": "docx-insert-ms7nl0tf-0yrz6-item-16",
-          "label": "Προφανώς (με τη βοήθεια …παραγώγων!):",
-          "position": "after"
-        },
-        "itemsInserted": 5,
-        "pagesAfterLocalPagination": 1,
-        "imagesAdded": 0,
-        "backup": "",
-        "tool": "bookwriter-4.5.0-rc1-docx"
-      },
-      {
-        "id": "docx-insert-ms80ojcr-gors4",
-        "createdAt": "2026-07-30T21:20:00.476Z",
-        "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-        "selection": {
-          "startPage": 3,
-          "endPage": 3,
-          "startBlock": "3:8",
-          "endBlock": "3:10",
-          "firstLabel": "σ.3 · ¶ · x=Aημ(ωt+ϕ0)(1.5)",
-          "lastLabel": "σ.3 · ¶ · α=dυdt=-ω2Aημ(ωt+ϕ0)(1.7)"
-        },
-        "target": {
-          "pageId": "page-1-r2",
-          "itemId": "_Toc235669428",
-          "label": "Συνοπτικά οι νόμοι της ΑΑΤ ως κίνησης:",
-          "position": "after"
-        },
-        "itemsInserted": 3,
-        "pagesAfterLocalPagination": 1,
-        "imagesAdded": 0,
-        "backup": "",
-        "tool": "bookwriter-4.5.0-rc1-docx"
       }
     ]
   },
@@ -6585,11 +6616,11 @@
       "paginationVersion": "1.2.0-overflow-page-diagnostics",
       "auditTolerancePx": 1
     },
-    "lastInsertionAuditAt": "2026-07-30T21:19:49.937Z",
+    "lastInsertionAuditAt": "2026-07-30T21:17:03.212Z",
     "lastInsertionLocalReport": {
       "report": {
         "version": "1.2.0-overflow-page-diagnostics",
-        "startedAt": "2026-07-30T21:19:49.763Z",
+        "startedAt": "2026-07-30T21:17:03.057Z",
         "sourcePages": 1,
         "outputPages": 1,
         "splitItems": 0,
@@ -6598,7 +6629,7 @@
         "oversizeItems": [],
         "hardBreaks": 0,
         "rendererVersion": "0.3.0-rc1-render-parity",
-        "completedAt": "2026-07-30T21:19:49.800Z",
+        "completedAt": "2026-07-30T21:17:03.089Z",
         "audit": {
           "ok": true,
           "pagesChecked": 1,
@@ -6610,7 +6641,7 @@
         },
         "pagination": {
           "version": "1.2.0-overflow-page-diagnostics",
-          "generatedAt": "2026-07-30T21:19:49.823Z",
+          "generatedAt": "2026-07-30T21:17:03.107Z",
           "sourcePages": 1,
           "outputPages": 1,
           "splitItems": 0,

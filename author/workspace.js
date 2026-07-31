@@ -95,6 +95,7 @@ const state={
   previewOverflowAuditToken:0,
   busy:false,
   library:{selectedHandle:null,booksHandle:null,staticRootUrl:'',entries:[],loading:false,error:'',restored:false,sortKey:'title',sortDir:'asc',filters:{query:'',discipline:'',level:'',status:''},selectedName:''},
+  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380)},
   docx:{mode:'create',file:null,result:null,entries:[],startKey:'',endKey:'',anchorKey:'',focusKey:'',blobUrls:new Map(),report:null,insertion:null},
   insert:{split:Number(storage.get('bw-v4_4-insert-split')||.5),bookZoom:Number(storage.get('bw-v4_4-insert-book-zoom')||.56),bookZoomMode:storage.get('bw-v4_4-insert-book-zoom-mode','fit')},
   sourceFileName:'book.json'
@@ -107,6 +108,10 @@ const page=()=>has()?(session.book.pages.find(p=>p.id===session.selection.pageId
 const item=()=>page()?.items.find(i=>i.id===session.selection.itemId)||null;
 const pageIndex=()=>page()?session.book.pages.indexOf(page()):-1;
 const itemIndex=()=>item()?page().items.indexOf(item()):-1;
+function isTextEditingTarget(node=document.activeElement){
+  const tag=node?.tagName;
+  return !!node&&(node.isContentEditable||tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT');
+}
 
 function setStatus(text,kind=''){
   const node=$('#statusMessage');
@@ -125,6 +130,7 @@ function modeLabel(){
 
 function viewTitle(){
   if(state.view==='home')return 'Βιβλιοθήκη';
+  if(state.view==='labs')return 'Εργαστήρια';
   if(state.view==='insert')return 'Παρεμβολή από Word';
   if(state.view==='docx')return 'Νέο βιβλίο από Word';
   return 'Επεξεργασία βιβλίου';
@@ -134,6 +140,7 @@ function setView(name){
   state.view=name;
   $$('.workspace-view').forEach(v=>v.classList.toggle('active',v.id===name+'View'));
   if(name==='home')renderLibrary();
+  if(name==='labs')renderLabsView();
   renderChrome();
   closeMenus();
   if(name==='book'&&has()) renderAll();
@@ -142,6 +149,7 @@ function setView(name){
 
 function modal(title,html,buttons=[{label:'OK',value:true,primary:true}]){
   return new Promise(resolve=>{
+    $('#modalBackdrop .modal-dialog')?.classList.remove('equation-dialog','registry-dialog');
     $('#modalTitle').textContent=title;
     $('#modalBody').innerHTML=html;
     const host=$('#modalButtons');
@@ -252,6 +260,738 @@ async function fetchJson(url){
   if(!response.ok)throw new Error(`HTTP ${response.status} στο ${url}`);
   return response.json();
 }
+
+const LAB_LIBRARY_REGISTRY_PATH='_labs/registry.json';
+const LAB_REGISTRY_BACKUP_NAME='registry.backup.json';
+const LAB_CUSTOM_PRESETS_KEY='bookwriter-lab-custom-presets-v1';
+function invalidateLabRegistry(){
+  state.labs.registry=null;
+  state.labs.source='';
+  state.labs.label='';
+}
+function clearLabRegistryHistory(){
+  state.labs.undoStack=[];
+  state.labs.redoStack=[];
+}
+function pushLabRegistryHistory(label,before,after){
+  if(JSON.stringify(before)===JSON.stringify(after))return;
+  state.labs.undoStack.push({label,at:new Date().toISOString(),before:clone(before),after:clone(after)});
+  if(state.labs.undoStack.length>50)state.labs.undoStack.shift();
+  state.labs.redoStack=[];
+}
+async function applyLabRegistrySnapshot(registry,label){
+  const labsDir=await writableLabRegistryDirectory();
+  const next=validateLabRegistry(registry);
+  await writeJsonFile(labsDir,'registry.json',next);
+  invalidateLabRegistry();
+  await loadLabRegistry();
+  if(state.view==='labs')renderLabsView();
+  renderChrome();
+  setStatus(label,'good');
+}
+async function writeJsonFile(dir,name,data){
+  const handle=await dir.getFileHandle(name,{create:true});
+  const writable=await handle.createWritable();
+  await writable.write(JSON.stringify(data,null,2)+'\n');
+  await writable.close();
+  return handle;
+}
+function isLibraryInfrastructureFolder(name=''){
+  return String(name).startsWith('_');
+}
+async function writableLabRegistryDirectory(){
+  if(!state.library.booksHandle){
+    throw new Error(`Χρειάζεται σύνδεση φακέλου Βιβλιοθήκης για εγγραφή στο ${LAB_LIBRARY_REGISTRY_PATH}.`);
+  }
+  if(await permissionFor(state.library.booksHandle,true)!=='granted'){
+    throw new Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια εγγραφής.');
+  }
+  return state.library.booksHandle.getDirectoryHandle('_labs',{create:true});
+}
+async function readLibraryLabRegistry(){
+  if(state.library.booksHandle){
+    if(await permissionFor(state.library.booksHandle,false)!=='granted'){
+      throw new Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια για ανάγνωση.');
+    }
+    try{
+      const labsDir=await state.library.booksHandle.getDirectoryHandle('_labs');
+      const opened=await readNamedJson(labsDir,'registry.json');
+      return{registry:opened.data,source:'library-handle',label:`${state.library.booksHandle.name}/_labs/registry.json`};
+    }catch(error){
+      throw new Error(`Δεν διαβάστηκε το μητρώο εργαστηρίων της Βιβλιοθήκης (${LAB_LIBRARY_REGISTRY_PATH}): ${error.message}`);
+    }
+  }
+  if(state.library.staticRootUrl){
+    const url=new URL(LAB_LIBRARY_REGISTRY_PATH,state.library.staticRootUrl).href;
+    try{
+      return{registry:await fetchJson(url),source:'library-static',label:url};
+    }catch(error){
+      throw new Error(`Δεν διαβάστηκε το μητρώο εργαστηρίων της Βιβλιοθήκης (${url}): ${error.message}`);
+    }
+  }
+  throw new Error(`Δεν υπάρχει ενεργή Βιβλιοθήκη με μητρώο εργαστηρίων. Χρειάζεται ${LAB_LIBRARY_REGISTRY_PATH}.`);
+}
+function validateLabRegistry(registry){
+  if(registry?.schemaVersion!=='bookwriter-lab-registry-v1') throw new Error('Άγνωστο schema βιβλιοθήκης εργαστηρίων.');
+  if(!Array.isArray(registry.labs)) throw new Error('Η βιβλιοθήκη εργαστηρίων δεν έχει λίστα labs.');
+  return registry;
+}
+async function loadLabRegistry(){
+  if(!state.labs.registry){
+    state.labs.loading=true;state.labs.error='';
+    try{
+      const loaded=await readLibraryLabRegistry();
+      state.labs.registry=validateLabRegistry(loaded.registry);
+      state.labs.source=loaded.source;
+      state.labs.label=loaded.label;
+    }catch(error){
+      state.labs.error=error.message;
+      throw error;
+    }finally{
+      state.labs.loading=false;
+    }
+  }
+  return runtimeLabRegistry(state.labs.registry);
+}
+async function reloadLabRegistry(){
+  invalidateLabRegistry();
+  try{
+    const registry=await loadLabRegistry();
+    setStatus(`Φορτώθηκε μητρώο Βιβλιοθήκης: ${registry.labs?.length||0} εργαστήρια.`, 'good');
+  }catch(error){
+    modal('Επαναφόρτωση εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+async function backupLabRegistry(){
+  try{
+    const labsDir=await writableLabRegistryDirectory();
+    const opened=await readNamedJson(labsDir,'registry.json');
+    const registry=validateLabRegistry(opened.data);
+    await writeJsonFile(labsDir,LAB_REGISTRY_BACKUP_NAME,registry);
+    setStatus(`Δημιουργήθηκε αντίγραφο μητρώου: _labs/${LAB_REGISTRY_BACKUP_NAME}.`, 'good');
+  }catch(error){
+    modal('Αντίγραφο μητρώου εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+async function restoreLabRegistry(){
+  try{
+    const labsDir=await writableLabRegistryDirectory();
+    const opened=await readNamedJson(labsDir,LAB_REGISTRY_BACKUP_NAME);
+    const registry=validateLabRegistry(opened.data);
+    const ok=await modal(
+      'Επαναφορά μητρώου εργαστηρίων',
+      `<div class="info-card warn">Θα αντικατασταθεί το ενεργό ${esc(LAB_LIBRARY_REGISTRY_PATH)} με το _labs/${esc(LAB_REGISTRY_BACKUP_NAME)}.</div>`,
+      [{label:'Άκυρο',value:false},{label:'Επαναφορά',value:true,primary:true}]
+    );
+    if(!ok)return;
+    let before=null;
+    try{before=validateLabRegistry((await readNamedJson(labsDir,'registry.json')).data)}catch(_error){}
+    await writeJsonFile(labsDir,'registry.json',registry);
+    if(before)pushLabRegistryHistory('Επαναφορά μητρώου εργαστηρίων',before,registry);
+    invalidateLabRegistry();
+    await loadLabRegistry();
+    renderChrome();
+    setStatus(`Επαναφέρθηκε το μητρώο εργαστηρίων από _labs/${LAB_REGISTRY_BACKUP_NAME}.`, 'good');
+  }catch(error){
+    modal('Επαναφορά μητρώου εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+async function openLabRegistryEditor(){
+  let labsDir,registry;
+  try{
+    labsDir=await writableLabRegistryDirectory();
+    const opened=await readNamedJson(labsDir,'registry.json');
+    registry=validateLabRegistry(opened.data);
+  }catch(error){
+    modal('Μητρώο εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+    return;
+  }
+  const pending=modal(
+    'Μητρώο εργαστηρίων',
+    `<div class="registry-editor">
+      <div class="info-card">Άνοιξε το ενεργό αρχείο <code>${esc(LAB_LIBRARY_REGISTRY_PATH)}</code>. Οι αλλαγές αποθηκεύονται μόνο όταν πατήσεις αποθήκευση.</div>
+      <textarea id="labRegistryEditor" spellcheck="false">${esc(JSON.stringify(registry,null,2))}</textarea>
+    </div>`,
+    [{label:'Άκυρο',value:false},{label:'Αποθήκευση',value:true,primary:true}]
+  );
+  $('#modalBackdrop .modal-dialog')?.classList.add('registry-dialog');
+  const accepted=await pending;
+  if(!accepted)return;
+  try{
+    const next=validateLabRegistry(JSON.parse($('#labRegistryEditor')?.value||''));
+    const before=clone(registry);
+    await writeJsonFile(labsDir,'registry.json',next);
+    pushLabRegistryHistory('Επεξεργασία μητρώου εργαστηρίων',before,next);
+    invalidateLabRegistry();
+    await loadLabRegistry();
+    renderChrome();
+    setStatus(`Αποθηκεύτηκε το μητρώο εργαστηρίων: ${next.labs?.length||0} εργαστήρια.`, 'good');
+  }catch(error){
+    modal('Μητρώο εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+function labPresetBadge(preset={}){
+  if(preset.discovered)return'εύρημα';
+  if(preset.custom)return'προσωπικό';
+  return preset.status==='planned'?'προβλεπόμενο':'έτοιμο';
+}
+function labPresetStatusClass(preset={}){
+  if(preset.discovered)return'discovered';
+  if(preset.custom)return'custom';
+  return preset.status==='planned'?'planned':'ready';
+}
+function labParamValueLabel(value){
+  const text=String(value);
+  if(text==='1'||text==='true')return'ναι';
+  if(text==='0'||text==='false')return'όχι';
+  return text;
+}
+function labPresetQuerySummary(lab,preset){
+  const query=presetQueryForDialog(lab,preset);
+  const order=['scene','preset','state','layout','graphs','layers','timePreset','t','showPosition','showVelocity','showAcceleration','showForce','showEnergy','showClock','controlsMode','allowedControls','zoom'];
+  const entries=Object.entries(query||{}).filter(([,value])=>value!==''&&value!=null);
+  entries.sort(([a],[b])=>{
+    const ai=order.indexOf(a),bi=order.indexOf(b);
+    return (ai<0?999:ai)-(bi<0?999:bi)||a.localeCompare(b,'el');
+  });
+  return entries.slice(0,6).map(([key,value])=>`${labParamLabel(key)}: ${labParamValueLabel(value)}`).join(' · ')||'Χωρίς δηλωμένες παραμέτρους';
+}
+function renderLabsTree(registry){
+  const selected=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
+  return (registry.labs||[]).map(lab=>{
+    const presets=(lab.presets||[]).map(preset=>{
+      const active=lab.id===selected.lab?.id&&preset.id===selected.preset?.id;
+      const statusClass=labPresetStatusClass(preset);
+      return `<button class="labs-preset-row ${statusClass} ${active?'active':''}" data-lab-id="${esc(lab.id)}" data-preset-id="${esc(preset.id)}">
+        <span class="labs-preset-head"><span class="labs-preset-title">${esc(preset.title||preset.id)}</span><span class="labs-preset-badge">${esc(labPresetBadge(preset))}</span></span>
+        <small>${esc(labPresetQuerySummary(lab,preset))}</small>
+      </button>`;
+    }).join('');
+    return `<section class="labs-group"><h3>${esc(lab.title||lab.id)}</h3>${presets||'<div class="labs-empty">Δεν υπάρχουν presets.</div>'}</section>`;
+  }).join('')||'<div class="labs-empty">Δεν υπάρχουν εργαστήρια.</div>';
+}
+function ensureLabsSelection(registry){
+  const labs=registry.labs||[];
+  if(!labs.length){state.labs.selectedLabId='';state.labs.selectedPresetId='';return{lab:null,preset:null}}
+  let lab=labs.find(current=>current.id===state.labs.selectedLabId)||labs[0];
+  let preset=(lab.presets||[]).find(current=>current.id===state.labs.selectedPresetId)||lab.presets?.[0]||null;
+  if(!preset){
+    lab=labs.find(current=>(current.presets||[]).length)||lab;
+    preset=lab.presets?.[0]||null;
+  }
+  state.labs.selectedLabId=lab?.id||'';
+  state.labs.selectedPresetId=preset?.id||'';
+  return{lab,preset};
+}
+function labPresetTitleForCopy(preset){
+  const raw=String(preset?.title||preset?.id||'Νέο preset').trim();
+  return raw.startsWith('Νέο ')||raw.includes('παραλλαγή')?raw:`${raw} - παραλλαγή`;
+}
+function renderLabsParamRows(lab,query={}){
+  const host=$('#labsParamRows');
+  if(!host)return;
+  const entries=Object.entries(query||{});
+  host.innerHTML=(entries.length?entries:[['','']]).map(([key,value])=>`<div class="labs-param-row">
+    <select class="labs-param-key">${labParamOptionsHtml(lab,query,key)}${key&&!labParamKeys(lab,query).includes(key)?`<option value="${esc(key)}" selected>${esc(key)}</option>`:''}</select>
+    <input class="labs-param-value" value="${esc(value)}" placeholder="τιμή">
+    <select class="labs-param-suggestion" title="Τιμές που έχουν ήδη χρησιμοποιηθεί"><option value="">τιμές</option>${labParamValues(lab,key).map(candidate=>`<option value="${esc(candidate)}">${esc(candidate)}</option>`).join('')}</select>
+    <button class="labs-param-remove" type="button" title="Αφαίρεση παραμέτρου">×</button>
+  </div>`).join('');
+}
+function applyLabsSplitterLayout(){
+  document.documentElement.style.setProperty('--labs-left',`${Math.max(210,Math.min(460,state.labs.leftWidth||290))}px`);
+  document.documentElement.style.setProperty('--labs-right',`${Math.max(300,Math.min(560,state.labs.rightWidth||380))}px`);
+}
+function queryObjectFromLabsParamRows(){
+  const out={};
+  $$('.labs-param-row').forEach(row=>{
+    const key=row.querySelector('.labs-param-key')?.value.trim();
+    const value=row.querySelector('.labs-param-value')?.value.trim();
+    if(key)out[key]=value??'';
+  });
+  return out;
+}
+function writeLabsParamsFromRows(){
+  const params=$('#labsEditorParams');
+  if(params)params.value=queryObjectToText(queryObjectFromLabsParamRows());
+}
+function addLabsParamRow(){
+  const registry=runtimeLabRegistry(state.labs.registry),{lab}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
+  const host=$('#labsParamRows');
+  if(!host)return;
+  const row=document.createElement('div');
+  row.className='labs-param-row';
+  row.innerHTML=`<select class="labs-param-key">${labParamOptionsHtml(lab,queryObjectFromLabsParamRows(),'')}</select><input class="labs-param-value" placeholder="τιμή"><select class="labs-param-suggestion" title="Τιμές που έχουν ήδη χρησιμοποιηθεί"><option value="">τιμές</option></select><button class="labs-param-remove" type="button" title="Αφαίρεση παραμέτρου">×</button>`;
+  host.appendChild(row);
+  bindLabsParamRows();
+}
+function bindLabsParamRows(){
+  $$('.labs-param-row').forEach(row=>{
+    row.querySelector('.labs-param-key').onchange=()=>{
+      const registry=runtimeLabRegistry(state.labs.registry),{lab}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId),key=row.querySelector('.labs-param-key')?.value||'',suggest=row.querySelector('.labs-param-suggestion');
+      if(suggest)suggest.innerHTML='<option value="">τιμές</option>'+labParamValues(lab,key).map(candidate=>`<option value="${esc(candidate)}">${esc(candidate)}</option>`).join('');
+      writeLabsParamsFromRows();syncLabsUrlFromParams();
+    };
+    row.querySelector('.labs-param-value').oninput=()=>{writeLabsParamsFromRows();syncLabsUrlFromParams()};
+    row.querySelector('.labs-param-suggestion').onchange=event=>{if(event.target.value==='')return;row.querySelector('.labs-param-value').value=event.target.value;event.target.value='';writeLabsParamsFromRows();syncLabsUrlFromParams()};
+    row.querySelector('.labs-param-remove').onclick=()=>{row.remove();writeLabsParamsFromRows();syncLabsUrlFromParams()};
+  });
+}
+function fillLabsEditor(registry){
+  const {lab,preset}=ensureLabsSelection(registry);
+  const labSelect=$('#labsEditorLab'),presetSelect=$('#labsEditorPreset');
+  if(labSelect)labSelect.innerHTML=(registry.labs||[]).map(current=>`<option value="${esc(current.id)}">${esc(current.title||current.id)}</option>`).join('');
+  if(labSelect)labSelect.value=lab?.id||'';
+  if(presetSelect)presetSelect.innerHTML=(lab?.presets||[]).map(current=>`<option value="${esc(current.id)}">${esc(current.title||current.id)}${current.status==='planned'?' · προβλεπόμενο':''}</option>`).join('');
+  if(presetSelect)presetSelect.value=preset?.id||'';
+  const src=lab&&preset?buildLabSceneSrc(lab,preset,false):'';
+  $('#labsEditorTitle').value=labPresetTitleForCopy(preset);
+  $('#labsEditorId').value=M.normalizeId(`${preset?.id||'preset'}_copy`).slice(0,60);
+  $('#labsEditorStatus').value=preset?.status==='planned'?'planned':'ready';
+  $('#labsEditorDescription').value=preset?.description||'';
+  const query=lab&&preset?presetQueryForDialog(lab,preset):{};
+  $('#labsEditorParams').value=queryObjectToText(query);
+  renderLabsParamRows(lab,query);
+  $('#labsEditorUrl').value=src;
+  $('#labsEditorWidth').value=preset?.layout?.widthPx||560;
+  $('#labsEditorAspect').value=preset?.layout?.aspectRatio||'16/9';
+  $('#labsEditorPlacement').value=preset?.layout?.placement||'wide';
+  $('#labsEditorInfo').innerHTML=lab&&preset?`<div class="labs-editor-status ${esc(labPresetStatusClass(preset))}"><b>${esc(labPresetBadge(preset))}</b><span>${esc(preset.description||'')}</span><code>${esc(buildLabSceneSrc(lab,preset,false))}</code>${preset.status==='planned'?'<em>Δεν φορτώνεται ως πραγματική σκηνή μέχρι να υποστηριχθεί από την εξωτερική εφαρμογή.</em>':''}</div>`:'Δεν υπάρχει επιλεγμένη σκηνή.';
+}
+function currentLabsEditorUrl(){
+  const raw=$('#labsEditorUrl')?.value.trim()||'';
+  try{return srcWithQuery(raw,queryTextToObject($('#labsEditorParams')?.value||''))}
+  catch{return raw}
+}
+function fitLabsPreviewPage(){
+  const stage=$('.labs-preview-stage'),page=$('#labsPreviewPage');
+  if(!stage||!page)return;
+  const pageWidth=Number.parseFloat(page.style.getPropertyValue('--labs-page-width'))||794;
+  const pageHeight=Number.parseFloat(page.style.getPropertyValue('--labs-page-height'))||1123;
+  const availableWidth=Math.max(180,stage.clientWidth-44);
+  const availableHeight=Math.max(240,stage.clientHeight-44);
+  const zoom=Math.max(.22,Math.min(1,availableWidth/pageWidth,availableHeight/pageHeight));
+  page.style.setProperty('--labs-page-zoom',zoom.toFixed(3));
+}
+function renderLabsPreview(){
+  const url=currentLabsEditorUrl();
+  const registry=state.labs.registry?runtimeLabRegistry(state.labs.registry):null;
+  const {lab,preset}=registry?selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId):{lab:null,preset:null};
+  const planned=preset?.status==='planned';
+  const frame=$('#labsPreviewFrame'),placeholder=$('#labsPreviewPlaceholder'),title=$('#labsPreviewTitle'),urlField=$('#labsEditorUrl'),box=$('#labsPreviewSceneBox'),page=$('#labsPreviewPage');
+  if(urlField&&url)urlField.value=url;
+  if(title)title.textContent=planned?'Προβλεπόμενο preset - δεν φορτώνεται εφαρμογή':url;
+  if(page){
+    const defs=session.book?.layoutDefaults||{};
+    page.style.setProperty('--labs-page-width',`${Number(defs.pageWidthPx||794)}px`);
+    page.style.setProperty('--labs-page-height',`${Number(defs.pageHeightPx||1123)}px`);
+    page.style.setProperty('--labs-page-pad-top',`${Number(defs.pagePaddingTopPx||54)}px`);
+    page.style.setProperty('--labs-page-pad-right',`${Number(defs.pagePaddingRightPx||45)}px`);
+    page.style.setProperty('--labs-page-pad-bottom',`${Number(defs.pagePaddingBottomPx||64)}px`);
+    page.style.setProperty('--labs-page-pad-left',`${Number(defs.pagePaddingLeftPx||45)}px`);
+    requestAnimationFrame(fitLabsPreviewPage);
+  }
+  if(box){
+    const width=Math.max(120,Number($('#labsEditorWidth')?.value)||560);
+    const aspect=String($('#labsEditorAspect')?.value||'16/9').trim()||'16/9';
+    const placement=$('#labsEditorPlacement')?.value||'wide';
+    box.style.setProperty('--labs-scene-width',`${width}px`);
+    box.style.setProperty('--labs-scene-aspect',aspect);
+    box.style.setProperty('--labs-scene-margin',placement==='right'||placement==='float-right'?'0 0 0 auto':placement==='left'||placement==='float-left'||placement==='inline'?'0 auto 0 0':placement==='full'?'0':'0 auto');
+  }
+  if(planned){
+    if(frame){frame.hidden=true;frame.removeAttribute('src')}
+    if(placeholder){
+      placeholder.hidden=false;
+      placeholder.innerHTML=`<b>${esc(preset.title||preset.id)}</b><span>${esc(preset.description||'')}</span><code>${esc(url)}</code><em>Το preset είναι δηλωμένο στο μητρώο, αλλά η εξωτερική εφαρμογή της ΑΑΤ δεν το υποστηρίζει ακόμα. Δεν εμφανίζουμε τη λάθος προεπιλεγμένη σκηνή.</em>`;
+    }
+    return;
+  }
+  if(frame)frame.hidden=false;
+  if(placeholder){placeholder.hidden=true;placeholder.innerHTML=''}
+  if(frame&&url)frame.src=url;
+}
+function syncLabsUrlFromParams(){
+  const urlField=$('#labsEditorUrl');
+  if(urlField)urlField.value=currentLabsEditorUrl();
+  renderLabsPreview();
+}
+function bindLabsView(registry){
+  $('#labsTree')?.querySelectorAll('[data-lab-id][data-preset-id]').forEach(button=>{
+    button.onclick=()=>{state.labs.selectedLabId=button.dataset.labId;state.labs.selectedPresetId=button.dataset.presetId;renderLabsView()};
+  });
+  $('#labsEditorLab').onchange=event=>{
+    state.labs.selectedLabId=event.target.value;
+    const lab=(registry.labs||[]).find(current=>current.id===state.labs.selectedLabId);
+    state.labs.selectedPresetId=lab?.presets?.[0]?.id||'';
+    renderLabsView();
+  };
+  $('#labsEditorPreset').onchange=event=>{state.labs.selectedPresetId=event.target.value;renderLabsView()};
+  $('#labsEditorParams').oninput=syncLabsUrlFromParams;
+  $('#labsEditorUrl').oninput=renderLabsPreview;
+  $('#labsEditorParams').onchange=()=>{const {lab}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);renderLabsParamRows(lab,queryTextToObject($('#labsEditorParams').value));bindLabsParamRows();renderLabsPreview()};
+  $('#labsEditorWidth').oninput=renderLabsPreview;
+  $('#labsEditorAspect').oninput=renderLabsPreview;
+  $('#labsEditorPlacement').onchange=renderLabsPreview;
+  $('#labsAddParam').onclick=addLabsParamRow;
+  bindLabsParamRows();
+  $('#labsPreviewRefresh').onclick=renderLabsPreview;
+  $('#labsSavePreset').onclick=saveLabPresetFromWorkspace;
+}
+async function openLabsWorkspace(){
+  try{
+    await loadLabRegistry();
+    setView('labs');
+    setStatus('Άνοιξε ο επεξεργαστής/προεπισκόπηση σκηνών εργαστηρίων.','good');
+  }catch(error){
+    modal('Εργαστήρια',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+function renderLabsView(){
+  if(state.view!=='labs')return;
+  applyLabsSplitterLayout();
+  let registry;
+  try{registry=runtimeLabRegistry(state.labs.registry)}
+  catch(error){$('#labsTree').innerHTML=`<div class="info-card bad">${esc(error.message)}</div>`;return}
+  ensureLabsSelection(registry);
+  $('#labsTree').innerHTML=renderLabsTree(registry);
+  fillLabsEditor(registry);
+  bindLabsView(registry);
+  renderLabsPreview();
+}
+function uniqueLabPresetId(lab,base){
+  const existing=new Set((lab.presets||[]).map(preset=>preset.id));
+  let id=M.normalizeId(base||'preset').slice(0,70)||'preset',candidate=id,count=2;
+  while(existing.has(candidate))candidate=`${id}_${count++}`;
+  return candidate;
+}
+async function saveLabPresetFromWorkspace(){
+  try{
+    const labsDir=await writableLabRegistryDirectory();
+    const opened=await readNamedJson(labsDir,'registry.json');
+    const raw=validateLabRegistry(opened.data);
+    const before=clone(raw);
+    const lab=raw.labs.find(current=>current.id===state.labs.selectedLabId)||raw.labs[0];
+    if(!lab)throw new Error('Δεν υπάρχει εργαστήριο για αποθήκευση preset.');
+    const title=$('#labsEditorTitle').value.trim()||'Νέο preset';
+    const id=uniqueLabPresetId(lab,$('#labsEditorId').value.trim()||title);
+    const query=queryTextToObject($('#labsEditorParams').value);
+    const src=($('#labsEditorUrl')?.value||'').trim();
+    const width=Number($('#labsEditorWidth').value)||560;
+    const preset={
+      id,
+      title,
+      status:$('#labsEditorStatus').value||'ready',
+      description:$('#labsEditorDescription').value.trim(),
+      query,
+      layout:{placement:$('#labsEditorPlacement').value||'wide',widthPx:width,aspectRatio:$('#labsEditorAspect').value.trim()||'16/9'},
+      sourcePresetId:state.labs.selectedPresetId||'',
+      createdAt:new Date().toISOString()
+    };
+    try{
+      const sceneUrl=new URL(src,location.href),baseUrl=new URL(lab.baseUrl||location.href,location.href);
+      sceneUrl.search='';baseUrl.search='';
+      if(sceneUrl.href!==baseUrl.href)preset.url=sceneUrl.href;
+    }catch(_error){}
+    lab.presets=Array.isArray(lab.presets)?lab.presets:[];
+    lab.presets.push(preset);
+    raw.updatedAt=new Date().toISOString();
+    await writeJsonFile(labsDir,'registry.json',raw);
+    pushLabRegistryHistory('Νέο preset σκηνής',before,raw);
+    invalidateLabRegistry();
+    state.labs.selectedLabId=lab.id;
+    state.labs.selectedPresetId=id;
+    await loadLabRegistry();
+    renderLabsView();
+    renderChrome();
+    setStatus(`Αποθηκεύτηκε νέο preset σκηνής: ${title}.`, 'good');
+  }catch(error){
+    modal('Αποθήκευση preset σκηνής',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+function readCustomLabPresets(){
+  try{
+    const raw=JSON.parse(storage.get(LAB_CUSTOM_PRESETS_KEY,'[]'));
+    return Array.isArray(raw)?raw:[];
+  }catch{return[]}
+}
+function writeCustomLabPresets(presets){
+  storage.set(LAB_CUSTOM_PRESETS_KEY,JSON.stringify(Array.isArray(presets)?presets:[]));
+}
+function urlOrigin(value=''){
+  try{return new URL(value,location.href).origin}catch{return''}
+}
+function labForSceneUrl(registry,src=''){
+  const origin=urlOrigin(src);
+  if(!origin)return null;
+  return (registry.labs||[]).find(lab=>urlOrigin(lab.baseUrl)===origin)||null;
+}
+function sceneQueryObject(src=''){
+  try{
+    const url=new URL(src,location.href),out={};
+    url.searchParams.forEach((value,key)=>{out[key]=value});
+    return out;
+  }catch{return{}}
+}
+function queryObjectToText(query={}){
+  return Object.entries(query||{}).map(([key,value])=>`${key}=${value}`).join('\n');
+}
+function queryTextToObject(text=''){
+  const out={};
+  String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).forEach(line=>{
+    const cut=line.indexOf('=');
+    if(cut<0)out[line]='1';
+    else out[line.slice(0,cut).trim()]=line.slice(cut+1).trim();
+  });
+  return out;
+}
+const LAB_PARAM_LABELS={
+  scene:'Σκηνή',
+  preset:'Προβολή / preset',
+  state:'Κατάσταση',
+  layout:'Διάταξη',
+  graphs:'Γραφήματα',
+  layers:'Στρώσεις / στοιχεία',
+  timePreset:'Χρονική στιγμή',
+  printPreset:'Στιγμή εκτύπωσης',
+  controlsMode:'Χειριστήρια',
+  allowedControls:'Επιτρεπτά κουμπιά',
+  play:'Αυτόματη κίνηση',
+  zoom:'Μεγέθυνση',
+  t:'Χρόνος',
+  time:'Χρόνος',
+  view:'Προβολή',
+  showPosition:'Θέση',
+  showVelocity:'Ταχύτητα',
+  showAcceleration:'Επιτάχυνση',
+  showForce:'Δύναμη',
+  showEnergy:'Ενέργεια',
+  showClock:'Χρονόμετρο'
+};
+function labParamLabel(key){
+  return LAB_PARAM_LABELS[key]||key;
+}
+function labParamKeys(lab,query={}){
+  const discovered=[];
+  (lab?.presets||[]).forEach(preset=>{
+    Object.keys(preset.query||{}).forEach(key=>discovered.push(key));
+    Object.keys(preset.printQuery||{}).forEach(key=>discovered.push(key));
+    Object.keys(sceneQueryObject(preset.url||'')).forEach(key=>discovered.push(key));
+  });
+  return [...new Set([...discovered,...Object.values(lab?.parameterMap||{}),...Object.keys(query||{})].filter(Boolean))];
+}
+function labParamValues(lab,key){
+  const values=[];
+  (lab?.presets||[]).forEach(preset=>{
+    const query=Object.assign({},sceneQueryObject(preset.url||''),preset.query||{},preset.printQuery||{});
+    if(Object.prototype.hasOwnProperty.call(query,key))values.push(String(query[key]));
+  });
+  return [...new Set(values.filter(value=>value!==''))];
+}
+function labParamOptionsHtml(lab,query,selected){
+  return labParamKeys(lab,query).map(key=>`<option value="${esc(key)}" ${key===selected?'selected':''}>${esc(labParamLabel(key))} (${esc(key)})</option>`).join('');
+}
+function srcWithQuery(baseSrc,query={}){
+  const url=new URL(baseSrc||location.href,location.href);
+  url.search='';
+  Object.entries(query||{}).forEach(([key,value])=>{
+    if(value!==undefined&&value!==null&&String(value)!=='')url.searchParams.set(key,String(value));
+  });
+  return url.href;
+}
+function appendLabPreset(lab,preset){
+  if(!lab||!preset)return;
+  lab.presets=Array.isArray(lab.presets)?lab.presets:[];
+  const src=String(preset.url||'');
+  if(src&&lab.presets.some(current=>String(current.url||'')===src))return;
+  const id=String(preset.id||'').trim();
+  if(id&&lab.presets.some(current=>current.id===id))return;
+  lab.presets.push(preset);
+}
+function discoverLabPresets(registry){
+  const out=[];
+  const books=[];
+  if(has())books.push({name:session.book.meta?.title||state.name||'Ανοιχτό βιβλίο',book:session.book});
+  (state.library.entries||[]).forEach(entry=>{if(entry.book)books.push({name:entry.title||entry.name||'Βιβλίο',book:entry.book})});
+  books.forEach(source=>{
+    (source.book.pages||[]).forEach((p,pageIndex)=>{
+      const scenesById=new Map((p.items||[]).filter(current=>current.type==='scene'&&current.id).map(current=>[current.id,current]));
+      (p.items||[]).forEach((current,itemIndex)=>{
+      if(current.type!=='scene'||!String(current.src||'').trim())return;
+      const lab=labForSceneUrl(registry,current.src);
+      if(!lab)return;
+      const title=String(current.title||current.caption||`Σκηνή σελ. ${pageIndex+1}`).trim();
+      out.push({
+        labId:lab.id,
+        preset:{
+          id:M.normalizeId(`found_${lab.id}_${source.name}_${title}_${pageIndex+1}_${itemIndex+1}`).slice(0,80),
+          title:`${title} · από ${source.name}`,
+          status:'ready',
+          discovered:true,
+          description:`Εύρημα από υπάρχον βιβλίο: ${source.name}.`,
+          url:String(current.src),
+          layout:clone(current.layout||{})
+        }
+      });
+    });
+      (p.items||[]).forEach((current,itemIndex)=>{
+        if(current.type!=='interactive_callout'||!Array.isArray(current.sequenceSteps)||!current.sequenceSteps.length)return;
+        const scene=scenesById.get(current.sequenceSceneId)||null;
+        if(!scene||!String(scene.src||'').trim())return;
+        const lab=labForSceneUrl(registry,scene.src);
+        if(!lab)return;
+        current.sequenceSteps.forEach((step,stepIndex)=>{
+          const title=String(step.title||step.printPreset||step.preset||`Βήμα ${stepIndex+1}`).trim();
+          out.push({
+            labId:lab.id,
+            preset:{
+              id:M.normalizeId(`found_${lab.id}_${source.name}_${title}_${pageIndex+1}_${itemIndex+1}_${stepIndex+1}`).slice(0,80),
+              title:`${title} · ακολουθία από ${source.name}`,
+              status:'ready',
+              discovered:true,
+              description:`Εύρημα από sequence step υπάρχοντος βιβλίου: ${source.name}.`,
+              url:BookCore.sequenceSceneUrl(scene.src,step),
+              query:Object.assign({},step.preset?{preset:step.preset}:{},step.printPreset?{printPreset:step.printPreset}:{},step.state||{},step.printQuery||{}),
+              layout:clone(scene.layout||{})
+            }
+          });
+        });
+      });
+    });
+  });
+  return out;
+}
+function runtimeLabRegistry(rawRegistry){
+  const registry=clone(rawRegistry||{labs:[]});
+  discoverLabPresets(registry).forEach(entry=>{
+    const lab=(registry.labs||[]).find(current=>current.id===entry.labId);
+    appendLabPreset(lab,entry.preset);
+  });
+  readCustomLabPresets().forEach(entry=>{
+    const lab=(registry.labs||[]).find(current=>current.id===entry.labId);
+    appendLabPreset(lab,{...(entry.preset||{}),custom:true});
+  });
+  return registry;
+}
+function selectedLabPreset(registry,labId,presetId){
+  const lab=(registry.labs||[]).find(current=>current.id===labId)||registry.labs?.[0]||null;
+  const preset=(lab?.presets||[]).find(current=>current.id===presetId)||lab?.presets?.[0]||null;
+  return{lab,preset};
+}
+function buildLabSceneSrc(lab,preset,print=false){
+  const base=lab?.baseUrl||location.href;
+  const url=new URL(preset?.url||preset?.path||'',base);
+  const query=Object.assign({},lab?.defaultQuery||{},preset?.query||{},print?preset?.printQuery||{}:{});
+  Object.entries(query).forEach(([key,value])=>{
+    if(value===undefined||value===null||value==='') url.searchParams.delete(key);
+    else url.searchParams.set(key,String(value));
+  });
+  return url.href;
+}
+function presetQueryForDialog(lab,preset){
+  const base=buildLabSceneSrc(lab,preset,false);
+  return sceneQueryObject(base);
+}
+function labSceneInfoHtml(lab,preset){
+  if(!lab||!preset)return'<div class="lab-scene-info">Δεν υπάρχει διαθέσιμο preset.</div>';
+  const status=String(preset.status||'ready');
+  const text=status==='planned'
+    ? 'Προβλεπόμενο preset: δηλώνεται στο συμβόλαιο, αλλά δεν φορτώνεται ως πραγματική σκηνή μέχρι να το υποστηρίξει η εξωτερική εφαρμογή.'
+    : 'Έτοιμο preset: υπάρχει ως κλήση εξωτερικής εφαρμογής.';
+  return `<div class="lab-scene-info ${status==='planned'?'planned':''}"><b>${esc(preset.title||preset.id)}</b><br>${esc(preset.description||'')}<br><span>${esc(text)}</span></div>`;
+}
+function updateLabSceneDialog(registry){
+  const labSelect=$('#labSceneLab'),presetSelect=$('#labScenePreset'),info=$('#labSceneInfo'),src=$('#labSceneSrc'),title=$('#labSceneTitle'),caption=$('#labSceneCaption'),params=$('#labSceneParams');
+  if(!labSelect||!presetSelect)return;
+  const {lab}=selectedLabPreset(registry,labSelect.value,presetSelect.value);
+  const previous=presetSelect.value;
+  presetSelect.innerHTML=(lab?.presets||[]).map(preset=>`<option value="${esc(preset.id)}">${esc(preset.title||preset.id)}${preset.status==='planned'?' · προβλεπόμενο':''}</option>`).join('');
+  if((lab?.presets||[]).some(preset=>preset.id===previous))presetSelect.value=previous;
+  const current=selectedLabPreset(registry,labSelect.value,presetSelect.value);
+  if(info)info.innerHTML=labSceneInfoHtml(current.lab,current.preset);
+  const built=current.lab&&current.preset?buildLabSceneSrc(current.lab,current.preset,false):'';
+  if(src)src.value=built;
+  if(params)params.value=current.lab&&current.preset?queryObjectToText(presetQueryForDialog(current.lab,current.preset)):'';
+  if(title&&!title.dataset.touched)title.value=current.preset?.title||current.lab?.title||'Ζωντανή σκηνή';
+  if(caption&&!caption.dataset.touched)caption.value=current.preset?.description||'';
+}
+function syncLabUrlFromParams(){
+  const src=$('#labSceneSrc'),params=$('#labSceneParams');
+  if(!src||!params)return;
+  try{src.value=srcWithQuery(src.value,queryTextToObject(params.value))}catch(_error){}
+}
+function saveLabCustomPreset(lab,preset,title,src,caption,layout){
+  const name=$('#labSceneCustomName')?.value.trim()||title;
+  const id=M.normalizeId(`custom_${lab.id}_${name}_${Date.now()}`).slice(0,80);
+  const saved=readCustomLabPresets();
+  saved.push({labId:lab.id,preset:{id,title:name,status:'ready',description:caption||`Προσωπική παραλλαγή από ${preset.title||preset.id}.`,url:src,layout:clone(layout),sourcePresetId:preset.id}});
+  writeCustomLabPresets(saved);
+  state.labs.registry=null;
+}
+async function insertLabScene(){
+  if(!page())return;
+  let registry;
+  try{registry=await loadLabRegistry()}catch(error){modal('Βιβλιοθήκη εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);return}
+  const firstLab=registry.labs?.[0],firstPreset=firstLab?.presets?.[0];
+  if(!firstLab||!firstPreset){modal('Βιβλιοθήκη εργαστηρίων','<div class="info-card warn">Δεν υπάρχουν δηλωμένα εργαστήρια.</div>');return}
+  const labOptions=registry.labs.map(lab=>`<option value="${esc(lab.id)}">${esc(lab.title||lab.id)}</option>`).join('');
+  const html=`<div class="lab-scene-dialog">
+    <div class="lab-grid">
+      <label>Εργαστήριο<select id="labSceneLab">${labOptions}</select></label>
+      <label>Preset<select id="labScenePreset"></select></label>
+      <label>Θέση εισαγωγής<select id="labScenePlacement"><option value="after">Μετά την επιλογή</option><option value="before">Πριν από την επιλογή</option></select></label>
+      <label>Τίτλος<input id="labSceneTitle"></label>
+    </div>
+    <label>Λεζάντα<textarea id="labSceneCaption"></textarea></label>
+    <label>Παράμετροι URL — μία γραμμή key=value<textarea id="labSceneParams" class="monospace-input"></textarea></label>
+    <label>URL σκηνής<textarea id="labSceneSrc" class="monospace-input"></textarea></label>
+    <label class="check-row"><input type="checkbox" id="labSceneSaveCustom"> Αποθήκευση ως προσωπικό preset</label>
+    <label>Όνομα προσωπικού preset<input id="labSceneCustomName" placeholder="π.χ. Η δική μου σκηνή"></label>
+    <div id="labSceneInfo" class="lab-scene-info"></div>
+  </div>`;
+  const pending=modal('Σκηνή από βιβλιοθήκη εργαστηρίων',html,[{label:'Ακύρωση',value:false},{label:'Εισαγωγή σκηνής',value:true,primary:true}]);
+  updateLabSceneDialog(registry);
+  $('#labSceneLab')?.addEventListener('change',()=>updateLabSceneDialog(registry));
+  $('#labScenePreset')?.addEventListener('change',()=>updateLabSceneDialog(registry));
+  $('#labSceneParams')?.addEventListener('input',syncLabUrlFromParams);
+  $('#labSceneTitle')?.addEventListener('input',event=>{event.target.dataset.touched='1'});
+  $('#labSceneCaption')?.addEventListener('input',event=>{event.target.dataset.touched='1'});
+  const accepted=await pending;
+  if(!accepted)return;
+  const {lab,preset}=selectedLabPreset(registry,$('#labSceneLab').value,$('#labScenePreset').value);
+  if(!lab||!preset)return;
+  if(preset.status==='planned'){
+    modal('Προβλεπόμενη σκηνή',`<div class="info-card warn">Το preset «${esc(preset.title||preset.id)}» υπάρχει στο μητρώο ως ανάγκη/σχέδιο, αλλά η εξωτερική εφαρμογή δεν το υποστηρίζει ακόμα. Δεν θα εισαχθεί σκηνή που θα έδειχνε λάθος προεπιλογή.</div>`);
+    return;
+  }
+  const placement=$('#labScenePlacement').value==='before'?'before':'after';
+  const src=$('#labSceneSrc').value.trim()||buildLabSceneSrc(lab,preset,false);
+  const title=$('#labSceneTitle').value.trim()||preset.title||lab.title||'Ζωντανή σκηνή';
+  const caption=$('#labSceneCaption').value.trim();
+  const layout=Object.assign({placement:'wide',widthPx:560,aspectRatio:'16/9'},preset.layout||{});
+  if($('#labSceneSaveCustom')?.checked)saveLabCustomPreset(lab,preset,title,src,caption,layout);
+  mutate(`Σκηνή εργαστηρίου: ${title}`,book=>{
+    const p=page();
+    let index;
+    if(item()) index=itemIndex()+(placement==='after'?1:0);
+    else index=placement==='before'?0:p.items.length;
+    const data=M.createItem('scene',{
+      title,
+      caption,
+      src,
+      layout,
+      print:{snapshot:true},
+      sourceRef:{kind:'lab-registry',registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,labId:lab.id,presetId:preset.id},
+      extensions:{lab:{registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,registrySource:state.labs.source||'',labId:lab.id,labTitle:lab.title||'',presetId:preset.id,presetTitle:preset.title||'',status:preset.status||'ready',insertedAt:new Date().toISOString()}}
+    });
+    const result=C.Operations.insertItem(book,p.id,index,'scene',data);
+    const created=book.pages.find(x=>x.id===result.pageId).items.find(x=>x.id===result.itemId);
+    ensureNewItemLayout(created);
+    return result;
+  });
+  state.tab='item';
+  if(preset.status==='planned')setStatus(`Προστέθηκε προβλεπόμενη σκηνή «${title}». Θα εμφανιστεί σωστά όταν η εξωτερική εφαρμογή υποστηρίξει το preset.`, 'warn');
+}
 async function attachStaticBook(book,mode,name,bookUrl,bookBase,source=null,report=null){
   session.attachBook(book,{directoryHandle:null,bookFileHandle:null,imagesDirectoryHandle:null});
   state.paginationReconciliation=reconcilePaginationCertification(session.book);
@@ -287,6 +1027,7 @@ async function openStaticBookUrl(bookUrl,bookBase=null,name=''){
   setStatus(`Άνοιξε στατική δοκιμαστική μετατροπή v4 · ${defaultsAdded} κανόνες ροής.`,'warn');
 }
 async function scanStaticLibrary(rootUrl=configuredStaticLibraryRoot(),quiet=false){
+  invalidateLabRegistry();
   state.library.loading=true;state.library.error='';state.library.staticRootUrl=rootUrl.href;state.library.booksHandle=null;renderLibrary();const entries=[];
   try{
     const response=await fetch(rootUrl.href,{cache:'no-store'});
@@ -300,6 +1041,7 @@ async function scanStaticLibrary(rootUrl=configuredStaticLibraryRoot(),quiet=fal
       .filter(url=>url.href.startsWith(rootUrl.href)&&url.pathname.endsWith('/'));
     for(const folderUrl of folders){
       const name=decodeURIComponent(folderUrl.pathname.replace(/\/$/,'').split('/').pop()||'');
+      if(isLibraryInfrastructureFolder(name))continue;
       try{
         const bookUrl=new URL('book.json',folderUrl).href,book=await fetchJson(bookUrl),canonical=book?.schemaVersion===M.SCHEMA_VERSION,meta=libraryMetadata(book);
         entries.push({name,static:true,staticBookUrl:bookUrl,staticBookBase:folderUrl.href,book,title:libraryBookTitle(book,name),canonical,pages:(book.pages||[]).length,items:(book.pages||[]).reduce((n,p)=>n+(p.items||[]).length,0),updated:0,version:book?.meta?.authoringVersion||book?.schemaVersion||'—',layoutState:book?.extensions?.paginationStatus||'',discipline:meta.discipline,level:meta.level,category:meta.category,status:meta.status,tags:meta.tags,error:''});
@@ -315,7 +1057,7 @@ async function scanStaticLibrary(rootUrl=configuredStaticLibraryRoot(),quiet=fal
 }
 async function chooseLibrary(){
   if(!filesystemAccessAvailable()){await scanStaticLibrary(configuredStaticLibraryRoot());return}
-  try{const selected=await showDirectoryPicker({mode:'readwrite'}),books=await normalizeLibrarySelection(selected);if(await permissionFor(books,true)!=='granted')throw Error('Δεν δόθηκε άδεια ανάγνωσης και εγγραφής.');state.library.selectedHandle=selected;state.library.booksHandle=books;state.library.error='';await rememberLibraryHandle(books);await scanLibrary();setView('home');setStatus(`Συνδέθηκε η Βιβλιοθήκη: ${books.name}.`,'good')}catch(error){if(error.name==='AbortError')return;state.library.error=error.message;renderLibrary();modal('Βιβλιοθήκη',`<div class="info-card bad">${esc(error.message)}</div>`)}
+  try{const selected=await showDirectoryPicker({mode:'readwrite'}),books=await normalizeLibrarySelection(selected);if(await permissionFor(books,true)!=='granted')throw Error('Δεν δόθηκε άδεια ανάγνωσης και εγγραφής.');state.library.selectedHandle=selected;state.library.booksHandle=books;state.library.error='';invalidateLabRegistry();clearLabRegistryHistory();await rememberLibraryHandle(books);await scanLibrary();setView('home');setStatus(`Συνδέθηκε η Βιβλιοθήκη: ${books.name}.`,'good')}catch(error){if(error.name==='AbortError')return;state.library.error=error.message;renderLibrary();modal('Βιβλιοθήκη',`<div class="info-card bad">${esc(error.message)}</div>`)}
 }
 async function restoreLibrary(){if(state.library.restored)return;state.library.restored=true;if(!filesystemAccessAvailable()){await scanStaticLibrary(configuredStaticLibraryRoot(),true);return}const handle=await recalledLibraryHandle();if(!handle){renderLibrary();return}state.library.booksHandle=handle;const permission=await permissionFor(handle,false);if(permission==='granted')await scanLibrary();else{state.library.error='Ο αποθηκευμένος φάκελος χρειάζεται νέα άδεια. Πάτησε «Σύνδεση φακέλου books». ';renderLibrary()}}
 function libraryBookTitle(book,folder){return String(book?.meta?.title||book?.meta?.projectId||folder||'Χωρίς τίτλο')}
@@ -327,9 +1069,10 @@ function libraryCompare(a,b,key,dir){const av=librarySortValue(a,key),bv=library
 function libraryVisibleEntries(){const f=state.library.filters,q=String(f.query||'').trim().toLocaleLowerCase('el');return state.library.entries.filter(entry=>{const text=[entry.title,entry.name,entry.discipline,entry.level,entry.category,entry.status,...(entry.tags||[])].join(' ').toLocaleLowerCase('el');return(!q||text.includes(q))&&(!f.discipline||entry.discipline===f.discipline)&&(!f.level||entry.level===f.level)&&(!f.status||entry.status===f.status)}).sort((a,b)=>libraryCompare(a,b,state.library.sortKey,state.library.sortDir))}
 function libraryFilterOptions(id,values,current){const node=$(id);if(!node)return;const label=node.options[0]?.textContent||'Όλα';node.innerHTML=`<option value="">${esc(label)}</option>`+[...new Set(values.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'el')).map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('');node.value=current||''}
 async function scanLibrary(){
+  invalidateLabRegistry();
   if(!state.library.booksHandle&&state.library.staticRootUrl){await scanStaticLibrary(new URL(state.library.staticRootUrl,location.href));return}
   const root=state.library.booksHandle;if(!root)return renderLibrary();state.library.loading=true;state.library.error='';renderLibrary();const entries=[];
-  try{if(await permissionFor(root,false)!=='granted')throw Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια.');for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||name.startsWith('.'))continue;try{const opened=await readNamedJson(handle,'book.json'),file=await opened.handle.getFile(),book=opened.data,canonical=book?.schemaVersion===M.SCHEMA_VERSION,meta=libraryMetadata(book);entries.push({name,handle,fileHandle:opened.handle,book,title:libraryBookTitle(book,name),canonical,pages:(book.pages||[]).length,items:(book.pages||[]).reduce((n,p)=>n+(p.items||[]).length,0),updated:file.lastModified,version:book?.meta?.authoringVersion||book?.schemaVersion||'—',layoutState:book?.extensions?.paginationStatus||'',discipline:meta.discipline,level:meta.level,category:meta.category,status:meta.status,tags:meta.tags,error:''})}catch(error){entries.push({name,handle,title:name,canonical:false,pages:0,items:0,updated:0,version:'—',layoutState:'',discipline:'',level:'',category:'',status:'',tags:[],error:error.message})}}
+  try{if(await permissionFor(root,false)!=='granted')throw Error('Ο φάκελος Βιβλιοθήκης δεν έχει ενεργή άδεια.');for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||name.startsWith('.')||isLibraryInfrastructureFolder(name))continue;try{const opened=await readNamedJson(handle,'book.json'),file=await opened.handle.getFile(),book=opened.data,canonical=book?.schemaVersion===M.SCHEMA_VERSION,meta=libraryMetadata(book);entries.push({name,handle,fileHandle:opened.handle,book,title:libraryBookTitle(book,name),canonical,pages:(book.pages||[]).length,items:(book.pages||[]).reduce((n,p)=>n+(p.items||[]).length,0),updated:file.lastModified,version:book?.meta?.authoringVersion||book?.schemaVersion||'—',layoutState:book?.extensions?.paginationStatus||'',discipline:meta.discipline,level:meta.level,category:meta.category,status:meta.status,tags:meta.tags,error:''})}catch(error){entries.push({name,handle,title:name,canonical:false,pages:0,items:0,updated:0,version:'—',layoutState:'',discipline:'',level:'',category:'',status:'',tags:[],error:error.message})}}
     state.library.entries=entries;
   }catch(error){state.library.error=error.message;state.library.entries=[]}finally{state.library.loading=false;renderLibrary()}
 }
@@ -617,8 +1360,24 @@ function moveAcross(direction){mutate(direction==='prev'?'Μεταφορά στ�
 function splitPage(){mutate('Νέα σελίδα από εδώ',book=>C.Operations.splitPage(book,page().id,item().id));}
 function cloneSelected(){if(item())mutate('Κλωνοποίηση στοιχείου',book=>C.Operations.cloneItem(book,page().id,item().id));else mutate('Κλωνοποίηση σελίδας',book=>C.Operations.clonePage(book,page().id));}
 
-function undo(){if(session.undo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Αναίρεση.');}}
-function redo(){if(session.redo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Επανάληψη.');}}
+async function undo(){
+  if(state.view==='labs'&&state.labs.undoStack.length){
+    const entry=state.labs.undoStack.pop();
+    state.labs.redoStack.push(entry);
+    await applyLabRegistrySnapshot(entry.before,`Αναίρεση μητρώου: ${entry.label}.`);
+    return;
+  }
+  if(session.undo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Αναίρεση.');}
+}
+async function redo(){
+  if(state.view==='labs'&&state.labs.redoStack.length){
+    const entry=state.labs.redoStack.pop();
+    state.labs.undoStack.push(entry);
+    await applyLabRegistrySnapshot(entry.after,`Επανάληψη μητρώου: ${entry.label}.`);
+    return;
+  }
+  if(session.redo()){state.audit=M.auditIntegrity(session.book);state.compatibility=BookCore.auditData(session.book);renderAll();setStatus('Επανάληψη.');}
+}
 
 function select(pageId,itemId=null,source=''){
   session.selection={pageId,itemId};
@@ -998,7 +1757,7 @@ function commandEnabled(cmd){
   const canItem=!!item();
   const pi=pageIndex();
   const rules={
-    'new-book':true,'open-book':true,'open-candidate':true,'choose-library':true,'refresh-library':!!(state.library.booksHandle||state.library.staticRootUrl)&&!state.library.loading,'home':true,'help':true,'about':true,
+    'new-book':true,'open-book':true,'open-candidate':true,'choose-library':true,'refresh-library':!!(state.library.booksHandle||state.library.staticRootUrl)&&!state.library.loading,'reload-lab-registry':!state.labs.loading,'labs-workspace':!!state.library.booksHandle&&!state.labs.loading,'open-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'backup-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'restore-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'home':true,'help':true,'about':true,
     'new-docx':!state.busy,'insert-docx':has()&&!state.busy&&!!session.directoryHandle,'inline-equation':!!(activeRichContext?.surface?.isConnected||(['paragraph','note','side_note'].includes(item()?.type))),'docx-audit':!!state.docx.result,'clean-assets':false,
     'save':has()&&state.mode!=='migration'&&(session.isDirty()||state.mode==='new'||state.mode==='candidate'),
     'save-candidate':has()&&state.mode==='migration',
@@ -1006,8 +1765,8 @@ function commandEnabled(cmd){
     'reader':has()&&!!(session.directoryHandle||state.staticBookBase),
     'print':has()&&!!(session.directoryHandle||state.staticBookBase),
     'close-book':has(),
-    'undo':has()&&session.commandStack.undoStack.length>0,
-    'redo':has()&&session.commandStack.redoStack.length>0,
+    'undo':(has()&&session.commandStack.undoStack.length>0)||(state.view==='labs'&&state.labs.undoStack.length>0),
+    'redo':(has()&&session.commandStack.redoStack.length>0)||(state.view==='labs'&&state.labs.redoStack.length>0),
     'clone':canItem||canPage,
     'delete':canItem||canPage,
     'move-up':canItem&&itemIndex()>0,
@@ -1016,6 +1775,7 @@ function commandEnabled(cmd){
     'move-next-page':canItem,
     'split-page':canItem,
     'insert-item':canPage,
+    'insert-lab-scene':canPage,
     'insert-item-before':canPage,
     'insert-item-after':canPage,
     'insert-page':has(),
@@ -1104,6 +1864,259 @@ function prop(label,path,value,options={}){
     return {pageId:page()?.id||book.pages[0].id,itemId:item()?.id||null};
   });
   if(options.tab) state.tab=options.tab;
+}
+
+function linesValue(value){
+  return String(value??'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+}
+
+function jsonObjectText(value){
+  return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length?JSON.stringify(value,null,2):'';
+}
+
+function setJsonObject(label,path,text){
+  const raw=String(text??'').trim();
+  if(!raw){prop(label,path,{});return}
+  try{
+    const parsed=JSON.parse(raw);
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('Το πεδίο πρέπει να είναι αντικείμενο JSON, π.χ. {"t":0}.');
+    prop(label,path,parsed);
+  }catch(error){
+    modal(label,`<div class="info-card bad">${esc(error.message)}</div>`);
+  }
+}
+
+function selectedItemIn(book){
+  const selectedPage=book.pages.find(p=>p.id===session.selection.pageId)||book.pages[0];
+  const selectedItem=selectedPage?.items?.find(current=>current.id===session.selection.itemId)||null;
+  return selectedPage&&selectedItem?{page:selectedPage,item:selectedItem}:null;
+}
+
+function mutateSequenceSteps(label,operation){
+  mutate(label,book=>{
+    const selected=selectedItemIn(book);
+    if(!selected||selected.item.type!=='interactive_callout')throw Error('Δεν έχει επιλεγεί πλαίσιο οδηγιών.');
+    selected.item.sequenceSteps=Array.isArray(selected.item.sequenceSteps)?selected.item.sequenceSteps:[];
+    operation(selected.item.sequenceSteps,selected.item);
+    if(selected.item.sequenceSteps.length&&!selected.item.sequenceDisplayMode)selected.item.sequenceDisplayMode='expanded';
+    if(selected.item.sequenceSteps.length)selected.item.print=Object.assign({expand:'per-step',snapshotScene:true},selected.item.print||{});
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
+}
+
+function newSequenceStepFromCallout(current,index=0){
+  return {
+    title:`${index+1}. Νέο βήμα`,
+    preset:'',
+    state:{play:false,t:0},
+    setupChips:clone(current.setupChips||[]),
+    pressChips:clone(current.pressChips||[]),
+    observeItems:clone(current.observeItems||[]),
+    conclusionItems:clone(current.conclusionItems||[])
+  };
+}
+
+function defaultExtras(value={}){
+  return {
+    title:String(value?.title||'Πρόσθετο υλικό'),
+    collapsedInBook:value?.collapsedInBook!==false,
+    print:value?.print!==false,
+    items:Array.isArray(value?.items)?clone(value.items):[]
+  };
+}
+
+function extrasItemsText(extras={}){
+  return (Array.isArray(extras.items)?extras.items:[]).map(entry=>String(entry?.text||'').trim()).filter(Boolean).join('\n');
+}
+
+function extrasAnswersText(extras={}){
+  return (Array.isArray(extras.items)?extras.items:[]).map(entry=>String(entry?.answer||'').trim()).join('\n---\n');
+}
+
+function extrasItemsFromText(text='',previous=[]){
+  const old=Array.isArray(previous)?previous:[];
+  return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map((line,index)=>({
+    type:old[index]?.type||'question',
+    label:old[index]?.label||'',
+    text:line,
+    answer:String(old[index]?.answer||''),
+    answerLines:Number(old[index]?.answerLines)||0
+  }));
+}
+
+function renderExtrasFields(parent,extras,path,label='Πρόσθετο υλικό'){
+  const value=defaultExtras(extras);
+  const box=document.createElement('div');
+  box.className='extras-editor';
+  box.innerHTML=`<div class="extras-editor-title">${esc(label)}</div>`;
+  box.append(
+    field('Τίτλος',value.title,v=>prop('Τίτλος πρόσθετου υλικού',[...path,'title'],v)),
+    check('Κλειστό στο βιβλίο',value.collapsedInBook,v=>prop('Πρόσθετο υλικό κλειστό στο βιβλίο',[...path,'collapsedInBook'],v)),
+    check('Να μπαίνει στην εκτύπωση',value.print,v=>prop('Πρόσθετο υλικό στην εκτύπωση',[...path,'print'],v)),
+    field('Ερωτήσεις / προβληματισμοί — μία γραμμή ανά στοιχείο',extrasItemsText(value),v=>prop('Στοιχεία πρόσθετου υλικού',[...path,'items'],extrasItemsFromText(v,value.items)),'textarea',null,{rows:4}),
+    field('Κρυμμένες απαντήσεις — χώρισε απαντήσεις με ---',extrasAnswersText(value),v=>{
+      const answers=String(v).split(/\r?\n---\r?\n/).map(x=>x.trim());
+      const next=(value.items||[]).map((entry,index)=>({...entry,answer:answers[index]||''}));
+      prop('Απαντήσεις πρόσθετου υλικού',[...path,'items'],next);
+    },'textarea',null,{rows:4}),
+    field('Γραμμές απάντησης ανά στοιχείο',value.items.map(entry=>Number(entry?.answerLines)||0).join('\n'),v=>{
+      const lines=String(v).split(/\r?\n/).map(x=>Math.max(0,Math.min(12,Number(x)||0)));
+      const next=(value.items||[]).map((entry,index)=>({...entry,answerLines:lines[index]||0}));
+      prop('Γραμμές απάντησης πρόσθετου υλικού',[...path,'items'],next);
+    },'textarea',null,{rows:3})
+  );
+  parent.appendChild(box);
+}
+
+function renderInteractiveCalloutEditor(cf,current,base){
+  cf.append(
+    field('Τίτλος',current.title||'',v=>prop('Τίτλος callout',[...base,'title'],v)),
+    field('Label ρύθμισης',current.setupLabel||'Ρύθμισε',v=>prop('Label ρύθμισης',[...base,'setupLabel'],v)),
+    field('Chips ρύθμισης — μία ανά γραμμή',(current.setupChips||[]).join('\n'),v=>prop('Chips ρύθμισης',[...base,'setupChips'],linesValue(v)),'textarea'),
+    field('Label πλήκτρων',current.pressLabel||'Πίεσε',v=>prop('Label πλήκτρων',[...base,'pressLabel'],v)),
+    field('Chips πλήκτρων — μία ανά γραμμή',(current.pressChips||[]).join('\n'),v=>prop('Chips πλήκτρων',[...base,'pressChips'],linesValue(v)),'textarea'),
+    field('Τίτλος παρατήρησης',current.observeTitle||'Παρατήρησε',v=>prop('Τίτλος παρατήρησης',[...base,'observeTitle'],v)),
+    field('Παρατηρήσεις — μία ανά γραμμή',(current.observeItems||[]).join('\n'),v=>prop('Στοιχεία παρατήρησης',[...base,'observeItems'],linesValue(v)),'textarea',null,{rows:5}),
+    field('Τίτλος συμπεράσματος',current.conclusionTitle||'Συμπέρασμα',v=>prop('Τίτλος συμπεράσματος',[...base,'conclusionTitle'],v)),
+    field('Συμπεράσματα — μία ανά γραμμή',(current.conclusionItems||[]).join('\n'),v=>prop('Στοιχεία συμπεράσματος',[...base,'conclusionItems'],linesValue(v)),'textarea',null,{rows:4})
+  );
+  renderExtrasFields(cf,current.extras,[...base,'extras'],'Πρόσθετο υλικό πλαισίου');
+
+  const scenes=[];
+  session.book.pages.forEach(p=>(p.items||[]).forEach(candidate=>{if(candidate.type==='scene')scenes.push(candidate)}));
+  const sceneOptions=[{value:'',label:'Χωρίς σύνδεση'}].concat(scenes.map(scene=>({value:scene.id,label:`${scene.id}${scene.title?' · '+scene.title:''}`})));
+  cf.append(
+    field('Σκηνή ακολουθίας',current.sequenceSceneId||'',v=>prop('Σκηνή ακολουθίας',[...base,'sequenceSceneId'],v),'text',sceneOptions),
+    field('Προβολή βημάτων',current.sequenceDisplayMode||'expanded',v=>prop('Προβολή βημάτων',[...base,'sequenceDisplayMode'],v),'text',[{value:'expanded',label:'Συμπυκνωμένη στο βιβλίο'},{value:'carousel',label:'Με βήματα'}]),
+    field('Αρχικό βήμα',current.sequenceInitialStep||0,v=>prop('Αρχικό βήμα',[...base,'sequenceInitialStep'],Math.max(0,Number(v)||0)),'number',null,{min:0,step:1}),
+    field('Εκτύπωση ακολουθίας',current.print?.expand||'per-step',v=>prop('Εκτύπωση ακολουθίας',[...base,'print','expand'],v),'text',[{value:'per-step',label:'Κάθε βήμα σε δική του σελίδα'},{value:'none',label:'Χωρίς ανάλυση βημάτων'}]),
+    check('Snapshot σκηνής στην εκτύπωση',current.print?.snapshotScene!==false,v=>prop('Snapshot σκηνής ακολουθίας',[...base,'print','snapshotScene'],v))
+  );
+
+  const steps=Array.isArray(current.sequenceSteps)?current.sequenceSteps:[];
+  const tools=document.createElement('div');
+  tools.className='sequence-tools';
+  tools.appendChild(button(steps.length?'Προσθήκη βήματος':'Δημιουργία ακολουθίας από αυτό το πλαίσιο',()=>mutateSequenceSteps('Προσθήκη βήματος ακολουθίας',(sequence,item)=>sequence.push(newSequenceStepFromCallout(item,sequence.length))),'primary-action'));
+  cf.appendChild(tools);
+  if(!steps.length){
+    const note=document.createElement('div');
+    note.className='info-card';
+    note.innerHTML='Το πλαίσιο λειτουργεί ως απλό <b>1+0</b>. Με τη δημιουργία ακολουθίας γίνεται γενική σκηνή με όσα βήματα θέλεις.';
+    cf.appendChild(note);
+    return;
+  }
+
+  const list=document.createElement('div');
+  list.className='sequence-step-editor-list';
+  steps.forEach((step,index)=>{
+    const card=document.createElement('section');
+    card.className='sequence-step-editor';
+    const title=step.title||`Βήμα ${index+1}`;
+    card.innerHTML=`<div class="sequence-step-editor-head"><b>${esc(index+1+'. '+title.replace(/^\d+\.\s*/,''))}</b><span>${esc(step.preset||step.printPreset||'χωρίς preset')}</span></div>`;
+    const actions=document.createElement('div');
+    actions.className='sequence-step-actions';
+    actions.append(
+      button('Πάνω',()=>mutateSequenceSteps('Βήμα πάνω',sequence=>{if(index>0)[sequence[index-1],sequence[index]]=[sequence[index],sequence[index-1]]})),
+      button('Κάτω',()=>mutateSequenceSteps('Βήμα κάτω',sequence=>{if(index<sequence.length-1)[sequence[index+1],sequence[index]]=[sequence[index],sequence[index+1]]})),
+      button('Αντιγραφή',()=>mutateSequenceSteps('Αντιγραφή βήματος',sequence=>sequence.splice(index+1,0,clone(sequence[index])))),
+      button('Διαγραφή',()=>mutateSequenceSteps('Διαγραφή βήματος',sequence=>sequence.splice(index,1)),'danger')
+    );
+    card.appendChild(actions);
+    const path=[...base,'sequenceSteps',index];
+    card.append(
+      field('Τίτλος βήματος',step.title||'',v=>prop('Τίτλος βήματος',[...path,'title'],v)),
+      field('Preset σκηνής',step.preset||'',v=>prop('Preset βήματος',[...path,'preset'],v)),
+      field('Print preset',step.printPreset||'',v=>prop('Print preset βήματος',[...path,'printPreset'],v)),
+      field('Ρύθμισε — chips',(step.setupChips||[]).join('\n'),v=>prop('Ρυθμίσεις βήματος',[...path,'setupChips'],linesValue(v)),'textarea',null,{rows:3}),
+      field('Πίεσε — chips',(step.pressChips||[]).join('\n'),v=>prop('Πλήκτρα βήματος',[...path,'pressChips'],linesValue(v)),'textarea',null,{rows:3}),
+      field('Τίτλος παρατήρησης',step.observeTitle||'',v=>prop('Τίτλος παρατήρησης βήματος',[...path,'observeTitle'],v)),
+      field('Παρατηρήσεις',(step.observeItems||[]).join('\n'),v=>prop('Παρατηρήσεις βήματος',[...path,'observeItems'],linesValue(v)),'textarea',null,{rows:4}),
+      field('Τίτλος συμπεράσματος',step.conclusionTitle||'',v=>prop('Τίτλος συμπεράσματος βήματος',[...path,'conclusionTitle'],v)),
+      field('Συμπεράσματα',(step.conclusionItems||[]).join('\n'),v=>prop('Συμπεράσματα βήματος',[...path,'conclusionItems'],linesValue(v)),'textarea',null,{rows:3}),
+      (()=>{const wrap=document.createElement('div');renderExtrasFields(wrap,step.extras,[...path,'extras'],'Πρόσθετο υλικό βήματος');return wrap})(),
+      field('Κατάσταση σκηνής JSON',jsonObjectText(step.state),v=>setJsonObject('Κατάσταση σκηνής βήματος',[...path,'state'],v),'textarea',null,{rows:4,monospace:true}),
+      field('Επιπλέον query εκτύπωσης JSON',jsonObjectText(step.printQuery),v=>setJsonObject('Query εκτύπωσης βήματος',[...path,'printQuery'],v),'textarea',null,{rows:3,monospace:true})
+    );
+    list.appendChild(card);
+  });
+  cf.appendChild(list);
+}
+
+function selectedListItemIn(book){
+  const selected=selectedItemIn(book);
+  if(!selected||selected.item.type!=='list')throw Error('Δεν έχει επιλεγεί λίστα.');
+  selected.item.items=Array.isArray(selected.item.items)?selected.item.items:[];
+  return selected;
+}
+
+function listEntryFromText(text=''){
+  return {level:0,body:M.createRichText(String(text).trim()?[M.createTextRun(String(text).trim())]:[])};
+}
+
+function mutateListItems(label,operation){
+  mutate(label,book=>{
+    const selected=selectedListItemIn(book);
+    operation(selected.item.items,selected.item);
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
+}
+
+function renderListEditor(cf,current,base){
+  cf.append(
+    check('Αριθμημένη λίστα',!!current.ordered,v=>prop('Τύπος λίστας',[...base,'ordered'],v)),
+    field('Έναρξη αρίθμησης',current.start||1,v=>prop('Έναρξη λίστας',[...base,'start'],Math.max(1,Number(v)||1)),'number',null,{min:1,step:1})
+  );
+  const tools=document.createElement('div');
+  tools.className='list-tools';
+  tools.append(
+    button('Προσθήκη στοιχείου',()=>mutateListItems('Προσθήκη στοιχείου λίστας',items=>items.push(listEntryFromText('Νέο στοιχείο'))),'primary-action'),
+    button('Εφαρμογή γραμμών',()=> {
+      const text=cf.querySelector('[data-list-bulk]')?.value||'';
+      mutateListItems('Μαζική ενημέρωση λίστας',(items,listItem)=>{
+        listItem.items=String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(listEntryFromText);
+      });
+    })
+  );
+  cf.appendChild(tools);
+  const bulkField=field('Γρήγορη επεξεργασία — μία γραμμή ανά στοιχείο',(current.items||[]).map(entry=>M.richTextPlain(entry.body)).join('\n'),()=>{},'textarea',null,{rows:5,wide:true});
+  bulkField.querySelector('textarea')?.setAttribute('data-list-bulk','1');
+  cf.appendChild(bulkField);
+
+  const items=Array.isArray(current.items)?current.items:[];
+  if(!items.length){
+    const note=document.createElement('div');
+    note.className='info-card';
+    note.textContent='Η λίστα είναι κενή. Πάτησε προσθήκη στοιχείου ή γράψε γραμμές στη γρήγορη επεξεργασία.';
+    cf.appendChild(note);
+    return;
+  }
+  const list=document.createElement('div');
+  list.className='list-item-editor-list';
+  items.forEach((entry,index)=>{
+    const card=document.createElement('section');
+    card.className='list-item-editor';
+    card.innerHTML=`<div class="list-item-editor-head"><b>${current.ordered?`${Number(entry.value)||index+Number(current.start||1)}.`:'•'} Στοιχείο ${index+1}</b><span>${esc(M.richTextPlain(entry.body)||'(κενό)')}</span></div>`;
+    const actions=document.createElement('div');
+    actions.className='list-item-actions';
+    actions.append(
+      button('Πάνω',()=>mutateListItems('Στοιχείο λίστας πάνω',items=>{if(index>0)[items[index-1],items[index]]=[items[index],items[index-1]]})),
+      button('Κάτω',()=>mutateListItems('Στοιχείο λίστας κάτω',items=>{if(index<items.length-1)[items[index+1],items[index]]=[items[index],items[index+1]]})),
+      button('Αντιγραφή',()=>mutateListItems('Αντιγραφή στοιχείου λίστας',items=>items.splice(index+1,0,clone(items[index])))),
+      button('Διαγραφή',()=>mutateListItems('Διαγραφή στοιχείου λίστας',items=>items.splice(index,1)),'danger')
+    );
+    card.appendChild(actions);
+    const path=[...base,'items',index];
+    card.append(
+      field('Κείμενο',M.richTextPlain(entry.body),v=>prop('Κείμενο στοιχείου λίστας',[...path,'body'],M.createRichText(String(v).trim()?[M.createTextRun(String(v).trim())]:[])),'textarea',null,{rows:3}),
+      field('Επίπεδο εσοχής',entry.level||0,v=>prop('Επίπεδο στοιχείου λίστας',[...path,'level'],Math.max(0,Number(v)||0)),'number',null,{min:0,step:1}),
+      field('Αριθμός στοιχείου',entry.value??'',v=>{
+        if(v===''||v===null)prop('Αριθμός στοιχείου λίστας',[...path,'value'],undefined);
+        else prop('Αριθμός στοιχείου λίστας',[...path,'value'],Math.max(1,Number(v)||1));
+      },'number',null,{min:1,step:1})
+    );
+    list.appendChild(card);
+  });
+  cf.appendChild(list);
 }
 
 function setRichBodyFromPlain(base,text){
@@ -1453,13 +2466,68 @@ function insertTextAtCursor(textarea,text){
   textarea.focus();
 }
 
+function normalizeEquationSourceForParser(source=''){
+  let value=String(source||'').replace(/\\\\text/g,'\\text');
+  let open=0;
+  const parens=[];
+  let result='';
+  for(const ch of value){
+    if(ch==='{'){
+      open++;
+      result+=ch;
+      continue;
+    }
+    if(ch==='}'){
+      if(open>0){
+        open--;
+        result+=ch;
+      }
+      continue;
+    }
+    if(ch==='('||ch==='['){
+      parens.push(ch);
+      result+=ch;
+      continue;
+    }
+    if(ch===')'||ch===']'){
+      const expected=ch===')'?'(': '[';
+      if(parens.at(-1)===expected){
+        parens.pop();
+        result+=ch;
+      }
+      continue;
+    }
+    result+=ch;
+  }
+  if(open>0) result+='}'.repeat(open);
+  while(parens.length){
+    result+=parens.pop()==='('?')':']';
+  }
+  return result;
+}
+
+function parseEquationSourceForComposer(source='',display='inline'){
+  const original=String(source||'');
+  const attempts=[original];
+  const normalized=normalizeEquationSourceForParser(original);
+  if(normalized!==original) attempts.push(normalized);
+  let lastError=null;
+  for(const candidate of attempts){
+    try{
+      return {source:candidate.trim(),mathml:X.sourceToMathML(candidate,display),normalized:candidate!==original};
+    }catch(error){lastError=error;}
+  }
+  throw lastError || new Error('Δεν αναγνωρίστηκε η εξίσωση.');
+}
+
 function equationComposer({source='',display='inline',title='Εξίσωση',acceptLabel='Εισαγωγή'}={}){
   return new Promise(resolve=>{
+    $('#modalBackdrop .modal-dialog')?.classList.add('equation-dialog');
     $('#modalTitle').textContent=title;
     const body=$('#modalBody');body.innerHTML='';
     const shell=document.createElement('div');shell.className='equation-composer';
     const help=document.createElement('div');help.className='info-card';
-    help.innerHTML='Γράψε απλή μαθηματική έκφραση ή χρησιμοποίησε σύνταξη όπως <code>x^2</code>, <code>E_{max}</code>, <code>\\frac{a}{b}</code>, <code>\\sqrt{x}</code>, <code>\\Delta</code>, <code>\\omega</code>.';
+    help.innerHTML='Γράψε ή συμπλήρωσε την εξίσωση. Δουλεύουν εκφράσεις όπως <code>x^2</code>, <code>φ_{0}</code>, <code>\\frac{x}{A}</code>, <code>\\text{ημ}^{2}(\\omega t + φ_{0})</code>. Για σύστημα σχέσεων χρησιμοποίησε <code>;</code> ανάμεσα στις σχέσεις. Για επόμενο βήμα/ισοδυναμία χρησιμοποίησε <code>||</code>. Τα κουμπιά παρεμβάλλουν έτοιμα κομμάτια στη θέση του δρομέα.';
     const templates=document.createElement('div');templates.className='equation-template-bar';
     const input=document.createElement('textarea');input.className='equation-source-input';input.value=source||'';input.spellcheck=false;
     const preview=document.createElement('div');preview.className='equation-live-preview';
@@ -1467,20 +2535,21 @@ function equationComposer({source='',display='inline',title='Εξίσωση',acc
     X.templates.forEach(template=>{const b=button(template.label,()=>insertTextAtCursor(input,template.insert));b.type='button';templates.appendChild(b);});
     const refresh=()=>{
       try{
-        const mathml=X.sourceToMathML(input.value,display);
-        preview.innerHTML=mathml;status.textContent='Έγκυρη εξίσωση';status.className='equation-parse-status good';
-        input.dataset.mathml=mathml;
-      }catch(error){preview.textContent='—';status.textContent=error.message;status.className='equation-parse-status bad';delete input.dataset.mathml;}
+        const parsed=parseEquationSourceForComposer(input.value,display);
+        preview.innerHTML=parsed.mathml;status.textContent=parsed.normalized?'Έγκυρη εξίσωση · διορθώθηκαν αυτόματα αγκύλες/εντολές':'Έγκυρη εξίσωση';status.className='equation-parse-status good';
+        input.dataset.mathml=parsed.mathml;input.dataset.normalizedSource=parsed.source;
+      }catch(error){preview.textContent='—';status.textContent=error.message;status.className='equation-parse-status bad';delete input.dataset.mathml;delete input.dataset.normalizedSource;}
     };
     input.addEventListener('input',refresh);
     input.addEventListener('keydown',event=>{if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();accept.click();}});
     shell.append(help,templates,input,preview,status);body.appendChild(shell);
     const host=$('#modalButtons');host.innerHTML='';
-    const cancel=button('Ακύρωση',()=>{$('#modalBackdrop').classList.add('hidden');resolve(null);});
+    const closeComposer=value=>{$('#modalBackdrop').classList.add('hidden');$('#modalBackdrop .modal-dialog')?.classList.remove('equation-dialog');resolve(value);};
+    const cancel=button('Ακύρωση',()=>closeComposer(null));
     const accept=button(acceptLabel,()=>{
       refresh();
       if(!input.dataset.mathml){status.textContent='Διόρθωσε πρώτα τη σύνταξη της εξίσωσης.';return;}
-      $('#modalBackdrop').classList.add('hidden');resolve({source:input.value.trim(),mathml:input.dataset.mathml});
+      closeComposer({source:(input.dataset.normalizedSource||input.value).trim(),mathml:input.dataset.mathml});
     },'primary');
     accept.classList.add('primary');host.append(cancel,accept);
     $('#modalBackdrop').classList.remove('hidden');
@@ -1605,7 +2674,7 @@ function renderEquationEditor(cf,current,base){
   const editorSource=current.source||mathMlToEditorSource(current.mathml)||'';
   cf.append(preview,actions,
     field('Πηγή',editorSource,v=>{
-      try{const mathml=X.sourceToMathML(v,'block');mutate('Πηγή εξίσωσης',book=>{const target=book.pages[pageIndex()].items[itemIndex()];target.source=v;target.mathml=mathml;return{pageId:page().id,itemId:target.id};});}
+      try{const parsed=parseEquationSourceForComposer(v,'block');mutate('Πηγή εξίσωσης',book=>{const target=book.pages[pageIndex()].items[itemIndex()];target.source=parsed.source;target.mathml=parsed.mathml;return{pageId:page().id,itemId:target.id};});}
       catch(error){modal('Άκυρη εξίσωση',`<div class="info-card bad">${esc(error.message)}</div>`);}
     },'textarea',null,{rows:4,monospace:true}),
     field('Αριθμός',current.number||'',v=>prop('Αριθμός εξίσωσης',[...base,'number'],v)),
@@ -1850,20 +2919,8 @@ function renderItemProperties(host){
     check('Απόκρυψη λεζάντας',current.hideCaption,v=>prop('Απόκρυψη λεζάντας',[...base,'hideCaption'],v)),
     check('Snapshot στην εκτύπωση',current.print?.snapshot!==false,v=>prop('Snapshot εκτύπωσης',[...base,'print','snapshot'],v))
   );
-  else if(current.type==='interactive_callout') cf.append(
-    field('Τίτλος',current.title||'',v=>prop('Τίτλος callout',[...base,'title'],v)),
-    field('Label ρύθμισης',current.setupLabel||'Ρύθμισε',v=>prop('Label ρύθμισης',[...base,'setupLabel'],v)),
-    field('Chips ρύθμισης — μία ανά γραμμή',(current.setupChips||[]).join('\n'),v=>prop('Chips ρύθμισης',[...base,'setupChips'],String(v).split(/\r?\n/).map(x=>x.trim()).filter(Boolean)),'textarea'),
-    field('Label πλήκτρων',current.pressLabel||'Πίεσε',v=>prop('Label πλήκτρων',[...base,'pressLabel'],v)),
-    field('Chips πλήκτρων — μία ανά γραμμή',(current.pressChips||[]).join('\n'),v=>prop('Chips πλήκτρων',[...base,'pressChips'],String(v).split(/\r?\n/).map(x=>x.trim()).filter(Boolean)),'textarea'),
-    field('Τίτλος παρατήρησης',current.observeTitle||'Παρατήρησε',v=>prop('Τίτλος παρατήρησης',[...base,'observeTitle'],v)),
-    field('Παρατηρήσεις — μία ανά γραμμή',(current.observeItems||[]).join('\n'),v=>prop('Στοιχεία παρατήρησης',[...base,'observeItems'],String(v).split(/\r?\n/).map(x=>x.trim()).filter(Boolean)),'textarea',null,{rows:6})
-  );
-  else if(current.type==='list') cf.append(
-    check('Αριθμημένη λίστα',!!current.ordered,v=>prop('Τύπος λίστας',[...base,'ordered'],v)),
-    field('Έναρξη',current.start||1,v=>prop('Έναρξη λίστας',[...base,'start'],v),'number'),
-    field('Στοιχεία — μία γραμμή ανά στοιχείο',(current.items||[]).map(entry=>M.richTextPlain(entry.body)).join('\n'),v=>prop('Στοιχεία λίστας',[...base,'items'],String(v).split(/\r?\n/).map(text=>({body:M.createRichText(text?[M.createTextRun(text)]:[])}))),'textarea',null,{rows:10})
-  );
+  else if(current.type==='interactive_callout') renderInteractiveCalloutEditor(cf,current,base);
+  else if(current.type==='list') renderListEditor(cf,current,base);
   else if(current.type==='table') renderTableEditor(cf,current,base);
   else if(current.type==='equation') renderEquationEditor(cf,current,base);
   else if(current.type==='clear') cf.innerHTML='<div class="info-card">Το στοιχείο αυτό δηλώνει τέλος ενότητας και δεν έχει δικό του περιεχόμενο.</div>';
@@ -2034,6 +3091,31 @@ function renderInsertWorkspace(){
 function bindInsertSplitter(){
   const splitter=$('#insertMainSplitter');if(!splitter)return;splitter.addEventListener('pointerdown',event=>{event.preventDefault();splitter.setPointerCapture(event.pointerId);splitter.classList.add('dragging')});splitter.addEventListener('pointermove',event=>{if(!splitter.hasPointerCapture(event.pointerId))return;const host=$('#insertView').getBoundingClientRect(),ratio=(event.clientX-host.left)/host.width;state.insert.split=Math.max(.34,Math.min(.66,ratio));document.documentElement.style.setProperty('--insert-left',`${state.insert.split*100}%`)});const end=event=>{if(splitter.hasPointerCapture(event.pointerId))splitter.releasePointerCapture(event.pointerId);splitter.classList.remove('dragging');storage.set('bw-v4_4-insert-split',String(state.insert.split));if(state.insert.bookZoomMode==='fit')insertFitBookZoom(false)};splitter.addEventListener('pointerup',end);splitter.addEventListener('pointercancel',end)
 }
+function bindLabsSplitters(){
+  const pairs=[['#labsLeftSplitter','left'],['#labsRightSplitter','right']];
+  pairs.forEach(([selector,side])=>{
+    const splitter=$(selector);
+    if(!splitter)return;
+    splitter.addEventListener('pointerdown',event=>{event.preventDefault();splitter.setPointerCapture(event.pointerId);splitter.classList.add('dragging')});
+    splitter.addEventListener('pointermove',event=>{
+      if(!splitter.hasPointerCapture(event.pointerId))return;
+      const host=$('#labsView')?.getBoundingClientRect();
+      if(!host)return;
+      if(side==='left')state.labs.leftWidth=Math.max(210,Math.min(460,event.clientX-host.left));
+      else state.labs.rightWidth=Math.max(300,Math.min(560,host.right-event.clientX));
+      applyLabsSplitterLayout();
+      requestAnimationFrame(fitLabsPreviewPage);
+    });
+    const end=event=>{
+      if(splitter.hasPointerCapture(event.pointerId))splitter.releasePointerCapture(event.pointerId);
+      splitter.classList.remove('dragging');
+      storage.set(`bw-v4_5-labs-${side}`,String(side==='left'?state.labs.leftWidth:state.labs.rightWidth));
+    };
+    splitter.addEventListener('pointerup',end);
+    splitter.addEventListener('pointercancel',end);
+  });
+  applyLabsSplitterLayout();
+}
 
 function resetDocxState(options={}){
   for(const url of state.docx.blobUrls.values())if(String(url).startsWith('blob:'))URL.revokeObjectURL(url);
@@ -2177,9 +3259,9 @@ async function executeCommand(cmd){
   }
   const map={
     'new-docx':startDocxCreate,'insert-docx':startDocxInsert,'docx-audit':()=>state.view==='docx'?downloadDocxReport():startDocxCreate,
-    'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'reader':openUserBook,'print':openReader,'close-book':closeBook,
+    'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'reload-lab-registry':reloadLabRegistry,'labs-workspace':openLabsWorkspace,'open-lab-registry':openLabRegistryEditor,'backup-lab-registry':backupLabRegistry,'restore-lab-registry':restoreLabRegistry,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'reader':openUserBook,'print':openReader,'close-book':closeBook,
     'undo':undo,'redo':redo,'clone':cloneSelected,'delete':deleteSelected,'move-up':()=>moveItem(-1),'move-down':()=>moveItem(1),'move-prev-page':()=>moveAcross('prev'),'move-next-page':()=>moveAcross('next'),'split-page':splitPage,
-    'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),
+    'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),'insert-lab-scene':insertLabScene,
     'insert-page':()=>insertPage('after'),'insert-page-before':()=>insertPage('before'),'insert-page-after':()=>insertPage('after'),
     'move-page-up':()=>movePage(-1),'move-page-down':()=>movePage(1),'clone-page':clonePage,'merge-page-prev':()=>mergePage('prev'),'merge-page-next':()=>mergePage('next'),
     'inline-equation':insertInlineEquation,'display-equation':async()=>{await insertItem('equation','after');await editSelectedDisplayEquation();},
@@ -2195,6 +3277,7 @@ async function executeCommand(cmd){
 
 
 bindInsertSplitter();
+bindLabsSplitters();
 $('#insertDocxOpenButton').onclick=()=>$('#docxFileInput').click();
 $('#insertBookSearch').addEventListener('input',()=>{if(state.view==='insert')renderInsertWorkspace()});
 $('#insertPosition').addEventListener('change',()=>{if(state.docx.insertion){state.docx.insertion.position=$('#insertPosition').value;state.docx.insertion.draft=null}renderInsertWorkspace()});
@@ -2222,7 +3305,7 @@ $$('[data-command]').forEach(button=>{
 $$('.property-tabs button').forEach(button=>button.onclick=()=>setTab(button.dataset.tab));
 $('#closePropertiesButton').onclick=toggleProperties;
 $('#bookPreviewScroller').addEventListener('scroll',()=>requestAnimationFrame(updateSelectionOverlay));
-window.addEventListener('resize',()=>{if(state.previewZoomMode==='fit'&&state.view==='book')fitPreviewToWidth(false);if(state.insert.bookZoomMode==='fit'&&state.view==='insert')insertFitBookZoom(false);requestAnimationFrame(updateSelectionOverlay)});
+window.addEventListener('resize',()=>{if(state.previewZoomMode==='fit'&&state.view==='book')fitPreviewToWidth(false);if(state.insert.bookZoomMode==='fit'&&state.view==='insert')insertFitBookZoom(false);if(state.view==='labs')requestAnimationFrame(fitLabsPreviewPage);requestAnimationFrame(updateSelectionOverlay)});
 $('#bookPreviewScroller').addEventListener('wheel',event=>{if(!(event.ctrlKey||event.metaKey))return;event.preventDefault();changeZoom(event.deltaY<0?.08:-.08)},{passive:false});
 
 window.addEventListener('keydown',event=>{
@@ -2235,8 +3318,8 @@ window.addEventListener('keydown',event=>{
   if(event.ctrlKey&&key==='o'){event.preventDefault();executeCommand('open-book');}
   if(event.ctrlKey&&key==='s'){event.preventDefault();executeCommand(state.mode==='migration'?'save-candidate':'save');}
   if(event.ctrlKey&&key==='p'){event.preventDefault();executeCommand('print');}
-  if(event.ctrlKey&&key==='z'){event.preventDefault();executeCommand('undo');}
-  if(event.ctrlKey&&key==='y'){event.preventDefault();executeCommand('redo');}
+  if(event.ctrlKey&&key==='z'&&!isTextEditingTarget()){event.preventDefault();executeCommand('undo');}
+  if(event.ctrlKey&&key==='y'&&!isTextEditingTarget()){event.preventDefault();executeCommand('redo');}
   if(event.ctrlKey&&key==='d'){event.preventDefault();executeCommand('clone');}
   if(event.altKey&&key==='m'){event.preventDefault();executeCommand('inline-equation');}
   if(event.ctrlKey&&(event.key==='+'||event.key==='=')){event.preventDefault();executeCommand('zoom-in');}
