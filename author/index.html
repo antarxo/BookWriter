@@ -222,6 +222,15 @@
     <section id="labsView" class="workspace-view labs-view">
       <aside class="pane labs-list-pane">
         <div class="pane-title">Εργαστήρια</div>
+        <div class="labs-filterbar">
+          <input id="labsSearch" type="search" placeholder="αναζήτηση">
+          <select id="labsStatusFilter" title="Κατάσταση preset">
+            <option value="">όλα</option>
+            <option value="ready">έτοιμα</option>
+            <option value="planned">προβλεπόμενα</option>
+            <option value="discovered">ευρήματα</option>
+          </select>
+        </div>
         <div id="labsTree" class="labs-tree"></div>
       </aside>
       <div id="labsLeftSplitter" class="labs-splitter" role="separator" aria-label="Αλλαγή πλάτους λίστας εργαστηρίων"></div>

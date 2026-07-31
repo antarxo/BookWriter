@@ -39,6 +39,10 @@ function hydrateIconSprites(root=document){
   });
 }
 const storage={get(k,d=''){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+function storageJson(key,fallback){
+  try{return JSON.parse(storage.get(key,JSON.stringify(fallback)))}
+  catch{return clone(fallback)}
+}
 const APP_VERSION='4.5.0-rc1';
 const APP_AUTHORING_VERSION='bookwriter-4.5.0-rc1';
 const ITEM_TYPE_LABELS={
@@ -95,7 +99,7 @@ const state={
   previewOverflowAuditToken:0,
   busy:false,
   library:{selectedHandle:null,booksHandle:null,staticRootUrl:'',entries:[],loading:false,error:'',restored:false,sortKey:'title',sortDir:'asc',filters:{query:'',discipline:'',level:'',status:''},selectedName:''},
-  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380)},
+  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380),filters:{query:storage.get('bw-v4_5-labs-query',''),status:storage.get('bw-v4_5-labs-status','')},collapsed:storageJson('bw-v4_5-labs-collapsed',{})},
   docx:{mode:'create',file:null,result:null,entries:[],startKey:'',endKey:'',anchorKey:'',focusKey:'',blobUrls:new Map(),report:null,insertion:null},
   insert:{split:Number(storage.get('bw-v4_4-insert-split')||.5),bookZoom:Number(storage.get('bw-v4_4-insert-book-zoom')||.56),bookZoomMode:storage.get('bw-v4_4-insert-book-zoom-mode','fit')},
   sourceFileName:'book.json'
@@ -263,7 +267,6 @@ async function fetchJson(url){
 
 const LAB_LIBRARY_REGISTRY_PATH='_labs/registry.json';
 const LAB_REGISTRY_BACKUP_NAME='registry.backup.json';
-const LAB_CUSTOM_PRESETS_KEY='bookwriter-lab-custom-presets-v1';
 function invalidateLabRegistry(){
   state.labs.registry=null;
   state.labs.source='';
@@ -456,10 +459,27 @@ function labPresetQuerySummary(lab,preset){
   });
   return entries.slice(0,6).map(([key,value])=>`${labParamLabel(key)}: ${labParamValueLabel(value)}`).join(' · ')||'Χωρίς δηλωμένες παραμέτρους';
 }
+function labPresetSearchText(lab,preset){
+  return [
+    lab?.title,lab?.id,lab?.discipline,
+    preset?.title,preset?.id,preset?.description,preset?.status,
+    labPresetBadge(preset),JSON.stringify(preset?.query||{}),preset?.url
+  ].filter(Boolean).join(' ').toLocaleLowerCase('el');
+}
+function labPresetVisible(lab,preset){
+  const query=String(state.labs.filters.query||'').trim().toLocaleLowerCase('el');
+  const status=state.labs.filters.status||'';
+  if(status&&labPresetStatusClass(preset)!==status)return false;
+  if(query&&!labPresetSearchText(lab,preset).includes(query))return false;
+  return true;
+}
 function renderLabsTree(registry){
   const selected=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
-  return (registry.labs||[]).map(lab=>{
-    const presets=(lab.presets||[]).map(preset=>{
+  const groups=(registry.labs||[]).map(lab=>{
+    const allPresets=lab.presets||[];
+    const visiblePresets=allPresets.filter(preset=>labPresetVisible(lab,preset));
+    const collapsed=!!state.labs.collapsed[lab.id];
+    const presets=collapsed?'':visiblePresets.map(preset=>{
       const active=lab.id===selected.lab?.id&&preset.id===selected.preset?.id;
       const statusClass=labPresetStatusClass(preset);
       return `<button class="labs-preset-row ${statusClass} ${active?'active':''}" data-lab-id="${esc(lab.id)}" data-preset-id="${esc(preset.id)}">
@@ -467,8 +487,13 @@ function renderLabsTree(registry){
         <small>${esc(labPresetQuerySummary(lab,preset))}</small>
       </button>`;
     }).join('');
-    return `<section class="labs-group"><h3>${esc(lab.title||lab.id)}</h3>${presets||'<div class="labs-empty">Δεν υπάρχουν presets.</div>'}</section>`;
-  }).join('')||'<div class="labs-empty">Δεν υπάρχουν εργαστήρια.</div>';
+    if(!visiblePresets.length&&state.labs.filters.query)return '';
+    return `<section class="labs-group ${collapsed?'collapsed':''}">
+      <button type="button" class="labs-group-title" data-lab-toggle="${esc(lab.id)}"><span>${collapsed?'▸':'▾'}</span><b>${esc(lab.title||lab.id)}</b><em>${visiblePresets.length}/${allPresets.length}</em></button>
+      ${collapsed?'':(presets||'<div class="labs-empty">Δεν υπάρχουν presets.</div>')}
+    </section>`;
+  }).filter(Boolean).join('');
+  return groups||'<div class="labs-empty">Δεν βρέθηκαν presets με αυτά τα κριτήρια.</div>';
 }
 function ensureLabsSelection(registry){
   const labs=registry.labs||[];
@@ -617,9 +642,26 @@ function syncLabsUrlFromParams(){
   renderLabsPreview();
 }
 function bindLabsView(registry){
-  $('#labsTree')?.querySelectorAll('[data-lab-id][data-preset-id]').forEach(button=>{
-    button.onclick=()=>{state.labs.selectedLabId=button.dataset.labId;state.labs.selectedPresetId=button.dataset.presetId;renderLabsView()};
-  });
+  const search=$('#labsSearch'),status=$('#labsStatusFilter');
+  if(search){
+    search.value=state.labs.filters.query||'';
+    search.oninput=event=>{
+      state.labs.filters.query=event.target.value;
+      storage.set('bw-v4_5-labs-query',state.labs.filters.query);
+      $('#labsTree').innerHTML=renderLabsTree(registry);
+      bindLabsTree(registry);
+    };
+  }
+  if(status){
+    status.value=state.labs.filters.status||'';
+    status.onchange=event=>{
+      state.labs.filters.status=event.target.value;
+      storage.set('bw-v4_5-labs-status',state.labs.filters.status);
+      $('#labsTree').innerHTML=renderLabsTree(registry);
+      bindLabsTree(registry);
+    };
+  }
+  bindLabsTree(registry);
   $('#labsEditorLab').onchange=event=>{
     state.labs.selectedLabId=event.target.value;
     const lab=(registry.labs||[]).find(current=>current.id===state.labs.selectedLabId);
@@ -637,6 +679,20 @@ function bindLabsView(registry){
   bindLabsParamRows();
   $('#labsPreviewRefresh').onclick=renderLabsPreview;
   $('#labsSavePreset').onclick=saveLabPresetFromWorkspace;
+}
+function bindLabsTree(registry){
+  $('#labsTree')?.querySelectorAll('[data-lab-id][data-preset-id]').forEach(button=>{
+    button.onclick=()=>{state.labs.selectedLabId=button.dataset.labId;state.labs.selectedPresetId=button.dataset.presetId;renderLabsView()};
+  });
+  $('#labsTree')?.querySelectorAll('[data-lab-toggle]').forEach(button=>{
+    button.onclick=()=>{
+      const id=button.dataset.labToggle;
+      state.labs.collapsed[id]=!state.labs.collapsed[id];
+      storage.set('bw-v4_5-labs-collapsed',JSON.stringify(state.labs.collapsed));
+      $('#labsTree').innerHTML=renderLabsTree(registry);
+      bindLabsTree(registry);
+    };
+  });
 }
 async function openLabsWorkspace(){
   try{
@@ -708,15 +764,6 @@ async function saveLabPresetFromWorkspace(){
   }catch(error){
     modal('Αποθήκευση preset σκηνής',`<div class="info-card bad">${esc(error.message)}</div>`);
   }
-}
-function readCustomLabPresets(){
-  try{
-    const raw=JSON.parse(storage.get(LAB_CUSTOM_PRESETS_KEY,'[]'));
-    return Array.isArray(raw)?raw:[];
-  }catch{return[]}
-}
-function writeCustomLabPresets(presets){
-  storage.set(LAB_CUSTOM_PRESETS_KEY,JSON.stringify(Array.isArray(presets)?presets:[]));
 }
 function urlOrigin(value=''){
   try{return new URL(value,location.href).origin}catch{return''}
@@ -867,10 +914,6 @@ function runtimeLabRegistry(rawRegistry){
     const lab=(registry.labs||[]).find(current=>current.id===entry.labId);
     appendLabPreset(lab,entry.preset);
   });
-  readCustomLabPresets().forEach(entry=>{
-    const lab=(registry.labs||[]).find(current=>current.id===entry.labId);
-    appendLabPreset(lab,{...(entry.preset||{}),custom:true});
-  });
   return registry;
 }
 function selectedLabPreset(registry,labId,presetId){
@@ -920,14 +963,6 @@ function syncLabUrlFromParams(){
   if(!src||!params)return;
   try{src.value=srcWithQuery(src.value,queryTextToObject(params.value))}catch(_error){}
 }
-function saveLabCustomPreset(lab,preset,title,src,caption,layout){
-  const name=$('#labSceneCustomName')?.value.trim()||title;
-  const id=M.normalizeId(`custom_${lab.id}_${name}_${Date.now()}`).slice(0,80);
-  const saved=readCustomLabPresets();
-  saved.push({labId:lab.id,preset:{id,title:name,status:'ready',description:caption||`Προσωπική παραλλαγή από ${preset.title||preset.id}.`,url:src,layout:clone(layout),sourcePresetId:preset.id}});
-  writeCustomLabPresets(saved);
-  state.labs.registry=null;
-}
 async function insertLabScene(){
   if(!page())return;
   let registry;
@@ -942,11 +977,10 @@ async function insertLabScene(){
       <label>Θέση εισαγωγής<select id="labScenePlacement"><option value="after">Μετά την επιλογή</option><option value="before">Πριν από την επιλογή</option></select></label>
       <label>Τίτλος<input id="labSceneTitle"></label>
     </div>
+    <div class="info-card">Οι αλλαγές παραμέτρων εδώ είναι τοπικές για το συγκεκριμένο βιβλίο. Νέα presets δημιουργούνται μόνο από την οθόνη Εργαστήρια/μητρώο.</div>
     <label>Λεζάντα<textarea id="labSceneCaption"></textarea></label>
     <label>Παράμετροι URL — μία γραμμή key=value<textarea id="labSceneParams" class="monospace-input"></textarea></label>
     <label>URL σκηνής<textarea id="labSceneSrc" class="monospace-input"></textarea></label>
-    <label class="check-row"><input type="checkbox" id="labSceneSaveCustom"> Αποθήκευση ως προσωπικό preset</label>
-    <label>Όνομα προσωπικού preset<input id="labSceneCustomName" placeholder="π.χ. Η δική μου σκηνή"></label>
     <div id="labSceneInfo" class="lab-scene-info"></div>
   </div>`;
   const pending=modal('Σκηνή από βιβλιοθήκη εργαστηρίων',html,[{label:'Ακύρωση',value:false},{label:'Εισαγωγή σκηνής',value:true,primary:true}]);
@@ -969,7 +1003,6 @@ async function insertLabScene(){
   const title=$('#labSceneTitle').value.trim()||preset.title||lab.title||'Ζωντανή σκηνή';
   const caption=$('#labSceneCaption').value.trim();
   const layout=Object.assign({placement:'wide',widthPx:560,aspectRatio:'16/9'},preset.layout||{});
-  if($('#labSceneSaveCustom')?.checked)saveLabCustomPreset(lab,preset,title,src,caption,layout);
   mutate(`Σκηνή εργαστηρίου: ${title}`,book=>{
     const p=page();
     let index;
