@@ -99,7 +99,7 @@ const state={
   previewOverflowAuditToken:0,
   busy:false,
   library:{selectedHandle:null,booksHandle:null,staticRootUrl:'',entries:[],loading:false,error:'',restored:false,sortKey:'title',sortDir:'asc',filters:{query:'',discipline:'',level:'',status:''},selectedName:''},
-  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380),previewZoom:Number(storage.get('bw-v4_5-labs-zoom')||1),previewZoomMode:storage.get('bw-v4_5-labs-zoom-mode','fit'),filters:{query:storage.get('bw-v4_5-labs-query',''),status:storage.get('bw-v4_5-labs-status','')},collapsed:storageJson('bw-v4_5-labs-collapsed',{})},
+  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',insertTarget:null,undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380),previewZoom:Number(storage.get('bw-v4_5-labs-zoom')||1),previewZoomMode:storage.get('bw-v4_5-labs-zoom-mode','fit'),filters:{query:storage.get('bw-v4_5-labs-query',''),status:storage.get('bw-v4_5-labs-status','')},collapsed:storageJson('bw-v4_5-labs-collapsed',{})},
   docx:{mode:'create',file:null,result:null,entries:[],startKey:'',endKey:'',anchorKey:'',focusKey:'',blobUrls:new Map(),report:null,insertion:null},
   insert:{split:Number(storage.get('bw-v4_4-insert-split')||.5),bookZoom:Number(storage.get('bw-v4_4-insert-book-zoom')||.56),bookZoomMode:storage.get('bw-v4_4-insert-book-zoom-mode','fit')},
   sourceFileName:'book.json'
@@ -565,15 +565,21 @@ function bindLabsParamRows(){
 function fillLabsEditor(registry){
   const {lab,preset}=ensureLabsSelection(registry);
   const labSelect=$('#labsEditorLab'),presetSelect=$('#labsEditorPreset');
+  const insertMode=!!state.labs.insertTarget;
   if(labSelect)labSelect.innerHTML=(registry.labs||[]).map(current=>`<option value="${esc(current.id)}">${esc(current.title||current.id)}</option>`).join('');
   if(labSelect)labSelect.value=lab?.id||'';
   if(presetSelect)presetSelect.innerHTML=(lab?.presets||[]).map(current=>`<option value="${esc(current.id)}">${esc(current.title||current.id)}${current.status==='planned'?' · προβλεπόμενο':''}</option>`).join('');
   if(presetSelect)presetSelect.value=preset?.id||'';
   const src=lab&&preset?buildLabSceneSrc(lab,preset,false):'';
-  $('#labsEditorTitle').value=labPresetTitleForCopy(preset);
+  $('#labsEditorTitle').value=insertMode?(preset?.title||lab?.title||'Ζωντανή σκηνή'):labPresetTitleForCopy(preset);
   $('#labsEditorId').value=M.normalizeId(`${preset?.id||'preset'}_copy`).slice(0,60);
   $('#labsEditorStatus').value=preset?.status==='planned'?'planned':'ready';
   $('#labsEditorDescription').value=preset?.description||'';
+  const titleLabel=$('#labsEditorTitle')?.closest('label')?.firstChild;
+  if(titleLabel)titleLabel.textContent=insertMode?'Τίτλος σκηνής':'Τίτλος νέου preset';
+  $('#labsEditorId')?.closest('label')?.classList.toggle('hidden',insertMode);
+  $('#labsEditorStatus')?.closest('label')?.classList.toggle('hidden',insertMode);
+  $('#labsSavePreset')?.classList.toggle('hidden',insertMode);
   const query=lab&&preset?presetQueryForDialog(lab,preset):{};
   $('#labsEditorParams').value=queryObjectToText(query);
   renderLabsParamRows(lab,query);
@@ -581,6 +587,13 @@ function fillLabsEditor(registry){
   $('#labsEditorWidth').value=preset?.layout?.widthPx||560;
   $('#labsEditorAspect').value=preset?.layout?.aspectRatio||'16/9';
   $('#labsEditorPlacement').value=preset?.layout?.placement||'wide';
+  const insertButton=$('#labsInsertScene');
+  if(insertButton){
+    const placement=state.labs.insertTarget?.placement==='before'?'πριν':'μετά';
+    insertButton.textContent=state.labs.insertTarget?`Εισαγωγή ${placement} από την επιλογή`:'Εισαγωγή στο βιβλίο';
+    insertButton.disabled=!has()||!page()||preset?.status==='planned';
+    insertButton.title=preset?.status==='planned'?'Το preset είναι προβλεπόμενο και δεν εισάγεται ακόμη.':'Εισαγωγή της επιλεγμένης σκηνής στο ανοιχτό βιβλίο';
+  }
   $('#labsEditorInfo').innerHTML=lab&&preset?`<div class="labs-editor-status ${esc(labPresetStatusClass(preset))}"><b>${esc(labPresetBadge(preset))}</b><span>${esc(preset.description||'')}</span><code>${esc(buildLabSceneSrc(lab,preset,false))}</code>${preset.status==='planned'?'<em>Δεν φορτώνεται ως πραγματική σκηνή μέχρι να υποστηριχθεί από την εξωτερική εφαρμογή.</em>':''}</div>`:'Δεν υπάρχει επιλεγμένη σκηνή.';
 }
 function currentLabsEditorUrl(){
@@ -697,6 +710,7 @@ function bindLabsView(registry){
   $('#labsAddParam').onclick=addLabsParamRow;
   bindLabsParamRows();
   $('#labsPreviewRefresh').onclick=renderLabsPreview;
+  $('#labsInsertScene').onclick=insertSelectedLabSceneFromWorkspace;
   $('#labsZoomOut').onclick=()=>changeLabsPreviewZoom(-.08);
   $('#labsZoomIn').onclick=()=>changeLabsPreviewZoom(.08);
   $('#labsZoom100').onclick=()=>changeLabsPreviewZoom(0,'100');
@@ -725,11 +739,13 @@ function bindLabsTree(registry){
     };
   });
 }
-async function openLabsWorkspace(){
+async function openLabsWorkspace(options={}){
   try{
     await loadLabRegistry();
+    if(options.insertPlacement)state.labs.insertTarget={placement:options.insertPlacement==='before'?'before':'after',pageId:page()?.id||'',itemId:item()?.id||'',createdAt:new Date().toISOString()};
+    else state.labs.insertTarget=null;
     setView('labs');
-    setStatus('Άνοιξε ο επεξεργαστής/προεπισκόπηση σκηνών εργαστηρίων.','good');
+    setStatus(options.insertPlacement?'Διάλεξε σκηνή από τα Εργαστήρια και πάτησε «Εισαγωγή στο βιβλίο».':'Άνοιξε ο επεξεργαστής/προεπισκόπηση σκηνών εργαστηρίων.','good');
   }catch(error){
     modal('Εργαστήρια',`<div class="info-card bad">${esc(error.message)}</div>`);
   }
@@ -796,6 +812,88 @@ async function saveLabPresetFromWorkspace(){
     modal('Αποθήκευση preset σκηνής',`<div class="info-card bad">${esc(error.message)}</div>`);
   }
 }
+async function insertSelectedLabSceneFromWorkspace(){
+  if(!has()||!page())return;
+  let registry;
+  try{registry=runtimeLabRegistry(state.labs.registry)}
+  catch(error){modal('Εργαστήρια',`<div class="info-card bad">${esc(error.message)}</div>`);return}
+  const {lab,preset}=selectedLabPreset(registry,state.labs.selectedLabId,state.labs.selectedPresetId);
+  if(!lab||!preset)return;
+  if(preset.status==='planned'){
+    modal('Προβλεπόμενη σκηνή',`<div class="info-card warn">Το preset «${esc(preset.title||preset.id)}» υπάρχει στο μητρώο ως ανάγκη/σχέδιο, αλλά η εξωτερική εφαρμογή δεν το υποστηρίζει ακόμα. Δεν θα εισαχθεί σκηνή που θα έδειχνε λάθος προεπιλογή.</div>`);
+    return;
+  }
+  const target=state.labs.insertTarget||{placement:'after',pageId:page().id,itemId:item()?.id||''};
+  const src=currentLabsEditorUrl()||buildLabSceneSrc(lab,preset,false);
+  const title=state.labs.insertTarget?($('#labsEditorTitle')?.value.trim()||preset.title||lab.title||'Ζωντανή σκηνή'):(preset.title||lab.title||'Ζωντανή σκηνή');
+  const caption=preset.description||'';
+  const width=Number($('#labsEditorWidth')?.value)||preset.layout?.widthPx||560;
+  const aspect=String($('#labsEditorAspect')?.value||preset.layout?.aspectRatio||'16/9').trim()||'16/9';
+  const layout=Object.assign({placement:'wide',widthPx:560,aspectRatio:'16/9'},preset.layout||{},{
+    placement:$('#labsEditorPlacement')?.value||preset.layout?.placement||'wide',
+    widthPx:width,
+    aspectRatio:aspect
+  });
+  const appliedQuery=stringValueMap(sceneQueryObject(src));
+  const baseQuery=stringValueMap(presetQueryForDialog(lab,preset));
+  const queryDiff=diffValueMap(baseQuery,appliedQuery);
+  const baseLayout=Object.assign({placement:'wide',widthPx:560,aspectRatio:'16/9'},preset.layout||{});
+  const localLayout=diffPlainObject(baseLayout,layout);
+  const labSourceRef={
+    kind:'lab-registry',
+    registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,
+    labId:lab.id,
+    presetId:preset.id,
+    appliedQuery,
+    localQuery:queryDiff.changed,
+    removedQueryKeys:queryDiff.removed,
+    appliedLayout:clone(layout),
+    localLayout,
+    appliedSrc:src
+  };
+  const labExtension={
+    registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,
+    registrySource:state.labs.source||'',
+    labId:lab.id,
+    labTitle:lab.title||'',
+    presetId:preset.id,
+    presetTitle:preset.title||'',
+    status:preset.status||'ready',
+    appliedQuery,
+    localQuery:queryDiff.changed,
+    removedQueryKeys:queryDiff.removed,
+    appliedLayout:clone(layout),
+    localLayout,
+    appliedSrc:src,
+    insertedAt:new Date().toISOString()
+  };
+  let result;
+  mutate(`Σκηνή εργαστηρίου: ${title}`,book=>{
+    const p=book.pages.find(current=>current.id===target.pageId)||book.pages.find(current=>current.id===session.selection.pageId)||book.pages[0];
+    if(!p)throw new Error('Δεν υπάρχει σελίδα για εισαγωγή σκηνής.');
+    let index=p.items.length;
+    const anchor=target.itemId?p.items.findIndex(current=>current.id===target.itemId):-1;
+    if(anchor>=0)index=anchor+(target.placement==='before'?0:1);
+    else if(target.placement==='before')index=0;
+    const data=M.createItem('scene',{
+      title,
+      caption,
+      src,
+      layout,
+      print:{snapshot:true},
+      sourceRef:labSourceRef,
+      extensions:{lab:labExtension}
+    });
+    result=C.Operations.insertItem(book,p.id,index,'scene',data);
+    return result;
+  });
+  state.labs.insertTarget=null;
+  if(result?.pageId)session.selection={pageId:result.pageId,itemId:result.itemId||null};
+  state.tab='item';
+  setView('book');
+  renderAll();
+  setStatus(`Εισάχθηκε σκηνή από εργαστήριο: ${title}.`,'good');
+}
 function urlOrigin(value=''){
   try{return new URL(value,location.href).origin}catch{return''}
 }
@@ -822,6 +920,30 @@ function queryTextToObject(text=''){
     else out[line.slice(0,cut).trim()]=line.slice(cut+1).trim();
   });
   return out;
+}
+function stringValueMap(object={}){
+  const out={};
+  Object.entries(object||{}).forEach(([key,value])=>{
+    if(value!==undefined&&value!==null&&String(value)!=='')out[key]=String(value);
+  });
+  return out;
+}
+function diffValueMap(base={},applied={}){
+  const before=stringValueMap(base),after=stringValueMap(applied),changed={},removed=[];
+  Object.entries(after).forEach(([key,value])=>{
+    if(before[key]!==value)changed[key]=value;
+  });
+  Object.keys(before).forEach(key=>{
+    if(!Object.prototype.hasOwnProperty.call(after,key))removed.push(key);
+  });
+  return{changed,removed};
+}
+function diffPlainObject(base={},applied={}){
+  const changed={};
+  Object.entries(applied||{}).forEach(([key,value])=>{
+    if(JSON.stringify(base?.[key])!==JSON.stringify(value))changed[key]=clone(value);
+  });
+  return changed;
 }
 const LAB_PARAM_LABELS={
   scene:'Σκηνή',
@@ -993,96 +1115,6 @@ function buildLabSceneSrc(lab,preset,print=false){
 function presetQueryForDialog(lab,preset){
   const base=buildLabSceneSrc(lab,preset,false);
   return sceneQueryObject(base);
-}
-function labSceneInfoHtml(lab,preset){
-  if(!lab||!preset)return'<div class="lab-scene-info">Δεν υπάρχει διαθέσιμο preset.</div>';
-  const status=String(preset.status||'ready');
-  const text=status==='planned'
-    ? 'Προβλεπόμενο preset: δηλώνεται στο συμβόλαιο, αλλά δεν φορτώνεται ως πραγματική σκηνή μέχρι να το υποστηρίξει η εξωτερική εφαρμογή.'
-    : 'Έτοιμο preset: υπάρχει ως κλήση εξωτερικής εφαρμογής.';
-  return `<div class="lab-scene-info ${status==='planned'?'planned':''}"><b>${esc(preset.title||preset.id)}</b><br>${esc(preset.description||'')}<br><span>${esc(text)}</span></div>`;
-}
-function updateLabSceneDialog(registry){
-  const labSelect=$('#labSceneLab'),presetSelect=$('#labScenePreset'),info=$('#labSceneInfo'),src=$('#labSceneSrc'),title=$('#labSceneTitle'),caption=$('#labSceneCaption'),params=$('#labSceneParams');
-  if(!labSelect||!presetSelect)return;
-  const {lab}=selectedLabPreset(registry,labSelect.value,presetSelect.value);
-  const previous=presetSelect.value;
-  presetSelect.innerHTML=(lab?.presets||[]).map(preset=>`<option value="${esc(preset.id)}">${esc(preset.title||preset.id)}${preset.status==='planned'?' · προβλεπόμενο':''}</option>`).join('');
-  if((lab?.presets||[]).some(preset=>preset.id===previous))presetSelect.value=previous;
-  const current=selectedLabPreset(registry,labSelect.value,presetSelect.value);
-  if(info)info.innerHTML=labSceneInfoHtml(current.lab,current.preset);
-  const built=current.lab&&current.preset?buildLabSceneSrc(current.lab,current.preset,false):'';
-  if(src)src.value=built;
-  if(params)params.value=current.lab&&current.preset?queryObjectToText(presetQueryForDialog(current.lab,current.preset)):'';
-  if(title&&!title.dataset.touched)title.value=current.preset?.title||current.lab?.title||'Ζωντανή σκηνή';
-  if(caption&&!caption.dataset.touched)caption.value=current.preset?.description||'';
-}
-function syncLabUrlFromParams(){
-  const src=$('#labSceneSrc'),params=$('#labSceneParams');
-  if(!src||!params)return;
-  try{src.value=srcWithQuery(src.value,queryTextToObject(params.value))}catch(_error){}
-}
-async function insertLabScene(){
-  if(!page())return;
-  let registry;
-  try{registry=await loadLabRegistry()}catch(error){modal('Βιβλιοθήκη εργαστηρίων',`<div class="info-card bad">${esc(error.message)}</div>`);return}
-  const firstLab=registry.labs?.[0],firstPreset=firstLab?.presets?.[0];
-  if(!firstLab||!firstPreset){modal('Βιβλιοθήκη εργαστηρίων','<div class="info-card warn">Δεν υπάρχουν δηλωμένα εργαστήρια.</div>');return}
-  const labOptions=registry.labs.map(lab=>`<option value="${esc(lab.id)}">${esc(lab.title||lab.id)}</option>`).join('');
-  const html=`<div class="lab-scene-dialog">
-    <div class="lab-grid">
-      <label>Εργαστήριο<select id="labSceneLab">${labOptions}</select></label>
-      <label>Preset<select id="labScenePreset"></select></label>
-      <label>Θέση εισαγωγής<select id="labScenePlacement"><option value="after">Μετά την επιλογή</option><option value="before">Πριν από την επιλογή</option></select></label>
-      <label>Τίτλος<input id="labSceneTitle"></label>
-    </div>
-    <div class="info-card">Οι αλλαγές παραμέτρων εδώ είναι τοπικές για το συγκεκριμένο βιβλίο. Νέα presets δημιουργούνται μόνο από την οθόνη Εργαστήρια/μητρώο.</div>
-    <label>Λεζάντα<textarea id="labSceneCaption"></textarea></label>
-    <label>Παράμετροι URL — μία γραμμή key=value<textarea id="labSceneParams" class="monospace-input"></textarea></label>
-    <label>URL σκηνής<textarea id="labSceneSrc" class="monospace-input"></textarea></label>
-    <div id="labSceneInfo" class="lab-scene-info"></div>
-  </div>`;
-  const pending=modal('Σκηνή από βιβλιοθήκη εργαστηρίων',html,[{label:'Ακύρωση',value:false},{label:'Εισαγωγή σκηνής',value:true,primary:true}]);
-  updateLabSceneDialog(registry);
-  $('#labSceneLab')?.addEventListener('change',()=>updateLabSceneDialog(registry));
-  $('#labScenePreset')?.addEventListener('change',()=>updateLabSceneDialog(registry));
-  $('#labSceneParams')?.addEventListener('input',syncLabUrlFromParams);
-  $('#labSceneTitle')?.addEventListener('input',event=>{event.target.dataset.touched='1'});
-  $('#labSceneCaption')?.addEventListener('input',event=>{event.target.dataset.touched='1'});
-  const accepted=await pending;
-  if(!accepted)return;
-  const {lab,preset}=selectedLabPreset(registry,$('#labSceneLab').value,$('#labScenePreset').value);
-  if(!lab||!preset)return;
-  if(preset.status==='planned'){
-    modal('Προβλεπόμενη σκηνή',`<div class="info-card warn">Το preset «${esc(preset.title||preset.id)}» υπάρχει στο μητρώο ως ανάγκη/σχέδιο, αλλά η εξωτερική εφαρμογή δεν το υποστηρίζει ακόμα. Δεν θα εισαχθεί σκηνή που θα έδειχνε λάθος προεπιλογή.</div>`);
-    return;
-  }
-  const placement=$('#labScenePlacement').value==='before'?'before':'after';
-  const src=$('#labSceneSrc').value.trim()||buildLabSceneSrc(lab,preset,false);
-  const title=$('#labSceneTitle').value.trim()||preset.title||lab.title||'Ζωντανή σκηνή';
-  const caption=$('#labSceneCaption').value.trim();
-  const layout=Object.assign({placement:'wide',widthPx:560,aspectRatio:'16/9'},preset.layout||{});
-  mutate(`Σκηνή εργαστηρίου: ${title}`,book=>{
-    const p=page();
-    let index;
-    if(item()) index=itemIndex()+(placement==='after'?1:0);
-    else index=placement==='before'?0:p.items.length;
-    const data=M.createItem('scene',{
-      title,
-      caption,
-      src,
-      layout,
-      print:{snapshot:true},
-      sourceRef:{kind:'lab-registry',registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,labId:lab.id,presetId:preset.id},
-      extensions:{lab:{registry:state.labs.label||LAB_LIBRARY_REGISTRY_PATH,registrySource:state.labs.source||'',labId:lab.id,labTitle:lab.title||'',presetId:preset.id,presetTitle:preset.title||'',status:preset.status||'ready',insertedAt:new Date().toISOString()}}
-    });
-    const result=C.Operations.insertItem(book,p.id,index,'scene',data);
-    const created=book.pages.find(x=>x.id===result.pageId).items.find(x=>x.id===result.itemId);
-    ensureNewItemLayout(created);
-    return result;
-  });
-  state.tab='item';
-  if(preset.status==='planned')setStatus(`Προστέθηκε προβλεπόμενη σκηνή «${title}». Θα εμφανιστεί σωστά όταν η εξωτερική εφαρμογή υποστηρίξει το preset.`, 'warn');
 }
 async function attachStaticBook(book,mode,name,bookUrl,bookBase,source=null,report=null){
   session.attachBook(book,{directoryHandle:null,bookFileHandle:null,imagesDirectoryHandle:null});
@@ -2224,6 +2256,7 @@ function insertItem(forcedType=null,placement='after'){
   return (async()=>{
     const type=forcedType||await chooseItemType();
     if(!type) return;
+    if(type==='scene')return openLabsWorkspace({insertPlacement:placement});
     mutate(`Νέο ${itemTypeLabel(type)} ${placement==='before'?'πριν':'μετά'}`,book=>{
       const p=page();
       let index;
@@ -3353,7 +3386,7 @@ async function executeCommand(cmd){
     'new-docx':startDocxCreate,'insert-docx':startDocxInsert,'docx-audit':()=>state.view==='docx'?downloadDocxReport():startDocxCreate,
     'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'reload-lab-registry':reloadLabRegistry,'labs-workspace':openLabsWorkspace,'open-lab-registry':openLabRegistryEditor,'backup-lab-registry':backupLabRegistry,'restore-lab-registry':restoreLabRegistry,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'reader':openUserBook,'print':openReader,'close-book':closeBook,
     'undo':undo,'redo':redo,'clone':cloneSelected,'delete':deleteSelected,'move-up':()=>moveItem(-1),'move-down':()=>moveItem(1),'move-prev-page':()=>moveAcross('prev'),'move-next-page':()=>moveAcross('next'),'split-page':splitPage,
-    'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),'insert-lab-scene':insertLabScene,
+    'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),'insert-lab-scene':()=>openLabsWorkspace({insertPlacement:'after'}),
     'insert-page':()=>insertPage('after'),'insert-page-before':()=>insertPage('before'),'insert-page-after':()=>insertPage('after'),
     'move-page-up':()=>movePage(-1),'move-page-down':()=>movePage(1),'clone-page':clonePage,'merge-page-prev':()=>mergePage('prev'),'merge-page-next':()=>mergePage('next'),
     'inline-equation':insertInlineEquation,'display-equation':async()=>{await insertItem('equation','after');await editSelectedDisplayEquation();},
