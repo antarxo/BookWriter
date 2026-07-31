@@ -99,7 +99,7 @@ const state={
   previewOverflowAuditToken:0,
   busy:false,
   library:{selectedHandle:null,booksHandle:null,staticRootUrl:'',entries:[],loading:false,error:'',restored:false,sortKey:'title',sortDir:'asc',filters:{query:'',discipline:'',level:'',status:''},selectedName:''},
-  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380),filters:{query:storage.get('bw-v4_5-labs-query',''),status:storage.get('bw-v4_5-labs-status','')},collapsed:storageJson('bw-v4_5-labs-collapsed',{})},
+  labs:{registry:null,loading:false,error:'',selectedLabId:'',selectedPresetId:'',undoStack:[],redoStack:[],leftWidth:Number(storage.get('bw-v4_5-labs-left')||290),rightWidth:Number(storage.get('bw-v4_5-labs-right')||380),previewZoom:Number(storage.get('bw-v4_5-labs-zoom')||1),previewZoomMode:storage.get('bw-v4_5-labs-zoom-mode','fit'),filters:{query:storage.get('bw-v4_5-labs-query',''),status:storage.get('bw-v4_5-labs-status','')},collapsed:storageJson('bw-v4_5-labs-collapsed',{})},
   docx:{mode:'create',file:null,result:null,entries:[],startKey:'',endKey:'',anchorKey:'',focusKey:'',blobUrls:new Map(),report:null,insertion:null},
   insert:{split:Number(storage.get('bw-v4_4-insert-split')||.5),bookZoom:Number(storage.get('bw-v4_4-insert-book-zoom')||.56),bookZoomMode:storage.get('bw-v4_4-insert-book-zoom-mode','fit')},
   sourceFileName:'book.json'
@@ -596,7 +596,26 @@ function fitLabsPreviewPage(){
   const availableWidth=Math.max(180,stage.clientWidth-44);
   const availableHeight=Math.max(240,stage.clientHeight-44);
   const zoom=Math.max(.22,Math.min(1,availableWidth/pageWidth,availableHeight/pageHeight));
-  page.style.setProperty('--labs-page-zoom',zoom.toFixed(3));
+  state.labs.previewZoom=zoom;
+  applyLabsPreviewZoom(false);
+}
+function applyLabsPreviewZoom(save=true){
+  const page=$('#labsPreviewPage'),value=$('#labsZoomValue');
+  const zoom=Math.max(.22,Math.min(1.6,Number(state.labs.previewZoom)||1));
+  state.labs.previewZoom=zoom;
+  page?.style.setProperty('--labs-page-zoom',zoom.toFixed(3));
+  if(value)value.textContent=state.labs.previewZoomMode==='fit'?'Α4':`${Math.round(zoom*100)}%`;
+  if(save){
+    storage.set('bw-v4_5-labs-zoom',String(zoom));
+    storage.set('bw-v4_5-labs-zoom-mode',state.labs.previewZoomMode);
+  }
+}
+function changeLabsPreviewZoom(delta,mode='manual'){
+  state.labs.previewZoomMode=mode;
+  if(mode==='fit'){fitLabsPreviewPage();storage.set('bw-v4_5-labs-zoom-mode','fit');return}
+  state.labs.previewZoom=mode==='100'?1:Math.max(.22,Math.min(1.6,(Number(state.labs.previewZoom)||1)+delta));
+  if(mode==='100')state.labs.previewZoomMode='manual';
+  applyLabsPreviewZoom(true);
 }
 function renderLabsPreview(){
   const url=currentLabsEditorUrl();
@@ -614,7 +633,7 @@ function renderLabsPreview(){
     page.style.setProperty('--labs-page-pad-right',`${Number(defs.pagePaddingRightPx||45)}px`);
     page.style.setProperty('--labs-page-pad-bottom',`${Number(defs.pagePaddingBottomPx||64)}px`);
     page.style.setProperty('--labs-page-pad-left',`${Number(defs.pagePaddingLeftPx||45)}px`);
-    requestAnimationFrame(fitLabsPreviewPage);
+    requestAnimationFrame(()=>state.labs.previewZoomMode==='fit'?fitLabsPreviewPage():applyLabsPreviewZoom(false));
   }
   if(box){
     const width=Math.max(120,Number($('#labsEditorWidth')?.value)||560);
@@ -678,7 +697,19 @@ function bindLabsView(registry){
   $('#labsAddParam').onclick=addLabsParamRow;
   bindLabsParamRows();
   $('#labsPreviewRefresh').onclick=renderLabsPreview;
+  $('#labsZoomOut').onclick=()=>changeLabsPreviewZoom(-.08);
+  $('#labsZoomIn').onclick=()=>changeLabsPreviewZoom(.08);
+  $('#labsZoom100').onclick=()=>changeLabsPreviewZoom(0,'100');
+  $('#labsZoomFit').onclick=()=>changeLabsPreviewZoom(0,'fit');
+  const stage=$('.labs-preview-stage');
+  if(stage)stage.onwheel=event=>{
+    if(!(event.ctrlKey||event.metaKey))return;
+    event.preventDefault();
+    changeLabsPreviewZoom(event.deltaY<0?.08:-.08);
+  };
   $('#labsSavePreset').onclick=saveLabPresetFromWorkspace;
+  if(state.labs.previewZoomMode==='fit')requestAnimationFrame(fitLabsPreviewPage);
+  else requestAnimationFrame(()=>applyLabsPreviewZoom(false));
 }
 function bindLabsTree(registry){
   $('#labsTree')?.querySelectorAll('[data-lab-id][data-preset-id]').forEach(button=>{
@@ -3137,7 +3168,7 @@ function bindLabsSplitters(){
       if(side==='left')state.labs.leftWidth=Math.max(210,Math.min(460,event.clientX-host.left));
       else state.labs.rightWidth=Math.max(300,Math.min(560,host.right-event.clientX));
       applyLabsSplitterLayout();
-      requestAnimationFrame(fitLabsPreviewPage);
+      if(state.labs.previewZoomMode==='fit')requestAnimationFrame(fitLabsPreviewPage);
     });
     const end=event=>{
       if(splitter.hasPointerCapture(event.pointerId))splitter.releasePointerCapture(event.pointerId);
@@ -3338,7 +3369,7 @@ $$('[data-command]').forEach(button=>{
 $$('.property-tabs button').forEach(button=>button.onclick=()=>setTab(button.dataset.tab));
 $('#closePropertiesButton').onclick=toggleProperties;
 $('#bookPreviewScroller').addEventListener('scroll',()=>requestAnimationFrame(updateSelectionOverlay));
-window.addEventListener('resize',()=>{if(state.previewZoomMode==='fit'&&state.view==='book')fitPreviewToWidth(false);if(state.insert.bookZoomMode==='fit'&&state.view==='insert')insertFitBookZoom(false);if(state.view==='labs')requestAnimationFrame(fitLabsPreviewPage);requestAnimationFrame(updateSelectionOverlay)});
+window.addEventListener('resize',()=>{if(state.previewZoomMode==='fit'&&state.view==='book')fitPreviewToWidth(false);if(state.insert.bookZoomMode==='fit'&&state.view==='insert')insertFitBookZoom(false);if(state.view==='labs'&&state.labs.previewZoomMode==='fit')requestAnimationFrame(fitLabsPreviewPage);requestAnimationFrame(updateSelectionOverlay)});
 $('#bookPreviewScroller').addEventListener('wheel',event=>{if(!(event.ctrlKey||event.metaKey))return;event.preventDefault();changeZoom(event.deltaY<0?.08:-.08)},{passive:false});
 
 window.addEventListener('keydown',event=>{

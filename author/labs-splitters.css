@@ -47,8 +47,49 @@ body .labs-filterbar select{
 
 body .labs-preview-stage{
   place-items:center!important;
-  overflow:hidden!important;
-  padding:22px!important;
+  overflow:auto!important;
+  padding:14px!important;
+}
+
+body .labs-preview-titlebar{
+  gap:8px;
+}
+
+body .labs-preview-titlebar .muted{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body .labs-zoom-tools{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  margin-left:auto;
+}
+
+body .labs-zoom-tools button{
+  height:23px;
+  min-width:27px;
+  padding:0 7px;
+  border:1px solid #9daab5;
+  border-radius:4px;
+  background:#fff;
+  color:#243847;
+  font:700 11px system-ui;
+  cursor:pointer;
+}
+
+body .labs-zoom-tools button:hover{
+  background:#eef5fb;
+}
+
+body #labsZoomValue{
+  min-width:38px;
+  text-align:right;
+  color:#526170;
+  font:700 11px system-ui;
 }
 
 body .labs-preview-page{
@@ -180,7 +221,7 @@ body .labs-group.collapsed{
 
 body .labs-editor-status{
   display:grid;
-  gap:6px;
+  gap:4px;
 }
 
 body .labs-editor-status b{
@@ -198,7 +239,8 @@ body .labs-editor-status.planned b{
 
 body .labs-editor-status span,
 body .labs-editor-status em{
-  line-height:1.35;
+  line-height:1.22;
+  font-size:11px;
 }
 
 body .labs-editor-status code{
@@ -210,7 +252,81 @@ body .labs-editor-status code{
   padding:5px 6px;
   background:#fff;
   border:1px solid #d1dbe3;
-  font-size:11px;
+  font-size:10px;
+}
+
+body .labs-form{
+  gap:5px!important;
+  padding:7px!important;
+}
+
+body .labs-form label{
+  gap:2px!important;
+  font-size:11px!important;
+}
+
+body .labs-form input,
+body .labs-form select,
+body .labs-form textarea{
+  padding:3px 5px!important;
+  font-size:12px!important;
+}
+
+body .labs-form input,
+body .labs-form select{
+  height:26px!important;
+}
+
+body .labs-form textarea{
+  min-height:42px!important;
+}
+
+body .labs-form #labsEditorDescription{
+  min-height:38px!important;
+}
+
+body .labs-form #labsEditorParams,
+body .labs-form #labsEditorUrl{
+  min-height:50px!important;
+}
+
+body .labs-layout-grid{
+  gap:5px!important;
+}
+
+body .labs-param-editor{
+  gap:4px!important;
+  padding:6px!important;
+}
+
+body .labs-param-title{
+  font-size:11px!important;
+}
+
+body .labs-param-rows{
+  gap:3px!important;
+}
+
+body .labs-param-row{
+  gap:3px!important;
+  grid-template-columns:minmax(96px,1fr) minmax(58px,.68fr) minmax(58px,.55fr) 24px!important;
+}
+
+body .labs-param-remove{
+  min-width:24px!important;
+  width:24px!important;
+  height:24px!important;
+}
+
+body .labs-actions{
+  gap:4px!important;
+}
+
+body .labs-actions button,
+body .labs-param-editor button{
+  min-height:27px!important;
+  padding:0 7px!important;
+  font-size:12px!important;
 }
 
 body .labs-preview-scene-box{
