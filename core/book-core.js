@@ -348,16 +348,77 @@
     return next;
   }
 
+  function continuationPageInfo(page){
+    const match = String(page?.id || '').match(/^(.*)-r(\d+)$/);
+    if(!match) return null;
+    const part = Number(match[2]);
+    return part > 1 ? {baseId:match[1], part} : null;
+  }
+
+  function printOnlyContinuationPage(page){
+    return !visibleInMode(page, 'screen') && visibleInMode(page, 'print');
+  }
+
+  function orderContinuationPages(pages=[], shouldMove=()=>true){
+    const baseIds = new Set((pages || []).map(page=>String(page?.id || '')).filter(Boolean));
+    const continuations = new Map();
+    const moved = new Set();
+    (pages || []).forEach(page=>{
+      const info = continuationPageInfo(page);
+      if(!info || !baseIds.has(info.baseId) || !shouldMove(page)) return;
+      if(!continuations.has(info.baseId)) continuations.set(info.baseId, []);
+      continuations.get(info.baseId).push({page, part:info.part});
+      moved.add(page);
+    });
+    continuations.forEach(list=>list.sort((a,b)=>a.part-b.part));
+    const ordered = [];
+    (pages || []).forEach(page=>{
+      if(moved.has(page)) return;
+      ordered.push(page);
+      const list = continuations.get(String(page?.id || ''));
+      if(list) ordered.push(...list.map(entry=>entry.page));
+    });
+    return ordered;
+  }
+
   function filterBookForMode(book, mode='screen'){
     const next = normalizeData(deepClone(book));
     let filteredPages = 0;
     let filteredItems = 0;
-    next.pages = (next.pages || [])
+    if(mode === 'screen'){
+      let hiddenPages = 0;
+      let hiddenItems = 0;
+      next.pages = (next.pages || []).map((page,pageIndex)=>{
+        if(!visibleInMode(page, mode)) hiddenPages++;
+        const items = (page.items || []).map(item=>{
+          if(!visibleInMode(item, mode)) hiddenItems++;
+          return item;
+        });
+        return Object.assign({}, page, {
+          id:page.id || `page-${pageIndex+1}`,
+          items
+        });
+      });
+      next.pages = orderContinuationPages(next.pages, printOnlyContinuationPage);
+      next.extensions = Object.assign({}, next.extensions || {}, {
+        screenVisibilityExpansion:{
+          enabled:hiddenPages > 0 || hiddenItems > 0,
+          mode,
+          filteredPages:0,
+          filteredItems:0,
+          hiddenPages,
+          hiddenItems,
+          totalPages:next.pages.length
+        }
+      });
+      return next;
+    }
+    next.pages = orderContinuationPages((next.pages || [])
       .filter(page=>{
         const visible = visibleInMode(page, mode);
         if(!visible) filteredPages++;
         return visible;
-      })
+      }), printOnlyContinuationPage)
       .map((page,pageIndex)=>{
         const items = (page.items || []).filter(item=>{
           const visible = visibleInMode(item, mode);
