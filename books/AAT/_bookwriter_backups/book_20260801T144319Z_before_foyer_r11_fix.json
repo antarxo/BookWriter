@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T14:43:19.451Z",
+    "updatedAt": "2026-08-01T14:42:19.743Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -5745,14 +5745,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 1,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 1,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -5818,14 +5818,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 2,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 2,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -5891,14 +5891,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 3,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 3,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -5964,14 +5964,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 4,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 4,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6037,14 +6037,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 5,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 5,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6110,14 +6110,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 6,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 6,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6183,14 +6183,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 7,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 7,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6256,14 +6256,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 8,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 8,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6329,14 +6329,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 9,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 9,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6402,14 +6402,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 10,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 10,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6453,6 +6453,13 @@
               "left": "Πολύ ωραία σύνοψη! Αλλά έχω την αίσθηση ότι μας δείχνει και τα πρακτικά βήματα που μπορούμε να ακολουθάμε προκειμένου να αποκαλύπτουμε και στις ασκήσεις τα πάντα για μια ταλάντωση!",
               "right": "1. Ξεκαθαρίζουμε για ποιον ταλαντωτή πρόκειται π.χ. τον  <b>m<sub>1</sub>,D<sub>1</sub> </b>\n2. Στήνουμε το σύστημα αναφοράς για την AAT\n    α. Εντοπίζουμε και στηρίζουμε τη  <b>θέση ισορροπίας ταλάντωσης  </b>(το μηδέν του άξονα) με τον 1ο Νόμο του Νεύτωνα\n    β.  <b>Προσανατολίζουμε τον άξονα αναφοράς </b> (Συμφέρει τα θετικά κατά εκεί που κινείται ή πρόκειται να κινηθεί ο ταλαντωτής)\n3. Στόχος να υπολογιστούν τα <b> Α, ω, φο  </b>της ταλάντωσης\n    α. Για το  <b>Α </b> εφαρμόζουμε  <b>ΑΔΜΕΤ </b> για το αρχικό συνήθως σημείο κάτι σαν ½D<sub>1</sub>A² = ½D<sub>1</sub>x²<sub>o</sub> + ½m<sub>1</sub>υ²<sub>o</sub>\n    β. Για το  <b>ω </b> εφαρμόζουμε τη σχέση  <b>D<sub>1</sub>=m<sub>1</sub>ω<sup>2</sup> </b>\n    γ. Για την <b>αρχική φάση φo</b> εφαρμόζουμε τη σχέση (1) x(t)=A·ημ(ωt+φ₀) για t=0, επιλύουμε τριγωνομετρικά ως προς φο και από τις δύο λύσεις δεχόμαστε εκείνη της οποίας το συνημίτονο έχει το πρόσημο της ταχύτητας τη χρονική στιγμή t=0!\n<b>Σκεφτείτε! </b><i>Αν έχεις τα Α, ω, φο μιας ταλάντωσης αποκτάς ...πρόσβαση στην απάντηση, για οποιοδήποτε ερώτημα την αφορά!</i>",
               "viewer": 1
+            },
+            {
+              "id": "foyer-row-33",
+              "speaker": "Θεατής 1",
+              "left": "Λοιπόν! <b>Τι λέτε αποχωρούμε;</b>",
+              "right": "",
+              "viewer": 1
             }
           ],
           "nav": {
@@ -6468,14 +6475,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 11,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 12
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 11,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 12
       }
     },
     {
@@ -6507,65 +6514,6 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-33",
-              "speaker": "Θεατής 1",
-              "left": "Λοιπόν! <b>Τι λέτε αποχωρούμε;</b>",
-              "right": "",
-              "viewer": 1
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 12,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 12,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r13",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r13",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
-            {
               "id": "foyer-row-34",
               "speaker": "Θεατής 3",
               "left": "Φυσικά!",
@@ -6585,8 +6533,8 @@
           "extensions": {
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 13,
-            "foyerSplitTotal": 13
+            "foyerSplitPart": 12,
+            "foyerSplitTotal": 12
           }
         },
         {
@@ -6621,8 +6569,8 @@
       ],
       "extensions": {
         "importedFromAatFoyer": true,
-        "foyerSplitPart": 13,
-        "foyerSplitTotal": 13
+        "foyerSplitPart": 12,
+        "foyerSplitTotal": 12
       }
     }
   ],
@@ -6876,6 +6824,6 @@
       }
     },
     "aatFoyerImportedAt": "2026-08-01T14:35:52.754Z",
-    "aatFoyerSplitAt": "2026-08-01T14:43:19.451Z"
+    "aatFoyerSplitAt": "2026-08-01T14:42:19.743Z"
   }
 }

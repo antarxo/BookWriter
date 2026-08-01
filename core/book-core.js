@@ -51,11 +51,11 @@
 
   const TEXT_KEYS = new Set([
     'eyebrow','title','subtitle','label','html','left','center','right',
-    'alt','caption','setupLabel','pressLabel','observeTitle','navLabel'
+    'alt','caption','setupLabel','pressLabel','observeTitle','navLabel','intro'
   ]);
   const STRUCTURAL_TYPES = new Set([
     'hero','part_title','section_heading','note','side_note',
-    'figure','scene','nav_anchor'
+    'figure','scene','dialogue','nav_anchor'
   ]);
   const FONT_PRESETS = Object.freeze({
     serif:'Georgia,"Noto Serif","Times New Roman",serif',
@@ -247,6 +247,18 @@
       return html + '</ul>';
     };
     return renderLevel(0);
+  }
+
+  function dialogueMarkupHtml(value=''){
+    return escapeHtml(String(value ?? ''))
+      .replace(/\r?\n/g,'<br>')
+      .replace(/&lt;(\/?)(b|strong|i|em|sub|sup)&gt;/gi,'<$1$2>')
+      .replace(/&lt;br\s*\/?&gt;/gi,'<br>');
+  }
+
+  function dialogueCellHtml(value='',empty=''){
+    const raw = String(value ?? '').trim();
+    return raw ? dialogueMarkupHtml(raw) : `<span class="dialogue-empty">${escapeHtml(empty)}</span>`;
   }
 
   function attrJson(value){
@@ -958,6 +970,23 @@
           const extras = calloutExtrasHtml(item.extras, lang);
           node.innerHTML = `<div class="callout-title">${textWithMath(getLoc(item,'title',lang==='en'?'Try':'Δοκίμασε',lang))}</div>${setup}${press}${observe}${conclusion}${extras}`;
         }
+        break;
+      }
+      case 'dialogue': {
+        node = document.createElement('section');
+        node.className = 'book-dialogue';
+        applyCanonicalStyle(node,item.style);
+        const rows = Array.isArray(item.rows) ? item.rows : [];
+        const intro = text('intro');
+        const rowHtml = rows.length
+          ? rows.map((row,index)=>{
+            const speaker = String(row?.speaker || (row?.viewer ? `${lang==='en'?'Viewer':'Θεατής'} ${row.viewer}` : '')).trim();
+            const left = dialogueCellHtml(row?.left, lang === 'en' ? 'No comment' : 'Χωρίς σχόλιο');
+            const right = dialogueCellHtml(row?.right, '');
+            return `<div class="dialogue-row" data-dialogue-row="${index}"><div class="dialogue-cell dialogue-left">${speaker?`<div class="dialogue-speaker">${escapeHtml(speaker)}</div>`:''}<div class="dialogue-text">${left}</div></div><div class="dialogue-cell dialogue-right">${right}</div></div>`;
+          }).join('')
+          : `<div class="dialogue-empty-block">${lang === 'en' ? 'No dialogue rows.' : 'Δεν υπάρχουν ατάκες στη συζήτηση.'}</div>`;
+        node.innerHTML = `${text('title')?`<h3 class="dialogue-title">${dialogueMarkupHtml(text('title'))}</h3>`:''}${intro?`<p class="dialogue-intro">${dialogueMarkupHtml(intro)}</p>`:''}<div class="dialogue-table">${rowHtml}</div>`;
         break;
       }
       case 'equation': {

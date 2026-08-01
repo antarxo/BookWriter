@@ -302,6 +302,62 @@
 .book-page-root .callout-extra-lines{display:grid;gap:9px;margin-top:8px}
 .book-page-root .callout-extra-lines span{display:block;border-bottom:1px solid #aebbc5;height:12px}
 @media screen{.book-page-root .callout-extras-body[hidden],.book-page-root .callout-extra-answer[hidden]{display:none!important}}
+.book-page-root .book-dialogue{
+  clear:both;
+  margin:12px 0;
+  border:1px solid #d9e2ea;
+  background:#fff;
+  border-radius:8px;
+  overflow:hidden;
+  font:500 calc(var(--body-font-size) * .78)/1.42 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  color:#273946
+}
+.book-page-root .dialogue-title{
+  margin:0;
+  padding:9px 11px 6px;
+  background:#eef4f8;
+  border-bottom:1px solid #d9e2ea;
+  font:800 calc(var(--body-font-size) * .82)/1.2 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  color:#173f5b
+}
+.book-page-root .dialogue-intro{
+  margin:0;
+  padding:8px 11px;
+  background:#f8fbfd;
+  border-bottom:1px solid #e3ebf1;
+  color:#3d5362
+}
+.book-page-root .dialogue-table{display:block}
+.book-page-root .dialogue-row{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);
+  border-top:1px solid #e5ecf2
+}
+.book-page-root .dialogue-row:first-child{border-top:0}
+.book-page-root .dialogue-cell{padding:7px 9px;min-width:0}
+.book-page-root .dialogue-left{background:#fff}
+.book-page-root .dialogue-right{
+  background:#f7fafc;
+  border-left:1px solid #e5ecf2;
+  color:#213544
+}
+.book-page-root .dialogue-speaker{
+  display:inline-block;
+  margin:0 0 4px;
+  padding:2px 7px;
+  border:1px solid #d1dde7;
+  border-radius:999px;
+  background:#edf4f8;
+  color:#28556f;
+  font:800 calc(var(--body-font-size) * .62)/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif
+}
+.book-page-root .dialogue-text{min-width:0}
+.book-page-root .dialogue-empty{color:#98a5ae}
+.book-page-root .dialogue-empty-block{padding:10px;color:#71808b}
+@media (max-width:760px){
+  .book-page-root .dialogue-row{grid-template-columns:1fr}
+  .book-page-root .dialogue-right{border-left:0;border-top:1px solid #e5ecf2}
+}
 .book-page-root .callout-sequence{padding:7px 8px}
 .book-page-root .callout-sequence-head{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 7px}
 .book-page-root .callout-sequence-dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}

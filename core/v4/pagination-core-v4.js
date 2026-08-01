@@ -34,7 +34,7 @@ function paginationUnits(items=[]){
   return units;
 }
 const flattenUnits=units=>(units||[]).flatMap(unit=>Array.isArray(unit)?unit:[unit]);
-function splittableUnits(item){if(['paragraph','note'].includes(item?.type))return richUnits(item.body);if(item?.type==='side_note'&&String(item?.layout?.placement||'wide')==='wide')return richUnits(item.body);if(item?.type==='list')return(item.items||[]).length;if(item?.type==='table')return(item.rows||[]).length;return 0}
+function splittableUnits(item){if(['paragraph','note'].includes(item?.type))return richUnits(item.body);if(item?.type==='side_note'&&String(item?.layout?.placement||'wide')==='wide')return richUnits(item.body);if(item?.type==='list')return(item.items||[]).length;if(item?.type==='table')return(item.rows||[]).length;if(item?.type==='dialogue')return(item.rows||[]).length;return 0}
 const continuationId=(item,part)=>`${item.id}--cont-${part}`;
 function splitItem(item,count,part=2){
   const total=splittableUnits(item),n=Math.max(0,Math.min(total,Number(count)||0));
@@ -48,6 +48,10 @@ function splitItem(item,count,part=2){
     first.rows=clone((item.rows||[]).slice(0,n));rest.rows=clone((item.rows||[]).slice(n));
     const repeat=Math.max(0,Number(item?.style?.headerRows)||0);
     if(repeat&&rest.rows.length){const headers=clone((item.rows||[]).slice(0,Math.min(repeat,n)));rest.rows=[...headers,...rest.rows];rest.extensions={...(rest.extensions||{}),paginationRepeatedHeaderRows:headers.length};}
+  }else if(item.type==='dialogue'){
+    first.rows=clone((item.rows||[]).slice(0,n));
+    rest.rows=clone((item.rows||[]).slice(n));
+    rest.intro='';
   }else return null;
   rest.id=continuationId(item,part);rest.nav={...(rest.nav||{}),show:false,label:''};
   first.extensions={...(first.extensions||{}),paginationOriginId:item.extensions?.paginationOriginId||item.id,paginationPart:item.extensions?.paginationPart||1};

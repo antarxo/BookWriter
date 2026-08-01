@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T14:43:19.451Z",
+    "updatedAt": "2026-08-01T14:41:13.594Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -5730,6 +5730,13 @@
               "left": "<b>Σωστά! Όμοια,</b> η (3)’ και η (6)",
               "right": "<b>(3)’ α(x)=−ω²·x\n(6)  ΣF(x)=−m·ω²·x</b>",
               "viewer": 2
+            },
+            {
+              "id": "foyer-row-4",
+              "speaker": "Θεατής 2",
+              "left": "... μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση και την συνολική δύναμη που δέχεται αρκεί να ξέρουμε σε ποιο σημείο της σκηνής βρίσκεται ο (m₁ ,D₁)</b> χωρίς φυσικά και αναγκαστικά να συνεχίσουμε να είμαστε θεατές!",
+              "right": "",
+              "viewer": 2
             }
           ],
           "nav": {
@@ -5745,14 +5752,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 1,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 9
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 1,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 9
       }
     },
     {
@@ -5784,13 +5791,6 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-4",
-              "speaker": "Θεατής 2",
-              "left": "... μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση και την συνολική δύναμη που δέχεται αρκεί να ξέρουμε σε ποιο σημείο της σκηνής βρίσκεται ο (m₁ ,D₁)</b> χωρίς φυσικά και αναγκαστικά να συνεχίσουμε να είμαστε θεατές!",
-              "right": "",
-              "viewer": 2
-            },
-            {
               "id": "foyer-row-5",
               "speaker": "Θεατής 3",
               "left": "Λοιπόν!\n1. Διαπιστώνουμε αγαπητοί μου ότι δεν μπορούμε προς το παρόν να «προφητέψουμε» κάτι ανάλογο  για την ταχύτητα και τη σχέση της με τη θέση του (m₁ ,D₁).\n2. Σκέφτομαι όμως, ότι αυτά που είδαμε μέχρι τώρα στην παράσταση, γενικεύονται για κάθε πρωταγωνιστή (m,D) σε ανάλογη Παράσταση ΑΑΤ.",
@@ -5803,6 +5803,20 @@
               "left": "...3. Ως γνώστες της …Αλγεβρικής και με ολίγην <i>“αλγεβρική περιέργεια”</i>, να τι μπορούμε να κάνουμε (και μάλιστα γενικεύοντας για κάθε, τυχαίο m,D) για να καλύψουμε και το <b>κενό 1 που αναφέρει ο Θεατής 3</b>.\n✓ Λύνουμε την (1) ως προς ημ(ωt+φ₀)",
               "right": "(1) x=A·ημ(ωt+φ₀) ⇒ ημ(ωt+φ₀)=x/A\n και υψώνουμε στο τετράγωνο\n <b>ημ²(ωt+φ₀)= x²/A²</b>",
               "viewer": 1
+            },
+            {
+              "id": "foyer-row-7",
+              "speaker": "Θεατής 3",
+              "left": "<b>Σωστά!</b> Το ίδιο να κάνουμε για την (2), λύνουμε ως προς συν(ωt+φ₀)",
+              "right": "(2) υ=ωA·συν(ωt+φ₀) ⇒ συν(ωt+φ₀)=υ/(ωA)\n και υψώνουμε στο τετράγωνο\n <b>συν²(ωt+φ₀)= υ²/(ω²A²)</b>\n καθώς ημ²(ωt+φ₀)+συν²(ωt+φ₀)=1\n με πρόσθεση κατά μέλη\n ⇒ <b>1 = x²/A² + υ²/(ω²A²) (8)</b>",
+              "viewer": 3
+            },
+            {
+              "id": "foyer-row-8",
+              "speaker": "Θεατής 4",
+              "left": "✓Ιδού η σχέση που μας έλειπε! Τώρα <b>«προφητεύουμε» και την ταχύτητα όταν γνωρίζουμε τη θέση του πρωταγωνιστή στη σκηνή</b> αλλά και\n✓Μπορούμε (σκεφτόμενοι ανάλογα) να βγάλουμε μια σχέση  ανάμεσα στην επιτάχυνση και την ταχύτητα!\nΔηλαδή εδώ, 'πειράζουμε' την  (3) και την (2)",
+              "right": "",
+              "viewer": 4
             }
           ],
           "nav": {
@@ -5818,14 +5832,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 2,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 9
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 2,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 9
       }
     },
     {
@@ -5857,78 +5871,12 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-7",
-              "speaker": "Θεατής 3",
-              "left": "<b>Σωστά!</b> Το ίδιο να κάνουμε για την (2), λύνουμε ως προς συν(ωt+φ₀)",
-              "right": "(2) υ=ωA·συν(ωt+φ₀) ⇒ συν(ωt+φ₀)=υ/(ωA)\n και υψώνουμε στο τετράγωνο\n <b>συν²(ωt+φ₀)= υ²/(ω²A²)</b>\n καθώς ημ²(ωt+φ₀)+συν²(ωt+φ₀)=1\n με πρόσθεση κατά μέλη\n ⇒ <b>1 = x²/A² + υ²/(ω²A²) (8)</b>",
-              "viewer": 3
-            },
-            {
-              "id": "foyer-row-8",
-              "speaker": "Θεατής 4",
-              "left": "✓Ιδού η σχέση που μας έλειπε! Τώρα <b>«προφητεύουμε» και την ταχύτητα όταν γνωρίζουμε τη θέση του πρωταγωνιστή στη σκηνή</b> αλλά και\n✓Μπορούμε (σκεφτόμενοι ανάλογα) να βγάλουμε μια σχέση  ανάμεσα στην επιτάχυνση και την ταχύτητα!\nΔηλαδή εδώ, 'πειράζουμε' την  (3) και την (2)",
-              "right": "",
-              "viewer": 4
-            },
-            {
               "id": "foyer-row-9",
               "speaker": "Θεατής 1",
               "left": "...φυσικά! φυσικά! Λύνουμε την (3) ως προς ημ(ωt+φ₀) και την (2) ως προς συν(ωt+φ₀), και υψώνουμε στο τετράγωνο",
               "right": "(3) ⇒ ημ²(ωt+φ₀)=α²/(ω⁴A²),\n(2) ⇒ συν²(ωt+φ₀)=υ²/(ω²A²)\n και πρόσθεση κατά μέλη\n ⇒ <b>1 = α²/(ω⁴A²) + υ²/(ω²A²)  (9)</b>  bingo!",
               "viewer": 1
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 3,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 3,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r4",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r4",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
+            },
             {
               "id": "foyer-row-10",
               "speaker": "Θεατής 4",
@@ -5963,15 +5911,95 @@
           "extensions": {
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
+            "foyerSplitPart": 3,
+            "foyerSplitTotal": 9
+          }
+        }
+      ],
+      "extensions": {
+        "importedFromAatFoyer": true,
+        "foyerSplitPart": 3,
+        "foyerSplitTotal": 9
+      }
+    },
+    {
+      "id": "aat-foyer-discussion-r4",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-foyer-dialogue-r4",
+          "type": "dialogue",
+          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
+          "intro": "",
+          "rows": [
+            {
+              "id": "foyer-row-13",
+              "speaker": "Θεατής 5",
+              "left": "...αλλά και από την (9), όμοια λύνοντας ως προς α...",
+              "right": "(9) 1 = α²/(ω⁴A²) + υ²/(ω²A²)\n⇔ <b>α = ±ω·√(ω²A² − υ²)  ⁽¹¹⁾</b>\nκαι να η ζητούμενη σχέση της επιτάχυνσης  του ταλαντωτή σε σχέση με τη θέση του!",
+              "viewer": 5
+            },
+            {
+              "id": "foyer-row-14",
+              "speaker": "Θεατής 3",
+              "left": "χμμ ναι, αλλά και (αν σκεφτούμε ότι ωA=υmax)",
+              "right": "⁽¹¹⁾ ⇔ α = ±ω·√((ωA)² − υ²)\n⇔ <b>a = ±ω·√(υ_max² − υ²)  (11΄)</b>",
+              "viewer": 3
+            },
+            {
+              "id": "foyer-row-15",
+              "speaker": "Θεατής 2",
+              "left": "που, τώρα πιά η ⁽¹¹⁾ και η (11΄). μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση αρκεί να ξέρουμε την ταχύτητα του ηθοποιού!",
+              "right": "",
+              "viewer": 2
+            },
+            {
+              "id": "foyer-row-16",
+              "speaker": "Θεατής 4",
+              "left": "... κάτι ήθελε να πει όμως ο <b>Θεατής 1</b>!",
+              "right": "",
+              "viewer": 4
+            }
+          ],
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "provenance": {
+            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
+            "sourceSection": "foyer",
+            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
+          },
+          "extensions": {
+            "importedFromAatFoyer": true,
+            "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 4,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 9
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 4,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 9
       }
     },
     {
@@ -6003,24 +6031,31 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-13",
-              "speaker": "Θεατής 5",
-              "left": "...αλλά και από την (9), όμοια λύνοντας ως προς α...",
-              "right": "(9) 1 = α²/(ω⁴A²) + υ²/(ω²A²)\n⇔ <b>α = ±ω·√(ω²A² − υ²)  ⁽¹¹⁾</b>\nκαι να η ζητούμενη σχέση της επιτάχυνσης  του ταλαντωτή σε σχέση με τη θέση του!",
-              "viewer": 5
+              "id": "foyer-row-17",
+              "speaker": "Θεατής 1",
+              "left": "Στο σημείο στο οποίο διέκοψα είχε γραφτεί <b>ω²A² = ω²x² + υ²</b>. Σκέφτομαι λοιπόν τα εξής: Αν πολλαπλασιάσουμε και τα δύο μέλη με ½m, δείτε! η σχέση γράφεται:",
+              "right": "<b>½ m ω²A² = ½ m ω²x² + ½ m υ²  ⁽¹²⁾</b>",
+              "viewer": 1
             },
             {
-              "id": "foyer-row-14",
-              "speaker": "Θεατής 3",
-              "left": "χμμ ναι, αλλά και (αν σκεφτούμε ότι ωA=υmax)",
-              "right": "⁽¹¹⁾ ⇔ α = ±ω·√((ωA)² − υ²)\n⇔ <b>a = ±ω·√(υ_max² − υ²)  (11΄)</b>",
-              "viewer": 3
-            },
-            {
-              "id": "foyer-row-15",
+              "id": "foyer-row-18",
               "speaker": "Θεατής 2",
-              "left": "που, τώρα πιά η ⁽¹¹⁾ και η (11΄). μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση αρκεί να ξέρουμε την ταχύτητα του ηθοποιού!",
-              "right": "",
+              "left": "Μα! έτσι ο παράγοντας ½ m υ² είναι η κινητική ενέργεια του … πρωταγωνιστή (m,D)",
+              "right": "<b>K = ½ m υ²</b>",
+              "viewer": 2
+            },
+            {
+              "id": "foyer-row-19",
+              "speaker": "Θεατής 4",
+              "left": "...χμμμ! Ο παράγοντας αυτός προστίθεται στον ½ m ω² x² ο οποίος δεν μπορεί παρά να <b>είναι και αυτός ενέργεια!</b> (πρόσθεση κάνουμε μόνο ανάμεσα σε ομοειδή!). Όμως ο παράγοντας αυτός εξαρτάται από τη θέση του πρωταγωνιστή άρα δεν μπορεί παρά να παριστάνει τη Δυναμική Ενέργεια U (λόγω θέσης) του πρωταγωνιστή (m,D)!",
+              "right": "<b>U= ½ m ω² x²</b>",
+              "viewer": 4
+            },
+            {
+              "id": "foyer-row-20",
+              "speaker": "Θεατής 2",
+              "left": "... Επομένως, ο παράγοντας ½ m ω² A² του πρώτου μέλους\n  <b>– Πρώτον</b> δεν μπορεί παρά ως άθροισμα Κ και U να «παριστάνει» τη μηχανική ενέργεια Ε<sub>Μ</sub> του πρωταγωνιστή (m,D).",
+              "right": "<b>Ε<sub>Μηχ</sub>= ½ m ω² A²</b>",
               "viewer": 2
             }
           ],
@@ -6037,14 +6072,14 @@
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 5,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 9
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 5,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 9
       }
     },
     {
@@ -6076,151 +6111,12 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-16",
-              "speaker": "Θεατής 4",
-              "left": "... κάτι ήθελε να πει όμως ο <b>Θεατής 1</b>!",
-              "right": "",
-              "viewer": 4
-            },
-            {
-              "id": "foyer-row-17",
-              "speaker": "Θεατής 1",
-              "left": "Στο σημείο στο οποίο διέκοψα είχε γραφτεί <b>ω²A² = ω²x² + υ²</b>. Σκέφτομαι λοιπόν τα εξής: Αν πολλαπλασιάσουμε και τα δύο μέλη με ½m, δείτε! η σχέση γράφεται:",
-              "right": "<b>½ m ω²A² = ½ m ω²x² + ½ m υ²  ⁽¹²⁾</b>",
-              "viewer": 1
-            },
-            {
-              "id": "foyer-row-18",
-              "speaker": "Θεατής 2",
-              "left": "Μα! έτσι ο παράγοντας ½ m υ² είναι η κινητική ενέργεια του … πρωταγωνιστή (m,D)",
-              "right": "<b>K = ½ m υ²</b>",
-              "viewer": 2
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 6,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 6,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r7",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r7",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
-            {
-              "id": "foyer-row-19",
-              "speaker": "Θεατής 4",
-              "left": "...χμμμ! Ο παράγοντας αυτός προστίθεται στον ½ m ω² x² ο οποίος δεν μπορεί παρά να <b>είναι και αυτός ενέργεια!</b> (πρόσθεση κάνουμε μόνο ανάμεσα σε ομοειδή!). Όμως ο παράγοντας αυτός εξαρτάται από τη θέση του πρωταγωνιστή άρα δεν μπορεί παρά να παριστάνει τη Δυναμική Ενέργεια U (λόγω θέσης) του πρωταγωνιστή (m,D)!",
-              "right": "<b>U= ½ m ω² x²</b>",
-              "viewer": 4
-            },
-            {
-              "id": "foyer-row-20",
-              "speaker": "Θεατής 2",
-              "left": "... Επομένως, ο παράγοντας ½ m ω² A² του πρώτου μέλους\n  <b>– Πρώτον</b> δεν μπορεί παρά ως άθροισμα Κ και U να «παριστάνει» τη μηχανική ενέργεια Ε<sub>Μ</sub> του πρωταγωνιστή (m,D).",
-              "right": "<b>Ε<sub>Μηχ</sub>= ½ m ω² A²</b>",
-              "viewer": 2
-            },
-            {
               "id": "foyer-row-21",
               "speaker": "Θεατής 5",
               "left": "...  Θέλετε να πείτε ότι η ⁽¹²⁾ δείχνει την ισχύ μιας Αρχής Διατήρησης Μηχανικής Ενέργειας;",
               "right": "<b>⁽¹²⁾ ½ m ω²A² = ½ m ω²x² + ½ m υ²</b>\n  ⇔     Ε<sub>Μηχ</sub>       =        U       +        K\n  Δηλαδή «Α.Δ.Μ.Ε.»;",
               "viewer": 5
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 7,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 7,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r8",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r8",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
+            },
             {
               "id": "foyer-row-22",
               "speaker": "Θεατής 3",
@@ -6255,15 +6151,175 @@
           "extensions": {
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
+            "foyerSplitPart": 6,
+            "foyerSplitTotal": 9
+          }
+        }
+      ],
+      "extensions": {
+        "importedFromAatFoyer": true,
+        "foyerSplitPart": 6,
+        "foyerSplitTotal": 9
+      }
+    },
+    {
+      "id": "aat-foyer-discussion-r7",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-foyer-dialogue-r7",
+          "type": "dialogue",
+          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
+          "intro": "",
+          "rows": [
+            {
+              "id": "foyer-row-25",
+              "speaker": "Θεατής 5",
+              "left": "Δηλαδή σα να λέμε τώρα, γνωρίζουμε πλέον και το … budget της παράστασης, πόσα στοίχισε δηλαδή στον κ. Ενεργειούλη η παρατηρούμενη από εμάς κίνηση του m₁ ,D₁; Και, δεν έχουμε επομένως λέω εγώ, κανένα πλέον λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3η πράξη περί ενέργειας! Το έργο το …έχουμε ξαναδεί;",
+              "right": "",
+              "viewer": 5
+            },
+            {
+              "id": "foyer-row-26",
+              "speaker": "Θεατής 1",
+              "left": "Φυσικά και γνωρίζουμε το budged! Μπορούμε εδώ και τώρα να το υπολογίσουμε με μια απλή αριθμητική αντικατάσταση..",
+              "right": "στη σχέση Ε<sub>Μηχ</sub>=½DA² που δίνει <b>Ε<sub>Μηχ</sub>={Emech}J</b>",
+              "viewer": 1
+            },
+            {
+              "id": "foyer-row-27",
+              "speaker": "Θεατής 4",
+              "left": "Σωστά! Η “αλγεβρική περιέργεια” ωστόσο, που τόσο συχνά επικαλείται ο Θεατής 1, μας οδηγεί και σε μια πιο συμμαζεμένη έκφραση αυτής της … Αρχής Διατήρησης της Μηχανικής Ενέργειας του Ταλαντωτή (m,D). Είπαμε πιο πάνω για τη σταθερά <b>D=mω²</b> αυτή, που βάλαμε και στη σχέση (7)ΣF = −D·x ...",
+              "right": "<b>D=mω²</b>",
+              "viewer": 4
+            },
+            {
+              "id": "foyer-row-28",
+              "speaker": "Θεατής 3",
+              "left": "...που θά 'θελες να πεις, αν χρησιμοποιηθεί στην ⁽¹²⁾, αυτή γράφεται:",
+              "right": "<b>½ D A² = ½ D x² + ½ m υ²  ⁽¹³⁾</b>\n  δηλαδή Α.Δ.Μ.Ε.Τ. του κάθε (m,D)",
+              "viewer": 3
+            }
+          ],
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "provenance": {
+            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
+            "sourceSection": "foyer",
+            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
+          },
+          "extensions": {
+            "importedFromAatFoyer": true,
+            "importedAt": "2026-08-01T14:35:52.754Z",
+            "foyerSplitPart": 7,
+            "foyerSplitTotal": 9
+          }
+        }
+      ],
+      "extensions": {
+        "importedFromAatFoyer": true,
+        "foyerSplitPart": 7,
+        "foyerSplitTotal": 9
+      }
+    },
+    {
+      "id": "aat-foyer-discussion-r8",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-foyer-dialogue-r8",
+          "type": "dialogue",
+          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
+          "intro": "",
+          "rows": [
+            {
+              "id": "foyer-row-29",
+              "speaker": "Θεατής 2",
+              "left": "Βασικά, να φύγουμε λέω και εγώ, αλλά με μια επίγευση από την αποψινή παράσταση του (m₁,D₁). Ας συνοψίσουμε:",
+              "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>(m,D)</b> χαρακτηρίζεται απολύτως από τον <b>«σωματότυπό του» (m)</b> και την <b>«χρονική» εμμονή του (ω)</b>",
+              "viewer": 2
+            },
+            {
+              "id": "foyer-row-30",
+              "speaker": "Θεατής 1",
+              "left": "...ή ισοδύναμα και ας το κρατήσουμε αυτό",
+              "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>θα χαρακτηρίζεται απολύτως από τα δικά του (m,D)!</b>",
+              "viewer": 1
+            },
+            {
+              "id": "foyer-row-31",
+              "speaker": "Θεατής 2",
+              "left": "...Θα ισχύει λοιπόν για μας στο εξής:",
+              "right": "<b>1. O ταλαντωτής m,D καθορίζει τα δικά του ω, f, T της ΑΑΤ που θα εκτελέσει</b>\n <b>2. Tα όρια</b> στην παράστασή του (το μήκος διαδρομής - με άλλα λόγια <b>το A</b>) τα <b>καθορίζει ο κάθε κύριος … Ενεργειούλης μέσα από την Μηχανική ενέργεια Ε<sub>Μηχ</sub> που καταβάλει για να τον θέσει σε κίνηση και\n3. Το σύστημα αναφοράς, δηλαδή τη σημείο αναφοράς (θέση ισορροπίας ταλάντωσης) και τον προσανατολισμό των αξόνων τον προσδιορίζουμε εμείς, αλλά κυρίως </b>την έναρξη της ΑΑΤ και επομένως την <b>(φ₀), την καθορίζουμε πάντα εμείς, οι θεατές</b> ανοίγοντας την \"κουρτίνα\" της παράστασής της!",
+              "viewer": 2
+            },
+            {
+              "id": "foyer-row-32",
+              "speaker": "Θεατής 1",
+              "left": "Πολύ ωραία σύνοψη! Αλλά έχω την αίσθηση ότι μας δείχνει και τα πρακτικά βήματα που μπορούμε να ακολουθάμε προκειμένου να αποκαλύπτουμε και στις ασκήσεις τα πάντα για μια ταλάντωση!",
+              "right": "1. Ξεκαθαρίζουμε για ποιον ταλαντωτή πρόκειται π.χ. τον  <b>m<sub>1</sub>,D<sub>1</sub> </b>\n2. Στήνουμε το σύστημα αναφοράς για την AAT\n    α. Εντοπίζουμε και στηρίζουμε τη  <b>θέση ισορροπίας ταλάντωσης  </b>(το μηδέν του άξονα) με τον 1ο Νόμο του Νεύτωνα\n    β.  <b>Προσανατολίζουμε τον άξονα αναφοράς </b> (Συμφέρει τα θετικά κατά εκεί που κινείται ή πρόκειται να κινηθεί ο ταλαντωτής)\n3. Στόχος να υπολογιστούν τα <b> Α, ω, φο  </b>της ταλάντωσης\n    α. Για το  <b>Α </b> εφαρμόζουμε  <b>ΑΔΜΕΤ </b> για το αρχικό συνήθως σημείο κάτι σαν ½D<sub>1</sub>A² = ½D<sub>1</sub>x²<sub>o</sub> + ½m<sub>1</sub>υ²<sub>o</sub>\n    β. Για το  <b>ω </b> εφαρμόζουμε τη σχέση  <b>D<sub>1</sub>=m<sub>1</sub>ω<sup>2</sup> </b>\n    γ. Για την <b>αρχική φάση φo</b> εφαρμόζουμε τη σχέση (1) x(t)=A·ημ(ωt+φ₀) για t=0, επιλύουμε τριγωνομετρικά ως προς φο και από τις δύο λύσεις δεχόμαστε εκείνη της οποίας το συνημίτονο έχει το πρόσημο της ταχύτητας τη χρονική στιγμή t=0!\n<b>Σκεφτείτε! </b><i>Αν έχεις τα Α, ω, φο μιας ταλάντωσης αποκτάς ...πρόσβαση στην απάντηση, για οποιοδήποτε ερώτημα την αφορά!</i>",
+              "viewer": 1
+            }
+          ],
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "provenance": {
+            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
+            "sourceSection": "foyer",
+            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
+          },
+          "extensions": {
+            "importedFromAatFoyer": true,
+            "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 8,
-            "foyerSplitTotal": 13
+            "foyerSplitTotal": 9
           }
         }
       ],
       "extensions": {
         "importedFromAatFoyer": true,
         "foyerSplitPart": 8,
-        "foyerSplitTotal": 13
+        "foyerSplitTotal": 9
       }
     },
     {
@@ -6295,276 +6351,12 @@
           "intro": "",
           "rows": [
             {
-              "id": "foyer-row-25",
-              "speaker": "Θεατής 5",
-              "left": "Δηλαδή σα να λέμε τώρα, γνωρίζουμε πλέον και το … budget της παράστασης, πόσα στοίχισε δηλαδή στον κ. Ενεργειούλη η παρατηρούμενη από εμάς κίνηση του m₁ ,D₁; Και, δεν έχουμε επομένως λέω εγώ, κανένα πλέον λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3η πράξη περί ενέργειας! Το έργο το …έχουμε ξαναδεί;",
-              "right": "",
-              "viewer": 5
-            },
-            {
-              "id": "foyer-row-26",
-              "speaker": "Θεατής 1",
-              "left": "Φυσικά και γνωρίζουμε το budged! Μπορούμε εδώ και τώρα να το υπολογίσουμε με μια απλή αριθμητική αντικατάσταση..",
-              "right": "στη σχέση Ε<sub>Μηχ</sub>=½DA² που δίνει <b>Ε<sub>Μηχ</sub>={Emech}J</b>",
-              "viewer": 1
-            },
-            {
-              "id": "foyer-row-27",
-              "speaker": "Θεατής 4",
-              "left": "Σωστά! Η “αλγεβρική περιέργεια” ωστόσο, που τόσο συχνά επικαλείται ο Θεατής 1, μας οδηγεί και σε μια πιο συμμαζεμένη έκφραση αυτής της … Αρχής Διατήρησης της Μηχανικής Ενέργειας του Ταλαντωτή (m,D). Είπαμε πιο πάνω για τη σταθερά <b>D=mω²</b> αυτή, που βάλαμε και στη σχέση (7)ΣF = −D·x ...",
-              "right": "<b>D=mω²</b>",
-              "viewer": 4
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 9,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 9,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r10",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r10",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
-            {
-              "id": "foyer-row-28",
-              "speaker": "Θεατής 3",
-              "left": "...που θά 'θελες να πεις, αν χρησιμοποιηθεί στην ⁽¹²⁾, αυτή γράφεται:",
-              "right": "<b>½ D A² = ½ D x² + ½ m υ²  ⁽¹³⁾</b>\n  δηλαδή Α.Δ.Μ.Ε.Τ. του κάθε (m,D)",
-              "viewer": 3
-            },
-            {
-              "id": "foyer-row-29",
-              "speaker": "Θεατής 2",
-              "left": "Βασικά, να φύγουμε λέω και εγώ, αλλά με μια επίγευση από την αποψινή παράσταση του (m₁,D₁). Ας συνοψίσουμε:",
-              "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>(m,D)</b> χαρακτηρίζεται απολύτως από τον <b>«σωματότυπό του» (m)</b> και την <b>«χρονική» εμμονή του (ω)</b>",
-              "viewer": 2
-            },
-            {
-              "id": "foyer-row-30",
-              "speaker": "Θεατής 1",
-              "left": "...ή ισοδύναμα και ας το κρατήσουμε αυτό",
-              "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>θα χαρακτηρίζεται απολύτως από τα δικά του (m,D)!</b>",
-              "viewer": 1
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 10,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 10,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r11",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r11",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
-            {
-              "id": "foyer-row-31",
-              "speaker": "Θεατής 2",
-              "left": "...Θα ισχύει λοιπόν για μας στο εξής:",
-              "right": "<b>1. O ταλαντωτής m,D καθορίζει τα δικά του ω, f, T της ΑΑΤ που θα εκτελέσει</b>\n <b>2. Tα όρια</b> στην παράστασή του (το μήκος διαδρομής - με άλλα λόγια <b>το A</b>) τα <b>καθορίζει ο κάθε κύριος … Ενεργειούλης μέσα από την Μηχανική ενέργεια Ε<sub>Μηχ</sub> που καταβάλει για να τον θέσει σε κίνηση και\n3. Το σύστημα αναφοράς, δηλαδή τη σημείο αναφοράς (θέση ισορροπίας ταλάντωσης) και τον προσανατολισμό των αξόνων τον προσδιορίζουμε εμείς, αλλά κυρίως </b>την έναρξη της ΑΑΤ και επομένως την <b>(φ₀), την καθορίζουμε πάντα εμείς, οι θεατές</b> ανοίγοντας την \"κουρτίνα\" της παράστασής της!",
-              "viewer": 2
-            },
-            {
-              "id": "foyer-row-32",
-              "speaker": "Θεατής 1",
-              "left": "Πολύ ωραία σύνοψη! Αλλά έχω την αίσθηση ότι μας δείχνει και τα πρακτικά βήματα που μπορούμε να ακολουθάμε προκειμένου να αποκαλύπτουμε και στις ασκήσεις τα πάντα για μια ταλάντωση!",
-              "right": "1. Ξεκαθαρίζουμε για ποιον ταλαντωτή πρόκειται π.χ. τον  <b>m<sub>1</sub>,D<sub>1</sub> </b>\n2. Στήνουμε το σύστημα αναφοράς για την AAT\n    α. Εντοπίζουμε και στηρίζουμε τη  <b>θέση ισορροπίας ταλάντωσης  </b>(το μηδέν του άξονα) με τον 1ο Νόμο του Νεύτωνα\n    β.  <b>Προσανατολίζουμε τον άξονα αναφοράς </b> (Συμφέρει τα θετικά κατά εκεί που κινείται ή πρόκειται να κινηθεί ο ταλαντωτής)\n3. Στόχος να υπολογιστούν τα <b> Α, ω, φο  </b>της ταλάντωσης\n    α. Για το  <b>Α </b> εφαρμόζουμε  <b>ΑΔΜΕΤ </b> για το αρχικό συνήθως σημείο κάτι σαν ½D<sub>1</sub>A² = ½D<sub>1</sub>x²<sub>o</sub> + ½m<sub>1</sub>υ²<sub>o</sub>\n    β. Για το  <b>ω </b> εφαρμόζουμε τη σχέση  <b>D<sub>1</sub>=m<sub>1</sub>ω<sup>2</sup> </b>\n    γ. Για την <b>αρχική φάση φo</b> εφαρμόζουμε τη σχέση (1) x(t)=A·ημ(ωt+φ₀) για t=0, επιλύουμε τριγωνομετρικά ως προς φο και από τις δύο λύσεις δεχόμαστε εκείνη της οποίας το συνημίτονο έχει το πρόσημο της ταχύτητας τη χρονική στιγμή t=0!\n<b>Σκεφτείτε! </b><i>Αν έχεις τα Α, ω, φο μιας ταλάντωσης αποκτάς ...πρόσβαση στην απάντηση, για οποιοδήποτε ερώτημα την αφορά!</i>",
-              "viewer": 1
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 11,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 11,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r12",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r12",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
-            {
               "id": "foyer-row-33",
               "speaker": "Θεατής 1",
               "left": "Λοιπόν! <b>Τι λέτε αποχωρούμε;</b>",
               "right": "",
               "viewer": 1
-            }
-          ],
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 12,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 12,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
-      "id": "aat-foyer-discussion-r13",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
-        {
-          "id": "aat-foyer-dialogue-r13",
-          "type": "dialogue",
-          "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
-          "intro": "",
-          "rows": [
+            },
             {
               "id": "foyer-row-34",
               "speaker": "Θεατής 3",
@@ -6585,8 +6377,8 @@
           "extensions": {
             "importedFromAatFoyer": true,
             "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 13,
-            "foyerSplitTotal": 13
+            "foyerSplitPart": 9,
+            "foyerSplitTotal": 9
           }
         },
         {
@@ -6621,8 +6413,8 @@
       ],
       "extensions": {
         "importedFromAatFoyer": true,
-        "foyerSplitPart": 13,
-        "foyerSplitTotal": 13
+        "foyerSplitPart": 9,
+        "foyerSplitTotal": 9
       }
     }
   ],
@@ -6876,6 +6668,6 @@
       }
     },
     "aatFoyerImportedAt": "2026-08-01T14:35:52.754Z",
-    "aatFoyerSplitAt": "2026-08-01T14:43:19.451Z"
+    "aatFoyerSplitAt": "2026-08-01T14:41:13.594Z"
   }
 }

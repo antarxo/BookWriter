@@ -59,7 +59,8 @@ const ITEM_TYPE_LABELS={
   clear:'Τέλος ενότητας',
   table:'Πίνακας',
   list:'Λίστα',
-  equation:'Εξίσωση'
+  equation:'Εξίσωση',
+  dialogue:'Συζήτηση'
 };
 function itemTypeLabel(type){
   return ITEM_TYPE_LABELS[type] || type || 'Στοιχείο';
@@ -2405,6 +2406,91 @@ function renderListEditor(cf,current,base){
   cf.appendChild(list);
 }
 
+function dialogueRowsText(rows=[]){
+  return (Array.isArray(rows)?rows:[]).map(row=>[
+    String(row?.speaker||'').replace(/\s+/g,' ').trim(),
+    String(row?.left||'').replace(/\r?\n/g,'\\n').trim(),
+    String(row?.right||'').replace(/\r?\n/g,'\\n').trim()
+  ].join(' | ')).join('\n');
+}
+
+function dialogueRowsFromText(text=''){
+  return String(text||'').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
+    const parts=line.split(/\s+\|\s+/);
+    if(parts.length>=3)return{speaker:parts[0].trim(),left:parts.slice(1,-1).join(' | ').replace(/\\n/g,'\n').trim(),right:parts.at(-1).replace(/\\n/g,'\n').trim()};
+    if(parts.length===2)return{speaker:parts[0].trim(),left:parts[1].replace(/\\n/g,'\n').trim(),right:''};
+    return{speaker:'',left:line.replace(/\\n/g,'\n'),right:''};
+  });
+}
+
+function selectedDialogueItemIn(book){
+  const selected=selectedItemIn(book);
+  if(!selected||selected.item.type!=='dialogue')throw Error('Δεν έχει επιλεγεί συζήτηση.');
+  selected.item.rows=Array.isArray(selected.item.rows)?selected.item.rows:[];
+  return selected;
+}
+
+function mutateDialogueRows(label,operation){
+  mutate(label,book=>{
+    const selected=selectedDialogueItemIn(book);
+    operation(selected.item.rows,selected.item);
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
+}
+
+function renderDialogueEditor(cf,current,base){
+  cf.append(
+    field('Τίτλος',current.title||'',v=>prop('Τίτλος συζήτησης',[...base,'title'],v),'textarea'),
+    field('Εισαγωγή',current.intro||'',v=>prop('Εισαγωγή συζήτησης',[...base,'intro'],v),'textarea',null,{rows:3})
+  );
+  const tools=document.createElement('div');
+  tools.className='list-tools';
+  tools.append(
+    button('Προσθήκη ατάκας',()=>mutateDialogueRows('Προσθήκη ατάκας',rows=>rows.push({speaker:'Θεατής',left:'Νέα ατάκα',right:''})),'primary-action'),
+    button('Εφαρμογή γραμμών',()=>{
+      const text=cf.querySelector('[data-dialogue-bulk]')?.value||'';
+      mutateDialogueRows('Μαζική ενημέρωση συζήτησης',(rows,item)=>{item.rows=dialogueRowsFromText(text);});
+    })
+  );
+  cf.appendChild(tools);
+  const bulkField=field('Γρήγορη επεξεργασία — ομιλητής | αριστερά | δεξιά',dialogueRowsText(current.rows),()=>{},'textarea',null,{rows:7,wide:true});
+  bulkField.querySelector('textarea')?.setAttribute('data-dialogue-bulk','1');
+  cf.appendChild(bulkField);
+
+  const rows=Array.isArray(current.rows)?current.rows:[];
+  if(!rows.length){
+    const note=document.createElement('div');
+    note.className='info-card';
+    note.textContent='Η συζήτηση είναι κενή. Πρόσθεσε ατάκες ή χρησιμοποίησε τη γρήγορη επεξεργασία.';
+    cf.appendChild(note);
+    return;
+  }
+  const list=document.createElement('div');
+  list.className='list-item-editor-list';
+  rows.forEach((row,index)=>{
+    const card=document.createElement('section');
+    card.className='list-item-editor';
+    card.innerHTML=`<div class="list-item-editor-head"><b>Ατάκα ${index+1}</b><span>${esc(row.speaker||M.textFromHtml(row.left||'')||'(κενό)')}</span></div>`;
+    const actions=document.createElement('div');
+    actions.className='list-item-actions';
+    actions.append(
+      button('Πάνω',()=>mutateDialogueRows('Ατάκα πάνω',rows=>{if(index>0)[rows[index-1],rows[index]]=[rows[index],rows[index-1]]})),
+      button('Κάτω',()=>mutateDialogueRows('Ατάκα κάτω',rows=>{if(index<rows.length-1)[rows[index+1],rows[index]]=[rows[index],rows[index+1]]})),
+      button('Αντιγραφή',()=>mutateDialogueRows('Αντιγραφή ατάκας',rows=>rows.splice(index+1,0,clone(rows[index])))),
+      button('Διαγραφή',()=>mutateDialogueRows('Διαγραφή ατάκας',rows=>rows.splice(index,1)),'danger')
+    );
+    card.appendChild(actions);
+    const path=[...base,'rows',index];
+    card.append(
+      field('Ομιλητής',row.speaker||'',v=>prop('Ομιλητής ατάκας',[...path,'speaker'],v)),
+      field('Αριστερή στήλη',row.left||'',v=>prop('Αριστερή στήλη ατάκας',[...path,'left'],v),'textarea',null,{rows:3}),
+      field('Δεξιά στήλη / τύποι',row.right||'',v=>prop('Δεξιά στήλη ατάκας',[...path,'right'],v),'textarea',null,{rows:3})
+    );
+    list.appendChild(card);
+  });
+  cf.appendChild(list);
+}
+
 function setRichBodyFromPlain(base,text){
   const nodes=[];
   String(text??'').split(/\r?\n/).forEach((line,index)=>{
@@ -3369,6 +3455,7 @@ function renderItemProperties(host){
   else if(current.type==='list') renderListEditor(cf,current,base);
   else if(current.type==='table') renderTableEditor(cf,current,base);
   else if(current.type==='equation') renderEquationEditor(cf,current,base);
+  else if(current.type==='dialogue') renderDialogueEditor(cf,current,base);
   else if(current.type==='clear') cf.innerHTML='<div class="info-card">Το στοιχείο αυτό δηλώνει τέλος ενότητας και δεν έχει δικό του περιεχόμενο.</div>';
   else cf.appendChild(document.createTextNode('Δεν υπάρχουν ειδικά πεδία για αυτόν τον τύπο.'));
   host.appendChild(content);
