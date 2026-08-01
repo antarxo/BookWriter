@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T10:48:07.026Z",
+    "updatedAt": "2026-08-01T10:42:56.534Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1371,6 +1371,9 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
+          },
+          "layout": {
+            "placement": "wide"
           }
         }
       ],
@@ -2608,7 +2611,7 @@
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
           "hideCaption": true,
           "layout": {
-            "placement": "right",
+            "placement": "wide",
             "wrap": false,
             "floatInteraction": "wrap",
             "widthPx": 706,
@@ -2815,9 +2818,6 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
-          },
-          "layout": {
-            "placement": "wide"
           }
         }
       ]

@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T10:48:07.026Z",
+    "updatedAt": "2026-08-01T10:41:54.663Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1070,102 +1070,6 @@
           }
         },
         {
-          "id": "docx-insert-ms80kyq1-4hd41-item-1",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση ",
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "math_inline",
-                "source": "x",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math>"
-              },
-              {
-                "type": "text_run",
-                "text": " του σώματος είναι αρμονική συνάρτηση του χρόνου ",
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "math_inline",
-                "source": "t",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math>"
-              },
-              {
-                "type": "text_run",
-                "text": ", δηλαδή δίνεται από την σχέση:  ",
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "math_inline",
-                "source": "x = \\text{Aημ} ( \\text{ωt} + ϕ_{0} ) ( 1.5 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"></mspace><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
-              },
-              {
-                "type": "text_run",
-                "text": "  ",
-                "bold": true,
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "text_run",
-                "text": "τότε η κίνηση του σώματος ",
-                "color": "rgb(0, 0, 0)"
-              },
-              {
-                "type": "text_run",
-                "text": "λέγεται απλή αρμονική ταλάντωση-ΑΑΤ. ",
-                "bold": true,
-                "color": "rgb(0, 0, 0)"
-              }
-            ]
-          },
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 4
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
-            "sourcePage": 2,
-            "sourceParagraph": 20,
-            "insertionId": "docx-insert-ms80kyq1-4hd41"
-          },
-          "provenance": {
-            "sourceStyle": "Normal",
-            "sourceParagraphStyle": {
-              "marginBottomPx": 4,
-              "lineHeight": 1,
-              "fontFamily": "Calibri",
-              "fontSizePx": 14.666666666666666,
-              "align": "both",
-              "bold": true
-            },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-07-30T21:54:32.625Z"
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math></span> του σώματος είναι αρμονική συνάρτηση του χρόνου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math></span>, δηλαδή δίνεται από την σχέση:&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math></span><strong>  </strong>τότε η κίνηση του σώματος <strong>λέγεται απλή αρμονική ταλάντωση. </strong>",
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          }
-        },
-        {
           "id": "page-1-r2-scene-οριζοντια-κινηση-θεση--11",
           "type": "scene",
           "nav": {
@@ -1177,7 +1081,7 @@
           "caption": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο, υ και α.",
           "hideCaption": true,
           "layout": {
-            "placement": "right",
+            "placement": "float-right",
             "wrap": true,
             "floatInteraction": "wrap",
             "widthPx": 340,
@@ -1271,6 +1175,102 @@
               "appliedSrc": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=11.5",
               "insertedAt": "2026-08-01T00:59:04.548Z"
             }
+          }
+        },
+        {
+          "id": "docx-insert-ms80kyq1-4hd41-item-1",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση ",
+                "color": "rgb(0, 0, 0)"
+              },
+              {
+                "type": "math_inline",
+                "source": "x",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": " του σώματος είναι αρμονική συνάρτηση του χρόνου ",
+                "color": "rgb(0, 0, 0)"
+              },
+              {
+                "type": "math_inline",
+                "source": "t",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": ", δηλαδή δίνεται από την σχέση:  ",
+                "color": "rgb(0, 0, 0)"
+              },
+              {
+                "type": "math_inline",
+                "source": "x = \\text{Aημ} ( \\text{ωt} + ϕ_{0} ) ( 1.5 )",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"></mspace><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math>"
+              },
+              {
+                "type": "text_run",
+                "text": "  ",
+                "bold": true,
+                "color": "rgb(0, 0, 0)"
+              },
+              {
+                "type": "text_run",
+                "text": "τότε η κίνηση του σώματος ",
+                "color": "rgb(0, 0, 0)"
+              },
+              {
+                "type": "text_run",
+                "text": "λέγεται απλή αρμονική ταλάντωση-ΑΑΤ. ",
+                "bold": true,
+                "color": "rgb(0, 0, 0)"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 4
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΤΑΛΑΝΤΩΣΕΙΣ.docx",
+            "sourcePage": 2,
+            "sourceParagraph": 20,
+            "insertionId": "docx-insert-ms80kyq1-4hd41"
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both",
+              "bold": true
+            },
+            "sourceHyphenation": true,
+            "visualEdited": true,
+            "contentEdited": true,
+            "editedAt": "2026-07-30T21:54:32.625Z"
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "Έστω ένα σώμα που κινείται παλινδρομικά πάνω σε ένα άξονα (π.χ. χ’χ) γύρω από την αρχή Ο του άξονα, που είναι και το μέσον της τροχιάς του. Αν η θέση <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>x</mi></mrow></mrow></math></span> του σώματος είναι αρμονική συνάρτηση του χρόνου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>t</mi></mrow></mrow></math></span>, δηλαδή δίνεται από την σχέση:&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi>x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mtext>Aημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.5</mn><mo>)</mo></mrow></mrow></math></span><strong>  </strong>τότε η κίνηση του σώματος <strong>λέγεται απλή αρμονική ταλάντωση. </strong>",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.2"
           }
         },
         {
@@ -2608,7 +2608,7 @@
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
           "hideCaption": true,
           "layout": {
-            "placement": "right",
+            "placement": "wide",
             "wrap": false,
             "floatInteraction": "wrap",
             "widthPx": 706,
@@ -2815,9 +2815,6 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
-          },
-          "layout": {
-            "placement": "wide"
           }
         }
       ]

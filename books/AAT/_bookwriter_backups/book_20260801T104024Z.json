@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T10:48:07.026Z",
+    "updatedAt": "2026-08-01T10:27:31.370Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1177,7 +1177,7 @@
           "caption": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο, υ και α.",
           "hideCaption": true,
           "layout": {
-            "placement": "right",
+            "placement": "float-right",
             "wrap": true,
             "floatInteraction": "wrap",
             "widthPx": 340,
@@ -1295,7 +1295,6 @@
             "print": true,
             "items": []
           },
-          "sequenceSceneId": "page-1-r2-scene-οριζοντια-κινηση-θεση--11",
           "sequenceDisplayMode": "expanded",
           "sequenceSteps": [
             {
@@ -1346,14 +1345,8 @@
               },
               "setupChips": [],
               "pressChips": [],
-              "observeItems": [
-                "Η ταχύτητα του σώματος κάθε χρονική στιγμή θα δίνεται από την σχέση:",
-                "<span style=\"color:#000000\"><strong> </strong></span><span class=\"bw-inline-math\" contenteditable=\"false\" data-math-source=\"υ = \\frac{d x}{d t} = \\text{ωΑ} \\text{σvν} ( \\text{ωt} + ϕ_{0} ) = υ_{max} \\text{σvν} ( \\text{ωt} + ϕ_{0} ) ( 1.6 )\" title=\"Διπλό κλικ για επεξεργασία\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math></span><span style=\"color:#000000\">  όπου </span><span class=\"bw-inline-math\" contenteditable=\"false\" data-math-source=\"υ_{max} = \\text{ωA}\" title=\"Διπλό κλικ για επεξεργασία\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mtext>ωA</mtext></mrow></mrow></math></span><span style=\"color:#000000\"> η μέγιστη τιμή του μέτρου της ταχύτητας του σώματος. </span>"
-              ],
-              "conclusionItems": [],
-              "extras": {
-                "print": false
-              }
+              "observeItems": [],
+              "conclusionItems": []
             },
             {
               "title": "4. Επιτάχυνση",
@@ -1371,6 +1364,10 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
+          },
+          "sequenceSceneId": "page-1-r2-scene-οριζοντια-κινηση-θεση--11",
+          "layout": {
+            "placement": "wide"
           }
         }
       ],
@@ -1917,27 +1914,27 @@
                 "type": "text_run",
                 "text": " ",
                 "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "υ = \\frac{d x}{d t} = \\text{ωΑ} \\text{σvν} ( \\text{ωt} + ϕ_{0} ) = υ_{max} \\text{σvν} ( \\text{ωt} + ϕ_{0} ) ( 1.6 )",
-                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"></mspace><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"></mspace><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>"
+                "source": "",
+                "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": "  όπου ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               },
               {
                 "type": "math_inline",
-                "source": "υ_{max} = \\text{ωA}",
+                "source": "",
                 "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mtext>ωA</mtext></mrow></mrow></math>"
               },
               {
                 "type": "text_run",
                 "text": " η μέγιστη τιμή του μέτρου της ταχύτητας του σώματος. ",
-                "color": "rgb(0, 0, 0)"
+                "color": "#000000"
               }
             ]
           },
@@ -1966,16 +1963,13 @@
               "align": "both",
               "bold": true
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-08-01T10:32:21.840Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<strong> </strong><span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mspace width=\".24em\"/><mi mathvariant=\"normal\">υ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>d</mi><mi>x</mi></mrow></mrow><mrow><mrow><mi>d</mi><mi>t</mi></mrow></mrow></mfrac><mrow><mo>=</mo><mtext>ωΑ</mtext></mrow><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mtext>σvν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mtext>ωt</mtext></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mo>ϕ</mo></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/><mo>(</mo><mn>1.6</mn><mo>)</mo></mrow></mrow></math></span>  όπου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mi mathvariant=\"normal\">max</mi></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mtext>ωA</mtext></mrow></mrow></math></span> η μέγιστη τιμή του μέτρου της ταχύτητας του σώματος. ",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -2608,7 +2602,7 @@
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
           "hideCaption": true,
           "layout": {
-            "placement": "right",
+            "placement": "wide",
             "wrap": false,
             "floatInteraction": "wrap",
             "widthPx": 706,
@@ -2815,9 +2809,6 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
-          },
-          "layout": {
-            "placement": "wide"
           }
         }
       ]
