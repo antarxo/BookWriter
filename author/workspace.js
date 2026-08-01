@@ -2229,7 +2229,7 @@ function renderExtrasFields(parent,extras,path,label='Πρόσθετο υλικ�
 }
 
 function renderInteractiveCalloutEditor(cf,current,base){
-  cf.appendChild(calloutSourcePicker([...base,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις'));
+  cf.appendChild(calloutObservationTools([...base,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις'));
   cf.append(
     field('Τίτλος',current.title||'',v=>prop('Τίτλος callout',[...base,'title'],v)),
     field('Label ρύθμισης',current.setupLabel||'Ρύθμισε',v=>prop('Label ρύθμισης',[...base,'setupLabel'],v)),
@@ -2301,7 +2301,7 @@ function renderInteractiveCalloutEditor(cf,current,base){
       field('Κατάσταση σκηνής JSON',jsonObjectText(step.state),v=>setJsonObject('Κατάσταση σκηνής βήματος',[...path,'state'],v),'textarea',null,{rows:4,monospace:true}),
       field('Query εκτύπωσης JSON',jsonObjectText(step.printQuery),v=>setJsonObject('Query εκτύπωσης βήματος',[...path,'printQuery'],v),'textarea',null,{rows:3,monospace:true})
     );
-    card.appendChild(calloutSourcePicker([...path,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις βήματος'));
+    card.appendChild(calloutObservationTools([...path,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις βήματος'));
     card.append(
       field('Τίτλος βήματος',step.title||'',v=>prop('Τίτλος βήματος',[...path,'title'],v)),
       field('Preset σκηνής',step.preset||'',v=>prop('Preset βήματος',[...path,'preset'],v)),
@@ -2755,22 +2755,25 @@ async function openCalloutSourcePicker(path,label){
 }
 
 function calloutSourcePicker(path,label){
-  const sources=calloutTextSources();
   const wrap=document.createElement('div');
   wrap.className='sequence-tools';
+  wrap.append(...calloutSourceControls(path,label));
+  return wrap;
+}
+
+function calloutSourceControls(path,label){
+  const sources=calloutTextSources();
   if(!sources.length){
     const note=document.createElement('div');
     note.className='info-card warn';
     note.textContent='Δεν υπάρχουν παράγραφοι, σημειώσεις ή λίστες στο βιβλίο για μεταφορά.';
-    wrap.appendChild(note);
-    return wrap;
+    return [note];
   }
   const note=document.createElement('span');
   note.className='sequence-tool-note';
   note.textContent=`Πηγές κειμένου: ${sources.length}`;
   const add=button('Επιλογή πηγής…',()=>openCalloutSourcePicker(path,label),'primary-action');
-  wrap.append(note,add);
-  return wrap;
+  return [note,add];
 }
 
 function appendLinesToCallout(path,label,lines){
@@ -2786,6 +2789,23 @@ function appendLinesToCallout(path,label,lines){
     target[key]=Array.isArray(target?.[key])?target[key].concat(next):next;
     return{pageId:selected.page.id,itemId:selected.item.id};
   });
+}
+
+async function insertCalloutObservationEquation(path,label){
+  const result=await equationComposer({display:'block',title:'Αυτόνομη εξίσωση στις παρατηρήσεις',acceptLabel:'Προσθήκη'});
+  if(!result)return;
+  const source=String(result.source||'').replace(/\s*\r?\n\s*/g,' ').trim();
+  appendLinesToCallout(path,label,`\\[${source}\\]`);
+}
+
+function calloutObservationTools(path,label){
+  const tools=document.createElement('div');
+  tools.className='sequence-tools';
+  tools.append(
+    ...calloutSourceControls(path,label),
+    button('Αυτόνομη εξίσωση…',()=>insertCalloutObservationEquation(path,'Προσθήκη εξίσωσης στις παρατηρήσεις'),'primary-action')
+  );
+  return tools;
 }
 
 function mathMlToEditorSource(mathml=''){
