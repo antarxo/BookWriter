@@ -338,6 +338,14 @@
     return true;
   }
 
+  function materializeVisibleEntry(entry){
+    const next = Object.assign({}, entry || {});
+    delete next.visibility;
+    delete next.printOnly;
+    delete next.screenOnly;
+    return next;
+  }
+
   function filterBookForMode(book, mode='screen'){
     const next = normalizeData(deepClone(book));
     let filteredPages = 0;
@@ -353,8 +361,8 @@
           const visible = visibleInMode(item, mode);
           if(!visible) filteredItems++;
           return visible;
-        });
-        return Object.assign({}, page, {
+        }).map(materializeVisibleEntry);
+        return Object.assign(materializeVisibleEntry(page), {
           id:page.id || `page-${pageIndex+1}`,
           items
         });
