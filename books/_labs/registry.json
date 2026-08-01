@@ -20,6 +20,7 @@
       "showForce",
       "showEnergy",
       "showClock",
+      "textSize",
       "zoom"
     ],
     "statusValues": [
@@ -45,6 +46,7 @@
         "showForce": "showForce",
         "showEnergy": "showEnergy",
         "showClock": "showClock",
+        "textSize": "textSize",
         "zoom": "zoom"
       },
       "defaultQuery": {

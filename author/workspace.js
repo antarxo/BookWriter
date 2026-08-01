@@ -925,7 +925,7 @@ async function insertSelectedLabSceneFromWorkspace(){
     appliedSrc:src,
     insertedAt:new Date().toISOString()
   };
-  let result;
+  let result,linkedCallout=null;
   mutate(`Σκηνή εργαστηρίου: ${title}`,book=>{
     const p=book.pages.find(current=>current.id===target.pageId)||book.pages.find(current=>current.id===session.selection.pageId)||book.pages[0];
     if(!p)throw new Error('Δεν υπάρχει σελίδα για εισαγωγή σκηνής.');
@@ -943,14 +943,20 @@ async function insertSelectedLabSceneFromWorkspace(){
       extensions:{lab:labExtension}
     });
     result=C.Operations.insertItem(book,p.id,index,'scene',data);
+    const anchorItem=anchor>=0?p.items.find(current=>current.id===target.itemId):null;
+    if(target.placement==='after'&&anchorItem?.type==='interactive_callout'&&!anchorItem.sequenceSceneId){
+      anchorItem.sequenceSceneId=result.itemId;
+      linkedCallout={pageId:p.id,itemId:anchorItem.id};
+    }
     return result;
   });
   state.labs.insertTarget=null;
-  if(result?.pageId)session.selection={pageId:result.pageId,itemId:result.itemId||null};
+  if(linkedCallout)session.selection=linkedCallout;
+  else if(result?.pageId)session.selection={pageId:result.pageId,itemId:result.itemId||null};
   state.tab='item';
   setView('book');
   renderAll();
-  setStatus(`Εισάχθηκε σκηνή από εργαστήριο: ${title}.`,'good');
+  setStatus(linkedCallout?`Εισάχθηκε και συνδέθηκε σκηνή ακολουθίας: ${title}.`:`Εισάχθηκε σκηνή από εργαστήριο: ${title}.`,'good');
 }
 function urlOrigin(value=''){
   try{return new URL(value,location.href).origin}catch{return''}
@@ -1061,6 +1067,7 @@ const LAB_PARAM_LABELS={
   showForce:'Δύναμη',
   showEnergy:'Ενέργεια',
   showClock:'Χρονόμετρο',
+  textSize:'Μέγεθος κειμένου',
   inheritDefaultQuery:'Κληρονόμηση προεπιλογών εργαστηρίου'
 };
 function labParamLabel(key){
@@ -2133,6 +2140,41 @@ function newSequenceStepFromCallout(current,index=0){
     conclusionItems:clone(current.conclusionItems||[])
   };
 }
+function updateSequenceStepState(path,key,value){
+  mutate(`Κατάσταση βήματος: ${key}`,book=>{
+    const selected=selectedItemIn(book);
+    if(!selected||selected.item.type!=='interactive_callout')throw Error('Δεν έχει επιλεγεί πλαίσιο οδηγιών.');
+    const stepIndex=path[path.indexOf('sequenceSteps')+1];
+    const target=selected.item.sequenceSteps?.[stepIndex];
+    if(!target)throw Error('Δεν βρέθηκε το βήμα.');
+    target.state=target.state&&typeof target.state==='object'&&!Array.isArray(target.state)?target.state:{};
+    if(value===''||value===undefined||value===null)delete target.state[key];
+    else target.state[key]=value;
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
+}
+function updateSequenceStepPrintQuery(path,key,value){
+  mutate(`Παράμετρος εκτύπωσης βήματος: ${key}`,book=>{
+    const selected=selectedItemIn(book);
+    if(!selected||selected.item.type!=='interactive_callout')throw Error('Δεν έχει επιλεγεί πλαίσιο οδηγιών.');
+    const stepIndex=path[path.indexOf('sequenceSteps')+1];
+    const target=selected.item.sequenceSteps?.[stepIndex];
+    if(!target)throw Error('Δεν βρέθηκε το βήμα.');
+    target.printQuery=target.printQuery&&typeof target.printQuery==='object'&&!Array.isArray(target.printQuery)?target.printQuery:{};
+    if(value===''||value===undefined||value===null)delete target.printQuery[key];
+    else target.printQuery[key]=String(value);
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
+}
+function sequenceExtraParamsText(value={}){
+  return Object.entries(value||{}).filter(([key])=>!['play','t'].includes(key)).map(([key,entry])=>`${key}=${entry}`).join('\n');
+}
+function sequenceParamsWithExtras(base={},text=''){
+  const next={};
+  Object.entries(base||{}).forEach(([key,value])=>{if(['play','t'].includes(key))next[key]=value});
+  Object.entries(queryTextToObject(text)).forEach(([key,value])=>{if(key&&!['play','t'].includes(key))next[key]=value});
+  return next;
+}
 
 function defaultExtras(value={}){
   return {
@@ -2249,10 +2291,22 @@ function renderInteractiveCalloutEditor(cf,current,base){
     );
     card.appendChild(actions);
     const path=[...base,'sequenceSteps',index];
+    const technical=document.createElement('details');
+    technical.className='advanced-html';
+    technical.innerHTML='<summary>Τεχνικά πεδία σκηνής</summary>';
+    technical.append(
+      field('Άλλες παράμετροι κατάστασης',sequenceExtraParamsText(step.state),v=>prop('Άλλες παράμετροι κατάστασης βήματος',[...path,'state'],sequenceParamsWithExtras(step.state,v)),'textarea',null,{rows:2,monospace:true}),
+      field('Άλλες παράμετροι εκτύπωσης',sequenceExtraParamsText(step.printQuery),v=>prop('Άλλες παράμετροι εκτύπωσης βήματος',[...path,'printQuery'],sequenceParamsWithExtras(step.printQuery,v)),'textarea',null,{rows:2,monospace:true}),
+      field('Κατάσταση σκηνής JSON',jsonObjectText(step.state),v=>setJsonObject('Κατάσταση σκηνής βήματος',[...path,'state'],v),'textarea',null,{rows:4,monospace:true}),
+      field('Query εκτύπωσης JSON',jsonObjectText(step.printQuery),v=>setJsonObject('Query εκτύπωσης βήματος',[...path,'printQuery'],v),'textarea',null,{rows:3,monospace:true})
+    );
     card.append(
       field('Τίτλος βήματος',step.title||'',v=>prop('Τίτλος βήματος',[...path,'title'],v)),
       field('Preset σκηνής',step.preset||'',v=>prop('Preset βήματος',[...path,'preset'],v)),
       field('Print preset',step.printPreset||'',v=>prop('Print preset βήματος',[...path,'printPreset'],v)),
+      field('Χρόνος σκηνής t',step.state?.t??'',v=>updateSequenceStepState(path,'t',v),'number',null,{step:.05,placeholder:'π.χ. 0'}),
+      check('Η σκηνή κινείται σε αυτό το βήμα',step.state?.play===true,v=>updateSequenceStepState(path,'play',!!v)),
+      field('Χρόνος εκτύπωσης t',step.printQuery?.t??'',v=>updateSequenceStepPrintQuery(path,'t',v),'number',null,{step:.05,placeholder:'κενό = ίδιο με το βήμα'}),
       field('Ρύθμισε — chips',(step.setupChips||[]).join('\n'),v=>prop('Ρυθμίσεις βήματος',[...path,'setupChips'],linesValue(v)),'textarea',null,{rows:3}),
       field('Πίεσε — chips',(step.pressChips||[]).join('\n'),v=>prop('Πλήκτρα βήματος',[...path,'pressChips'],linesValue(v)),'textarea',null,{rows:3}),
       field('Τίτλος παρατήρησης',step.observeTitle||'',v=>prop('Τίτλος παρατήρησης βήματος',[...path,'observeTitle'],v)),
@@ -2260,8 +2314,7 @@ function renderInteractiveCalloutEditor(cf,current,base){
       field('Τίτλος συμπεράσματος',step.conclusionTitle||'',v=>prop('Τίτλος συμπεράσματος βήματος',[...path,'conclusionTitle'],v)),
       field('Συμπεράσματα',(step.conclusionItems||[]).join('\n'),v=>prop('Συμπεράσματα βήματος',[...path,'conclusionItems'],linesValue(v)),'textarea',null,{rows:3}),
       (()=>{const wrap=document.createElement('div');renderExtrasFields(wrap,step.extras,[...path,'extras'],'Πρόσθετο υλικό βήματος');return wrap})(),
-      field('Κατάσταση σκηνής JSON',jsonObjectText(step.state),v=>setJsonObject('Κατάσταση σκηνής βήματος',[...path,'state'],v),'textarea',null,{rows:4,monospace:true}),
-      field('Επιπλέον query εκτύπωσης JSON',jsonObjectText(step.printQuery),v=>setJsonObject('Query εκτύπωσης βήματος',[...path,'printQuery'],v),'textarea',null,{rows:3,monospace:true})
+      technical
     );
     list.appendChild(card);
   });
