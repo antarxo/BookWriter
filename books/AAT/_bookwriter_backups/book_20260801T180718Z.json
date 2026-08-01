@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T18:07:18.733Z",
+    "updatedAt": "2026-08-01T14:43:19.451Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -111,10 +111,6 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
       "items": [
         {
           "id": "_Toc235669424",
@@ -122,10 +118,6 @@
           "nav": {
             "show": true,
             "label": "Ταλαντώσεις"
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "eyebrow": "",
           "title": "Ταλαντώσεις",
@@ -202,10 +194,6 @@
             "show": true,
             "label": "1.1 Περιοδικά Φαινόμενα"
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "title": "<span style=\"display:block;background:#D6E3BC;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:18.666666666666668px\">1.1 Περιοδικά Φαινόμενα</span>",
           "level": 2,
           "style": {
@@ -250,10 +238,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -367,10 +351,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "ordered": false,
           "start": 1,
           "items": [
@@ -434,10 +414,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -498,10 +474,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -571,10 +543,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": false,
           "start": 1,
@@ -667,10 +635,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -730,10 +694,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": false,
           "start": 1,
@@ -798,10 +758,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi>f</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mi>T</mi></mrow></mrow></mfrac><mrow><mo>(</mo><mn>1.3</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
@@ -836,10 +792,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": false,
           "start": 1,
@@ -949,10 +901,6 @@
             "show": true,
             "label": "1.1.1 Ταλαντώσεις"
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "title": "<span style=\"display:block;background:#D6E3BC;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:18.666666666666668px\">1.1.1 Ταλαντώσεις</span>",
           "level": 2,
           "style": {
@@ -997,10 +945,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -1087,10 +1031,6 @@
             "show": true,
             "label": "1.1.2 Η Απλή Αρμονική Ταλάντωση (ΑΑΤ)"
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "title": "<span style=\"display:block;background:#D6E3BC;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:18.666666666666668px\">1.1.2 Η Απλή Αρμονική Ταλάντωση (ΑΑΤ)</span>",
           "level": 2,
           "style": {
@@ -1135,10 +1075,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -1235,10 +1171,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "src": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=11.5",
           "title": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα, επιτάχυνση",
@@ -1347,10 +1279,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "title": "Δοκίμασε",
           "setupLabel": "Ρύθμισε",
@@ -1508,10 +1436,6 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
       "items": [
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-10",
@@ -1519,10 +1443,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -1575,10 +1495,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -1636,10 +1552,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -1721,10 +1633,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "src": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13",
           "title": "Απλή Αρμονική Ταλάντωση",
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
@@ -1777,10 +1685,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "title": "Διερεύνησε βήμα προς βήμα",
           "setupLabel": "Ρύθμισε",
@@ -1976,10 +1880,6 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
       "items": [
         {
           "id": "_Toc235669429-2",
@@ -1987,10 +1887,6 @@
           "nav": {
             "show": true,
             "label": "Βλέποντας την ΑΑΤ σαν παράσταση!!!(οι Θεατές!! Πατήστε έναρξη για άνοιγμα της αυλαίας)"
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "title": "<span style=\"display:block;background:#FBD4B4;padding:4px 8px;border-radius:2px;color:#000000;font-family:&quot;Cambria&quot;;font-size:13.333333333333334px\">Από τον Ορισμό στους Νόμους της ΑΑΤ</span>",
           "level": 3,
@@ -2038,10 +1934,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -2103,10 +1995,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "label": "",
           "title": "",
           "body": {
@@ -2167,10 +2055,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -2221,10 +2105,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -2280,10 +2160,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "label": "",
           "title": "",
@@ -2375,10 +2251,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -2435,10 +2307,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -2500,10 +2368,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><msup><mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><msub><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>4</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
@@ -2538,10 +2402,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -2594,10 +2454,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "label": "",
           "title": "",
@@ -2689,10 +2545,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -2747,10 +2599,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "( 4 ) ( 3 ) ' ⇔ 2^{\\text{ος}} \\text{Νόμος} \\text{του} \\text{Νεύτωνα} : Σ F_{1} = - m_{1} ω_{1}^{2} x_{1} ( 6 )",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>4</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mrow><mo stretchy=\"true\">(</mo><mrow><mn>3</mn></mrow><mo stretchy=\"true\">)</mo></mrow><mi>&apos;</mi><mo>⇔</mo><msup><mn>2</mn><mrow><mtext>ος</mtext></mrow></msup><mtext>Νόμος</mtext><mtext>του</mtext><mtext>Νεύτωνα</mtext><mo>:</mo><mi>Σ</mi><msub><mi>F</mi><mrow><mn>1</mn></mrow></msub><mo>=</mo><mo>-</mo><msub><mi>m</mi><mrow><mn>1</mn></mrow></msub><msubsup><mi>ω</mi><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></msubsup><msub><mi>x</mi><mrow><mn>1</mn></mrow></msub><mrow><mo stretchy=\"true\">(</mo><mrow><mn>6</mn></mrow><mo stretchy=\"true\">)</mo></mrow></mrow></math>",
           "number": "",
@@ -2786,10 +2634,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "label": "",
           "title": "",
@@ -2970,10 +2814,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -3026,10 +2866,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><msup><mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo></mrow><mrow><mo>-</mo></mrow><msub><mrow><mrow><mi>D</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><msub><mrow><mrow><mi>x</mi><mspace width=\".24em\"/></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mspace width=\".24em\"/><mo>(</mo><mn>7</mn><mo>)</mo><mspace width=\".24em\"/></mrow></mrow></math>",
           "number": "",
@@ -3065,134 +2901,6 @@
       }
     },
     {
-      "id": "aat-foyer-discussion",
-      "sourcePage": null,
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
-      "items": [
-        {
-          "id": "aat-foyer-heading",
-          "type": "section_heading",
-          "nav": {
-            "show": true,
-            "label": "Φουαγιέ"
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
-          "title": "Φουαγιέ: χώρος ελεύθερης συζήτησης",
-          "level": 2
-        },
-        {
-          "id": "aat-foyer-live-scene",
-          "type": "scene",
-          "nav": {
-            "show": true,
-            "label": "Φουαγιέ"
-          },
-          "visibility": {
-            "screen": true,
-            "print": false
-          },
-          "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1",
-          "title": "Ζωντανό φουαγιέ παράστασης",
-          "caption": "Φουαγιέ παράστασης",
-          "hideCaption": true,
-          "layout": {
-            "placement": "wide",
-            "wrap": false,
-            "floatInteraction": "clear",
-            "widthPx": 700,
-            "aspectRatio": "4/3",
-            "crop": {
-              "scaleX": 1.25,
-              "scaleY": 1,
-              "xPercent": 7,
-              "yPercent": 0
-            }
-          },
-          "print": {
-            "snapshot": false
-          }
-        },
-        {
-          "id": "aat-foyer-dialogue",
-          "type": "dialogue",
-          "nav": {
-            "show": true,
-            "label": "Συζήτηση Φουαγιέ"
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
-          "title": "Συζήτηση μετά τη δεύτερη πράξη",
-          "intro": "Στο φουαγιέ και σε αναμονή έναρξης της 3ης πράξης \"η Ενέργεια στα ...Αλγεβρικά!\" γίνεται ζωηρή συζήτηση ανάμεσα στους θεατές , κατάθεση συμπερασμάτων, ανακεφαλαίωση και όχι μόνο!.",
-          "rows": [
-            {
-              "speaker": "Θεατής 1",
-              "left": "Οι σχέσεις (1), (2), (3) και (5)",
-              "right": "<b>(1) x(t)=A·ημ(ωt+φ₀)\n(2) υ(t)=ωA·συν(ωt+φ₀)\n(3) α(t)=−ω²A·ημ(ωt+φ₀)\n(5) ΣF(t)=−m·ω²A·ημ(ωt+φ₀)</b>",
-              "viewer": 1,
-              "id": "foyer-row-1"
-            },
-            {
-              "speaker": "Θεατής 1",
-              "left": "... μας βοηθούν να <b>«προφητεύουμε» τη θέση, την ταχύτητα, την επιτάχυνση και την συνολική δύναμη που δέχεται κάθε στιγμή ο (m₁ ,D₁)</b> χωρίς να χρειαστεί να ξαναμπούμε για τη συνέχεια της παράστασης!",
-              "right": "",
-              "viewer": 1,
-              "id": "foyer-row-2"
-            },
-            {
-              "speaker": "Θεατής 2",
-              "left": "<b>Σωστά! Όμοια,</b> η (3)’ και η (6)",
-              "right": "<b>(3)’ α(x)=−ω²·x\n(6)  ΣF(x)=−m·ω²·x</b>",
-              "viewer": 2,
-              "id": "foyer-row-3"
-            }
-          ],
-          "style": {},
-          "provenance": {
-            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
-            "sourceSection": "foyer",
-            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
-          },
-          "extensions": {
-            "importedFromAatFoyer": true,
-            "importedAt": "2026-08-01T14:35:52.754Z",
-            "foyerSplitPart": 1,
-            "foyerSplitTotal": 13
-          }
-        }
-      ],
-      "extensions": {
-        "importedFromAatFoyer": true,
-        "foyerSplitPart": 1,
-        "foyerSplitTotal": 13
-      }
-    },
-    {
       "id": "page-1-r4-r2-r2",
       "sourcePage": 3,
       "header": {
@@ -3213,10 +2921,6 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
       "items": [
         {
           "id": "page-1-r4-r2-paragraph-2-η-δυναμικη-στα-αλγεβ-9",
@@ -3224,10 +2928,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -3288,10 +2988,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -3389,10 +3085,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -3502,10 +3194,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -3571,10 +3259,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": true,
           "start": 1,
@@ -3827,10 +3511,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "ordered": false,
           "start": 1,
           "items": [
@@ -3949,10 +3629,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><mrow><mi mathvariant=\"normal\">x</mi></mrow><mrow><mo>=</mo></mrow><mrow><mi mathvariant=\"normal\">A</mi></mrow><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>1</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow></mtd></mtr><mtr><mtd><mrow><mi mathvariant=\"normal\">υ</mi><mo>=</mo><mtext>ωΑ</mtext><mspace width=\".24em\"/><mtext>συν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>2</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow></mtd></mtr></mtable><mrow><mspace width=\".24em\"/></mrow><mrow><mover><mrow><mrow><mtext>ως</mtext><mspace width=\".24em\"/><mtext>προς</mtext><mspace width=\".24em\"/><mtext>ημ</mtext><mspace width=\".24em\"/><mtext>και</mtext><mspace width=\".24em\"/><mtext>συν</mtext></mrow></mrow><mo>⇔</mo></mover></mrow></mrow></mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mi>A</mi></mrow></mrow></mfrac></mtd></mtr><mtr><mtd><mrow><mtext>συν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mtext>ωΑ</mtext></mrow></mrow></mfrac></mtd></mtr></mtable></mrow></mrow><mrow><mover><mrow><mrow><mtext>στο</mtext><mspace width=\".24em\"/><mtext>τετράγωνο</mtext></mrow></mrow><mo>⇔</mo></mover></mrow></mrow></math>",
           "number": "",
@@ -3987,10 +3663,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mtd></mtr><mtr><mtd><msup><mrow><mrow><mspace width=\".24em\"/><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mtd></mtr></mtable></mrow></mrow><mrow><mover><mrow><mrow><mtext>αθροίζοντας</mtext><mspace width=\".24em\"/><mtext>κατά</mtext><mspace width=\".24em\"/><mtext>μέλη</mtext></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mspace width=\".24em\"/></mrow><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>+</mo></mrow><msup><mrow><mrow><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mo>+</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mrow></math>",
@@ -4027,10 +3699,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mover><mrow><mtable><mtr><mtd><mrow><mn>1</mn><mi mathvariant=\"normal\">ο</mi><mspace width=\".24em\"/><mtext>μέλος</mtext><mspace width=\".24em\"/><mtext>ίσον</mtext><mspace width=\".24em\"/><mtext>με</mtext><mspace width=\".24em\"/><mn>1</mn></mrow></mtd></mtr><mtr><mtd><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi mathvariant=\"normal\">φ</mi><mo>+</mo></mrow><msup><mrow><mrow><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi mathvariant=\"normal\">φ</mi><mo>=</mo><mn>1</mn></mrow></mtd></mtr></mtable></mrow><mo>⇔</mo></mover></mrow><mrow><mn>1</mn><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi>x</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mo>+</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mspace width=\".24em\"/><mo>(</mo><mn>8</mn><mo>)</mo></mrow></mrow></math>",
           "number": "",
@@ -4065,10 +3733,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": false,
           "start": 1,
@@ -4231,10 +3895,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><mrow><mi mathvariant=\"normal\">α</mi></mrow><mrow><mo>=</mo><mo>-</mo></mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi mathvariant=\"normal\">A</mi></mrow><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>1</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow></mtd></mtr><mtr><mtd><mrow><mi mathvariant=\"normal\">υ</mi><mo>=</mo><mtext>ωΑ</mtext><mspace width=\".24em\"/><mtext>συν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>2</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow></mtd></mtr></mtable><mrow><mspace width=\".24em\"/></mrow><mrow><mover><mrow><mrow><mtext>ως</mtext><mspace width=\".24em\"/><mtext>προς</mtext><mspace width=\".24em\"/><mtext>ημ</mtext><mspace width=\".24em\"/><mtext>και</mtext><mspace width=\".24em\"/><mtext>συν</mtext></mrow></mrow><mo>⇔</mo></mover></mrow></mrow></mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mo>-</mo><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow></mfrac></mtd></mtr><mtr><mtd><mrow><mtext>συν</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mtext>ωΑ</mtext></mrow></mrow></mfrac></mtd></mtr></mtable></mrow></mrow><mrow><mover><mrow><mrow><mtext>στο</mtext><mspace width=\".24em\"/><mtext>τετράγωνο</mtext></mrow></mrow><mo>⇔</mo></mover></mrow></mrow></math>",
           "number": "",
@@ -4269,10 +3929,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mo fence=\"true\" stretchy=\"true\">{</mo><mrow><mtable><mtr><mtd><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>4</mn></mrow></mrow></msup><msup><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mtd></mtr><mtr><mtd><mrow><mspace width=\".24em\"/></mrow><msup><mrow><mrow><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mtd></mtr></mtable></mrow></mrow><mrow><mover><mrow><mrow><mtext>αθροίζοντας</mtext><mspace width=\".24em\"/><mtext>κατά</mtext><mspace width=\".24em\"/><mtext>μέλη</mtext></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mspace width=\".24em\"/></mrow><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>+</mo></mrow><msup><mrow><mrow><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow><mrow><mi mathvariant=\"normal\">t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>0</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>4</mn></mrow></mrow></msup><msup><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mo>+</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac></mrow></math>",
@@ -4329,10 +3985,6 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
       "items": [
         {
           "id": "docx-insert-ms80gunx-df8n1-item-25",
@@ -4340,10 +3992,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "source": "",
           "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mover><mrow><mtable><mtr><mtd><mrow><mn>1</mn><mi mathvariant=\"normal\">ο</mi><mspace width=\".24em\"/><mtext>μέλος</mtext><mspace width=\".24em\"/><mtext>ίσον</mtext><mspace width=\".24em\"/><mtext>με</mtext><mspace width=\".24em\"/><mn>1</mn></mrow></mtd></mtr><mtr><mtd><msup><mrow><mrow><mtext>ημ</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi mathvariant=\"normal\">φ</mi><mo>+</mo></mrow><msup><mrow><mrow><mtext>συν</mtext></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi mathvariant=\"normal\">φ</mi><mo>=</mo><mn>1</mn></mrow></mtd></mtr></mtable></mrow><mo>⇔</mo></mover></mrow><mrow><mn>1</mn><mo>=</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">α</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>4</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mo>+</mo></mrow><mfrac><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">υ</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow><mrow><msup><mrow><msup><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msup></mrow></mfrac><mrow><mspace width=\".24em\"/><mo>(</mo><mn>9</mn><mo>)</mo></mrow></mrow></math>",
@@ -4379,10 +4027,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -4460,10 +4104,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -4571,10 +4211,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -4624,10 +4260,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -4684,10 +4316,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -4780,10 +4408,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -4866,10 +4490,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -4948,10 +4568,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "ordered": false,
           "start": 1,
@@ -5599,10 +5215,6 @@
             "show": false,
             "label": ""
           },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "body": {
             "format": "rich-text-v1",
             "nodes": [
@@ -5690,10 +5302,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -5813,10 +5421,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -5940,10 +5544,6 @@
           "nav": {
             "show": false,
             "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
           },
           "body": {
             "format": "rich-text-v1",
@@ -6073,6 +5673,129 @@
       }
     },
     {
+      "id": "aat-foyer-discussion",
+      "sourcePage": null,
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
+        {
+          "id": "aat-foyer-heading",
+          "type": "section_heading",
+          "title": "Φουαγιέ: χώρος ελεύθερης συζήτησης",
+          "level": 2,
+          "nav": {
+            "show": true,
+            "label": "Φουαγιέ"
+          }
+        },
+        {
+          "id": "aat-foyer-live-scene",
+          "type": "scene",
+          "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1",
+          "title": "Ζωντανό φουαγιέ παράστασης",
+          "caption": "Φουαγιέ παράστασης",
+          "hideCaption": true,
+          "layout": {
+            "placement": "wide",
+            "widthPx": 700,
+            "aspectRatio": "4/3",
+            "wrap": false,
+            "floatInteraction": "clear",
+            "crop": {
+              "scaleX": 1.6,
+              "scaleY": 1.08,
+              "xPercent": 17,
+              "yPercent": 2
+            }
+          },
+          "print": {
+            "snapshot": false
+          },
+          "visibility": {
+            "screen": true,
+            "print": false
+          },
+          "nav": {
+            "show": true,
+            "label": "Φουαγιέ"
+          }
+        },
+        {
+          "id": "aat-foyer-dialogue",
+          "type": "dialogue",
+          "title": "Συζήτηση μετά τη δεύτερη πράξη",
+          "intro": "Στο φουαγιέ και σε αναμονή έναρξης της 3ης πράξης \"η Ενέργεια στα ...Αλγεβρικά!\" γίνεται ζωηρή συζήτηση ανάμεσα στους θεατές , κατάθεση συμπερασμάτων, ανακεφαλαίωση και όχι μόνο!.",
+          "rows": [
+            {
+              "id": "foyer-row-1",
+              "speaker": "Θεατής 1",
+              "left": "Οι σχέσεις (1), (2), (3) και (5)",
+              "right": "<b>(1) x(t)=A·ημ(ωt+φ₀)\n(2) υ(t)=ωA·συν(ωt+φ₀)\n(3) α(t)=−ω²A·ημ(ωt+φ₀)\n(5) ΣF(t)=−m·ω²A·ημ(ωt+φ₀)</b>",
+              "viewer": 1
+            },
+            {
+              "id": "foyer-row-2",
+              "speaker": "Θεατής 1",
+              "left": "... μας βοηθούν να <b>«προφητεύουμε» τη θέση, την ταχύτητα, την επιτάχυνση και την συνολική δύναμη που δέχεται κάθε στιγμή ο (m₁ ,D₁)</b> χωρίς να χρειαστεί να ξαναμπούμε για τη συνέχεια της παράστασης!",
+              "right": "",
+              "viewer": 1
+            },
+            {
+              "id": "foyer-row-3",
+              "speaker": "Θεατής 2",
+              "left": "<b>Σωστά! Όμοια,</b> η (3)’ και η (6)",
+              "right": "<b>(3)’ α(x)=−ω²·x\n(6)  ΣF(x)=−m·ω²·x</b>",
+              "viewer": 2
+            }
+          ],
+          "nav": {
+            "show": true,
+            "label": "Συζήτηση Φουαγιέ"
+          },
+          "provenance": {
+            "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
+            "sourceSection": "foyer",
+            "sourceBookConfig": "E:/EGGRAFA/GitHub/AAT/book-gr.json"
+          },
+          "extensions": {
+            "importedFromAatFoyer": true,
+            "importedAt": "2026-08-01T14:35:52.754Z",
+            "foyerSplitPart": 1,
+            "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
+          }
+        }
+      ],
+      "extensions": {
+        "importedFromAatFoyer": true,
+        "foyerSplitPart": 1,
+        "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": true,
+        "print": true
+      }
+    },
+    {
       "id": "aat-foyer-discussion-r2",
       "sourcePage": null,
       "header": {
@@ -6093,48 +5816,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r2",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-4",
               "speaker": "Θεατής 2",
               "left": "... μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση και την συνολική δύναμη που δέχεται αρκεί να ξέρουμε σε ποιο σημείο της σκηνής βρίσκεται ο (m₁ ,D₁)</b> χωρίς φυσικά και αναγκαστικά να συνεχίσουμε να είμαστε θεατές!",
               "right": "",
-              "viewer": 2,
-              "id": "foyer-row-4"
+              "viewer": 2
             },
             {
+              "id": "foyer-row-5",
               "speaker": "Θεατής 3",
               "left": "Λοιπόν!\n1. Διαπιστώνουμε αγαπητοί μου ότι δεν μπορούμε προς το παρόν να «προφητέψουμε» κάτι ανάλογο  για την ταχύτητα και τη σχέση της με τη θέση του (m₁ ,D₁).\n2. Σκέφτομαι όμως, ότι αυτά που είδαμε μέχρι τώρα στην παράσταση, γενικεύονται για κάθε πρωταγωνιστή (m,D) σε ανάλογη Παράσταση ΑΑΤ.",
               "right": "",
-              "viewer": 3,
-              "id": "foyer-row-5"
+              "viewer": 3
             },
             {
+              "id": "foyer-row-6",
               "speaker": "Θεατής 1",
               "left": "...3. Ως γνώστες της …Αλγεβρικής και με ολίγην <i>“αλγεβρική περιέργεια”</i>, να τι μπορούμε να κάνουμε (και μάλιστα γενικεύοντας για κάθε, τυχαίο m,D) για να καλύψουμε και το <b>κενό 1 που αναφέρει ο Θεατής 3</b>.\n✓ Λύνουμε την (1) ως προς ημ(ωt+φ₀)",
               "right": "(1) x=A·ημ(ωt+φ₀) ⇒ ημ(ωt+φ₀)=x/A\n και υψώνουμε στο τετράγωνο\n <b>ημ²(ωt+φ₀)= x²/A²</b>",
-              "viewer": 1,
-              "id": "foyer-row-6"
+              "viewer": 1
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6145,6 +5859,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 2,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6152,6 +5870,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 2,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6175,48 +5897,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r3",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-7",
               "speaker": "Θεατής 3",
               "left": "<b>Σωστά!</b> Το ίδιο να κάνουμε για την (2), λύνουμε ως προς συν(ωt+φ₀)",
               "right": "(2) υ=ωA·συν(ωt+φ₀) ⇒ συν(ωt+φ₀)=υ/(ωA)\n και υψώνουμε στο τετράγωνο\n <b>συν²(ωt+φ₀)= υ²/(ω²A²)</b>\n καθώς ημ²(ωt+φ₀)+συν²(ωt+φ₀)=1\n με πρόσθεση κατά μέλη\n ⇒ <b>1 = x²/A² + υ²/(ω²A²) (8)</b>",
-              "viewer": 3,
-              "id": "foyer-row-7"
+              "viewer": 3
             },
             {
+              "id": "foyer-row-8",
               "speaker": "Θεατής 4",
               "left": "✓Ιδού η σχέση που μας έλειπε! Τώρα <b>«προφητεύουμε» και την ταχύτητα όταν γνωρίζουμε τη θέση του πρωταγωνιστή στη σκηνή</b> αλλά και\n✓Μπορούμε (σκεφτόμενοι ανάλογα) να βγάλουμε μια σχέση  ανάμεσα στην επιτάχυνση και την ταχύτητα!\nΔηλαδή εδώ, 'πειράζουμε' την  (3) και την (2)",
               "right": "",
-              "viewer": 4,
-              "id": "foyer-row-8"
+              "viewer": 4
             },
             {
+              "id": "foyer-row-9",
               "speaker": "Θεατής 1",
               "left": "...φυσικά! φυσικά! Λύνουμε την (3) ως προς ημ(ωt+φ₀) και την (2) ως προς συν(ωt+φ₀), και υψώνουμε στο τετράγωνο",
               "right": "(3) ⇒ ημ²(ωt+φ₀)=α²/(ω⁴A²),\n(2) ⇒ συν²(ωt+φ₀)=υ²/(ω²A²)\n και πρόσθεση κατά μέλη\n ⇒ <b>1 = α²/(ω⁴A²) + υ²/(ω²A²)  (9)</b>  bingo!",
-              "viewer": 1,
-              "id": "foyer-row-9"
+              "viewer": 1
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6227,6 +5940,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 3,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6234,6 +5951,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 3,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6257,48 +5978,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r4",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-10",
               "speaker": "Θεατής 4",
               "left": "... καλύτερα όμως δεν είναι, αν την (8) την λύσουμε ως προς υ ! δηλαδη:",
               "right": "(8) 1 = x²/A² + υ²/(ω²A²)\n⇔ ω²A² = ω²x² + υ²",
-              "viewer": 4,
-              "id": "foyer-row-10"
+              "viewer": 4
             },
             {
+              "id": "foyer-row-11",
               "speaker": "Θεατής 1",
               "left": "…μισό!",
               "right": "",
-              "viewer": 1,
-              "id": "foyer-row-11"
+              "viewer": 1
             },
             {
+              "id": "foyer-row-12",
               "speaker": "Θεατής 4",
               "left": "να ολοκληρώσω παρακαλώ, … την οποία λύνουμε ως προς υ",
               "right": "⇔ <b>υ = ±ω·√(A²−x²)  ⁽¹⁰⁾</b>\nκαι να η ζητούμενη σχέση της ταχύτητας του ταλαντωτή σε σχέση με τη θέση του!",
-              "viewer": 4,
-              "id": "foyer-row-12"
+              "viewer": 4
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6309,6 +6021,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 4,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6316,6 +6032,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 4,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6339,48 +6059,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r5",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-13",
               "speaker": "Θεατής 5",
               "left": "...αλλά και από την (9), όμοια λύνοντας ως προς α...",
               "right": "(9) 1 = α²/(ω⁴A²) + υ²/(ω²A²)\n⇔ <b>α = ±ω·√(ω²A² − υ²)  ⁽¹¹⁾</b>\nκαι να η ζητούμενη σχέση της επιτάχυνσης  του ταλαντωτή σε σχέση με τη θέση του!",
-              "viewer": 5,
-              "id": "foyer-row-13"
+              "viewer": 5
             },
             {
+              "id": "foyer-row-14",
               "speaker": "Θεατής 3",
               "left": "χμμ ναι, αλλά και (αν σκεφτούμε ότι ωA=υmax)",
               "right": "⁽¹¹⁾ ⇔ α = ±ω·√((ωA)² − υ²)\n⇔ <b>a = ±ω·√(υ_max² − υ²)  (11΄)</b>",
-              "viewer": 3,
-              "id": "foyer-row-14"
+              "viewer": 3
             },
             {
+              "id": "foyer-row-15",
               "speaker": "Θεατής 2",
               "left": "που, τώρα πιά η ⁽¹¹⁾ και η (11΄). μας βοηθούν να … <b>«προφητεύουμε» την επιτάχυνση αρκεί να ξέρουμε την ταχύτητα του ηθοποιού!",
               "right": "",
-              "viewer": 2,
-              "id": "foyer-row-15"
+              "viewer": 2
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6391,6 +6102,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 5,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6398,6 +6113,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 5,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6421,48 +6140,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r6",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-16",
               "speaker": "Θεατής 4",
               "left": "... κάτι ήθελε να πει όμως ο <b>Θεατής 1</b>!",
               "right": "",
-              "viewer": 4,
-              "id": "foyer-row-16"
+              "viewer": 4
             },
             {
+              "id": "foyer-row-17",
               "speaker": "Θεατής 1",
               "left": "Στο σημείο στο οποίο διέκοψα είχε γραφτεί <b>ω²A² = ω²x² + υ²</b>. Σκέφτομαι λοιπόν τα εξής: Αν πολλαπλασιάσουμε και τα δύο μέλη με ½m, δείτε! η σχέση γράφεται:",
               "right": "<b>½ m ω²A² = ½ m ω²x² + ½ m υ²  ⁽¹²⁾</b>",
-              "viewer": 1,
-              "id": "foyer-row-17"
+              "viewer": 1
             },
             {
+              "id": "foyer-row-18",
               "speaker": "Θεατής 2",
               "left": "Μα! έτσι ο παράγοντας ½ m υ² είναι η κινητική ενέργεια του … πρωταγωνιστή (m,D)",
               "right": "<b>K = ½ m υ²</b>",
-              "viewer": 2,
-              "id": "foyer-row-18"
+              "viewer": 2
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6473,6 +6183,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 6,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6480,6 +6194,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 6,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6503,48 +6221,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r7",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-19",
               "speaker": "Θεατής 4",
               "left": "...χμμμ! Ο παράγοντας αυτός προστίθεται στον ½ m ω² x² ο οποίος δεν μπορεί παρά να <b>είναι και αυτός ενέργεια!</b> (πρόσθεση κάνουμε μόνο ανάμεσα σε ομοειδή!). Όμως ο παράγοντας αυτός εξαρτάται από τη θέση του πρωταγωνιστή άρα δεν μπορεί παρά να παριστάνει τη Δυναμική Ενέργεια U (λόγω θέσης) του πρωταγωνιστή (m,D)!",
               "right": "<b>U= ½ m ω² x²</b>",
-              "viewer": 4,
-              "id": "foyer-row-19"
+              "viewer": 4
             },
             {
+              "id": "foyer-row-20",
               "speaker": "Θεατής 2",
               "left": "... Επομένως, ο παράγοντας ½ m ω² A² του πρώτου μέλους\n  <b>– Πρώτον</b> δεν μπορεί παρά ως άθροισμα Κ και U να «παριστάνει» τη μηχανική ενέργεια Ε<sub>Μ</sub> του πρωταγωνιστή (m,D).",
               "right": "<b>Ε<sub>Μηχ</sub>= ½ m ω² A²</b>",
-              "viewer": 2,
-              "id": "foyer-row-20"
+              "viewer": 2
             },
             {
+              "id": "foyer-row-21",
               "speaker": "Θεατής 5",
               "left": "...  Θέλετε να πείτε ότι η ⁽¹²⁾ δείχνει την ισχύ μιας Αρχής Διατήρησης Μηχανικής Ενέργειας;",
               "right": "<b>⁽¹²⁾ ½ m ω²A² = ½ m ω²x² + ½ m υ²</b>\n  ⇔     Ε<sub>Μηχ</sub>       =        U       +        K\n  Δηλαδή «Α.Δ.Μ.Ε.»;",
-              "viewer": 5,
-              "id": "foyer-row-21"
+              "viewer": 5
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6555,6 +6264,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 7,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6562,6 +6275,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 7,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6585,48 +6302,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r8",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-22",
               "speaker": "Θεατής 3",
               "left": "Μη βιαζόμαστε! δεν συμπεράναμε προς το παρόν ότι αυτή η Μηχανική ενέργεια είναι σταθερή! Όμως ... η  ½ m ω² A², ως Μηχανική Ενέργεια είναι και σταθερή αφού m, ω, A, είναι σταθερά και επομένως με βάση τη ⁽¹²⁾, μας οδηγεί σε «Α.Δ.Μ.Ε.Τ.» του πρωταγωνιστή Ταλαντωτή (m,D)!",
               "right": "Ε<sub>Μηχ</sub>= ½ m ω² A² = σταθερή ⇔ \n«Α.Δ.Μ.Ε.Τ.» του πρωταγωνιστή (m,D)",
-              "viewer": 3,
-              "id": "foyer-row-22"
+              "viewer": 3
             },
             {
+              "id": "foyer-row-23",
               "speaker": "Θεατής 1",
               "left": "<b> - Δεύτερον</b>, συγκρίνοντας την Ε<sub>Μηχ</sub>= ½ m ω² <b>A²</b> με τη μορφή της U= ½ m ω² <b>x²</b> (παρατηρούμε σ αυτήν μέγιστη απομάκρυνση)!\n Άρα ½ m ω² A² παριστάνει και την μέγιστη Δυναμική Ενέργεια U_max του (m,D).",
               "right": "<b>Ε<sub>Μηχ</sub>= ½ m ω² A² = U_max</b>",
-              "viewer": 1,
-              "id": "foyer-row-23"
+              "viewer": 1
             },
             {
+              "id": "foyer-row-24",
               "speaker": "Θεατής 3",
               "left": "...<b>- Τρίτον </b>η ½ m ω² A², ως Μηχανική Ενέργεια θα είναι ίση και με την μέγιστη Κινητική Ενέργεια του ταλαντωτή δηλαδή όταν η θέση του x=0 δηλαδή στη θέση Ισορροπίας ταλάντωσης .",
               "right": "<b>Ε<sub>Μηχ</sub>=½ m ω² A²=U<sub>max</sub>=K<sub>max</sub></b>",
-              "viewer": 3,
-              "id": "foyer-row-24"
+              "viewer": 3
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6637,6 +6345,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 8,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6644,6 +6356,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 8,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6667,48 +6383,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r9",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-25",
               "speaker": "Θεατής 5",
               "left": "Δηλαδή σα να λέμε τώρα, γνωρίζουμε πλέον και το … budget της παράστασης, πόσα στοίχισε δηλαδή στον κ. Ενεργειούλη η παρατηρούμενη από εμάς κίνηση του m₁ ,D₁; Και, δεν έχουμε επομένως λέω εγώ, κανένα πλέον λόγο να περάσουμε στην αίθουσα να παρακολουθήσουμε την 3η πράξη περί ενέργειας! Το έργο το …έχουμε ξαναδεί;",
               "right": "",
-              "viewer": 5,
-              "id": "foyer-row-25"
+              "viewer": 5
             },
             {
+              "id": "foyer-row-26",
               "speaker": "Θεατής 1",
               "left": "Φυσικά και γνωρίζουμε το budged! Μπορούμε εδώ και τώρα να το υπολογίσουμε με μια απλή αριθμητική αντικατάσταση..",
               "right": "στη σχέση Ε<sub>Μηχ</sub>=½DA² που δίνει <b>Ε<sub>Μηχ</sub>={Emech}J</b>",
-              "viewer": 1,
-              "id": "foyer-row-26"
+              "viewer": 1
             },
             {
+              "id": "foyer-row-27",
               "speaker": "Θεατής 4",
               "left": "Σωστά! Η “αλγεβρική περιέργεια” ωστόσο, που τόσο συχνά επικαλείται ο Θεατής 1, μας οδηγεί και σε μια πιο συμμαζεμένη έκφραση αυτής της … Αρχής Διατήρησης της Μηχανικής Ενέργειας του Ταλαντωτή (m,D). Είπαμε πιο πάνω για τη σταθερά <b>D=mω²</b> αυτή, που βάλαμε και στη σχέση (7)ΣF = −D·x ...",
               "right": "<b>D=mω²</b>",
-              "viewer": 4,
-              "id": "foyer-row-27"
+              "viewer": 4
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6719,6 +6426,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 9,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6726,6 +6437,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 9,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6749,48 +6464,39 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r10",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-28",
               "speaker": "Θεατής 3",
               "left": "...που θά 'θελες να πεις, αν χρησιμοποιηθεί στην ⁽¹²⁾, αυτή γράφεται:",
               "right": "<b>½ D A² = ½ D x² + ½ m υ²  ⁽¹³⁾</b>\n  δηλαδή Α.Δ.Μ.Ε.Τ. του κάθε (m,D)",
-              "viewer": 3,
-              "id": "foyer-row-28"
+              "viewer": 3
             },
             {
+              "id": "foyer-row-29",
               "speaker": "Θεατής 2",
               "left": "Βασικά, να φύγουμε λέω και εγώ, αλλά με μια επίγευση από την αποψινή παράσταση του (m₁,D₁). Ας συνοψίσουμε:",
               "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>(m,D)</b> χαρακτηρίζεται απολύτως από τον <b>«σωματότυπό του» (m)</b> και την <b>«χρονική» εμμονή του (ω)</b>",
-              "viewer": 2,
-              "id": "foyer-row-29"
+              "viewer": 2
             },
             {
+              "id": "foyer-row-30",
               "speaker": "Θεατής 1",
               "left": "...ή ισοδύναμα και ας το κρατήσουμε αυτό",
               "right": "Ο κάθε πρωταγωνιστής ταλαντωτής <b>θα χαρακτηρίζεται απολύτως από τα δικά του (m,D)!</b>",
-              "viewer": 1,
-              "id": "foyer-row-30"
+              "viewer": 1
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6801,6 +6507,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 10,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6808,6 +6518,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 10,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6831,41 +6545,32 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r11",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-31",
               "speaker": "Θεατής 2",
               "left": "...Θα ισχύει λοιπόν για μας στο εξής:",
               "right": "<b>1. O ταλαντωτής m,D καθορίζει τα δικά του ω, f, T της ΑΑΤ που θα εκτελέσει</b>\n <b>2. Tα όρια</b> στην παράστασή του (το μήκος διαδρομής - με άλλα λόγια <b>το A</b>) τα <b>καθορίζει ο κάθε κύριος … Ενεργειούλης μέσα από την Μηχανική ενέργεια Ε<sub>Μηχ</sub> που καταβάλει για να τον θέσει σε κίνηση και\n3. Το σύστημα αναφοράς, δηλαδή τη σημείο αναφοράς (θέση ισορροπίας ταλάντωσης) και τον προσανατολισμό των αξόνων τον προσδιορίζουμε εμείς, αλλά κυρίως </b>την έναρξη της ΑΑΤ και επομένως την <b>(φ₀), την καθορίζουμε πάντα εμείς, οι θεατές</b> ανοίγοντας την \"κουρτίνα\" της παράστασής της!",
-              "viewer": 2,
-              "id": "foyer-row-31"
+              "viewer": 2
             },
             {
+              "id": "foyer-row-32",
               "speaker": "Θεατής 1",
               "left": "Πολύ ωραία σύνοψη! Αλλά έχω την αίσθηση ότι μας δείχνει και τα πρακτικά βήματα που μπορούμε να ακολουθάμε προκειμένου να αποκαλύπτουμε και στις ασκήσεις τα πάντα για μια ταλάντωση!",
               "right": "1. Ξεκαθαρίζουμε για ποιον ταλαντωτή πρόκειται π.χ. τον  <b>m<sub>1</sub>,D<sub>1</sub> </b>\n2. Στήνουμε το σύστημα αναφοράς για την AAT\n    α. Εντοπίζουμε και στηρίζουμε τη  <b>θέση ισορροπίας ταλάντωσης  </b>(το μηδέν του άξονα) με τον 1ο Νόμο του Νεύτωνα\n    β.  <b>Προσανατολίζουμε τον άξονα αναφοράς </b> (Συμφέρει τα θετικά κατά εκεί που κινείται ή πρόκειται να κινηθεί ο ταλαντωτής)\n3. Στόχος να υπολογιστούν τα <b> Α, ω, φο  </b>της ταλάντωσης\n    α. Για το  <b>Α </b> εφαρμόζουμε  <b>ΑΔΜΕΤ </b> για το αρχικό συνήθως σημείο κάτι σαν ½D<sub>1</sub>A² = ½D<sub>1</sub>x²<sub>o</sub> + ½m<sub>1</sub>υ²<sub>o</sub>\n    β. Για το  <b>ω </b> εφαρμόζουμε τη σχέση  <b>D<sub>1</sub>=m<sub>1</sub>ω<sup>2</sup> </b>\n    γ. Για την <b>αρχική φάση φo</b> εφαρμόζουμε τη σχέση (1) x(t)=A·ημ(ωt+φ₀) για t=0, επιλύουμε τριγωνομετρικά ως προς φο και από τις δύο λύσεις δεχόμαστε εκείνη της οποίας το συνημίτονο έχει το πρόσημο της ταχύτητας τη χρονική στιγμή t=0!\n<b>Σκεφτείτε! </b><i>Αν έχεις τα Α, ω, φο μιας ταλάντωσης αποκτάς ...πρόσβαση στην απάντηση, για οποιοδήποτε ερώτημα την αφορά!</i>",
-              "viewer": 1,
-              "id": "foyer-row-32"
+              "viewer": 1
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6876,6 +6581,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 11,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6883,6 +6592,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 11,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6906,34 +6619,25 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r12",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-33",
               "speaker": "Θεατής 1",
               "left": "Λοιπόν! <b>Τι λέτε αποχωρούμε;</b>",
               "right": "",
-              "viewer": 1,
-              "id": "foyer-row-33"
+              "viewer": 1
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -6944,6 +6648,10 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 12,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         }
       ],
@@ -6951,6 +6659,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 12,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     },
     {
@@ -6974,34 +6686,25 @@
         "offset": 0,
         "hide": false
       },
-      "visibility": {
-        "screen": false,
-        "print": true
-      },
       "items": [
         {
           "id": "aat-foyer-dialogue-r13",
           "type": "dialogue",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": false,
-            "print": true
-          },
           "title": "Συζήτηση μετά τη δεύτερη πράξη (συνέχεια)",
           "intro": "",
           "rows": [
             {
+              "id": "foyer-row-34",
               "speaker": "Θεατής 3",
               "left": "Φυσικά!",
               "right": "",
-              "viewer": 3,
-              "id": "foyer-row-34"
+              "viewer": 3
             }
           ],
-          "style": {},
+          "nav": {
+            "show": false,
+            "label": ""
+          },
           "provenance": {
             "sourceFile": "E:/EGGRAFA/GitHub/AAT/dialogs-gr.json",
             "sourceSection": "foyer",
@@ -7012,19 +6715,15 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 13,
             "foyerSplitTotal": 13
+          },
+          "visibility": {
+            "screen": false,
+            "print": true
           }
         },
         {
           "id": "aat-foyer-summary-note",
           "type": "note",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
           "label": "Ανακεφαλαίωση",
           "body": {
             "format": "rich-text-v1",
@@ -7056,6 +6755,10 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 13,
         "foyerSplitTotal": 13
+      },
+      "visibility": {
+        "screen": false,
+        "print": true
       }
     }
   ],

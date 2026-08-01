@@ -963,6 +963,7 @@
         frame.className = 'media-frame scene-frame';
         frame.style.aspectRatio = String(mediaAspect(item,'scene'));
         const printOptions = item.print && typeof item.print === 'object' ? item.print : {};
+        if(printOptions.snapshot === false) frame.dataset.printSnapshot = '0';
         if(printOptions.snapshotTimeoutMs != null) frame.dataset.snapshotTimeoutMs = String(printOptions.snapshotTimeoutMs);
         if(printOptions.snapshotAttempts != null) frame.dataset.snapshotAttempts = String(printOptions.snapshotAttempts);
         if(printOptions.snapshotRetryDelayMs != null) frame.dataset.snapshotRetryDelayMs = String(printOptions.snapshotRetryDelayMs);
