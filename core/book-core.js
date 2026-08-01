@@ -346,44 +346,65 @@
     if(options.enabled === false) return deepClone(data);
     const book = normalizeData(deepClone(data));
     const sceneById = new Map();
-    (book.pages || []).forEach(page => (page.items || []).forEach(item => {
-      if(item?.type === 'scene' && item.id) sceneById.set(String(item.id), item);
+    const scenePageById = new Map();
+    (book.pages || []).forEach((page,pageIndex) => (page.items || []).forEach((item,itemIndex) => {
+      if(item?.type === 'scene' && item.id){
+        sceneById.set(String(item.id), item);
+        scenePageById.set(String(item.id), {pageIndex,itemIndex});
+      }
     }));
-    const expanded = [];
     let changed = false;
-    let generatedCount = 0;
-    (book.pages || []).forEach((page,pageIndex)=>{
-      const generated = [];
-      (page.items || []).forEach((item,itemIndex)=>{
-        const steps = sequenceSteps(item);
-        const sceneId = String(item?.sequenceSceneId || '').trim();
-        const scene = sceneId ? sceneById.get(sceneId) : null;
-        if(!steps.length || !scene || item?.print?.expand === 'none') return;
+    let generatedSteps = 0;
+    const expandedPages = (book.pages || []).map((page,pageIndex)=>{
+      const items = page.items || [];
+      const skip = new Set();
+      const out = [];
+      let pageChanged = false;
+      const appendGenerated = (callout, scene, calloutIndex)=>{
+        const steps = sequenceSteps(callout);
+        if(!steps.length || !scene || callout?.print?.expand === 'none') return false;
         steps.forEach((step,stepIndex)=>{
-          const callout = calloutForSequenceStep(item, step, stepIndex);
-          callout.extensions = Object.assign({}, callout.extensions || {}, {sequencePrintGenerated:true});
+          const stepNumber = stepIndex + 1;
+          const stepCallout = calloutForSequenceStep(callout, step, stepIndex);
+          stepCallout.extensions = Object.assign({}, stepCallout.extensions || {}, {sequencePrintGenerated:true, sourcePageId:page.id || '', sourceCalloutId:callout.id || '', sourceSceneId:scene.id || ''});
           const sceneCopy = deepClone(scene);
-          sceneCopy.id = `${scene.id}-step-${stepIndex+1}`;
+          sceneCopy.id = `${scene.id || 'scene'}-step-${stepNumber}`;
           sceneCopy.src = sequenceSceneUrl(scene.src ?? scene.singleSrc ?? '', step);
           sceneCopy.title = step.title || scene.title || '';
-          sceneCopy.extensions = Object.assign({}, sceneCopy.extensions || {}, {sequenceSourceSceneId:scene.id, sequenceStep:stepIndex+1});
-          generated.push(Object.assign({}, deepClone(page), {
-            id:`${page.id || `page-${pageIndex+1}`}-${item.id || `sequence-${itemIndex+1}`}-print-${stepIndex+1}`,
-            items:[callout, sceneCopy],
-            extensions:Object.assign({}, page.extensions || {}, {printGeneratedSequence:true, sourcePageId:page.id || '', sourceCalloutId:item.id || '', sourceSceneId:scene.id || '', sequenceStep:stepIndex+1})
-          }));
+          sceneCopy.extensions = Object.assign({}, sceneCopy.extensions || {}, {sequencePrintGenerated:true, sequenceSourceSceneId:scene.id || '', sourceCalloutId:callout.id || '', sequenceStep:stepNumber});
+          stepCallout.sequenceSceneId = sceneCopy.id;
+          out.push(stepCallout, sceneCopy);
+          generatedSteps++;
         });
-      });
-      if(generated.length){
         changed = true;
-        generatedCount += generated.length;
-        expanded.push(...generated);
-      }else{
-        expanded.push(page);
+        pageChanged = true;
+        const scenePos = scene?.id ? scenePageById.get(String(scene.id)) : null;
+        if(scenePos && scenePos.pageIndex === pageIndex) skip.add(scenePos.itemIndex);
+        skip.add(calloutIndex);
+        return true;
+      };
+      for(let itemIndex=0; itemIndex<items.length; itemIndex++){
+        if(skip.has(itemIndex)) continue;
+        const item = items[itemIndex];
+        const next = items[itemIndex + 1];
+        if(item?.type === 'scene' && sequenceSteps(next).length && String(next?.sequenceSceneId || '').trim() === String(item.id || '')){
+          if(appendGenerated(next, item, itemIndex + 1)){
+            skip.add(itemIndex);
+            continue;
+          }
+        }
+        const sceneId = String(item?.sequenceSceneId || '').trim();
+        const scene = sceneId ? sceneById.get(sceneId) : null;
+        if(appendGenerated(item, scene, itemIndex)) continue;
+        out.push(item);
       }
+      return Object.assign({}, page, {
+        items:out,
+        extensions:Object.assign({}, page.extensions || {}, pageChanged ? {printSequenceExpansion:true} : {})
+      });
     });
-    book.pages = expanded;
-    book.extensions = Object.assign({}, book.extensions || {}, {printSequenceExpansion:{enabled:changed, generatedPages:generatedCount, totalPages:expanded.length, generatedAt:new Date().toISOString()}});
+    book.pages = expandedPages;
+    book.extensions = Object.assign({}, book.extensions || {}, {printSequenceExpansion:{enabled:changed, mode:'inline-flow', generatedSteps, generatedPages:0, totalPages:expandedPages.length, generatedAt:new Date().toISOString()}});
     return book;
   }
 
@@ -663,8 +684,17 @@
     return '';
   }
 
+  function isGeneratedSequencePair(callout, scene){
+    return callout?.type === 'interactive_callout'
+      && scene?.type === 'scene'
+      && callout?.extensions?.sequencePrintGenerated === true
+      && scene?.extensions?.sequencePrintGenerated === true
+      && String(callout?.extensions?.sourceCalloutId || '') === String(scene?.extensions?.sourceCalloutId || '')
+      && Number(callout?.extensions?.sequenceStep || 0) === Number(scene?.extensions?.sequenceStep || 0);
+  }
+
   function sequencePairMode(callout, scene){
-    if(!sequenceSteps(callout).length || !scene || scene.type !== 'scene') return '';
+    if((!sequenceSteps(callout).length && !isGeneratedSequencePair(callout, scene)) || !scene || scene.type !== 'scene') return '';
     const side = sequencePairSide(scene);
     if(!side) return '';
     if(!hasExplicitLayout(callout)) return `stack-${side}`;
@@ -1044,7 +1074,7 @@
         }
       }
       const linkedSceneId = String(item?.sequenceSceneId || '').trim();
-      const pairScene = linkedSceneId && nextItem?.type === 'scene' && String(nextItem.id || '') === linkedSceneId ? nextItem : null;
+      const pairScene = isGeneratedSequencePair(item, nextItem) ? nextItem : (linkedSceneId && nextItem?.type === 'scene' && String(nextItem.id || '') === linkedSceneId ? nextItem : null);
       const pairMode = pairScene ? sequencePairMode(item, pairScene) : '';
       if(pairMode){
         appendSequencePair(pairMode, item, pairScene, itemIndex, itemIndex+1);
