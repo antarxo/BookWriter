@@ -574,6 +574,35 @@
     return node;
   }
 
+  function hasExplicitLayout(item){
+    const layout = item?.layout;
+    return !!(layout && typeof layout === 'object' && Object.keys(layout).length);
+  }
+
+  function sequencePairSide(scene){
+    const placement = String(itemLayout(scene).placement || '').toLowerCase();
+    if(placement === 'right' || placement === 'float-right') return 'right';
+    if(placement === 'left' || placement === 'float-left') return 'left';
+    return '';
+  }
+
+  function sequencePairMode(callout, scene){
+    if(!sequenceSteps(callout).length || !scene || scene.type !== 'scene') return '';
+    const side = sequencePairSide(scene);
+    if(!side) return '';
+    if(!hasExplicitLayout(callout)) return `stack-${side}`;
+    const placement = String(itemLayout(callout).placement || 'wide').toLowerCase();
+    if(placement === 'wide' || placement === 'full') return `wrap-${side}`;
+    if(placement === side || placement === `float-${side}`) return `stack-${side}`;
+    return '';
+  }
+
+  function applySequencePairWidth(wrapper, scene){
+    const layout = itemLayout(scene);
+    const width = Number(layout.widthPx || 340);
+    if(Number.isFinite(width) && width > 0) wrapper.style.setProperty('--sequence-pair-width', `${width}px`);
+  }
+
   function cssLength(value){
     if(value === null || value === undefined || value === '') return '';
     if(typeof value === 'number' && Number.isFinite(value)) return `${value}px`;
@@ -891,7 +920,56 @@
 
     const body = document.createElement('div');
     body.className = 'sheet-body';
-    (page?.items || []).forEach((item,itemIndex)=>{
+    const items = page?.items || [];
+    const appendSequencePair = (pairMode, callout, scene, calloutIndex, sceneIndex)=>{
+      const pair = document.createElement('div');
+      pair.className = `sequence-pair sequence-${pairMode}`;
+      pair.dataset.sequencePair = pairMode;
+      applySequencePairWidth(pair, scene);
+
+      const calloutContext = {page,pageIndex,itemIndex:calloutIndex};
+      const sceneContext = {page,pageIndex,itemIndex:sceneIndex};
+      const calloutNode = renderItem(callout,calloutContext,options);
+      if(callout?.id) calloutNode.dataset.bookItemId = String(callout.id);
+      calloutNode.dataset.bookItemType = String(callout?.type || 'unknown');
+      calloutNode.dataset.bookItemIndex = String(calloutIndex);
+      if(calloutIndex === options.highlightedIndex) calloutNode.classList.add('item-highlight');
+
+      const sceneNode = renderItem(scene,sceneContext,options);
+      if(scene?.id) sceneNode.dataset.bookItemId = String(scene.id);
+      sceneNode.dataset.bookItemType = String(scene?.type || 'unknown');
+      sceneNode.dataset.bookItemIndex = String(sceneIndex);
+      if(sceneIndex === options.highlightedIndex) sceneNode.classList.add('item-highlight');
+
+      if(pairMode.startsWith('wrap-')){
+        pair.appendChild(sceneNode);
+        pair.appendChild(calloutNode);
+      }else{
+        pair.appendChild(calloutNode);
+        pair.appendChild(sceneNode);
+      }
+      body.appendChild(pair);
+    };
+    for(let itemIndex=0; itemIndex<items.length; itemIndex++){
+      const item = items[itemIndex];
+      const nextItem = items[itemIndex + 1];
+      const sceneBeforeCallout = item?.type === 'scene' && sequenceSteps(nextItem).length && String(nextItem?.sequenceSceneId || '').trim() === String(item.id || '');
+      if(sceneBeforeCallout){
+        const pairMode = sequencePairMode(nextItem, item);
+        if(pairMode){
+          appendSequencePair(pairMode, nextItem, item, itemIndex+1, itemIndex);
+          itemIndex++;
+          continue;
+        }
+      }
+      const linkedSceneId = String(item?.sequenceSceneId || '').trim();
+      const pairScene = linkedSceneId && nextItem?.type === 'scene' && String(nextItem.id || '') === linkedSceneId ? nextItem : null;
+      const pairMode = pairScene ? sequencePairMode(item, pairScene) : '';
+      if(pairMode){
+        appendSequencePair(pairMode, item, pairScene, itemIndex, itemIndex+1);
+        itemIndex++;
+        continue;
+      }
       const context = {page,pageIndex,itemIndex};
       const node = renderItem(item,context,options);
       if(item?.id) node.dataset.bookItemId = String(item.id);
@@ -899,7 +977,7 @@
       node.dataset.bookItemIndex = String(itemIndex);
       if(itemIndex === options.highlightedIndex) node.classList.add('item-highlight');
       body.appendChild(node);
-    });
+    }
     inner.appendChild(body);
 
     const footer = document.createElement('div');
