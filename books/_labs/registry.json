@@ -59,12 +59,13 @@
           "status": "ready",
           "description": "Η υπάρχουσα σκηνή ΑΑΤ με ελατήριο, σώμα και βασικά στοιχεία.",
           "query": {
-            "state": "spring"
+            "state": "spring",
+            "textSize": 13
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 620,
-            "aspectRatio": "1.44"
+            "widthPx": 706,
+            "aspectRatio": "2"
           }
         },
         {

@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T01:35:48.803Z",
+    "updatedAt": "2026-08-01T01:26:46.777Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -2586,14 +2586,14 @@
             "show": false,
             "label": ""
           },
-          "src": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13",
+          "src": "https://aatscene.netlify.app/?state=spring&play=0&textSize=14.5",
           "title": "Απλή Αρμονική Ταλάντωση",
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
           "hideCaption": true,
           "layout": {
             "placement": "wide",
             "wrap": false,
-            "floatInteraction": "wrap",
+            "floatInteraction": "block",
             "widthPx": 706,
             "aspectRatio": "2"
           },
@@ -2605,30 +2605,30 @@
             "appliedQuery": {
               "state": "spring",
               "play": "0",
-              "textSize": "13"
+              "textSize": "14.5"
             },
             "localQuery": {
               "state": "spring",
               "play": "0",
-              "textSize": "13"
+              "textSize": "14.5"
             },
             "removedQueryKeys": [],
-            "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13"
+            "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=14.5"
           },
           "extensions": {
             "lab": {
               "appliedQuery": {
                 "state": "spring",
                 "play": "0",
-                "textSize": "13"
+                "textSize": "14.5"
               },
               "localQuery": {
                 "state": "spring",
                 "play": "0",
-                "textSize": "13"
+                "textSize": "14.5"
               },
               "removedQueryKeys": [],
-              "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13"
+              "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=14.5"
             }
           }
         },
