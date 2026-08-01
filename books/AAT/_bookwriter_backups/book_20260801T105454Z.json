@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T10:54:54.526Z",
+    "updatedAt": "2026-08-01T10:48:07.026Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1371,9 +1371,6 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
-          },
-          "layout": {
-            "placement": "wide"
           }
         }
       ],
@@ -2681,12 +2678,6 @@
               }
             ]
           },
-          "layout": {
-            "placement": "wide",
-            "wrap": false,
-            "floatInteraction": "",
-            "aspectRatio": "natural"
-          },
           "sequenceSceneId": "aat-main-scene",
           "sequenceDisplayMode": "expanded",
           "sequenceInitialStep": 0,
@@ -2824,6 +2815,9 @@
           "print": {
             "expand": "per-step",
             "snapshotScene": true
+          },
+          "layout": {
+            "placement": "wide"
           }
         }
       ]

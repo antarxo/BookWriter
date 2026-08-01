@@ -2674,19 +2674,84 @@ function richTextToCalloutText(rich){
   return renderNodes(rich?.nodes).replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').replace(/[ \t]+/g,' ').trim();
 }
 
+function listToCalloutText(list){
+  const items=Array.isArray(list?.items)?list.items:[];
+  return items.map((entry,index)=>{
+    const text=richTextToCalloutText(entry?.body);
+    if(!text)return '';
+    const level=Math.max(0,Number(entry?.level)||0);
+    const prefix=list?.ordered?`${Number(entry?.value)||index+1}. `:'• ';
+    return `${level?'↳ '.repeat(Math.min(level,4)):''}${prefix}${text}`;
+  }).filter(Boolean).join('\n');
+}
+
 function calloutTextSources(){
-  const p=page();
-  if(!p)return [];
-  return (p.items||[]).map((candidate,index)=>({candidate,index})).filter(({candidate})=>
-    ['paragraph','note','side_note'].includes(candidate?.type) && candidate.body
-  ).map(({candidate,index})=>{
-    const text=richTextToCalloutText(candidate.body);
-    return {
-      value:String(index),
-      label:`${index+1}. ${itemTypeLabel(candidate.type)} · ${(text||itemSummary(candidate)||candidate.id||'κενό').slice(0,70)}`,
-      text
-    };
-  }).filter(entry=>entry.text);
+  if(!has())return [];
+  const currentPageId=page()?.id||'';
+  const sources=[];
+  (session.book.pages||[]).forEach((sourcePage,pageIdx)=>{
+    (sourcePage.items||[]).forEach((candidate,itemIdx)=>{
+      const supported=['paragraph','note','side_note','list'].includes(candidate?.type);
+      if(!supported)return;
+      const text=candidate.type==='list'?listToCalloutText(candidate):richTextToCalloutText(candidate.body);
+      if(!text)return;
+      const summary=(text||itemSummary(candidate)||candidate.id||'κενό').replace(/\s+/g,' ').trim();
+      sources.push({
+        value:`${pageIdx}:${itemIdx}`,
+        pageIndex:pageIdx,
+        itemIndex:itemIdx,
+        pageId:sourcePage.id||`page-${pageIdx+1}`,
+        itemId:candidate.id||'',
+        type:candidate.type,
+        currentPage:(sourcePage.id||'')===currentPageId,
+        label:`Σελίδα ${pageIdx+1} · ${itemIdx+1}. ${itemTypeLabel(candidate.type)}`,
+        summary,
+        text
+      });
+    });
+  });
+  return sources;
+}
+
+async function openCalloutSourcePicker(path,label){
+  const sources=calloutTextSources();
+  if(!sources.length){
+    modal(label,'<div class="info-card warn">Δεν υπάρχουν παράγραφοι, σημειώσεις ή λίστες στο βιβλίο για μεταφορά.</div>');
+    return;
+  }
+  const rows=sources.map(source=>`
+    <label class="callout-source-row" data-callout-source-row data-search="${esc([source.label,source.summary,source.itemId].join(' ').toLowerCase())}">
+      <input type="radio" name="calloutSourceChoice" value="${esc(source.value)}">
+      <span class="callout-source-meta">${esc(source.label)}${source.currentPage?' · τρέχουσα σελίδα':''}${source.itemId?' · '+esc(source.itemId):''}</span>
+      <span class="callout-source-preview">${esc(source.summary.slice(0,260))}${source.summary.length>260?'…':''}</span>
+    </label>
+  `).join('');
+  const promise=modal('Επιλογή πηγής για παρατηρήσεις',`
+    <div class="callout-source-picker">
+      <input id="calloutSourceSearch" class="callout-source-search" placeholder="Αναζήτηση σε σελίδες, τύπο, id ή κείμενο">
+      <div class="callout-source-count">${sources.length} διαθέσιμες πηγές από όλο το βιβλίο</div>
+      <div class="callout-source-list">${rows}</div>
+    </div>
+  `,[{label:'Άκυρο',value:false},{label:'Μεταφορά',value:true,primary:true}]);
+  const search=$('#calloutSourceSearch');
+  const refresh=()=>{
+    const term=String(search?.value||'').trim().toLowerCase();
+    let visible=0;
+    document.querySelectorAll('[data-callout-source-row]').forEach(row=>{
+      const match=!term||String(row.dataset.search||'').includes(term);
+      row.hidden=!match;
+      if(match)visible++;
+    });
+    const count=document.querySelector('.callout-source-count');
+    if(count)count.textContent=`${visible} από ${sources.length} διαθέσιμες πηγές`;
+  };
+  if(search)search.addEventListener('input',refresh);
+  const accepted=await promise;
+  if(!accepted)return;
+  const choice=document.querySelector('input[name="calloutSourceChoice"]:checked')?.value;
+  const source=sources.find(entry=>entry.value===choice);
+  if(!source){modal(label,'<div class="info-card warn">Διάλεξε πρώτα συγκεκριμένη πηγή κειμένου.</div>');return;}
+  appendLinesToCallout(path,label,source?.text||'');
 }
 
 function calloutSourcePicker(path,label){
@@ -2696,18 +2761,15 @@ function calloutSourcePicker(path,label){
   if(!sources.length){
     const note=document.createElement('div');
     note.className='info-card warn';
-    note.textContent='Δεν υπάρχουν παράγραφοι ή σημειώσεις στη σελίδα για μεταφορά.';
+    note.textContent='Δεν υπάρχουν παράγραφοι, σημειώσεις ή λίστες στο βιβλίο για μεταφορά.';
     wrap.appendChild(note);
     return wrap;
   }
-  const select=document.createElement('select');
-  select.title='Πηγή κειμένου';
-  sources.forEach(source=>select.add(new Option(source.label,source.value)));
-  const add=button('Προσθήκη πηγής στις παρατηρήσεις',()=>{
-    const source=sources.find(entry=>entry.value===select.value);
-    appendLinesToCallout(path,label,source?.text||'');
-  },'primary-action');
-  wrap.append(select,add);
+  const note=document.createElement('span');
+  note.className='sequence-tool-note';
+  note.textContent=`Πηγές κειμένου: ${sources.length}`;
+  const add=button('Επιλογή πηγής…',()=>openCalloutSourcePicker(path,label),'primary-action');
+  wrap.append(note,add);
   return wrap;
 }
 
