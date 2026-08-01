@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T01:01:48.994Z",
+    "updatedAt": "2026-07-31T12:18:17.402Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1070,94 +1070,6 @@
           }
         },
         {
-          "id": "page-1-scene-οριζοντια-κινηση-θεση--16",
-          "type": "scene",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "src": "https://aatscene.netlify.app/?play=1&preset=body_axis_position_time&controlsMode=guided&allowedControls=togglePosition&showPosition=1&showClock=1&showVelocity=0&showAcceleration=0&showForce=0&showEnergy=0&textSize=15",
-          "title": "Οριζόντια κίνηση: θέση και χρόνος",
-          "caption": "Μικρό οριζόντιο πλαίσιο με σώμα, άξονα αναφοράς, θέση x και χρονόμετρο.",
-          "hideCaption": true,
-          "layout": {
-            "placement": "right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 440,
-            "aspectRatio": "3/1"
-          },
-          "print": {
-            "snapshot": true
-          },
-          "sourceRef": {
-            "kind": "lab-registry",
-            "registry": "books/_labs/registry.json",
-            "labId": "aat",
-            "presetId": "body_axis_position_time",
-            "appliedQuery": {
-              "play": "0",
-              "preset": "body_axis_position_time",
-              "controlsMode": "guided",
-              "allowedControls": "togglePosition",
-              "showPosition": "1",
-              "showClock": "1",
-              "showVelocity": "0",
-              "showAcceleration": "0",
-              "showForce": "0",
-              "showEnergy": "0",
-              "textSize": "15"
-            },
-            "localQuery": {
-              "textSize": "15"
-            },
-            "removedQueryKeys": [],
-            "appliedLayout": {
-              "placement": "wide",
-              "widthPx": 340,
-              "aspectRatio": "3/1"
-            },
-            "localLayout": {},
-            "appliedSrc": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_time&controlsMode=guided&allowedControls=togglePosition&showPosition=1&showClock=1&showVelocity=0&showAcceleration=0&showForce=0&showEnergy=0&textSize=15"
-          },
-          "extensions": {
-            "lab": {
-              "registry": "books/_labs/registry.json",
-              "registrySource": "library-handle",
-              "labId": "aat",
-              "labTitle": "Απλή Αρμονική Ταλάντωση",
-              "presetId": "body_axis_position_time",
-              "presetTitle": "Οριζόντια κίνηση: θέση και χρόνος",
-              "status": "ready",
-              "appliedQuery": {
-                "play": "0",
-                "preset": "body_axis_position_time",
-                "controlsMode": "guided",
-                "allowedControls": "togglePosition",
-                "showPosition": "1",
-                "showClock": "1",
-                "showVelocity": "0",
-                "showAcceleration": "0",
-                "showForce": "0",
-                "showEnergy": "0",
-                "textSize": "15"
-              },
-              "localQuery": {
-                "textSize": "15"
-              },
-              "removedQueryKeys": [],
-              "appliedLayout": {
-                "placement": "wide",
-                "widthPx": 340,
-                "aspectRatio": "3/1"
-              },
-              "localLayout": {},
-              "appliedSrc": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_time&controlsMode=guided&allowedControls=togglePosition&showPosition=1&showClock=1&showVelocity=0&showAcceleration=0&showForce=0&showEnergy=0&textSize=15",
-              "insertedAt": "2026-08-01T00:53:31.406Z"
-            }
-          }
-        },
-        {
           "id": "docx-insert-ms80kyq1-4hd41-item-1",
           "type": "paragraph",
           "nav": {
@@ -1439,7 +1351,35 @@
           "extensions": {
             "docxCanonicalImport": "v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationGenerated": true,
+        "paginationPagePart": 1
+      }
+    },
+    {
+      "id": "page-1-r2",
+      "sourcePage": "2-3",
+      "header": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "footer": {
+        "inherit": true,
+        "left": "",
+        "center": "",
+        "right": ""
+      },
+      "pageNumbering": {
+        "inherit": true,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "items": [
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-15",
           "type": "list",
@@ -1603,35 +1543,7 @@
           "extensions": {
             "docxCanonicalImport": "v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationGenerated": true,
-        "paginationPagePart": 1
-      }
-    },
-    {
-      "id": "page-1-r2",
-      "sourcePage": "2-3",
-      "header": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "footer": {
-        "inherit": true,
-        "left": "",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": true,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "items": [
+        },
         {
           "id": "docx-insert-ms7nl0tf-0yrz6-item-16",
           "type": "paragraph",
@@ -2230,141 +2142,6 @@
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "mathSourceFormat": "omml-mathml"
-          }
-        },
-        {
-          "id": "page-1-r2-scene-οριζοντια-κινηση-θεση--11",
-          "type": "scene",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "src": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=15",
-          "title": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα, επιτάχυνση",
-          "caption": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο, υ και α.",
-          "hideCaption": false,
-          "layout": {
-            "placement": "float-right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": "3/1"
-          },
-          "print": {
-            "snapshot": true
-          },
-          "sourceRef": {
-            "kind": "lab-registry",
-            "registry": "books/_labs/registry.json",
-            "labId": "aat",
-            "presetId": "body_axis_position_velocity_acceleration",
-            "appliedQuery": {
-              "play": "0",
-              "preset": "body_axis_position_velocity_acceleration",
-              "controlsMode": "guided",
-              "allowedControls": "togglePosition,toggleVelocity,toggleAcceleration",
-              "showPosition": "1",
-              "showClock": "1",
-              "showVelocity": "1",
-              "showAcceleration": "1",
-              "showForce": "0",
-              "showEnergy": "0",
-              "textSize": "15"
-            },
-            "localQuery": {
-              "textSize": "15"
-            },
-            "removedQueryKeys": [],
-            "appliedLayout": {
-              "placement": "wide",
-              "widthPx": 340,
-              "aspectRatio": "3/1"
-            },
-            "localLayout": {},
-            "appliedSrc": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=15"
-          },
-          "extensions": {
-            "lab": {
-              "registry": "books/_labs/registry.json",
-              "registrySource": "library-handle",
-              "labId": "aat",
-              "labTitle": "Απλή Αρμονική Ταλάντωση",
-              "presetId": "body_axis_position_velocity_acceleration",
-              "presetTitle": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα, επιτάχυνση",
-              "status": "ready",
-              "appliedQuery": {
-                "play": "0",
-                "preset": "body_axis_position_velocity_acceleration",
-                "controlsMode": "guided",
-                "allowedControls": "togglePosition,toggleVelocity,toggleAcceleration",
-                "showPosition": "1",
-                "showClock": "1",
-                "showVelocity": "1",
-                "showAcceleration": "1",
-                "showForce": "0",
-                "showEnergy": "0",
-                "textSize": "15"
-              },
-              "localQuery": {
-                "textSize": "15"
-              },
-              "removedQueryKeys": [],
-              "appliedLayout": {
-                "placement": "wide",
-                "widthPx": 340,
-                "aspectRatio": "3/1"
-              },
-              "localLayout": {},
-              "appliedSrc": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=15",
-              "insertedAt": "2026-08-01T00:59:04.548Z"
-            }
-          }
-        },
-        {
-          "id": "page-1-r2-interactive_callout-δοκιμασε-11",
-          "type": "interactive_callout",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "title": "Δοκίμασε",
-          "setupLabel": "Ρύθμισε",
-          "setupChips": [],
-          "pressLabel": "Πίεσε",
-          "pressChips": [],
-          "observeTitle": "Παρατήρησε",
-          "observeItems": [],
-          "conclusionTitle": "Συμπέρασμα",
-          "conclusionItems": [],
-          "extras": {
-            "title": "Πρόσθετο υλικό",
-            "collapsedInBook": true,
-            "print": true,
-            "items": []
-          },
-          "layout": {
-            "floatInteraction": "wrap",
-            "placement": "wide",
-            "wrap": true
-          },
-          "sequenceSteps": [
-            {
-              "title": "1. Νέο βήμα",
-              "preset": "",
-              "state": {
-                "play": false,
-                "t": 0
-              },
-              "setupChips": [],
-              "pressChips": [],
-              "observeItems": [],
-              "conclusionItems": []
-            }
-          ],
-          "sequenceDisplayMode": "expanded",
-          "print": {
-            "expand": "per-step",
-            "snapshotScene": true
           }
         },
         {
