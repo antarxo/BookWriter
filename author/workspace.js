@@ -2304,6 +2304,7 @@ function renderInteractiveCalloutEditor(cf,current,base){
       field('Τίτλος βήματος',step.title||'',v=>prop('Τίτλος βήματος',[...path,'title'],v)),
       field('Preset σκηνής',step.preset||'',v=>prop('Preset βήματος',[...path,'preset'],v)),
       field('Print preset',step.printPreset||'',v=>prop('Print preset βήματος',[...path,'printPreset'],v)),
+      check('Συνέχεια από την τρέχουσα κατάσταση',step.stateMode==='patch'||step.patchState===true||step.continueState===true,v=>prop('Τρόπος κατάστασης βήματος',[...path,'stateMode'],v?'patch':'')),
       field('Χρόνος σκηνής t',step.state?.t??'',v=>updateSequenceStepState(path,'t',v),'number',null,{step:.05,placeholder:'π.χ. 0'}),
       check('Η σκηνή κινείται σε αυτό το βήμα',step.state?.play===true,v=>updateSequenceStepState(path,'play',!!v)),
       field('Χρόνος εκτύπωσης t',step.printQuery?.t??'',v=>updateSequenceStepPrintQuery(path,'t',v),'number',null,{step:.05,placeholder:'κενό = ίδιο με το βήμα'}),

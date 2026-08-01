@@ -1005,6 +1005,29 @@
     return page.querySelector?.(`[data-book-item-id="${CSS.escape(id)}"] .scene-frame`) || global.document.querySelector?.(`[data-book-item-id="${CSS.escape(id)}"] .scene-frame`) || null;
   }
 
+  function sequenceStepUsesPatch(step={}){
+    return step?.stateMode === 'patch' || step?.patchState === true || step?.continueState === true;
+  }
+
+  function postSequenceScenePatch(iframe, step={}){
+    const send = ()=>{
+      const target = iframe?.contentWindow;
+      if(!target) return false;
+      const preset = step.preset ?? null;
+      if(preset != null && String(preset).trim()){
+        target.postMessage({type:'book-scene-preset', preset:String(preset)}, '*');
+      }
+      const state = step.state && typeof step.state === 'object' ? step.state : {};
+      target.postMessage({type:'book-scene-apply', state}, '*');
+      return true;
+    };
+    if(iframe?.dataset?.sceneLoadState === 'loading'){
+      iframe.addEventListener('load', send, {once:true});
+      return true;
+    }
+    return send();
+  }
+
   function activateCalloutSequence(sequenceNode,index=0){
     const steps = Array.from(sequenceNode.querySelectorAll('.callout-sequence-step'));
     if(!steps.length) return;
@@ -1018,6 +1041,7 @@
     const frame = findSequenceSceneFrame(sequenceNode);
     const iframe = frame?.querySelector?.('iframe');
     if(!iframe) return;
+    if(sequenceStepUsesPatch(step) && postSequenceScenePatch(iframe, step)) return;
     const base = frame.dataset.sceneBaseSource || frame.dataset.sceneSource || iframe.dataset.sceneSource || iframe.getAttribute('src') || '';
     const nextSrc = sequenceSceneUrl(base, step);
     if(nextSrc && iframe.getAttribute('src') !== nextSrc){

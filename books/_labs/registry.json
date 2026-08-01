@@ -64,8 +64,8 @@
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 706,
-            "aspectRatio": "2"
+            "widthPx": 700,
+            "aspectRatio": "8/5"
           }
         },
         {
@@ -86,8 +86,8 @@
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 340,
-            "aspectRatio": "3/1"
+            "widthPx": 440,
+            "aspectRatio": "8/5"
           }
         },
         {
@@ -108,8 +108,8 @@
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 340,
-            "aspectRatio": "3/1"
+            "widthPx": 440,
+            "aspectRatio": "8/5"
           }
         },
         {
@@ -130,8 +130,8 @@
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 340,
-            "aspectRatio": "3/1"
+            "widthPx": 440,
+            "aspectRatio": "8/5"
           }
         },
         {
@@ -152,8 +152,8 @@
           },
           "layout": {
             "placement": "wide",
-            "widthPx": 340,
-            "aspectRatio": "3/1"
+            "widthPx": 440,
+            "aspectRatio": "8/5"
           }
         }
       ]
