@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T01:14:25.952Z",
+    "updatedAt": "2026-08-01T01:01:48.994Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -2591,7 +2591,7 @@
             "show": false,
             "label": ""
           },
-          "src": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13",
+          "src": "https://aatscene.netlify.app/?state=spring&play=0",
           "title": "Απλή Αρμονική Ταλάντωση",
           "caption": "Εκτέλεσε στη σκηνή τις κινήσεις που ζητά το ενεργό βήμα.",
           "hideCaption": true,
@@ -2600,42 +2600,12 @@
             "wrap": false,
             "floatInteraction": "block",
             "widthPx": 706,
-            "aspectRatio": "2"
+            "aspectRatio": "1.3"
           },
           "print": {
             "snapshot": true
           },
-          "status": "scene",
-          "sourceRef": {
-            "appliedQuery": {
-              "state": "spring",
-              "play": "0",
-              "textSize": "13"
-            },
-            "localQuery": {
-              "state": "spring",
-              "play": "0",
-              "textSize": "13"
-            },
-            "removedQueryKeys": [],
-            "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13"
-          },
-          "extensions": {
-            "lab": {
-              "appliedQuery": {
-                "state": "spring",
-                "play": "0",
-                "textSize": "13"
-              },
-              "localQuery": {
-                "state": "spring",
-                "play": "0",
-                "textSize": "13"
-              },
-              "removedQueryKeys": [],
-              "appliedSrc": "https://aatscene.netlify.app/?state=spring&play=0&textSize=13"
-            }
-          }
+          "status": "scene"
         },
         {
           "id": "aat-guided-callout",
