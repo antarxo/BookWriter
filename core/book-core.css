@@ -277,6 +277,10 @@
 }
 .book-page-root .callout-observe ul{margin:6px 0 0 18px;padding:0}
 .book-page-root .callout-observe li{margin:4px 0;font-style:italic}
+.book-page-root .callout-observe .callout-list .callout-list,
+.book-page-root .callout-conclusion .callout-list .callout-list{margin:3px 0 0 14px}
+.book-page-root .callout-observe .callout-list .callout-list li,
+.book-page-root .callout-conclusion .callout-list .callout-list li{margin:3px 0}
 .book-page-root .callout-conclusion{margin-top:5px;padding-top:5px;border-top:1px solid #d7e4dc;background:#f7fcf9}
 .book-page-root .callout-conclusion-title{
   font:800 var(--callout-observe-title-font-size)/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;

@@ -2685,15 +2685,24 @@ function listToCalloutText(list){
   }).filter(Boolean).join('\n');
 }
 
+function equationToCalloutText(equation){
+  const source=String(equation?.source||mathMlToEditorSource(equation?.mathml||'')||'').replace(/\s*\r?\n\s*/g,' ').trim();
+  return source?`\\[${source}\\]`:'';
+}
+
 function calloutTextSources(){
   if(!has())return [];
   const currentPageId=page()?.id||'';
   const sources=[];
   (session.book.pages||[]).forEach((sourcePage,pageIdx)=>{
     (sourcePage.items||[]).forEach((candidate,itemIdx)=>{
-      const supported=['paragraph','note','side_note','list'].includes(candidate?.type);
+      const supported=['paragraph','note','side_note','list','equation'].includes(candidate?.type);
       if(!supported)return;
-      const text=candidate.type==='list'?listToCalloutText(candidate):richTextToCalloutText(candidate.body);
+      const text=candidate.type==='list'
+        ? listToCalloutText(candidate)
+        : candidate.type==='equation'
+          ? equationToCalloutText(candidate)
+          : richTextToCalloutText(candidate.body);
       if(!text)return;
       const summary=(text||itemSummary(candidate)||candidate.id||'κενό').replace(/\s+/g,' ').trim();
       sources.push({
@@ -2716,7 +2725,7 @@ function calloutTextSources(){
 async function openCalloutSourcePicker(path,label){
   const sources=calloutTextSources();
   if(!sources.length){
-    modal(label,'<div class="info-card warn">Δεν υπάρχουν παράγραφοι, σημειώσεις ή λίστες στο βιβλίο για μεταφορά.</div>');
+    modal(label,'<div class="info-card warn">Δεν υπάρχουν παράγραφοι, σημειώσεις, λίστες ή εξισώσεις στο βιβλίο για μεταφορά.</div>');
     return;
   }
   const rows=sources.map(source=>`
@@ -2766,7 +2775,7 @@ function calloutSourceControls(path,label){
   if(!sources.length){
     const note=document.createElement('div');
     note.className='info-card warn';
-    note.textContent='Δεν υπάρχουν παράγραφοι, σημειώσεις ή λίστες στο βιβλίο για μεταφορά.';
+    note.textContent='Δεν υπάρχουν παράγραφοι, σημειώσεις, λίστες ή εξισώσεις στο βιβλίο για μεταφορά.';
     return [note];
   }
   const note=document.createElement('span');
