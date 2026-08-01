@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-01T01:26:46.777Z",
+    "updatedAt": "2026-08-01T01:20:27.445Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -2242,7 +2242,7 @@
           "src": "https://aatscene.netlify.app/?play=0&preset=body_axis_position_velocity_acceleration&controlsMode=guided&allowedControls=togglePosition%2CtoggleVelocity%2CtoggleAcceleration&showPosition=1&showClock=1&showVelocity=1&showAcceleration=1&showForce=0&showEnergy=0&textSize=15",
           "title": "Οριζόντια κίνηση: θέση, χρόνος, ταχύτητα, επιτάχυνση",
           "caption": "Σώμα σε οριζόντια ΑΑΤ με θέση x, χρονόμετρο, υ και α.",
-          "hideCaption": true,
+          "hideCaption": false,
           "layout": {
             "placement": "float-right",
             "wrap": true,
