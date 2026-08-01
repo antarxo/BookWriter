@@ -639,14 +639,15 @@
 
   function sceneCropStyle(crop={}){
     if(!crop || typeof crop !== 'object') return '';
-    const scale = Math.max(1, Number(crop.scale) || 1);
+    const baseScale = Math.max(1, Number(crop.scale) || 1);
+    const scaleX = Math.max(1, Number(crop.scaleX) || baseScale);
+    const scaleY = Math.max(1, Number(crop.scaleY) || baseScale);
     const x = Number(crop.xPercent ?? crop.x ?? 0) || 0;
     const y = Number(crop.yPercent ?? crop.y ?? 0) || 0;
-    const transform = `translate(${-x}%, ${-y}%) scale(${scale})`;
     return [
-      'width:100%',
-      'height:100%',
-      `transform:${transform}`,
+      `width:${(scaleX * 100).toFixed(4)}%`,
+      `height:${(scaleY * 100).toFixed(4)}%`,
+      `transform:translate(${-x}%, ${-y}%)`,
       'transform-origin:top left'
     ].join(';');
   }

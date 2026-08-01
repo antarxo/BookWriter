@@ -5718,10 +5718,9 @@
             "wrap": false,
             "floatInteraction": "clear",
             "crop": {
-              "scaleX": 1.6,
-              "scaleY": 1.08,
+              "scale": 1.45,
               "xPercent": 17,
-              "yPercent": 2
+              "yPercent": 22
             }
           },
           "print": {
