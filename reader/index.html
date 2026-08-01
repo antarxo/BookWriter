@@ -494,6 +494,7 @@ figure.media figcaption{
   </div>
 <script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
 <script src="../core/book-core.js?v=20260801-sequence-print-inline-flow-1"></script>
+<script src="../core/v4/pagination-core-v4.js?v=20260801-sequence-print-pagination-2"></script>
 <script src="../core/snapshot-transport.js?v=20260730-no-app-button-1"></script>
 <script>
 'use strict';
@@ -1166,10 +1167,36 @@ const BOOK_PRINT_DIAGNOSTICS = Object.freeze({
   })
 });
 globalThis.BOOK_PRINT_DIAGNOSTICS = BOOK_PRINT_DIAGNOSTICS;
-function ensurePrintSequenceExpansion(){
+async function buildPrintBookFromSource(source){
+  const expanded = BookCore.expandPrintSequences(source);
+  if(!expanded?.extensions?.printSequenceExpansion?.enabled) return expanded;
+  if(!globalThis.BookPaginationV4?.paginateBook) return expanded;
+  const paged = await BookPaginationV4.paginateBook(expanded,{
+    imageCandidates:src=>imageSrcCandidates(src),
+    sceneSource:src=>withCacheBust(normalizeAppSrc(src)),
+    rejectOverflow:false,
+    tolerancePx:1,
+    assetTimeout:2200
+  });
+  const book = paged.book || expanded;
+  book.extensions = {
+    ...(book.extensions || {}),
+    printSequenceExpansion:{
+      ...(expanded.extensions?.printSequenceExpansion || {}),
+      paginated:true,
+      sourcePages:(expanded.pages||[]).length,
+      totalPages:(book.pages||[]).length,
+      pagination:paged.report?.pagination || paged.report || null
+    },
+    lastPrintOverflowAudit:paged.audit || null
+  };
+  return book;
+}
+
+async function ensurePrintSequenceExpansion(){
   const source = sourceBookData || bookData;
   if(!source) return;
-  const expanded = BookCore.expandPrintSequences(source);
+  const expanded = await buildPrintBookFromSource(source);
   if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
   if(bookData?.extensions?.printSequenceExpansion?.enabled) return;
   clearPrintSnapshots();
@@ -1189,7 +1216,7 @@ async function beginPrintFlow(){
   try{
     await nextFrame();
     updatePrintProgress(14, printProgressText('expanding'));
-    ensurePrintSequenceExpansion();
+    await ensurePrintSequenceExpansion();
     await nextFrame();
     await preparePrintSnapshots({
       force:true,

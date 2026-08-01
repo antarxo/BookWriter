@@ -1928,13 +1928,17 @@ async function openReader(){
     const validation=M.validateBook(session.book);if(!validation.ok)throw new Error(validation.errors.join('\n'));
     const coreValidation=BookCore.validateData(session.book);if(!coreValidation.ok)throw new Error(coreValidation.errors.join('\n'));
     const sourceBook=M.deepClone(session.book);
+    const assumedBookBase=currentBookBaseUrl();
     const previewBook=BookCore.expandScreenSequences(M.deepClone(sourceBook));
-    const printBook=BookCore.expandPrintSequences(M.deepClone(sourceBook));
+    const expandedPrintBook=BookCore.expandPrintSequences(M.deepClone(sourceBook));
+    const pagedPrint=expandedPrintBook.extensions?.printSequenceExpansion?.enabled
+      ? await P.paginateBook(expandedPrintBook,{imageCandidates,sceneSource:src=>resolveSceneSource(src,assumedBookBase),rejectOverflow:false,tolerancePx:1,assetTimeout:2500})
+      : {book:expandedPrintBook,audit:await P.auditOverflow(expandedPrintBook,{imageCandidates,sceneSource:src=>resolveSceneSource(src,assumedBookBase),rejectOverflow:false,tolerancePx:1,assetTimeout:2500})};
+    const printBook=pagedPrint.book;
     const readerCoreValidation=BookCore.validateData(previewBook);if(!readerCoreValidation.ok)throw new Error(readerCoreValidation.errors.join('\n'));
     const printCoreValidation=BookCore.validateData(printBook);if(!printCoreValidation.ok)throw new Error(printCoreValidation.errors.join('\n'));
-    const overflowAudit=await P.auditOverflow(printBook,{imageCandidates,rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
+    const overflowAudit=pagedPrint.audit||await P.auditOverflow(printBook,{imageCandidates,sceneSource:src=>resolveSceneSource(src,assumedBookBase),rejectOverflow:false,tolerancePx:1,assetTimeout:2500});
     const printOverride=!overflowAudit.ok;
-    const assumedBookBase=currentBookBaseUrl();
     const missingFigureAssets=resolveRuntimeBookSources(previewBook,assumedBookBase);
     resolveRuntimeBookSources(printBook,assumedBookBase).forEach(src=>missingFigureAssets.add(src));
     if(missingFigureAssets.size)throw new Error(`Η εκτύπωση σταμάτησε: λείπουν ${missingFigureAssets.size} αρχεία εικόνων από τον φάκελο του βιβλίου:\n${[...missingFigureAssets].join('\n')}`);
