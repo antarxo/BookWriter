@@ -261,6 +261,19 @@
     return raw ? dialogueMarkupHtml(raw) : `<span class="dialogue-empty">${escapeHtml(empty)}</span>`;
   }
 
+  function dialogueStageAsset(item,key,fallback='',options={}){
+    const value = item?.stage && typeof item.stage === 'object' ? item.stage[key] : '';
+    const raw = value || fallback;
+    return escapeHtml(raw && options.assetSource ? (options.assetSource(raw,item) || raw) : raw);
+  }
+
+  function dialogueViewerImage(item,viewer,options={}){
+    const list = Array.isArray(item?.stage?.viewerImages) ? item.stage.viewerImages : [];
+    const index = Math.max(0, Number(viewer || 0) - 1);
+    const raw = list[index] || '';
+    return escapeHtml(raw && options.assetSource ? (options.assetSource(raw,item) || raw) : raw);
+  }
+
   function attrJson(value){
     return escapeHtml(JSON.stringify(value == null ? {} : value));
   }
@@ -974,19 +987,36 @@
       }
       case 'dialogue': {
         node = document.createElement('section');
-        node.className = 'book-dialogue';
+        const displayMode = ['playback','stage'].includes(String(item.displayMode)) ? String(item.displayMode) : 'static';
+        node.className = `book-dialogue dialogue-mode-${displayMode}`;
+        node.dataset.dialogueMode = displayMode;
+        node.dataset.dialogueInitial = String(Math.max(0, Number(item.initialRow)||0));
+        node.dataset.dialogueDelay = String(Math.max(800, Number(item.autoAdvanceMs)||4500));
+        if(item.autoPlay) node.dataset.dialogueAutoplay = '1';
         applyCanonicalStyle(node,item.style);
         const rows = Array.isArray(item.rows) ? item.rows : [];
+        const safeInitial = Math.max(0, Math.min(rows.length-1, Number(item.initialRow)||0));
         const intro = text('intro');
         const rowHtml = rows.length
           ? rows.map((row,index)=>{
             const speaker = String(row?.speaker || (row?.viewer ? `${lang==='en'?'Viewer':'Θεατής'} ${row.viewer}` : '')).trim();
             const left = dialogueCellHtml(row?.left, lang === 'en' ? 'No comment' : 'Χωρίς σχόλιο');
             const right = dialogueCellHtml(row?.right, '');
-            return `<div class="dialogue-row" data-dialogue-row="${index}"><div class="dialogue-cell dialogue-left">${speaker?`<div class="dialogue-speaker">${escapeHtml(speaker)}</div>`:''}<div class="dialogue-text">${left}</div></div><div class="dialogue-cell dialogue-right">${right}</div></div>`;
+            return `<div class="dialogue-row${index===safeInitial?' active':''}" data-dialogue-row="${index}"><div class="dialogue-cell dialogue-left">${speaker?`<div class="dialogue-speaker">${escapeHtml(speaker)}</div>`:''}<div class="dialogue-text">${left}</div></div><div class="dialogue-cell dialogue-right">${right}</div></div>`;
           }).join('')
           : `<div class="dialogue-empty-block">${lang === 'en' ? 'No dialogue rows.' : 'Δεν υπάρχουν ατάκες στη συζήτηση.'}</div>`;
-        node.innerHTML = `${text('title')?`<h3 class="dialogue-title">${dialogueMarkupHtml(text('title'))}</h3>`:''}${intro?`<p class="dialogue-intro">${dialogueMarkupHtml(intro)}</p>`:''}<div class="dialogue-table">${rowHtml}</div>`;
+        const stageRows = displayMode === 'stage' && rows.length ? rows.map((row,index)=>{
+          const speaker = String(row?.speaker || (row?.viewer ? `${lang==='en'?'Viewer':'Θεατής'} ${row.viewer}` : '')).trim();
+          const left = dialogueCellHtml(row?.left, lang === 'en' ? 'No comment' : 'Χωρίς σχόλιο');
+          const right = dialogueCellHtml(row?.right, '');
+          const viewerImage = dialogueViewerImage(item,row?.viewer,options);
+          return `<div class="dialogue-stage-line${index===safeInitial?' active':''}" data-dialogue-stage-line="${index}">${viewerImage?`<div class="dialogue-stage-speaker-photo" style="background-image:url('${viewerImage}')"></div>`:''}<div class="dialogue-stage-speech"><div class="dialogue-stage-speaker">${escapeHtml(speaker || (lang==='en'?'Speaker':'Ομιλητής'))}</div><div class="dialogue-stage-left">${left}</div></div><div class="dialogue-stage-board">${right}</div></div>`;
+        }).join('') : '';
+        const stageBackground = dialogueStageAsset(item,'background','',options);
+        const stageAudience = dialogueStageAsset(item,'audience','',options);
+        const stage = displayMode === 'stage' ? `<div class="dialogue-stage" style="${stageBackground?`--dialogue-stage-bg:url('${stageBackground}');`:''}${stageAudience?`--dialogue-audience-bg:url('${stageAudience}');`:''}"><div class="dialogue-stage-backdrop"><div class="dialogue-stage-curtain"></div><div class="dialogue-stage-panel"><div class="dialogue-stage-title">${dialogueMarkupHtml(text('title') || (lang==='en'?'Foyer':'Φουαγιέ'))}</div><div class="dialogue-stage-lines">${stageRows}</div></div><div class="dialogue-stage-audience"></div></div><div class="dialogue-stage-controls" aria-label="${lang==='en'?'Performance controls':'Χειριστήρια παράστασης'}"><button type="button" data-dialogue-play title="${lang==='en'?'Start/Pause':'Έναρξη / παύση'}">▶</button><span data-dialogue-progress>${rows.length?`${safeInitial+1}/${rows.length}`:'0/0'}</span></div></div>` : '';
+        const playback = displayMode === 'playback' ? `<div class="dialogue-playback-controls"><button type="button" data-dialogue-play>▶</button><span data-dialogue-progress>${rows.length?`${safeInitial+1}/${rows.length}`:'0/0'}</span></div>` : '';
+        node.innerHTML = `${text('title')?`<h3 class="dialogue-title">${dialogueMarkupHtml(text('title'))}</h3>`:''}${intro?`<p class="dialogue-intro">${dialogueMarkupHtml(intro)}</p>`:''}${stage}${playback}<div class="dialogue-table">${rowHtml}</div>`;
         break;
       }
       case 'equation': {
@@ -1194,6 +1224,63 @@
     }
   }
 
+  function dialogueRowsCount(dialogueNode){
+    return dialogueNode.querySelectorAll?.('.dialogue-row')?.length || 0;
+  }
+
+  function activateDialogueRow(dialogueNode,index){
+    const rows = [...(dialogueNode.querySelectorAll?.('.dialogue-row') || [])];
+    const stageRows = [...(dialogueNode.querySelectorAll?.('.dialogue-stage-line') || [])];
+    const total = rows.length;
+    if(!total) return;
+    const next = Math.max(0, Math.min(total - 1, Number(index) || 0));
+    rows.forEach((row,rowIndex)=>row.classList.toggle('active', rowIndex === next));
+    stageRows.forEach((row,rowIndex)=>row.classList.toggle('active', rowIndex === next));
+    dialogueNode.dataset.dialogueActive = String(next);
+    dialogueNode.querySelectorAll?.('[data-dialogue-progress]').forEach(node=>{
+      node.textContent = `${next + 1}/${total}`;
+    });
+  }
+
+  function setDialoguePlayButtons(dialogueNode,playing){
+    dialogueNode.querySelectorAll?.('[data-dialogue-play]').forEach(button=>{
+      button.textContent = playing ? '❚❚' : '▶';
+      button.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      button.title = playing ? 'Παύση' : 'Έναρξη';
+    });
+  }
+
+  function stopDialoguePlayback(dialogueNode){
+    if(dialogueNode._dialogueTimer){
+      global.clearInterval(dialogueNode._dialogueTimer);
+      dialogueNode._dialogueTimer = null;
+    }
+    dialogueNode.dataset.dialoguePlaying = '0';
+    setDialoguePlayButtons(dialogueNode, false);
+  }
+
+  function startDialoguePlayback(dialogueNode){
+    const total = dialogueRowsCount(dialogueNode);
+    if(total <= 1) return;
+    stopDialoguePlayback(dialogueNode);
+    dialogueNode.dataset.dialoguePlaying = '1';
+    setDialoguePlayButtons(dialogueNode, true);
+    const delay = Math.max(800, Number(dialogueNode.dataset.dialogueDelay) || 4500);
+    dialogueNode._dialogueTimer = global.setInterval(()=>{
+      const current = Number(dialogueNode.dataset.dialogueActive || 0) || 0;
+      if(current >= total - 1){
+        stopDialoguePlayback(dialogueNode);
+        return;
+      }
+      activateDialogueRow(dialogueNode, current + 1);
+    }, delay);
+  }
+
+  function toggleDialoguePlayback(dialogueNode){
+    if(dialogueNode.dataset.dialoguePlaying === '1') stopDialoguePlayback(dialogueNode);
+    else startDialoguePlayback(dialogueNode);
+  }
+
   function bindCalloutSequences(root=global.document){
     root.querySelectorAll?.('[data-callout-extras]').forEach(extrasNode=>{
       if(extrasNode.dataset.extrasBound === '1') return;
@@ -1232,6 +1319,25 @@
       });
       const initial = Number(sequenceNode.querySelector('.callout-sequence-step.active')?.dataset.sequenceIndex || sequenceNode.dataset.sequenceActive || 0) || 0;
       activateCalloutSequence(sequenceNode, initial);
+    });
+    root.querySelectorAll?.('.book-dialogue[data-dialogue-mode="playback"], .book-dialogue[data-dialogue-mode="stage"]').forEach(dialogueNode=>{
+      if(dialogueNode.dataset.dialogueBound === '1') return;
+      dialogueNode.dataset.dialogueBound = '1';
+      const rows = dialogueNode.querySelectorAll('.dialogue-row');
+      const initial = Math.max(0, Math.min(rows.length - 1, Number(dialogueNode.dataset.dialogueInitial) || 0));
+      activateDialogueRow(dialogueNode, initial);
+      dialogueNode.querySelectorAll('[data-dialogue-play]').forEach(button=>{
+        button.addEventListener('click',event=>{
+          event.preventDefault();
+          toggleDialoguePlayback(dialogueNode);
+        });
+      });
+      const stage = dialogueNode.querySelector('.dialogue-stage');
+      stage?.addEventListener('click',event=>{
+        if(event.target.closest?.('button')) return;
+        toggleDialoguePlayback(dialogueNode);
+      });
+      if(dialogueNode.dataset.dialogueAutoplay === '1') startDialoguePlayback(dialogueNode);
     });
   }
 

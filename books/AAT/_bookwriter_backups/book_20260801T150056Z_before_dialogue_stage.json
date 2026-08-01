@@ -5746,21 +5746,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 1,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -5834,21 +5819,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 2,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -5922,21 +5892,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 3,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6010,21 +5965,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 4,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6098,21 +6038,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 5,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6186,21 +6111,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 6,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6274,21 +6184,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 7,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6362,21 +6257,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 8,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6450,21 +6330,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 9,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6538,21 +6403,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 10,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6619,21 +6469,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 11,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6693,21 +6528,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 12,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         }
       ],
@@ -6767,21 +6587,6 @@
             "importedAt": "2026-08-01T14:35:52.754Z",
             "foyerSplitPart": 13,
             "foyerSplitTotal": 13
-          },
-          "displayMode": "stage",
-          "initialRow": 0,
-          "autoAdvanceMs": 4200,
-          "autoPlay": false,
-          "stage": {
-            "background": "images/theatron-banner.png",
-            "audience": "images/koino_final.png",
-            "viewerImages": [
-              "images/viewer1.png",
-              "images/viewer2.png",
-              "images/viewer3.png",
-              "images/viewer4.png",
-              "images/viewer5.png"
-            ]
           }
         },
         {
