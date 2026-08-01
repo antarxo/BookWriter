@@ -2229,6 +2229,7 @@ function renderExtrasFields(parent,extras,path,label='Πρόσθετο υλικ�
 }
 
 function renderInteractiveCalloutEditor(cf,current,base){
+  cf.appendChild(calloutSourcePicker([...base,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις'));
   cf.append(
     field('Τίτλος',current.title||'',v=>prop('Τίτλος callout',[...base,'title'],v)),
     field('Label ρύθμισης',current.setupLabel||'Ρύθμισε',v=>prop('Label ρύθμισης',[...base,'setupLabel'],v)),
@@ -2300,6 +2301,7 @@ function renderInteractiveCalloutEditor(cf,current,base){
       field('Κατάσταση σκηνής JSON',jsonObjectText(step.state),v=>setJsonObject('Κατάσταση σκηνής βήματος',[...path,'state'],v),'textarea',null,{rows:4,monospace:true}),
       field('Query εκτύπωσης JSON',jsonObjectText(step.printQuery),v=>setJsonObject('Query εκτύπωσης βήματος',[...path,'printQuery'],v),'textarea',null,{rows:3,monospace:true})
     );
+    card.appendChild(calloutSourcePicker([...path,'observeItems'],'Μεταφορά πηγής στις παρατηρήσεις βήματος'));
     card.append(
       field('Τίτλος βήματος',step.title||'',v=>prop('Τίτλος βήματος',[...path,'title'],v)),
       field('Preset σκηνής',step.preset||'',v=>prop('Preset βήματος',[...path,'preset'],v)),
@@ -2655,6 +2657,73 @@ function richTextToEditorHtml(rich){
     return '';
   }).join('');
   return renderNodes(rich?.nodes);
+}
+
+function richTextToCalloutText(rich){
+  const renderNodes=nodes=>(nodes||[]).map(node=>{
+    if(!node||typeof node!=='object') return String(node??'');
+    if(node.type==='line_break') return '\n';
+    if(node.type==='math_inline'){
+      const source=node.source || mathMlToEditorSource(node.mathml || '') || '';
+      return source ? `\\(${source}\\)` : '[εξίσωση]';
+    }
+    if(node.type==='link') return renderNodes(node.children);
+    if(node.type==='text_run') return String(node.text||'');
+    return '';
+  }).join('');
+  return renderNodes(rich?.nodes).replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').replace(/[ \t]+/g,' ').trim();
+}
+
+function calloutTextSources(){
+  const p=page();
+  if(!p)return [];
+  return (p.items||[]).map((candidate,index)=>({candidate,index})).filter(({candidate})=>
+    ['paragraph','note','side_note'].includes(candidate?.type) && candidate.body
+  ).map(({candidate,index})=>{
+    const text=richTextToCalloutText(candidate.body);
+    return {
+      value:String(index),
+      label:`${index+1}. ${itemTypeLabel(candidate.type)} · ${(text||itemSummary(candidate)||candidate.id||'κενό').slice(0,70)}`,
+      text
+    };
+  }).filter(entry=>entry.text);
+}
+
+function calloutSourcePicker(path,label){
+  const sources=calloutTextSources();
+  const wrap=document.createElement('div');
+  wrap.className='sequence-tools';
+  if(!sources.length){
+    const note=document.createElement('div');
+    note.className='info-card warn';
+    note.textContent='Δεν υπάρχουν παράγραφοι ή σημειώσεις στη σελίδα για μεταφορά.';
+    wrap.appendChild(note);
+    return wrap;
+  }
+  const select=document.createElement('select');
+  select.title='Πηγή κειμένου';
+  sources.forEach(source=>select.add(new Option(source.label,source.value)));
+  const add=button('Προσθήκη πηγής στις παρατηρήσεις',()=>{
+    const source=sources.find(entry=>entry.value===select.value);
+    appendLinesToCallout(path,label,source?.text||'');
+  },'primary-action');
+  wrap.append(select,add);
+  return wrap;
+}
+
+function appendLinesToCallout(path,label,lines){
+  const next=linesValue(lines);
+  if(!next.length){modal(label,'<div class="info-card warn">Δεν βρέθηκε κείμενο για μεταφορά.</div>');return;}
+  mutate(label,book=>{
+    const selected=selectedItemIn(book);
+    if(!selected||selected.item.type!=='interactive_callout')throw Error('Δεν έχει επιλεγεί πλαίσιο οδηγιών.');
+    let target=book;
+    for(let i=0;i<path.length-1;i++) target=target?.[path[i]];
+    if(!target || typeof target!=='object')throw Error('Δεν βρέθηκε το πεδίο προορισμού.');
+    const key=path.at(-1);
+    target[key]=Array.isArray(target?.[key])?target[key].concat(next):next;
+    return{pageId:selected.page.id,itemId:selected.item.id};
+  });
 }
 
 function mathMlToEditorSource(mathml=''){

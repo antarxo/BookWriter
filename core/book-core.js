@@ -173,6 +173,50 @@
     })[ch]);
   }
 
+  function mathSourceToHtml(source='',display='inline'){
+    const raw = String(source || '').trim();
+    if(!raw) return '';
+    try{
+      const parser = global.MathExpressionV4;
+      if(!parser?.sourceToMathML) throw Error('MathExpressionV4 is not loaded');
+      let mathml = parser.sourceToMathML(raw);
+      if(display === 'block') mathml = mathml.replace('<math', '<math display="block"');
+      return `<span class="${display === 'block' ? 'math-block' : 'math-inline'}" data-math-source="${escapeHtml(raw)}">${mathml}</span>`;
+    }catch(error){
+      const wrapped = display === 'block' ? `\\[${raw}\\]` : `\\(${raw}\\)`;
+      return `<code class="math-source-error" title="${escapeHtml(error.message)}">${escapeHtml(wrapped)}</code>`;
+    }
+  }
+
+  function textWithMath(value=''){
+    const text = String(value ?? '');
+    if(!/[\\$]/.test(text)) return escapeHtml(text);
+    const out = [];
+    let i = 0;
+    while(i < text.length){
+      const inline = text.indexOf('\\(', i);
+      const block = text.indexOf('\\[', i);
+      const dollar = text.indexOf('$$', i);
+      const candidates = [
+        inline >= 0 ? {start:inline, open:'\\(', close:'\\)', display:'inline'} : null,
+        block >= 0 ? {start:block, open:'\\[', close:'\\]', display:'block'} : null,
+        dollar >= 0 ? {start:dollar, open:'$$', close:'$$', display:'block'} : null
+      ].filter(Boolean).sort((a,b)=>a.start-b.start);
+      const hit = candidates[0];
+      if(!hit){ out.push(escapeHtml(text.slice(i))); break; }
+      out.push(escapeHtml(text.slice(i, hit.start)));
+      const contentStart = hit.start + hit.open.length;
+      const end = text.indexOf(hit.close, contentStart);
+      if(end < 0){
+        out.push(escapeHtml(text.slice(hit.start)));
+        break;
+      }
+      out.push(mathSourceToHtml(text.slice(contentStart, end), hit.display));
+      i = end + hit.close.length;
+    }
+    return out.join('');
+  }
+
   function attrJson(value){
     return escapeHtml(JSON.stringify(value == null ? {} : value));
   }
@@ -234,9 +278,9 @@
       const answerText = String(entry.answer || '').trim();
       const showAnswer = lang === 'en' ? 'Show answer' : 'Εμφάνιση απάντησης';
       const hideAnswer = lang === 'en' ? 'Hide answer' : 'Απόκρυψη απάντησης';
-      const answerHtml = answerText ? `<button type="button" class="callout-extra-answer-toggle" data-callout-answer-toggle data-show-label="${escapeHtml(showAnswer)}" data-hide-label="${escapeHtml(hideAnswer)}">${escapeHtml(showAnswer)}</button><div class="callout-extra-answer" hidden>${escapeHtml(answerText).replace(/\n/g,'<br>')}</div>` : '';
+      const answerHtml = answerText ? `<button type="button" class="callout-extra-answer-toggle" data-callout-answer-toggle data-show-label="${escapeHtml(showAnswer)}" data-hide-label="${escapeHtml(hideAnswer)}">${escapeHtml(showAnswer)}</button><div class="callout-extra-answer" hidden>${textWithMath(answerText).replace(/\n/g,'<br>')}</div>` : '';
       const linesHtml = lines ? `<div class="callout-extra-lines" aria-hidden="true">${Array.from({length:lines},()=>'<span></span>').join('')}</div>` : '';
-      return `<div class="callout-extra-item"><b>${escapeHtml(label)}</b><p>${escapeHtml(entry.text)}</p>${answerHtml}${linesHtml}</div>`;
+      return `<div class="callout-extra-item"><b>${textWithMath(label)}</b><p>${textWithMath(entry.text)}</p>${answerHtml}${linesHtml}</div>`;
     }).join('');
     return `<div class="callout-extras${collapsed?' collapsed':''}" data-callout-extras data-print="${extras.print === false ? '0' : '1'}"><button type="button" class="callout-extras-toggle" data-callout-extras-toggle>${escapeHtml(title)}</button><div class="callout-extras-body" ${collapsed?'hidden':''}>${body}</div></div>`;
   }
@@ -829,23 +873,23 @@
           node.dataset.sequenceSceneId = String(item.sequenceSceneId || '');
           const stepHtml = steps.map((step,index)=>{
             const callout = calloutForSequenceStep(item, step, index);
-            const setup = (callout.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.setupLabel || (lang==='en'?'Set':'Ρύθμισε'))}</span>${callout.setupChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
-            const press = (callout.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${escapeHtml(callout.pressLabel || (lang==='en'?'Press':'Πίεσε'))}</span>${callout.pressChips.map(value=>`<span class="callout-chip">${escapeHtml(value)}</span>`).join('')}</div>` : '';
-            const observe = (callout.observeItems || []).length ? `<div class="callout-observe"><span class="callout-observe-title">${escapeHtml(callout.observeTitle || (lang==='en'?'Observe':'Παρατήρησε'))}</span><ul>${callout.observeItems.map(value=>`<li>${escapeHtml(value)}</li>`).join('')}</ul></div>` : '';
-            const conclusion = (callout.conclusionItems || []).length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${escapeHtml(callout.conclusionTitle || (lang==='en'?'Conclusion':'Συμπέρασμα'))}</span><ul>${callout.conclusionItems.map(value=>`<li>${escapeHtml(value)}</li>`).join('')}</ul></div>` : '';
+            const setup = (callout.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${textWithMath(callout.setupLabel || (lang==='en'?'Set':'Ρύθμισε'))}</span>${callout.setupChips.map(value=>`<span class="callout-chip">${textWithMath(value)}</span>`).join('')}</div>` : '';
+            const press = (callout.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${textWithMath(callout.pressLabel || (lang==='en'?'Press':'Πίεσε'))}</span>${callout.pressChips.map(value=>`<span class="callout-chip">${textWithMath(value)}</span>`).join('')}</div>` : '';
+            const observe = (callout.observeItems || []).length ? `<div class="callout-observe"><span class="callout-observe-title">${textWithMath(callout.observeTitle || (lang==='en'?'Observe':'Παρατήρησε'))}</span><ul>${callout.observeItems.map(value=>`<li>${textWithMath(value)}</li>`).join('')}</ul></div>` : '';
+            const conclusion = (callout.conclusionItems || []).length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${textWithMath(callout.conclusionTitle || (lang==='en'?'Conclusion':'Συμπέρασμα'))}</span><ul>${callout.conclusionItems.map(value=>`<li>${textWithMath(value)}</li>`).join('')}</ul></div>` : '';
             const extras = calloutExtrasHtml(callout.extras, lang);
-            return `<section class="callout-sequence-step${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-index="${index}" data-sequence-step="${attrJson(step)}"><div class="callout-title">${escapeHtml(callout.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}</div>${setup}${press}${observe}${conclusion}${extras}</section>`;
+            return `<section class="callout-sequence-step${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-index="${index}" data-sequence-step="${attrJson(step)}"><div class="callout-title">${textWithMath(callout.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}</div>${setup}${press}${observe}${conclusion}${extras}</section>`;
           }).join('');
           const buttons = steps.map((step,index)=>`<button type="button" class="callout-sequence-dot${index===Number(item.sequenceInitialStep||0)?' active':''}" data-sequence-goto="${index}" title="${escapeHtml(step.title || `${lang==='en'?'Step':'Βήμα'} ${index+1}`)}">${index+1}</button>`).join('');
           node.innerHTML = `<div class="callout-sequence-head"><button type="button" class="callout-sequence-arrow" data-sequence-move="-1" title="${lang==='en'?'Previous':'Προηγούμενο'}">‹</button><div class="callout-sequence-dots">${buttons}</div><button type="button" class="callout-sequence-arrow" data-sequence-move="1" title="${lang==='en'?'Next':'Επόμενο'}">›</button></div><div class="callout-sequence-body">${stepHtml}</div>`;
         }else{
           node.className = 'callout';
-          const setup = (item.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('setupLabel',lang==='en'?'Set':'Ρύθμισε')}</span>${item.setupChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
-          const press = (item.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${text('pressLabel',lang==='en'?'Press':'Πίεσε')}</span>${item.pressChips.map(value=>`<span class="callout-chip">${value}</span>`).join('')}</div>` : '';
-          const observe = list('observeItems').length ? `<div class="callout-observe"><span class="callout-observe-title">${text('observeTitle',lang==='en'?'Observe':'Παρατήρησε')}</span><ul>${list('observeItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
-          const conclusion = list('conclusionItems').length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${text('conclusionTitle',lang==='en'?'Conclusion':'Συμπέρασμα')}</span><ul>${list('conclusionItems').map(value=>`<li>${value}</li>`).join('')}</ul></div>` : '';
+          const setup = (item.setupChips || []).length ? `<div class="callout-row"><span class="callout-label">${textWithMath(getLoc(item,'setupLabel',lang==='en'?'Set':'Ρύθμισε',lang))}</span>${item.setupChips.map(value=>`<span class="callout-chip">${textWithMath(value)}</span>`).join('')}</div>` : '';
+          const press = (item.pressChips || []).length ? `<div class="callout-row"><span class="callout-label">${textWithMath(getLoc(item,'pressLabel',lang==='en'?'Press':'Πίεσε',lang))}</span>${item.pressChips.map(value=>`<span class="callout-chip">${textWithMath(value)}</span>`).join('')}</div>` : '';
+          const observe = list('observeItems').length ? `<div class="callout-observe"><span class="callout-observe-title">${textWithMath(getLoc(item,'observeTitle',lang==='en'?'Observe':'Παρατήρησε',lang))}</span><ul>${list('observeItems').map(value=>`<li>${textWithMath(value)}</li>`).join('')}</ul></div>` : '';
+          const conclusion = list('conclusionItems').length ? `<div class="callout-conclusion"><span class="callout-conclusion-title">${textWithMath(getLoc(item,'conclusionTitle',lang==='en'?'Conclusion':'Συμπέρασμα',lang))}</span><ul>${list('conclusionItems').map(value=>`<li>${textWithMath(value)}</li>`).join('')}</ul></div>` : '';
           const extras = calloutExtrasHtml(item.extras, lang);
-          node.innerHTML = `<div class="callout-title">${text('title',lang==='en'?'Try':'Δοκίμασε')}</div>${setup}${press}${observe}${conclusion}${extras}`;
+          node.innerHTML = `<div class="callout-title">${textWithMath(getLoc(item,'title',lang==='en'?'Try':'Δοκίμασε',lang))}</div>${setup}${press}${observe}${conclusion}${extras}`;
         }
         break;
       }
