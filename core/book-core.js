@@ -338,11 +338,13 @@
     return true;
   }
 
-  function materializeVisibleEntry(entry){
+  function materializeVisibleEntry(entry, mode='screen'){
     const next = Object.assign({}, entry || {});
-    delete next.visibility;
-    delete next.printOnly;
-    delete next.screenOnly;
+    if(mode === 'print'){
+      delete next.visibility;
+      delete next.printOnly;
+      delete next.screenOnly;
+    }
     return next;
   }
 
@@ -361,8 +363,8 @@
           const visible = visibleInMode(item, mode);
           if(!visible) filteredItems++;
           return visible;
-        }).map(materializeVisibleEntry);
-        return Object.assign(materializeVisibleEntry(page), {
+        }).map(item=>materializeVisibleEntry(item, mode));
+        return Object.assign(materializeVisibleEntry(page, mode), {
           id:page.id || `page-${pageIndex+1}`,
           items
         });

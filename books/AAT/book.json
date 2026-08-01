@@ -3115,7 +3115,7 @@
             "screen": true,
             "print": false
           },
-          "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1",
+          "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1&mode=cover",
           "title": "Ζωντανό φουαγιέ παράστασης",
           "caption": "Φουαγιέ παράστασης",
           "hideCaption": true,
@@ -3126,9 +3126,9 @@
             "widthPx": 700,
             "aspectRatio": "4/3",
             "crop": {
-              "scaleX": 1.25,
+              "scaleX": 1,
               "scaleY": 1,
-              "xPercent": 7,
+              "xPercent": 0,
               "yPercent": 0
             }
           },
