@@ -967,6 +967,42 @@ function sceneQueryObject(src=''){
     return out;
   }catch{return{}}
 }
+function setSceneQueryParam(label,key,value){
+  mutate(label,book=>{
+    const selected=selectedItemIn(book);
+    if(!selected||selected.item.type!=='scene')throw Error('Δεν έχει επιλεγεί ζωντανή σκηνή.');
+    const scene=selected.item;
+    const url=new URL(scene.src||'',location.href);
+    const text=String(value??'').trim();
+    if(text)url.searchParams.set(key,text);
+    else url.searchParams.delete(key);
+    scene.src=url.href;
+    const appliedQuery=stringValueMap(sceneQueryObject(scene.src));
+    const ref=scene.sourceRef&&typeof scene.sourceRef==='object'?scene.sourceRef:{};
+    let baseQuery={};
+    try{
+      const registry=state.labs.registry?runtimeLabRegistry(state.labs.registry):null;
+      const lab=(registry?.labs||[]).find(current=>current.id===ref.labId);
+      const preset=(lab?.presets||[]).find(current=>current.id===ref.presetId);
+      if(lab&&preset)baseQuery=stringValueMap(presetQueryForDialog(lab,preset));
+    }catch(_error){}
+    const queryDiff=diffValueMap(baseQuery,appliedQuery);
+    scene.sourceRef=Object.assign({},ref,{
+      appliedQuery,
+      localQuery:queryDiff.changed,
+      removedQueryKeys:queryDiff.removed,
+      appliedSrc:scene.src
+    });
+    scene.extensions=scene.extensions&&typeof scene.extensions==='object'?scene.extensions:{};
+    scene.extensions.lab=Object.assign({},scene.extensions.lab||{},{
+      appliedQuery,
+      localQuery:queryDiff.changed,
+      removedQueryKeys:queryDiff.removed,
+      appliedSrc:scene.src
+    });
+    return{pageId:selected.page.id,itemId:scene.id};
+  });
+}
 function queryObjectToText(query={}){
   return Object.entries(query||{}).map(([key,value])=>`${key}=${value}`).join('\n');
 }
@@ -2167,8 +2203,16 @@ function renderInteractiveCalloutEditor(cf,current,base){
   const scenes=[];
   session.book.pages.forEach(p=>(p.items||[]).forEach(candidate=>{if(candidate.type==='scene')scenes.push(candidate)}));
   const sceneOptions=[{value:'',label:'Χωρίς σύνδεση'}].concat(scenes.map(scene=>({value:scene.id,label:`${scene.id}${scene.title?' · '+scene.title:''}`})));
+  const currentPage=page(),currentItemIndex=itemIndex();
+  const nextScene=currentPage?.items?.slice(Math.max(0,currentItemIndex+1)).find(candidate=>candidate.type==='scene')||null;
+  if(nextScene&&!current.sequenceSceneId){
+    const link=document.createElement('div');
+    link.className='sequence-tools';
+    link.appendChild(button(`Σύνδεση με επόμενη σκηνή: ${nextScene.title||nextScene.id}`,()=>prop('Σύνδεση με επόμενη σκηνή',[...base,'sequenceSceneId'],nextScene.id),'primary-action'));
+    cf.appendChild(link);
+  }
   cf.append(
-    field('Σκηνή ακολουθίας',current.sequenceSceneId||'',v=>prop('Σκηνή ακολουθίας',[...base,'sequenceSceneId'],v),'text',sceneOptions),
+    field('Σκηνή που οδηγείται από τα βήματα',current.sequenceSceneId||'',v=>prop('Σκηνή ακολουθίας',[...base,'sequenceSceneId'],v),'text',sceneOptions),
     field('Προβολή βημάτων',current.sequenceDisplayMode||'expanded',v=>prop('Προβολή βημάτων',[...base,'sequenceDisplayMode'],v),'text',[{value:'expanded',label:'Συμπυκνωμένη στο βιβλίο'},{value:'carousel',label:'Με βήματα'}]),
     field('Αρχικό βήμα',current.sequenceInitialStep||0,v=>prop('Αρχικό βήμα',[...base,'sequenceInitialStep'],Math.max(0,Number(v)||0)),'number',null,{min:0,step:1}),
     field('Εκτύπωση ακολουθίας',current.print?.expand||'per-step',v=>prop('Εκτύπωση ακολουθίας',[...base,'print','expand'],v),'text',[{value:'per-step',label:'Κάθε βήμα σε δική του σελίδα'},{value:'none',label:'Χωρίς ανάλυση βημάτων'}]),
@@ -3099,6 +3143,7 @@ function renderItemProperties(host){
     field('URL σκηνής',current.src||'',v=>prop('URL σκηνής',[...base,'src'],v),'textarea',null,{rows:5,monospace:true}),
     field('Τίτλος',current.title||'',v=>prop('Τίτλος σκηνής',[...base,'title'],v)),
     field('Λεζάντα',current.caption||'',v=>prop('Λεζάντα σκηνής',[...base,'caption'],v),'textarea'),
+    field('Μέγεθος κειμένου σκηνής',sceneQueryObject(current.src).textSize||'',v=>setSceneQueryParam('Μέγεθος κειμένου σκηνής','textSize',v),'number',null,{min:8,max:18,step:.5,placeholder:'π.χ. 11'}),
     check('Απόκρυψη λεζάντας',current.hideCaption,v=>prop('Απόκρυψη λεζάντας',[...base,'hideCaption'],v)),
     check('Snapshot στην εκτύπωση',current.print?.snapshot!==false,v=>prop('Snapshot εκτύπωσης',[...base,'print','snapshot'],v))
   );
