@@ -52,6 +52,8 @@
   color:var(--ink);
   font:var(--body-font-size)/var(--body-leading) var(--body-font-family);
 }
+@media screen{.book-page-root[data-screen-hidden="1"],.book-page-root [data-screen-hidden="1"]{display:none!important}}
+@media print{.book-page-root[data-print-hidden="1"],.book-page-root [data-print-hidden="1"]{display:none!important}}
 .book-page-root .sheet{
   width:var(--sheet-width);
   height:var(--sheet-height);
@@ -354,140 +356,9 @@
 .book-page-root .dialogue-text{min-width:0}
 .book-page-root .dialogue-empty{color:#98a5ae}
 .book-page-root .dialogue-empty-block{padding:10px;color:#71808b}
-@media screen{
-  .book-page-root .dialogue-mode-playback .dialogue-row{display:none}
-  .book-page-root .dialogue-mode-playback .dialogue-row.active{display:grid}
-  .book-page-root .dialogue-mode-stage .dialogue-table{display:none}
-}
-.book-page-root .dialogue-playback-controls,
-.book-page-root .dialogue-stage-controls{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:8px 10px;
-  background:#0b1117;
-  color:#f6fbff;
-  font:800 12px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif
-}
-.book-page-root .dialogue-playback-controls button,
-.book-page-root .dialogue-stage-controls button{
-  appearance:none;
-  width:34px;
-  height:28px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.42);
-  background:linear-gradient(180deg,#2f80a7,#154a68);
-  color:#fff;
-  box-shadow:0 2px 10px rgba(0,0,0,.28);
-  font:900 15px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
-  cursor:pointer
-}
-.book-page-root .dialogue-stage{
-  position:relative;
-  min-height:360px;
-  background:#070b10;
-  color:#f8fbff;
-  overflow:hidden
-}
-.book-page-root .dialogue-stage-backdrop{
-  position:absolute;
-  inset:0;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) 82px;
-  background:
-    linear-gradient(180deg,rgba(5,7,10,.2),rgba(5,7,10,.55)),
-    var(--dialogue-stage-bg,linear-gradient(135deg,#202936,#0a0f16));
-  background-size:cover;
-  background-position:center
-}
-.book-page-root .dialogue-stage-curtain{
-  position:absolute;
-  inset:0;
-  background:radial-gradient(circle at 50% 28%,rgba(255,220,150,.18),transparent 32%),linear-gradient(90deg,rgba(90,12,18,.45),transparent 22%,transparent 78%,rgba(90,12,18,.45));
-  pointer-events:none
-}
-.book-page-root .dialogue-stage-audience{
-  grid-row:2;
-  align-self:end;
-  height:92px;
-  background:
-    linear-gradient(180deg,transparent,rgba(0,0,0,.55)),
-    var(--dialogue-audience-bg,linear-gradient(90deg,#14181d,#242a31,#14181d));
-  background-size:cover;
-  background-position:center bottom
-}
-.book-page-root .dialogue-stage-panel{
-  position:relative;
-  z-index:2;
-  align-self:end;
-  margin:34px auto 96px;
-  width:min(86%,640px);
-  min-height:190px;
-  padding:16px;
-  border:1px solid rgba(255,255,255,.24);
-  border-radius:8px;
-  background:rgba(8,14,22,.72);
-  box-shadow:0 18px 44px rgba(0,0,0,.42);
-  backdrop-filter:blur(8px)
-}
-.book-page-root .dialogue-stage-title{
-  margin:0 0 12px;
-  font:900 18px/1.15 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
-  color:#ffe7a3
-}
-.book-page-root .dialogue-stage-line{
-  display:none;
-  grid-template-columns:70px minmax(0,1.15fr) minmax(0,.85fr);
-  gap:12px;
-  align-items:start
-}
-.book-page-root .dialogue-stage-line.active{display:grid}
-.book-page-root .dialogue-stage-speaker-photo{
-  width:62px;
-  height:62px;
-  border-radius:50%;
-  background-size:cover;
-  background-position:center;
-  border:2px solid rgba(255,255,255,.66);
-  box-shadow:0 8px 18px rgba(0,0,0,.34)
-}
-.book-page-root .dialogue-stage-speech,
-.book-page-root .dialogue-stage-board{
-  min-width:0;
-  padding:10px 12px;
-  border-radius:8px;
-  background:rgba(255,255,255,.92);
-  color:#1d2730
-}
-.book-page-root .dialogue-stage-speaker{
-  margin:0 0 6px;
-  color:#1d5f84;
-  font:900 12px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif
-}
-.book-page-root .dialogue-stage-left,
-.book-page-root .dialogue-stage-board{
-  font:650 13px/1.35 system-ui,-apple-system,"Segoe UI",Arial,sans-serif
-}
-.book-page-root .dialogue-stage-board:empty{display:none}
-.book-page-root .dialogue-stage-controls{
-  position:absolute;
-  left:50%;
-  bottom:12px;
-  z-index:3;
-  transform:translateX(-50%);
-  min-width:120px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:999px;
-  background:rgba(6,10,15,.82);
-  box-shadow:0 8px 24px rgba(0,0,0,.34)
-}
 @media (max-width:760px){
   .book-page-root .dialogue-row{grid-template-columns:1fr}
   .book-page-root .dialogue-right{border-left:0;border-top:1px solid #e5ecf2}
-  .book-page-root .dialogue-stage{min-height:420px}
-  .book-page-root .dialogue-stage-line{grid-template-columns:1fr}
-  .book-page-root .dialogue-stage-speaker-photo{width:54px;height:54px}
 }
 .book-page-root .callout-sequence{padding:7px 8px}
 .book-page-root .callout-sequence-head{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 7px}
@@ -586,9 +457,6 @@
 @media print{.book-page-root .callout-sequence-head{display:none!important}.book-page-root .callout-sequence-step{display:block!important}}
 @media print{.book-page-root .callout-extras-toggle,.book-page-root .callout-extra-answer-toggle{display:none!important}.book-page-root .callout-extras-body{display:grid!important}.book-page-root .callout-extras[data-print="0"]{display:none!important}}
 @media print{
-  .book-page-root .dialogue-stage,
-  .book-page-root .dialogue-playback-controls,
-  .book-page-root .dialogue-stage-controls{display:none!important}
   .book-page-root .dialogue-table{display:block!important}
   .book-page-root .dialogue-row{display:grid!important}
 }

@@ -5705,32 +5705,6 @@
           }
         },
         {
-          "id": "aat-foyer-live-scene",
-          "type": "scene",
-          "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1",
-          "title": "Ζωντανό φουαγιέ παράστασης",
-          "caption": "Φουαγιέ παράστασης",
-          "hideCaption": false,
-          "layout": {
-            "placement": "wide",
-            "widthPx": 700,
-            "aspectRatio": "16/9",
-            "wrap": false,
-            "floatInteraction": "clear"
-          },
-          "print": {
-            "snapshot": false
-          },
-          "visibility": {
-            "screen": true,
-            "print": false
-          },
-          "nav": {
-            "show": true,
-            "label": "Φουαγιέ"
-          }
-        },
-        {
           "id": "aat-foyer-dialogue",
           "type": "dialogue",
           "title": "Συζήτηση μετά τη δεύτερη πράξη",
@@ -5773,9 +5747,20 @@
             "foyerSplitPart": 1,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -5783,10 +5768,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 1,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": true,
-        "print": true
       }
     },
     {
@@ -5854,9 +5835,20 @@
             "foyerSplitPart": 2,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -5864,10 +5856,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 2,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -5935,9 +5923,20 @@
             "foyerSplitPart": 3,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -5945,10 +5944,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 3,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6016,9 +6011,20 @@
             "foyerSplitPart": 4,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6026,10 +6032,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 4,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6097,9 +6099,20 @@
             "foyerSplitPart": 5,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6107,10 +6120,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 5,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6178,9 +6187,20 @@
             "foyerSplitPart": 6,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6188,10 +6208,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 6,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6259,9 +6275,20 @@
             "foyerSplitPart": 7,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6269,10 +6296,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 7,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6340,9 +6363,20 @@
             "foyerSplitPart": 8,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6350,10 +6384,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 8,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6421,9 +6451,20 @@
             "foyerSplitPart": 9,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6431,10 +6472,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 9,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6502,9 +6539,20 @@
             "foyerSplitPart": 10,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6512,10 +6560,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 10,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6576,9 +6620,20 @@
             "foyerSplitPart": 11,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6586,10 +6641,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 11,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6643,9 +6694,20 @@
             "foyerSplitPart": 12,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         }
       ],
@@ -6653,10 +6715,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 12,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     },
     {
@@ -6710,9 +6768,20 @@
             "foyerSplitPart": 13,
             "foyerSplitTotal": 13
           },
-          "visibility": {
-            "screen": false,
-            "print": true
+          "displayMode": "stage",
+          "initialRow": 0,
+          "autoAdvanceMs": 4200,
+          "autoPlay": false,
+          "stage": {
+            "background": "images/theatron-banner.png",
+            "audience": "images/koino_final.png",
+            "viewerImages": [
+              "images/viewer1.png",
+              "images/viewer2.png",
+              "images/viewer3.png",
+              "images/viewer4.png",
+              "images/viewer5.png"
+            ]
           }
         },
         {
@@ -6749,10 +6818,6 @@
         "importedFromAatFoyer": true,
         "foyerSplitPart": 13,
         "foyerSplitTotal": 13
-      },
-      "visibility": {
-        "screen": false,
-        "print": true
       }
     }
   ],

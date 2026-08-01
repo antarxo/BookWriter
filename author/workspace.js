@@ -2441,25 +2441,7 @@ function mutateDialogueRows(label,operation){
 function renderDialogueEditor(cf,current,base){
   cf.append(
     field('Τίτλος',current.title||'',v=>prop('Τίτλος συζήτησης',[...base,'title'],v),'textarea'),
-    field('Εισαγωγή',current.intro||'',v=>prop('Εισαγωγή συζήτησης',[...base,'intro'],v),'textarea',null,{rows:3}),
-    field('Προβολή στο βιβλίο',current.displayMode||'static',v=>prop('Προβολή συζήτησης',[...base,'displayMode'],v),'text',[
-      {value:'static',label:'Στατική'},
-      {value:'playback',label:'Απλή ροή ατάκας'},
-      {value:'stage',label:'Θεατρική σκηνή'}
-    ]),
-    field('Αρχική ατάκα',current.initialRow||0,v=>prop('Αρχική ατάκα συζήτησης',[...base,'initialRow'],Math.max(0,Number(v)||0)),'number',null,{min:0,step:1}),
-    field('Ρυθμός ατάκας ms',current.autoAdvanceMs||4500,v=>prop('Ρυθμός συζήτησης',[...base,'autoAdvanceMs'],Math.max(800,Number(v)||4500)),'number',null,{min:800,step:100})
-  );
-  const autoplay=document.createElement('label');
-  autoplay.className='check-row';
-  autoplay.innerHTML=`<input type="checkbox" ${current.autoPlay?'checked':''}> <span>Αυτόματη έναρξη στο άνοιγμα</span>`;
-  autoplay.querySelector('input').addEventListener('change',event=>prop('Αυτόματη έναρξη συζήτησης',[...base,'autoPlay'],!!event.target.checked));
-  cf.appendChild(autoplay);
-  const stage=current.stage&&typeof current.stage==='object'?current.stage:{};
-  cf.append(
-    field('Φόντο σκηνής',stage.background||'',v=>prop('Φόντο σκηνής συζήτησης',[...base,'stage','background'],v),'text',null,{wide:true}),
-    field('Εικόνα κοινού',stage.audience||'',v=>prop('Κοινό σκηνής συζήτησης',[...base,'stage','audience'],v),'text',null,{wide:true}),
-    field('Εικόνες θεατών',Array.isArray(stage.viewerImages)?stage.viewerImages.join('\n'):'',v=>prop('Εικόνες θεατών συζήτησης',[...base,'stage','viewerImages'],linesValue(v)),'textarea',null,{rows:4,wide:true})
+    field('Εισαγωγή',current.intro||'',v=>prop('Εισαγωγή συζήτησης',[...base,'intro'],v),'textarea',null,{rows:3})
   );
   const tools=document.createElement('div');
   tools.className='list-tools';
