@@ -454,7 +454,7 @@ figure.media figcaption{
 }
 
 </style>
-<link rel="stylesheet" href="../core/book-core.css?v=20260801-visibility-print-1">
+<link rel="stylesheet" href="../core/book-core.css?v=20260801-scene-crop-print-1">
 </head>
 <body>
   <div class="topbar">
@@ -493,8 +493,8 @@ figure.media figcaption{
     </div>
   </div>
 <script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
-<script src="../core/book-core.js?v=20260801-visibility-print-1"></script>
-<script src="../core/v4/pagination-core-v4.js?v=20260801-visibility-print-1"></script>
+<script src="../core/book-core.js?v=20260801-scene-crop-print-1"></script>
+<script src="../core/v4/pagination-core-v4.js?v=20260801-scene-crop-print-1"></script>
 <script src="../core/snapshot-transport.js?v=20260730-no-app-button-1"></script>
 <script>
 'use strict';
@@ -1169,7 +1169,8 @@ const BOOK_PRINT_DIAGNOSTICS = Object.freeze({
 globalThis.BOOK_PRINT_DIAGNOSTICS = BOOK_PRINT_DIAGNOSTICS;
 async function buildPrintBookFromSource(source){
   const expanded = BookCore.expandPrintSequences(source);
-  if(!expanded?.extensions?.printSequenceExpansion?.enabled) return expanded;
+  const needsPagination = expanded?.extensions?.printSequenceExpansion?.enabled || expanded?.extensions?.printVisibilityExpansion?.enabled;
+  if(!needsPagination) return expanded;
   if(!globalThis.BookPaginationV4?.paginateBook) return expanded;
   const paged = await BookPaginationV4.paginateBook(expanded,{
     imageCandidates:src=>imageSrcCandidates(src),
@@ -1197,8 +1198,9 @@ async function ensurePrintSequenceExpansion(){
   const source = sourceBookData || bookData;
   if(!source) return;
   const expanded = await buildPrintBookFromSource(source);
-  if(!expanded?.extensions?.printSequenceExpansion?.enabled) return;
-  if(bookData?.extensions?.printSequenceExpansion?.enabled) return;
+  const needsPrintRender = expanded?.extensions?.printSequenceExpansion?.enabled || expanded?.extensions?.printVisibilityExpansion?.enabled;
+  if(!needsPrintRender) return;
+  if(bookData?.extensions?.printSequenceExpansion?.enabled || bookData?.extensions?.printVisibilityExpansion?.enabled) return;
   clearPrintSnapshots();
   bookData = expanded;
   renderPages(bookData);

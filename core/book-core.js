@@ -340,16 +340,35 @@
 
   function filterBookForMode(book, mode='screen'){
     const next = normalizeData(deepClone(book));
+    let filteredPages = 0;
+    let filteredItems = 0;
     next.pages = (next.pages || [])
-      .filter(page=>visibleInMode(page, mode))
+      .filter(page=>{
+        const visible = visibleInMode(page, mode);
+        if(!visible) filteredPages++;
+        return visible;
+      })
       .map((page,pageIndex)=>{
-        const items = (page.items || []).filter(item=>visibleInMode(item, mode));
+        const items = (page.items || []).filter(item=>{
+          const visible = visibleInMode(item, mode);
+          if(!visible) filteredItems++;
+          return visible;
+        });
         return Object.assign({}, page, {
           id:page.id || `page-${pageIndex+1}`,
           items
         });
       })
       .filter(page=>(page.items || []).length || page.keepEmpty === true);
+    next.extensions = Object.assign({}, next.extensions || {}, {
+      [`${mode}VisibilityExpansion`]:{
+        enabled:filteredPages > 0 || filteredItems > 0,
+        mode,
+        filteredPages,
+        filteredItems,
+        totalPages:next.pages.length
+      }
+    });
     return next;
   }
 
@@ -491,7 +510,8 @@
       heightPx:layout.heightPx ?? item?.frameHeight ?? item?.figureHeight ?? item?.sceneHeight,
       aspectRatio:layout.aspectRatio ?? item?.aspectRatio ?? item?.sceneAspect ?? item?.aspect,
       wrap:!!(layout.wrap ?? item?.wrapTight ?? (media||placement.startsWith('float-'))),
-      floatInteraction:String(layout.floatInteraction ?? item?.floatInteraction ?? '')
+      floatInteraction:String(layout.floatInteraction ?? item?.floatInteraction ?? ''),
+      crop:layout.crop ?? item?.crop ?? null
     };
   }
 
@@ -615,6 +635,20 @@
     const viewportHeight = Number(item?.viewport?.height);
     if(viewportWidth > 0 && viewportHeight > 0) return viewportWidth / viewportHeight;
     return kind === 'scene' ? 16/9 : null;
+  }
+
+  function sceneCropStyle(crop={}){
+    if(!crop || typeof crop !== 'object') return '';
+    const scale = Math.max(1, Number(crop.scale) || 1);
+    const x = Number(crop.xPercent ?? crop.x ?? 0) || 0;
+    const y = Number(crop.yPercent ?? crop.y ?? 0) || 0;
+    const transform = `translate(${-x}%, ${-y}%) scale(${scale})`;
+    return [
+      'width:100%',
+      'height:100%',
+      `transform:${transform}`,
+      'transform-origin:top left'
+    ].join(';');
   }
 
   function fontValue(value, fallback){
@@ -923,6 +957,7 @@
         if(printOptions.snapshotTimeoutMs != null) frame.dataset.snapshotTimeoutMs = String(printOptions.snapshotTimeoutMs);
         if(printOptions.snapshotAttempts != null) frame.dataset.snapshotAttempts = String(printOptions.snapshotAttempts);
         if(printOptions.snapshotRetryDelayMs != null) frame.dataset.snapshotRetryDelayMs = String(printOptions.snapshotRetryDelayMs);
+        const cropStyle = sceneCropStyle(layout.crop || item.crop);
         const rawSource=item.src ?? item.singleSrc ?? '';
         const source = String((options.sceneSource || (value=>value))(rawSource,item) || '');
         if(source){
@@ -931,6 +966,7 @@
           iframe.loading = deferred ? 'lazy' : 'eager';
           iframe.referrerPolicy = 'no-referrer';
           iframe.allow = 'fullscreen';
+          if(cropStyle) iframe.style.cssText += cropStyle;
           iframe.dataset.sceneProtocol = 'book-scene-v1';
           iframe.dataset.sceneSource = source;
           frame.dataset.sceneSource = source;

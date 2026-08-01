@@ -1932,7 +1932,8 @@ async function openReader(){
     const assumedBookBase=currentBookBaseUrl();
     const previewBook=BookCore.expandScreenSequences(M.deepClone(sourceBook));
     const expandedPrintBook=BookCore.expandPrintSequences(M.deepClone(sourceBook));
-    const pagedPrint=expandedPrintBook.extensions?.printSequenceExpansion?.enabled
+    const needsPrintPagination=expandedPrintBook.extensions?.printSequenceExpansion?.enabled || expandedPrintBook.extensions?.printVisibilityExpansion?.enabled;
+    const pagedPrint=needsPrintPagination
       ? await P.paginateBook(expandedPrintBook,{imageCandidates,sceneSource:src=>resolveSceneSource(src,assumedBookBase),rejectOverflow:false,tolerancePx:1,assetTimeout:2500})
       : {book:expandedPrintBook,audit:await P.auditOverflow(expandedPrintBook,{imageCandidates,sceneSource:src=>resolveSceneSource(src,assumedBookBase),rejectOverflow:false,tolerancePx:1,assetTimeout:2500})};
     const printBook=pagedPrint.book;

@@ -5710,18 +5710,13 @@
           "src": "https://armat.netlify.app/index.html?start=foyer&lang=gr&nav=1",
           "title": "Ζωντανό φουαγιέ παράστασης",
           "caption": "Φουαγιέ παράστασης",
-          "hideCaption": true,
+          "hideCaption": false,
           "layout": {
             "placement": "wide",
             "widthPx": 700,
-            "aspectRatio": "4/3",
+            "aspectRatio": "16/9",
             "wrap": false,
-            "floatInteraction": "clear",
-            "crop": {
-              "scale": 1.45,
-              "xPercent": 17,
-              "yPercent": 22
-            }
+            "floatInteraction": "clear"
           },
           "print": {
             "snapshot": false
