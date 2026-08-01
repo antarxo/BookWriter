@@ -3175,7 +3175,7 @@ function appendLayoutProperties(host,current,base){
       {value:'wrap',label:'wrap — ροή γύρω'},{value:'avoid',label:'avoid — διαθέσιμη περιοχή'},{value:'clear',label:'clear — κάτω από float'}
     ]),
     field('Τοποθέτηση',value.placement||'',v=>prop('Τοποθέτηση',[...base,'layout','placement'],v),'text',[
-      {value:'',label:'Αυτόματο'},{value:'wide',label:'Πλήρες πλάτος'},{value:'left',label:'Αριστερά'},{value:'right',label:'Δεξιά'},{value:'float-left',label:'Float αριστερά'},{value:'float-right',label:'Float δεξιά'}
+      {value:'',label:'Αυτόματο'},{value:'wide',label:'Πλήρες πλάτος'},{value:'left',label:'Αριστερά'},{value:'right',label:'Δεξιά'},{value:'float-left',label:'Παλιό: αριστερά με ροή'},{value:'float-right',label:'Παλιό: δεξιά με ροή'}
     ]),
     field('Πλάτος px',value.widthPx??'',v=>prop('Πλάτος',[...base,'layout','widthPx'],v),'number'),
     field('Αναλογία',value.aspectRatio??'',v=>prop('Αναλογία',[...base,'layout','aspectRatio'],v), 'text',null,{placeholder:'natural ή 16/9'}),

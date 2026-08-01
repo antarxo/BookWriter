@@ -620,7 +620,8 @@
 
   function hasExplicitLayout(item){
     const layout = item?.layout;
-    return !!(layout && typeof layout === 'object' && Object.keys(layout).length);
+    if(!layout || typeof layout !== 'object') return false;
+    return ['placement','widthPx','heightPx','aspectRatio','wrap'].some(key=>layout[key] !== undefined && layout[key] !== '');
   }
 
   function sequencePairSide(scene){
