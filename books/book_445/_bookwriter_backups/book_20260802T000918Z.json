@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T00:45:40.774Z",
-    "updatedAt": "2026-08-02T00:30:20.341Z",
+    "updatedAt": "2026-08-02T00:07:15.017Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -173,7 +173,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Εισαγωγή: γιατί χρειάστηκε “σύγχρονη” φυσική"
+                    "text": "    Εισαγωγή: γιατί χρειάστηκε “σύγχρονη” φυσική"
                   }
                 ]
               },
@@ -186,7 +186,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Μέλαν Σώμα, Φάσμα και Νόμος Wien"
+                    "text": "    Μέλαν Σώμα, Φάσμα και Νόμος Wien"
                   }
                 ]
               },
@@ -199,7 +199,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Τι είναι το «μέλαν σώμα»"
+                    "text": "        Τι είναι το «μέλαν σώμα»"
                   }
                 ]
               },
@@ -212,7 +212,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Χρώμα των σωμάτων!"
+                    "text": "        Χρώμα των σωμάτων!"
                   }
                 ]
               },
@@ -225,46 +225,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Το φάσμα εκπομπής του μέλανος σώματος"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-νομος-μετατοπισης-του-wien",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Νόμος μετατόπισης του Wien"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-ιδεα-του-planck-κβαντωση-ενεργειας",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η ιδέα του Planck: κβάντωση ενέργειας"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-παρατηρησεις",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            ΠΑΡΑΤΗΡΗΣΕΙΣ"
+                    "text": "        Το φάσμα εκπομπής του μέλανος σώματος"
                   }
                 ]
               },
@@ -277,124 +238,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ο μηχανισμός της ακτινοβολίας του μέλανος σώματος"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-οι-πρωταγωνιστες",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Οι «πρωταγωνιστές»"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-ανατομια-της-θερμικης-ακτινοβολιας-μεσα-στην-κοιλοτητα",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Ανατομία της θερμικής ακτινοβολίας μέσα στην κοιλότητα"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#_Toc224256065",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            ΟΙ ΚΒΑΝΤΙΚΟΙ ΤΑΛΑΝΤΩΤΕΣ του Planck!"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-διαταραχη-της-αρχικης-ισορροπιας",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η διαταραχή της αρχικής ισορροπίας"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-οπη",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η οπή!"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-απορροφηση-hf",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η απορρόφηση hf"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-θερμοποιηση",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η θερμοποίηση"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-εκπομπη-hf",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η εκπομπή hf"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-η-νεα-ισορροπια-και-το-φασμα-μελανος-σωματος",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η νέα ισορροπία και το φάσμα μέλανος σώματος"
+                    "text": "        Ο μηχανισμός της ακτινοβολίας του μέλανος σώματος"
                   }
                 ]
               },
@@ -407,33 +251,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Δύο εφαρμογές του νόμου του Wien"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-υπολογισμος-της-θερμοκρασιας-της-επιφανειας-του-ηλιου",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Υπολογισμός της θερμοκρασίας της επιφάνειας του Ήλιου:"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-το-χρωμα-ενος-αστρου-στον-ουρανο-προδιδει-και-την-επιφανειακη-το",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Το χρώμα ενός άστρου στον ουρανό προδίδει και την επιφανειακή του θερμοκρασία."
+                    "text": "        Δύο εφαρμογές του νόμου του Wien"
                   }
                 ]
               },
@@ -446,7 +264,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ερωτήσεις κατανόησης"
+                    "text": "        Ερωτήσεις κατανόησης"
                   }
                 ]
               },
@@ -459,7 +277,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Το χρώμα των πυρακτωμένων σωμάτων"
+                    "text": "        Το χρώμα των πυρακτωμένων σωμάτων"
                   }
                 ]
               },
@@ -472,7 +290,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        το Παράδειγμα του ταλαντωτή του σχολικού βιβλίου!"
+                    "text": "        το Παράδειγμα του ταλαντωτή του σχολικού βιβλίου!"
                   }
                 ]
               },
@@ -485,7 +303,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        ΕΡΩΤΗΣΕΙΣ"
+                    "text": "        ΕΡΩΤΗΣΕΙΣ"
                   }
                 ]
               },
@@ -512,7 +330,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Ορισμός και βασική ιδέα"
+                    "text": "    Ορισμός και βασική ιδέα"
                   }
                 ]
               },
@@ -525,7 +343,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Πειραματική διάταξη"
+                    "text": "    Πειραματική διάταξη"
                   }
                 ]
               },
@@ -538,7 +356,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Το πείραμα"
+                    "text": "    Το πείραμα"
                   }
                 ]
               },
@@ -551,7 +369,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Το πειραματικό διάγραμμα i-V"
+                    "text": "    Το πειραματικό διάγραμμα i-V"
                   }
                 ]
               },
@@ -564,7 +382,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Τι δείχνει το πείραμα"
+                    "text": "    Τι δείχνει το πείραμα"
                   }
                 ]
               },
@@ -577,7 +395,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Γιατί η κλασική θεωρία δεν επαρκεί"
+                    "text": "    Γιατί η κλασική θεωρία δεν επαρκεί"
                   }
                 ]
               },
@@ -590,7 +408,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Η ερμηνεία του Einstein"
+                    "text": "    Η ερμηνεία του Einstein"
                   }
                 ]
               },
@@ -603,7 +421,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Η συχνότητα κατωφλίου"
+                    "text": "    Η συχνότητα κατωφλίου"
                   }
                 ]
               },
@@ -616,7 +434,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Συμπεράσματα"
+                    "text": "        Συμπεράσματα"
                   }
                 ]
               },
@@ -629,59 +447,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Σύνδεση με την τάση αποκοπής"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-συμπερασμα-1",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Συμπέρασμα 1"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-συμπερασμα-2",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Συμπέρασμα 2"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-συμπερασμα-3",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Συμπέρασμα 3"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "#docx-h4-συμπερασμα-4",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Συμπέρασμα 4"
+                    "text": "    Σύνδεση με την τάση αποκοπής"
                   }
                 ]
               },
@@ -694,7 +460,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Παρατηρήσεις για ασκήσεις"
+                    "text": "    Παρατηρήσεις για ασκήσεις"
                   }
                 ]
               },
@@ -707,7 +473,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ένταση Ακτινοβολίας σημειακής πηγής"
+                    "text": "        Ένταση Ακτινοβολίας σημειακής πηγής"
                   }
                 ]
               },
@@ -720,7 +486,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Λυμένες ασκήσεις"
+                    "text": "        Λυμένες ασκήσεις"
                   }
                 ]
               },
@@ -733,7 +499,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ερωτήσεις τύπου «Σωστό - Λάθος»"
+                    "text": "        Ερωτήσεις τύπου «Σωστό - Λάθος»"
                   }
                 ]
               },
@@ -746,7 +512,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ερωτήσεις πολλαπλής επιλογής"
+                    "text": "        Ερωτήσεις πολλαπλής επιλογής"
                   }
                 ]
               },
@@ -759,7 +525,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ερωτήσεις με αιτιολόγηση"
+                    "text": "        Ερωτήσεις με αιτιολόγηση"
                   }
                 ]
               },
@@ -772,7 +538,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ασκήσεις και προβλήματα"
+                    "text": "        Ασκήσεις και προβλήματα"
                   }
                 ]
               },
@@ -799,7 +565,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Oι ακτίνες Χ"
+                    "text": "    Oι ακτίνες Χ"
                   }
                 ]
               },
@@ -812,7 +578,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Πειραματική διαπίστωση Compton"
+                    "text": "    Πειραματική διαπίστωση Compton"
                   }
                 ]
               },
@@ -825,7 +591,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Που η κλασική θεωρία αποτυγχάνει"
+                    "text": "    Που η κλασική θεωρία αποτυγχάνει"
                   }
                 ]
               },
@@ -838,7 +604,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Κβαντική ερμηνεία"
+                    "text": "    Κβαντική ερμηνεία"
                   }
                 ]
               },
@@ -851,7 +617,7 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Διατήρηση της ενέργειας και μεταβολή του μήκους κύματος"
+                    "text": "    Διατήρηση της ενέργειας και μεταβολή του μήκους κύματος"
                   }
                 ]
               },
@@ -864,90 +630,20 @@
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Η σχέση του Compton"
+                    "text": "    Η σχέση του Compton"
                   }
                 ]
-              }
-            ]
-          },
-          "style": {
-            "align": "left",
-            "hyphenate": false,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1.15
-          },
-          "sourceRef": {
-            "kind": "generated-toc",
-            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx"
-          },
-          "extensions": {
-            "generatedActiveToc": true,
-            "regeneratedAt": "2026-08-02T00:08:58.706Z",
-            "headingCount": 93,
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          },
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-08-02T00:16:52.499Z"
-          }
-        }
-      ],
-      "extensions": {
-        "paginationSection": "toc",
-        "paginationGenerated": true,
-        "paginationPagePart": 1
-      }
-    },
-    {
-      "id": "page-2",
-      "sourcePage": null,
-      "header": {
-        "inherit": false,
-        "left": "",
-        "center": "",
-        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
-      },
-      "footer": {
-        "inherit": false,
-        "left": "© antarxo 2026",
-        "center": "",
-        "right": ""
-      },
-      "pageNumbering": {
-        "inherit": false,
-        "enabled": true,
-        "offset": 0,
-        "hide": true
-      },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
-      "items": [
-        {
-          "id": "contents-flow-paragraph-στοιχεια-κβαντομηχανικ-3",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
+              },
+              {
+                "type": "line_break"
+              },
               {
                 "type": "link",
                 "href": "#_Toc229872267",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Τι αποδεικνύει το φαινόμενο"
+                    "text": "    Τι αποδεικνύει το φαινόμενο"
                   }
                 ]
               },
@@ -956,11 +652,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872268",
+                "href": "#_Toc229872268",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Συμπέρασμα"
+                    "text": "    Συμπέρασμα"
                   }
                 ]
               },
@@ -969,11 +665,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872269",
+                "href": "#_Toc229872269",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Η ορμή των φωτονίων"
+                    "text": "    Η ορμή των φωτονίων"
                   }
                 ]
               },
@@ -982,11 +678,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872270",
+                "href": "#_Toc229872270",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Από τον Compton στον de Broglie"
+                    "text": "    Από τον Compton στον de Broglie"
                   }
                 ]
               },
@@ -995,11 +691,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872271",
+                "href": "#_Toc229872271",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    de Broglie"
+                    "text": "    de Broglie"
                   }
                 ]
               },
@@ -1008,11 +704,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872272",
+                "href": "#_Toc229872272",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Συμπέρασμα και συνέχεια"
+                    "text": "    Συμπέρασμα και συνέχεια"
                   }
                 ]
               },
@@ -1021,11 +717,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872273",
+                "href": "#_Toc229872273",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Λυμένες ασκήσεις"
+                    "text": "        Λυμένες ασκήσεις"
                   }
                 ]
               },
@@ -1034,11 +730,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872274",
+                "href": "#_Toc229872274",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Ερωτήσεις"
+                    "text": "        Ερωτήσεις"
                   }
                 ]
               },
@@ -1047,11 +743,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B1%CE%BA%CF%84%CE%AF%CE%BD%CE%B5%CF%82_%CF%87_2",
+                "href": "#_Toc229872275",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "            Ακτίνες Χ"
+                    "text": "        προβλήματα για λύση"
                   }
                 ]
               },
@@ -1060,85 +756,7 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CF%83%CE%BA%CE%AD%CE%B4%CE%B1%CF%83%CE%B7_compton",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Σκέδαση Compton"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B5%CF%81%CF%89%CF%84%CE%AE%CF%83%CE%B5%CE%B9%CF%82_%CE%B1%CE%BD%CE%BF%CE%B9%CE%BA%CF%84%CE%BF%CF%8D_%CF%84%CF%8D%CF%80%CE%BF%CF%85_%CE%BA%CE%B1%CE%B9_%CE%BA%CF%81%CE%AF%CF%83%CE%B5%CF%89%CF%82_18",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Ερωτήσεις με αιτιολόγηση"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CF%86%CE%B1%CE%B9%CE%BD%CE%BF%CE%BC%CE%B5%CE%BD%CE%BF-compton-%CF%86%CF%89%CF%84%CE%BF%CE%B7%CE%BB%CE%B5%CE%BA%CF%84%CF%81%CE%B9%CE%BA%CE%BF-%CF%86%CE%B1%CE%B9%CE%BD%CE%BF%CE%BC%CE%B5%CE%BD%CE%BF-%CE%B1%CE%BA%CF%84%CE%B9%CE%BD%CE%B5%CF%82-%CF%87",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Φαινόμενο Compton - Φωτοηλεκτρικό φαινόμενο - Ακτίνες Χ"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872275",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "        προβλήματα για λύση"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CF%86%CE%B1%CE%B9%CE%BD%CF%8C%CE%BC%CE%B5%CE%BD%CE%BF_compton_2",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Φαινόμενο Compton"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CF%86%CE%B1%CE%B9%CE%BD%CE%BF%CE%BC%CE%B5%CE%BD%CE%BF-compton-%CF%86%CF%89%CF%84%CE%BF%CE%B7%CE%BB%CE%B5%CE%BA%CF%84%CF%81%CE%B9%CE%BA%CE%BF-%CF%86%CE%B1%CE%B9%CE%BD%CE%BF%CE%BC%CE%B5%CE%BD%CE%BF",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Φαινόμενο Compton - Φωτοηλεκτρικό φαινόμενο"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872276",
+                "href": "#_Toc229872276",
                 "children": [
                   {
                     "type": "text_run",
@@ -1152,46 +770,7 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h5-%CE%BC%CE%B9%CE%B1-%CE%BF%CF%87%CE%B9-%CE%BA%CE%B1%CE%B9-%CF%84%CE%BF%CF%83%CE%BF-%CF%87%CF%81%CE%B7%CF%83%CE%B9%CE%BC%CE%B7-%CE%B4%CE%B9%CE%B4%CE%B1%CE%BA%CF%84%CE%B9%CE%BA%CE%B7-%CE%B5%CE%B9%CE%BA%CE%BF%CE%BD%CE%B1",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "                Μια όχι και τόσο χρήσιμη διδακτική εικόνα"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h5-%CF%84%CE%BF-%CE%B2%CE%B1%CE%B8%CF%85%CF%84%CE%B5%CF%81%CE%BF-%CE%BD%CE%BF%CE%B7%CE%BC%CE%B1",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "                Το βαθύτερο νόημα"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h5-%CE%B5%CF%86%CE%B1%CF%81%CE%BC%CE%BF%CE%B3%CE%B7",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "                Εφαρμογή"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872277",
+                "href": "#_Toc229872277",
                 "children": [
                   {
                     "type": "text_run",
@@ -1205,11 +784,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872278",
+                "href": "#_Toc229872278",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Εμβαθύνοντας για το άτομο του Υδρογόνου"
+                    "text": "        Εμβαθύνοντας για το άτομο του Υδρογόνου"
                   }
                 ]
               },
@@ -1218,11 +797,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CF%80%CF%85%CE%BA%CE%BD%CE%BF%CF%84%CE%B7%CF%84%CE%B1-%CF%80%CE%B9%CE%B8%CE%B1%CE%BD%CE%BF%CF%84%CE%B7%CF%84%CE%B1%CF%82-vs-%CF%80%CE%B9%CE%B8%CE%B1%CE%BD%CE%BF%CF%84%CE%B7%CF%84%CE%B1",
+                "href": "#_Toc229872279",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "            Πυκνότητα πιθανότητας vs Πιθανότητα"
+                    "text": "    Ατομικά τροχιακά"
                   }
                 ]
               },
@@ -1231,11 +810,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CF%83%CF%85%CE%BC%CF%80%CE%B5%CF%81%CE%B1%CF%83%CE%BC%CE%B1%CF%84%CE%B9%CE%BA%CE%B1",
+                "href": "#_Toc229872280",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "            Συμπερασματικά"
+                    "text": "    Παραστάσεις της κατανομής πιθανότητας, δηλαδή του |Ψ|2"
                   }
                 ]
               },
@@ -1244,11 +823,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872279",
+                "href": "#_Toc229872281",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Ατομικά τροχιακά"
+                    "text": "    Αποσαφηνίσεις"
                   }
                 ]
               },
@@ -1257,11 +836,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872280",
+                "href": "#λυμένες_ασκήσεις_20",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Παραστάσεις της κατανομής πιθανότητας, δηλαδή του |Ψ|2"
+                    "text": "        Λυμένες ασκήσεις"
                   }
                 ]
               },
@@ -1270,11 +849,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872281",
+                "href": "#_Toc229872283",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "    Αποσαφηνίσεις"
+                    "text": "        Ερωτήσεις"
                   }
                 ]
               },
@@ -1283,154 +862,11 @@
               },
               {
                 "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%BB%CF%85%CE%BC%CE%AD%CE%BD%CE%B5%CF%82_%CE%B1%CF%83%CE%BA%CE%AE%CF%83%CE%B5%CE%B9%CF%82_20",
+                "href": "#ασκήσεις_και_ηροβλήματα_για_λύση_10",
                 "children": [
                   {
                     "type": "text_run",
-                    "text": "        Λυμένες ασκήσεις"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#_Toc229872283",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "        Ερωτήσεις"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B7_%CE%BA%CF%85%CE%BC%CE%B1%CF%84%CE%B9%CE%BA%CE%AE_%CF%86%CF%8D%CF%83%CE%B7_%CF%84%CE%B7%CF%82_%CF%8D%CE%BB%CE%B7%CF%82_2",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η κυματική φύση της ύλης"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B1%CF%81%CF%87%CE%AE_%CF%84%CE%B7%CF%82_%CE%B1%CE%B2%CE%B5%CE%B2%CE%B1%CE%B9%CF%8C%CF%84%CE%B7%CF%84%CE%B1%CF%82_2",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Αρχή της αβεβαιότητας"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CE%BA%CF%85%CE%BC%CE%B1%CF%84%CE%BF%CF%83%CF%85%CE%BD%CE%B1%CF%81%CF%84%CE%B7%CF%83%CE%B7-%CE%BA%CE%B1%CE%B9-%CE%B5%CE%BE%CE%B9%CF%83%CF%89%CF%83%CE%B7-schrodinger",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Κυματοσυνάρτηση και εξίσωση Schrödinger"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B7_%CE%BA%CF%85%CE%BC%CE%B1%CF%84%CE%B9%CE%BA%CE%AE_%CF%86%CF%8D%CF%83%CE%B7_%CF%84%CE%B7%CF%82_%CF%8D%CE%BB%CE%B7%CF%82_3",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η κυματική φύση της ύλης"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B1%CF%81%CF%87%CE%AE_%CF%84%CE%B7%CF%82_%CE%B1%CE%B2%CE%B5%CE%B2%CE%B1%CE%B9%CF%8C%CF%84%CE%B7%CF%84%CE%B1%CF%82_3",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Αρχή της αβεβαιότητας"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%BA%CF%85%CE%BC%CE%B1%CF%84%CE%BF%CF%83%CF%85%CE%BD%CE%AC%CF%81%CF%84%CE%B7%CF%83%CE%B7_%CE%BA%CE%B1%CE%B9_%CE%B5%CE%BE%CE%AF%CF%83%CF%89%CF%83%CE%B7_schr-_e2df58",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Κυματοσυνάρτηση και εξίσωση Schrödinger"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#docx-h4-%CE%B1%CF%81%CF%87%CE%B7-%CF%84%CE%B7%CF%82-%CE%B1%CF%80%CF%81%CE%BF%CF%83%CE%B4%CE%B9%CE%BF%CF%81%CE%B9%CF%83%CF%84%CE%B9%CE%B1%CF%82",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Αρχή της απροσδιοριστίας"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B1%CF%83%CE%BA%CE%AE%CF%83%CE%B5%CE%B9%CF%82_%CE%BA%CE%B1%CE%B9_%CE%B7%CF%81%CE%BF%CE%B2%CE%BB%CE%AE%CE%BC%CE%B1%CF%84%CE%B1_%CE%B3%CE%B9%CE%B1_%CE%BB%CF%8D%CF%83%CE%B7_10",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "        προβλήματα για λύση"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B7_%CE%BA%CF%85%CE%BC%CE%B1%CF%84%CE%B9%CE%BA%CE%AE_%CF%86%CF%8D%CF%83%CE%B7_%CF%84%CE%B7%CF%82_%CF%8D%CE%BB%CE%B7%CF%82_4",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Η κυματική φύση της ύλης"
-                  }
-                ]
-              },
-              {
-                "type": "line_break"
-              },
-              {
-                "type": "link",
-                "href": "http://127.0.0.1:8767/author/index.html?v=desktop-cmd#%CE%B1%CF%81%CF%87%CE%AE_%CF%84%CE%B7%CF%82_%CE%B1%CF%80%CF%81%CE%BF%CF%83%CE%B4%CE%B9%CE%BF%CF%81%CE%B9%CF%83%CF%84%CE%AF%CE%B1%CF%82",
-                "children": [
-                  {
-                    "type": "text_run",
-                    "text": "            Αρχή της απροσδιοριστίας"
+                    "text": "        προβλήματα για λύση"
                   }
                 ]
               }
@@ -1448,19 +884,15 @@
             "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx"
           },
           "extensions": {
-            "generatedActiveToc": true,
-            "regeneratedAt": "2026-08-02T00:08:58.706Z",
-            "headingCount": 93,
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
-          },
-          "provenance": {
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-08-02T00:16:27.357Z"
+            "generatedActiveToc": true
           }
         }
-      ]
+      ],
+      "extensions": {
+        "paginationSection": "toc",
+        "paginationGenerated": true,
+        "paginationPagePart": 1
+      }
     },
     {
       "id": "document-flow",
@@ -11145,9 +10577,6 @@
             "docxSourceHtml": "«Κανονικά» και σύμφωνα με τις υπολογισμένες τιμές για τις τρεις θερμοκρασίες,  καμιά τιμή του λ<sub>max</sub> από αυτές που υπολογίσαμε, δεν είναι στο ορατό! Αλλά αν δούμε την καμπύλη κατανομής Plank  σχεδόν όλες …κάτι δίνουν στο ορατό! ",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
-          },
-          "layout": {
-            "placement": "wide"
           }
         },
         {
@@ -11294,9 +10723,63 @@
             "docxSourceHtml": "Επομένως η θερμοκρασία που δίνει ορατά αποτελέσματα, θα είναι αυτή που έστω μια «ουρά της καμπύλης Planck», (και ανάλογα με τις συνθήκες φωτισμού-σκοτεινό, φωτεινό δωμάτιο π.χ.) θα μπαίνει για τα καλά στο ορατό και θα αναδεικνύει κάποιο από τα φυσικά χρώματα ή συνδυασμό τους (δες διπλανό διάγραμμα). Θα έχει δηλαδή σημαντική τιμή η έντασή της ανά μονάδα μήκους κύματος (δες το διάγραμμα του οποίου το εμβαδόν δίνει ένταση της ακτινοβολίας-στο διάγραμμα βέβαια δεν περιλαμβάνονται τιμές για τις ζητούμενες θερμοκρασίες αλλά για την μεγαλύτερη μόνο!). ",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
+          }
+        },
+        {
+          "id": "docx-item-115",
+          "type": "paragraph",
+          "nav": {
+            "show": false,
+            "label": ""
           },
-          "layout": {
-            "placement": "wide"
+          "visibility": {
+            "screen": true,
+            "print": true
+          },
+          "body": {
+            "format": "rich-text-v1",
+            "nodes": [
+              {
+                "type": "text_run",
+                "text": "ριοχής μπορεί να δώσει σκοτεινό κόκκινο χρώμα! ",
+                "color": "#000000"
+              }
+            ]
+          },
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 0,
+            "marginLeftPx": 24,
+            "contextualSpacing": 1
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
+            "sourcePage": 11,
+            "sourceParagraph": 146
+          },
+          "provenance": {
+            "sourceStyle": "Normal",
+            "sourceParagraphStyle": {
+              "marginBottomPx": 4,
+              "lineHeight": 1,
+              "fontFamily": "Calibri",
+              "fontSizePx": 14.666666666666666,
+              "align": "both",
+              "contextualSpacing": true,
+              "marginLeftPx": 24
+            },
+            "sourceHyphenation": true
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxSourceHtml": "ριοχής μπορεί να δώσει σκοτεινό κόκκινο χρώμα! ",
+            "preferRichText": true,
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -11549,63 +11032,6 @@
           },
           "extensions": {
             "docxCanonicalImport": "v4.4"
-          }
-        },
-        {
-          "id": "docx-item-115",
-          "type": "paragraph",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
-          "body": {
-            "format": "rich-text-v1",
-            "nodes": [
-              {
-                "type": "text_run",
-                "text": "ριοχής μπορεί να δώσει σκοτεινό κόκκινο χρώμα! ",
-                "color": "#000000"
-              }
-            ]
-          },
-          "style": {
-            "align": "justify",
-            "hyphenate": true,
-            "fontFamily": "Calibri",
-            "fontSizePx": 14.666666666666666,
-            "lineHeight": 1,
-            "marginBottomPx": 0,
-            "marginLeftPx": 24,
-            "contextualSpacing": 1
-          },
-          "sourceRef": {
-            "kind": "docx",
-            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
-            "sourcePage": 11,
-            "sourceParagraph": 146
-          },
-          "provenance": {
-            "sourceStyle": "Normal",
-            "sourceParagraphStyle": {
-              "marginBottomPx": 4,
-              "lineHeight": 1,
-              "fontFamily": "Calibri",
-              "fontSizePx": 14.666666666666666,
-              "align": "both",
-              "contextualSpacing": true,
-              "marginLeftPx": 24
-            },
-            "sourceHyphenation": true
-          },
-          "extensions": {
-            "docxCanonicalImport": "v4.4",
-            "docxSourceHtml": "ριοχής μπορεί να δώσει σκοτεινό κόκκινο χρώμα! ",
-            "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -12326,20 +11752,33 @@
             "nodes": [
               {
                 "type": "text_run",
-                "text": "Το παράδειγμα αυτό ",
-                "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "text": "Το παράδειγμα αυτό δεν χρησιμοποιείται για να περιγράψει τον πραγματικό μηχανισμό απόσβεσης του ταλ",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "δεν χρησιμοποιείται για να περιγράψει τον πραγματικό μηχανισμό απόσβεσης του ταλαντωτή, ο οποίος στην πράξη οφείλεται κυρίως σε μηχανικές τριβές. Χρησιμοποιείται μόνο ",
-                "color": "rgb(0, 0, 0)"
+                "text": "α",
+                "color": "#000000"
               },
               {
                 "type": "text_run",
-                "text": "για να δείξει ότι, αν ένα τέτοιο μακροσκοπικό σύστημα είχε κβαντισμένες ενεργειακές στάθμες με βήμα hf, τότε το βήμα αυτό θα ήταν τόσο μικρό ώστε η κβάντωση να είναι πρακτικά μη ανιχνεύσιμη και η ενεργειακή συμπεριφορά του συστήματος να εμφανίζεται κλασική.",
-                "bold": true,
-                "color": "rgb(0, 0, 0)"
+                "text": "ντωτή, ο οποίος στην πράξη οφείλεται κυρίως σε μηχανικές τριβές. Χρησιμοποιείται μόνο για να δείξει ότι, αν ένα τέτοιο μακροσκοπικό σύστημα είχε κβαντισμένες ενεργειακές στάθμες με βήμα hf, τότε το βήμα αυτό θα ήταν τόσο μικρό ώστε η κβάντωση να είναι πρακτικά μη ανιχνεύσιμη και η ενεργειακή συμπεριφορά του συστ",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "ή",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": "ματος να εμφανίζεται κλασική",
+                "color": "#000000"
+              },
+              {
+                "type": "text_run",
+                "text": ".",
+                "color": "#000000"
               }
             ]
           },
@@ -12368,16 +11807,13 @@
               "align": "both",
               "textColor": "#000000"
             },
-            "sourceHyphenation": true,
-            "visualEdited": true,
-            "contentEdited": true,
-            "editedAt": "2026-08-02T00:22:19.099Z"
+            "sourceHyphenation": true
           },
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "docxSourceHtml": "<span style=\"color:#000000;font-family:&quot;Calibri&quot;\">Το παράδειγμα αυτό δεν χρησιμοποιείται για να περιγράψει τον πραγματικό μηχανισμό απόσβεσης του ταλ</span><span style=\"color:#000000;font-family:&quot;Calibri&quot;\">α</span><span style=\"color:#000000;font-family:&quot;Calibri&quot;\">ντωτή, ο οποίος στην πράξη οφείλεται κυρίως σε μηχανικές τριβές. Χρησιμοποιείται μόνο για να δείξει ότι, αν ένα τέτοιο μακροσκοπικό σύστημα είχε κβαντισμένες ενεργειακές στάθμες με βήμα hf, τότε το βήμα αυτό θα ήταν τόσο μικρό ώστε η κβάντωση να είναι πρακτικά μη ανιχνεύσιμη και η ενεργειακή συμπεριφορά του συστ</span><span style=\"color:#000000;font-family:&quot;Calibri&quot;\">ή</span><span style=\"color:#000000;font-family:&quot;Calibri&quot;\">ματος να εμφανίζεται κλασική</span><span style=\"color:#000000;font-family:&quot;Calibri&quot;\">.</span>",
             "preferRichText": true,
-            "richTextSync": "canonical-primary-v4.2"
+            "richTextSync": "canonical-primary-v4.4"
           }
         },
         {
@@ -19064,30 +18500,6 @@
           }
         },
         {
-          "id": "document-flow-r16-figure-figure-12",
-          "type": "figure",
-          "nav": {
-            "show": false,
-            "label": ""
-          },
-          "visibility": {
-            "screen": true,
-            "print": true
-          },
-          "src": "images/φωτοηλεκτρικο.png",
-          "alt": "",
-          "title": "",
-          "caption": "",
-          "hideCaption": true,
-          "layout": {
-            "placement": "float-right",
-            "wrap": true,
-            "floatInteraction": "wrap",
-            "widthPx": 340,
-            "aspectRatio": "natural"
-          }
-        },
-        {
           "id": "docx-item-214",
           "type": "paragraph",
           "nav": {
@@ -19242,6 +18654,79 @@
           },
           "extensions": {
             "docxCanonicalImport": "v4.4"
+          }
+        },
+        {
+          "id": "docx-item-218",
+          "type": "figure",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "visibility": {
+            "screen": true,
+            "print": true
+          },
+          "src": "images/image28.jpg",
+          "alt": "Εικόνα 7 Διάγραμμα φωτορεύματος-τάσης για συγκεκριμένη ένταση και συχνότητα ακτινοβολίας",
+          "title": "",
+          "caption": "<span style=\"font-size:10.666666666666666px\">Εικόνα </span><span style=\"font-size:10.666666666666666px\">7</span><span style=\"font-size:10.666666666666666px\"> Διάγραμμα φωτορεύματος-τάσης για συγκεκριμένη ένταση και συχνότητα ακτινοβολίας</span>",
+          "hideCaption": false,
+          "layout": {
+            "placement": "float-right",
+            "wrap": true,
+            "floatInteraction": "wrap",
+            "widthPx": 225,
+            "heightPx": 184,
+            "aspectRatio": "natural"
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
+            "sourcePage": 14,
+            "sourceParagraph": 271
+          },
+          "provenance": {
+            "sourceImagePath": "word/media/image28.jpg",
+            "sourceKind": "drawing",
+            "sourceParagraph": 271
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4",
+            "docxTextLabels": [
+              {
+                "text": "Τάση αποκοπής",
+                "html": "<span style=\"font-size:12px\"><strong>Τάση αποκοπής</strong></span>"
+              },
+              {
+                "text": "Περιοχήκόρουκόρους",
+                "html": "<span style=\"color:#1F497D;font-size:13.333333333333334px\"><strong>Περιοχή</strong></span><br><span style=\"color:#1F497D;font-size:13.333333333333334px\"><strong>κόρου</strong></span><br><span style=\"color:#1F497D;font-size:13.333333333333334px\"><strong>κόρους</strong></span>"
+              },
+              {
+                "text": "i0",
+                "html": "<span style=\"font-size:16px\"><strong>i</strong></span><span style=\"font-size:16px\"><strong><sub>0</sub></strong></span>"
+              },
+              {
+                "text": "iκόρου",
+                "html": "<span style=\"color:#C00000;font-size:16px\"><strong>i</strong></span><span style=\"color:#C00000;font-size:16px\"><strong><sub>κόρου</sub></strong></span>"
+              },
+              {
+                "text": "ΠεριοχήΑποκοπήςκόρους",
+                "html": "<span style=\"color:#00B050;font-size:12px\"><strong>Περιοχή</strong></span><br><span style=\"color:#00B050;font-size:12px\"><strong>Αποκοπής</strong></span><br><span style=\"color:#00B050;font-size:12px\"><strong>κόρους</strong></span>"
+              },
+              {
+                "text": "ΠεριοχήΣυλλογήςκόρους",
+                "html": "<span style=\"color:#C0504D;font-size:12px\"><strong>Περιοχή</strong></span><br><span style=\"color:#C0504D;font-size:12px\"><strong>Συλλογής</strong></span><br><span style=\"color:#C0504D;font-size:12px\"><strong>κόρους</strong></span>"
+              },
+              {
+                "text": "f, I",
+                "html": "<span class=\"math-display\" style=\"display:block;overflow-x:auto;text-align:center;margin:0.45em 0\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mrow><mi>f</mi><mo>,</mo><mspace width=\".24em\"/><mi>I</mi></mrow></mrow></math></span>"
+              },
+              {
+                "text": "V1",
+                "html": "<span style=\"color:#595959;font-size:16px\"><strong>V</strong></span><span style=\"color:#595959;font-size:16px\"><strong><sub>1</sub></strong></span>"
+              }
+            ]
           }
         },
         {
@@ -19575,40 +19060,7 @@
           "extensions": {
             "docxCanonicalImport": "v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationSection": "document-flow",
-        "paginationGenerated": true,
-        "paginationPagePart": 16
-      }
-    },
-    {
-      "id": "document-flow-r17",
-      "sourcePage": "14-15",
-      "header": {
-        "inherit": false,
-        "left": "",
-        "center": "",
-        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
-      },
-      "footer": {
-        "inherit": false,
-        "left": "© antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": false,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
-      "items": [
+        },
         {
           "id": "docx-item-221",
           "type": "paragraph",
@@ -19663,7 +19115,40 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationSection": "document-flow",
+        "paginationGenerated": true,
+        "paginationPagePart": 16
+      }
+    },
+    {
+      "id": "document-flow-r17",
+      "sourcePage": "14-15",
+      "header": {
+        "inherit": false,
+        "left": "",
+        "center": "",
+        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
+      },
+      "footer": {
+        "inherit": false,
+        "left": "© antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": false,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "visibility": {
+        "screen": true,
+        "print": true
+      },
+      "items": [
         {
           "id": "docx-item-222",
           "type": "list",
@@ -21203,17 +20688,81 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
+        },
+        {
+          "id": "docx-item-236",
+          "type": "list",
+          "nav": {
+            "show": false,
+            "label": ""
+          },
+          "visibility": {
+            "screen": true,
+            "print": true
+          },
+          "ordered": false,
+          "start": 1,
+          "items": [
+            {
+              "level": 0,
+              "body": {
+                "format": "rich-text-v1",
+                "nodes": [
+                  {
+                    "type": "text_run",
+                    "text": "[εξίσωση], δεν έχουμε εκπομπή φωτοηλεκτρονίου."
+                  }
+                ]
+              }
+            },
+            {
+              "level": 0,
+              "body": {
+                "format": "rich-text-v1",
+                "nodes": [
+                  {
+                    "type": "text_run",
+                    "text": "[εξίσωση], το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει."
+                  }
+                ]
+              }
+            }
+          ],
+          "style": {
+            "align": "justify",
+            "hyphenate": true,
+            "fontFamily": "Calibri",
+            "fontSizePx": 14.666666666666666,
+            "lineHeight": 1,
+            "marginBottomPx": 2.6666666666666665,
+            "listStylePosition": "outside"
+          },
+          "sourceRef": {
+            "kind": "docx",
+            "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
+            "sourcePage": 15,
+            "sourceParagraph": 303
+          },
+          "provenance": {
+            "sourceStyle": "List Paragraph",
+            "sourceNumId": "26",
+            "sourceNumFmt": "bullet",
+            "sourceLvlText": ""
+          },
+          "extensions": {
+            "docxCanonicalImport": "v4.4"
+          }
         }
       ],
       "extensions": {
         "paginationSection": "document-flow",
         "paginationGenerated": true,
-        "paginationPagePart": 1
+        "paginationPagePart": 17
       }
     },
     {
-      "id": "document-flow-r17-r2",
-      "sourcePage": 15,
+      "id": "document-flow-r18",
+      "sourcePage": "15-16",
       "header": {
         "inherit": false,
         "left": "",
@@ -21238,7 +20787,7 @@
       },
       "items": [
         {
-          "id": "docx-insert-msb1lrli-0totn-item-1",
+          "id": "document-flow-r17-list-list-19",
           "type": "list",
           "nav": {
             "show": false,
@@ -21253,95 +20802,14 @@
           "items": [
             {
               "level": 0,
-              "value": 0,
               "body": {
                 "format": "rich-text-v1",
                 "nodes": [
                   {
-                    "type": "math_inline",
-                    "source": "",
-                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>&lt;</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
-                  },
-                  {
                     "type": "text_run",
-                    "text": ",",
-                    "bold": true
-                  },
-                  {
-                    "type": "text_run",
-                    "text": " δεν έχουμε εκπομπή φωτοηλεκτρονίου."
+                    "text": "[εξίσωση], η περίσσεια ενέργειας εμφανίζεται ως κινητική ενέργεια του φωτοηλεκτρονίου."
                   }
                 ]
-              },
-              "style": {
-                "align": "justify",
-                "hyphenate": true,
-                "fontFamily": "Calibri",
-                "fontSizePx": 14.666666666666666,
-                "lineHeight": 1,
-                "marginBottomPx": 2.6666666666666665
-              }
-            },
-            {
-              "level": 0,
-              "value": 0,
-              "body": {
-                "format": "rich-text-v1",
-                "nodes": [
-                  {
-                    "type": "math_inline",
-                    "source": "",
-                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>=</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
-                  },
-                  {
-                    "type": "text_run",
-                    "text": ",",
-                    "bold": true
-                  },
-                  {
-                    "type": "text_run",
-                    "text": " το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει."
-                  }
-                ]
-              },
-              "style": {
-                "align": "justify",
-                "hyphenate": true,
-                "fontFamily": "Calibri",
-                "fontSizePx": 14.666666666666666,
-                "lineHeight": 1,
-                "marginBottomPx": 2.6666666666666665
-              }
-            },
-            {
-              "level": 0,
-              "value": 0,
-              "body": {
-                "format": "rich-text-v1",
-                "nodes": [
-                  {
-                    "type": "math_inline",
-                    "source": "",
-                    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>h</mi><mi>f</mi></mrow><mrow><mo>&gt;</mo></mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow></math>"
-                  },
-                  {
-                    "type": "text_run",
-                    "text": ",",
-                    "bold": true
-                  },
-                  {
-                    "type": "text_run",
-                    "text": " η περίσσεια ενέργειας εμφανίζεται ως κινητική ενέργεια του φωτοηλεκτρονίου."
-                  }
-                ]
-              },
-              "style": {
-                "align": "justify",
-                "hyphenate": true,
-                "fontFamily": "Calibri",
-                "fontSizePx": 14.666666666666666,
-                "lineHeight": 1,
-                "marginBottomPx": 2.6666666666666665
               }
             }
           ],
@@ -21358,8 +20826,7 @@
             "kind": "docx",
             "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
             "sourcePage": 15,
-            "sourceParagraph": 303,
-            "insertionId": "docx-insert-msb1lrli-0totn"
+            "sourceParagraph": 303
           },
           "provenance": {
             "sourceStyle": "List Paragraph",
@@ -22747,40 +22214,7 @@
           "extensions": {
             "docxCanonicalImport": "v4.4"
           }
-        }
-      ],
-      "extensions": {
-        "paginationSection": "document-flow",
-        "paginationGenerated": true,
-        "paginationPagePart": 2
-      }
-    },
-    {
-      "id": "document-flow-r20",
-      "sourcePage": 17,
-      "header": {
-        "inherit": false,
-        "left": "",
-        "center": "",
-        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
-      },
-      "footer": {
-        "inherit": false,
-        "left": "© antarxo 2026",
-        "center": "",
-        "right": "{page}"
-      },
-      "pageNumbering": {
-        "inherit": false,
-        "enabled": true,
-        "offset": 0,
-        "hide": false
-      },
-      "visibility": {
-        "screen": true,
-        "print": true
-      },
-      "items": [
+        },
         {
           "id": "docx-item-251",
           "type": "paragraph",
@@ -22848,7 +22282,40 @@
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
           }
-        },
+        }
+      ],
+      "extensions": {
+        "paginationSection": "document-flow",
+        "paginationGenerated": true,
+        "paginationPagePart": 18
+      }
+    },
+    {
+      "id": "document-flow-r20",
+      "sourcePage": 17,
+      "header": {
+        "inherit": false,
+        "left": "",
+        "center": "",
+        "right": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026"
+      },
+      "footer": {
+        "inherit": false,
+        "left": "© antarxo 2026",
+        "center": "",
+        "right": "{page}"
+      },
+      "pageNumbering": {
+        "inherit": false,
+        "enabled": true,
+        "offset": 0,
+        "hide": false
+      },
+      "visibility": {
+        "screen": true,
+        "print": true
+      },
+      "items": [
         {
           "id": "docx-item-252",
           "type": "paragraph",
@@ -28220,9 +27687,9 @@
           },
           "src": "images/image41.jpg",
           "alt": "Εικόνα από ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
-          "title": "Εικόνα 8 γ.",
+          "title": "",
           "caption": "",
-          "hideCaption": false,
+          "hideCaption": true,
           "layout": {
             "placement": "float-right",
             "wrap": true,
@@ -28260,9 +27727,9 @@
           },
           "src": "images/image40.jpg",
           "alt": "Εικόνα από ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
-          "title": "Εικόνα 8 β.",
+          "title": "",
           "caption": "",
-          "hideCaption": false,
+          "hideCaption": true,
           "layout": {
             "placement": "float-right",
             "wrap": true,
@@ -28299,9 +27766,9 @@
             "print": true
           },
           "src": "images/image39.jpg",
-          "alt": "Εικόνα 8 α.",
-          "title": "Εικόνα 8 α.",
-          "caption": "",
+          "alt": "Εικόνα 8 α. β. γ.",
+          "title": "",
+          "caption": "Εικόνα 8 <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">α</mi><mo>.</mo></mrow></mrow></math></span><span style=\"color:#000000;font-size:16px\">  </span>&emsp;&emsp;&emsp;&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">β</mi><mo>.</mo><mspace width=\".24em\"/></mrow></mrow></math></span>&emsp;&emsp;&emsp;&emsp;<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">γ</mi></mrow></mrow></math></span><span style=\"color:#000000;font-size:16px\">.</span>",
           "hideCaption": false,
           "layout": {
             "placement": "float-right",
@@ -41958,6 +41425,9 @@
             "align": "left",
             "hyphenate": true
           },
+          "layout": {
+            "floatInteraction": "wrap"
+          },
           "provenance": {
             "visualEdited": true,
             "contentEdited": true,
@@ -48159,6 +47629,11 @@
             "docxSourceHtml": "μέταλλο που έχει έργο εξόδου <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow><mrow><mo>=</mo></mrow><mfrac><mrow><mrow><mi mathvariant=\"normal\">hc</mi></mrow></mrow><mrow><mrow><mn>6</mn></mrow><mrow><mi mathvariant=\"normal\">λ</mi></mrow></mrow></mfrac></mrow></math></span>, όπου h είναι η σταθερά του Planck και c είναι η ταχύτητα του φωτός στο κενό. Στο μέταλλο γίνεται φωτοηλεκτρικό φαινόμενο και βγαίνει ηλεκτρόνιο κινητικής ενέργειας <span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">Κ</mi></mrow></mrow><mrow><mrow><mtext>ηλ</mtext></mrow></mrow></msub></mrow></math></span>. Για τις ενέργειες ισχύει:",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
+          },
+          "layout": {
+            "placement": "left",
+            "wrap": false,
+            "widthPx": 600
           }
         },
         {
@@ -66532,32 +66007,7 @@
       "textBoxesImported": 2,
       "textBoxLabelsRetained": 29
     },
-    "insertions": [
-      {
-        "id": "docx-insert-msb1lrli-0totn",
-        "createdAt": "2026-08-02T00:09:18.917Z",
-        "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΣΥΓΧΡΟΝΗ ΦΥΣΙΚΗ 03042026.docx",
-        "selection": {
-          "startPage": 15,
-          "endPage": 15,
-          "startBlock": "15:16",
-          "endBlock": "15:16",
-          "firstLabel": "σ.15 · Λίστα · hf<φ, δεν έχουμε εκπομπή φωτοηλεκτρονίου. · hf=φ, το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει. · hf>φ, …",
-          "lastLabel": "σ.15 · Λίστα · hf<φ, δεν έχουμε εκπομπή φωτοηλεκτρονίου. · hf=φ, το φωτοηλεκτρόνιο μόλις καταφέρνει να βγει. · hf>φ, …"
-        },
-        "target": {
-          "pageId": "document-flow-r17",
-          "itemId": "docx-item-235",
-          "label": "Επομένως με διαθέσιμη την ενέργεια που κουβαλάει το φωτόνιο [εξίσωση], αν:",
-          "position": "after"
-        },
-        "itemsInserted": 1,
-        "pagesAfterLocalPagination": 2,
-        "imagesAdded": 0,
-        "backup": "",
-        "tool": "bookwriter-4.5.0-rc1-docx"
-      }
-    ]
+    "insertions": []
   },
   "extensions": {
     "docxHeadingPalette": {
@@ -66637,87 +66087,6 @@
       "bodyFontSize": 14.666666666666666,
       "lineHeight": 1.15,
       "paragraphGap": 13.333333333333334
-    },
-    "lastInsertionAudit": {
-      "ok": false,
-      "pagesChecked": 43,
-      "overflowPages": 1,
-      "pages": [
-        {
-          "pageId": "contents-flow",
-          "pageIndex": 0,
-          "displayPage": 1,
-          "sourcePage": null,
-          "overflowPx": 629.4,
-          "usedPx": 1638.4,
-          "flowUsedPx": 1638.4,
-          "visualUsedPx": 1638.4,
-          "availablePx": 1009.1,
-          "overflowKind": "document-flow",
-          "bottomItemId": "contents-body",
-          "bottomItemType": "paragraph",
-          "bottomItemIndex": 1,
-          "bottomItemFloat": "none"
-        }
-      ],
-      "rendererVersion": "0.3.0-rc1-render-parity",
-      "paginationVersion": "1.2.0-overflow-page-diagnostics",
-      "auditTolerancePx": 1
-    },
-    "lastInsertionAuditAt": "2026-08-02T00:08:59.825Z",
-    "lastInsertionLocalReport": {
-      "report": {
-        "version": "1.2.0-overflow-page-diagnostics",
-        "startedAt": "2026-08-02T00:08:58.651Z",
-        "sourcePages": 1,
-        "outputPages": 2,
-        "splitItems": 0,
-        "splitByType": {},
-        "resizedFigures": 0,
-        "oversizeItems": [],
-        "hardBreaks": 0,
-        "rendererVersion": "0.3.0-rc1-render-parity",
-        "completedAt": "2026-08-02T00:08:58.687Z",
-        "audit": {
-          "ok": true,
-          "pagesChecked": 2,
-          "overflowPages": 0,
-          "pages": [],
-          "rendererVersion": "0.3.0-rc1-render-parity",
-          "paginationVersion": "1.2.0-overflow-page-diagnostics",
-          "auditTolerancePx": 1
-        },
-        "pagination": {
-          "version": "1.2.0-overflow-page-diagnostics",
-          "generatedAt": "2026-08-02T00:08:58.705Z",
-          "sourcePages": 1,
-          "outputPages": 2,
-          "splitItems": 0,
-          "splitByType": {},
-          "resizedFigures": 0,
-          "oversizeItems": [],
-          "hardBreaks": 0,
-          "rendererVersion": "0.3.0-rc1-render-parity",
-          "audit": {
-            "ok": true,
-            "pagesChecked": 2,
-            "overflowPages": 0,
-            "pages": [],
-            "rendererVersion": "0.3.0-rc1-render-parity",
-            "paginationVersion": "1.2.0-overflow-page-diagnostics",
-            "auditTolerancePx": 1
-          }
-        }
-      },
-      "audit": {
-        "ok": true,
-        "pagesChecked": 2,
-        "overflowPages": 0,
-        "pages": [],
-        "rendererVersion": "0.3.0-rc1-render-parity",
-        "paginationVersion": "1.2.0-overflow-page-diagnostics",
-        "auditTolerancePx": 1
-      }
     }
   }
 }
