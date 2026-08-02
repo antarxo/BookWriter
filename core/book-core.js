@@ -315,7 +315,7 @@
     if(!items.length) return '';
     const title = String(extras.title || (lang === 'en' ? 'More' : 'Πρόσθετο υλικό'));
     const collapsed = extras.collapsedInBook !== false;
-    const body = items.map(entry=>{
+    const body = items.map((entry,index)=>{
       const type = String(entry.type || 'question');
       const label = entry.label || (type === 'exercise' ? (lang === 'en' ? 'Exercise' : 'Άσκηση') : type === 'prompt' ? (lang === 'en' ? 'Think' : 'Σκέψου') : (lang === 'en' ? 'Question' : 'Ερώτηση'));
       const lines = Math.max(0, Math.min(12, Number(entry.answerLines) || 0));
@@ -324,7 +324,7 @@
       const hideAnswer = lang === 'en' ? 'Hide answer' : 'Απόκρυψη απάντησης';
       const answerHtml = answerText ? `<button type="button" class="callout-extra-answer-toggle" data-callout-answer-toggle data-show-label="${escapeHtml(showAnswer)}" data-hide-label="${escapeHtml(hideAnswer)}">${escapeHtml(showAnswer)}</button><div class="callout-extra-answer" hidden>${textWithMath(answerText).replace(/\n/g,'<br>')}</div>` : '';
       const linesHtml = lines ? `<div class="callout-extra-lines" aria-hidden="true">${Array.from({length:lines},()=>'<span></span>').join('')}</div>` : '';
-      return `<div class="callout-extra-item"><b>${textWithMath(label)}</b><p>${textWithMath(entry.text)}</p>${answerHtml}${linesHtml}</div>`;
+      return `<div class="callout-extra-item"><b><span class="callout-extra-number">${index+1}.</span> ${textWithMath(label)}</b><p>${textWithMath(entry.text)}</p>${answerHtml}${linesHtml}</div>`;
     }).join('');
     return `<div class="callout-extras${collapsed?' collapsed':''}" data-callout-extras data-print="${extras.print === false ? '0' : '1'}"><button type="button" class="callout-extras-toggle" data-callout-extras-toggle>${escapeHtml(title)}</button><div class="callout-extras-body" ${collapsed?'hidden':''}>${body}</div></div>`;
   }

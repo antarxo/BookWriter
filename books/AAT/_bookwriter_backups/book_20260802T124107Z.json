@@ -10,7 +10,7 @@
     "defaultLanguage": "el",
     "authoringVersion": "bookwriter-4.5.0-rc1",
     "createdAt": "2026-07-29T15:37:37.247Z",
-    "updatedAt": "2026-08-02T12:41:07.913Z",
+    "updatedAt": "2026-08-01T23:17:49.230Z",
     "appHref": "",
     "library": {
       "discipline": "Φυσική",
@@ -1828,15 +1828,7 @@
                 "Το Σύστημα Αναφοράς  είναι αναντικατάστατο όταν θέλουμε να περιγράψουμε μια κίνηση!"
               ],
               "extras": {
-                "items": [
-                  {
-                    "type": "question",
-                    "label": "",
-                    "text": "Μπορείς να προσδιορίσεις την Περίοδο Τ αυτής της ταλάντωσης;",
-                    "answer": "Χρησιμοποίησε Έναρξη/Παύση κατάλληλα για να το βρεις!",
-                    "answerLines": 0
-                  }
-                ],
+                "items": [],
                 "collapsedInBook": false,
                 "title": ""
               },
@@ -1857,23 +1849,7 @@
               ],
               "printPreset": "spring_axis",
               "extras": {
-                "collapsedInBook": false,
-                "items": [
-                  {
-                    "type": "question",
-                    "label": "",
-                    "text": "Πόσος χρόνος μεσολαβεί για την μετατόπιση του ταλαντωτή από τη ΘΙΤ μέχρι την επόμενη ακραία θέση;",
-                    "answer": "Τ/4!",
-                    "answerLines": 2
-                  },
-                  {
-                    "type": "question",
-                    "label": "",
-                    "text": "Ανάμεσα σε δύο θέσεις που απέχουν απόσταση Α μεσολαβεί πάντα χρόνος Τ/4;",
-                    "answer": "όχι πάντα παρά μόνο για μετάβαση από ΘΙΤ σε ακραία και αντίστροφα!",
-                    "answerLines": 2
-                  }
-                ]
+                "collapsedInBook": true
               },
               "stateMode": "patch"
             },
@@ -2590,6 +2566,9 @@
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "mathSourceFormat": "omml-mathml"
+          },
+          "layout": {
+            "placement": "left"
           }
         },
         {
@@ -2726,6 +2705,9 @@
             "docxSourceHtml": "<span style=\"font-family:&quot;Calibri&quot;\"><em>Ποικίλοι συνειρμοί!</em></span>",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
+          },
+          "layout": {
+            "placement": "left"
           }
         },
         {
@@ -2784,6 +2766,10 @@
             "docxSourceHtml": "<span class=\"math-inline\"><math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><msup><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>4</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mover><mrow><mrow><mo>(</mo><mn>3</mn><mo>)</mo></mrow></mrow><mo>⇔</mo></mover></mrow><mrow><mn>2</mn></mrow></mrow><mrow><mrow><mtext>ος</mtext></mrow></mrow></msup><mrow><mspace width=\".24em\"/><mtext>Νόμος</mtext><mspace width=\".24em\"/><mtext>του</mtext><mspace width=\".24em\"/><mtext>Νεύτωνα</mtext><mo>:</mo></mrow><mrow><mi mathvariant=\"normal\">Σ</mi></mrow><msub><mrow><mrow><mi>F</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mo>=</mo><mo>-</mo></mrow><msubsup><mrow><msub><mrow><mrow><mi>m</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow><mrow><mrow><mn>2</mn></mrow></mrow></msubsup><msub><mrow><mrow><mi>A</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mtext>ημ</mtext></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><msub><mrow><mrow><mi mathvariant=\"normal\">ω</mi></mrow></mrow><mrow><mrow><mn>1</mn></mrow></mrow></msub><mrow><mi>t</mi></mrow><mrow><mo>+</mo></mrow><msub><mrow><mrow><mi mathvariant=\"normal\">φ</mi></mrow></mrow><mrow><mrow><mn>01</mn></mrow></mrow></msub></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mrow><mrow><mn>5</mn></mrow></mrow><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mrow><mspace width=\".24em\"/></mrow></mrow></math></span>",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.2"
+          },
+          "layout": {
+            "placement": "wide",
+            "wrap": true
           }
         },
         {
@@ -2824,6 +2810,10 @@
             "docxCanonicalImport": "v4.4",
             "mathSourceFormat": "omml-mathml",
             "mathSyntax": "bookwriter-math-v1"
+          },
+          "layout": {
+            "wrap": false,
+            "placement": "left"
           }
         },
         {
@@ -3063,6 +3053,9 @@
             "docxSourceHtml": "<span style=\"font-family:&quot;Calibri&quot;\"><em>Κι άλλοι συνειρμοί</em></span>",
             "preferRichText": true,
             "richTextSync": "canonical-primary-v4.4"
+          },
+          "layout": {
+            "placement": "left"
           }
         },
         {
@@ -3102,6 +3095,9 @@
           "extensions": {
             "docxCanonicalImport": "v4.4",
             "mathSourceFormat": "omml-mathml"
+          },
+          "layout": {
+            "placement": "left"
           }
         }
       ],

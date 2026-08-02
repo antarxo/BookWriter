@@ -2191,23 +2191,32 @@ function defaultExtras(value={}){
   };
 }
 
-function extrasItemsText(extras={}){
-  return (Array.isArray(extras.items)?extras.items:[]).map(entry=>String(entry?.text||'').trim()).filter(Boolean).join('\n');
+function cleanExtrasItem(entry={}){
+  return {
+    type:String(entry?.type||'question'),
+    label:String(entry?.label||''),
+    text:String(entry?.text||''),
+    answer:String(entry?.answer||''),
+    answerLines:Math.max(0,Math.min(12,Number(entry?.answerLines)||0))
+  };
 }
 
-function extrasAnswersText(extras={}){
-  return (Array.isArray(extras.items)?extras.items:[]).map(entry=>String(entry?.answer||'').trim()).join('\n---\n');
+function setExtrasItem(path,value,index,patch,label='Πρόσθετο υλικό'){
+  const items=(Array.isArray(value.items)?value.items:[]).map(cleanExtrasItem);
+  items[index]=cleanExtrasItem({...items[index],...patch});
+  prop(label,[...path,'items'],items);
 }
 
-function extrasItemsFromText(text='',previous=[]){
-  const old=Array.isArray(previous)?previous:[];
-  return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map((line,index)=>({
-    type:old[index]?.type||'question',
-    label:old[index]?.label||'',
-    text:line,
-    answer:String(old[index]?.answer||''),
-    answerLines:Number(old[index]?.answerLines)||0
-  }));
+function addExtrasItem(path,value){
+  const items=(Array.isArray(value.items)?value.items:[]).map(cleanExtrasItem);
+  items.push({type:'question',label:'',text:'Νέα ερώτηση',answer:'',answerLines:0});
+  prop('Προσθήκη ερώτησης πρόσθετου υλικού',[...path,'items'],items);
+}
+
+function removeExtrasItem(path,value,index){
+  const items=(Array.isArray(value.items)?value.items:[]).map(cleanExtrasItem);
+  items.splice(index,1);
+  prop('Διαγραφή ερώτησης πρόσθετου υλικού',[...path,'items'],items);
 }
 
 function renderExtrasFields(parent,extras,path,label='Πρόσθετο υλικό'){
@@ -2219,18 +2228,36 @@ function renderExtrasFields(parent,extras,path,label='Πρόσθετο υλικ�
     field('Τίτλος',value.title,v=>prop('Τίτλος πρόσθετου υλικού',[...path,'title'],v)),
     check('Κλειστό στο βιβλίο',value.collapsedInBook,v=>prop('Πρόσθετο υλικό κλειστό στο βιβλίο',[...path,'collapsedInBook'],v)),
     check('Να μπαίνει στην εκτύπωση',value.print,v=>prop('Πρόσθετο υλικό στην εκτύπωση',[...path,'print'],v)),
-    field('Ερωτήσεις / προβληματισμοί — μία γραμμή ανά στοιχείο',extrasItemsText(value),v=>prop('Στοιχεία πρόσθετου υλικού',[...path,'items'],extrasItemsFromText(v,value.items)),'textarea',null,{rows:4}),
-    field('Κρυμμένες απαντήσεις — χώρισε απαντήσεις με ---',extrasAnswersText(value),v=>{
-      const answers=String(v).split(/\r?\n---\r?\n/).map(x=>x.trim());
-      const next=(value.items||[]).map((entry,index)=>({...entry,answer:answers[index]||''}));
-      prop('Απαντήσεις πρόσθετου υλικού',[...path,'items'],next);
-    },'textarea',null,{rows:4}),
-    field('Γραμμές απάντησης ανά στοιχείο',value.items.map(entry=>Number(entry?.answerLines)||0).join('\n'),v=>{
-      const lines=String(v).split(/\r?\n/).map(x=>Math.max(0,Math.min(12,Number(x)||0)));
-      const next=(value.items||[]).map((entry,index)=>({...entry,answerLines:lines[index]||0}));
-      prop('Γραμμές απάντησης πρόσθετου υλικού',[...path,'items'],next);
-    },'textarea',null,{rows:3})
+    button('Προσθήκη ερώτησης',()=>addExtrasItem(path,value),'primary-action')
   );
+  const items=(Array.isArray(value.items)?value.items:[]).map(cleanExtrasItem);
+  if(!items.length){
+    const empty=document.createElement('div');
+    empty.className='extras-editor-empty';
+    empty.textContent='Δεν υπάρχουν ακόμη ερωτήσεις.';
+    box.appendChild(empty);
+  }
+  items.forEach((entry,index)=>{
+    const itemBox=document.createElement('div');
+    itemBox.className='extras-editor-item';
+    const head=document.createElement('div');
+    head.className='extras-editor-item-head';
+    head.innerHTML=`<strong>${index+1}. Ερώτηση</strong>`;
+    head.appendChild(button('Διαγραφή',()=>removeExtrasItem(path,value,index),'danger'));
+    itemBox.append(
+      head,
+      field('Τύπος',entry.type,v=>setExtrasItem(path,value,index,{type:v},'Τύπος πρόσθετου υλικού'),'text',[
+        {value:'question',label:'Ερώτηση'},
+        {value:'prompt',label:'Προβληματισμός'},
+        {value:'exercise',label:'Άσκηση'}
+      ]),
+      field('Ετικέτα',entry.label,v=>setExtrasItem(path,value,index,{label:v},'Ετικέτα πρόσθετου υλικού')),
+      field('Κείμενο',entry.text,v=>setExtrasItem(path,value,index,{text:v},'Κείμενο πρόσθετου υλικού'),'textarea',null,{rows:3}),
+      field('Κρυμμένη απάντηση',entry.answer,v=>setExtrasItem(path,value,index,{answer:v},'Απάντηση πρόσθετου υλικού'),'textarea',null,{rows:3}),
+      field('Γραμμές απάντησης',entry.answerLines,v=>setExtrasItem(path,value,index,{answerLines:v},'Γραμμές απάντησης πρόσθετου υλικού'),'number',null,{min:0,max:12,step:1})
+    );
+    box.appendChild(itemBox);
+  });
   parent.appendChild(box);
 }
 

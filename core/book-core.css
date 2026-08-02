@@ -298,6 +298,7 @@
 .book-page-root .callout-extras-body{margin-top:7px;display:grid;gap:7px}
 .book-page-root .callout-extra-item{padding:7px 8px;border:1px solid #d8e3ea;background:#fff;border-radius:6px}
 .book-page-root .callout-extra-item b{display:block;margin-bottom:3px;color:#31556c;font:800 10.5px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.book-page-root .callout-extra-number{display:inline-block;min-width:1.6em;color:#0b6f9f}
 .book-page-root .callout-extra-item p{margin:0}
 .book-page-root .callout-extra-answer-toggle{appearance:none;margin-top:6px;border:1px solid #b8cad8;background:#f4f9fc;color:#244b65;border-radius:999px;padding:4px 9px;font:800 10px/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;cursor:pointer}
 .book-page-root .callout-extra-answer{margin-top:6px;padding:7px 8px;border-left:3px solid #6aa0bf;background:#f5fafc;color:#263d4c;border-radius:4px}

@@ -226,6 +226,10 @@
 
 .extras-editor{display:grid;gap:6px;margin:8px 0;padding:8px;border:1px solid #c8d5df;background:#f8fbfd;border-radius:6px}
 .extras-editor-title{font:800 12px system-ui;color:#244b65}
+.extras-editor-empty{padding:7px;border:1px dashed #bfd0dc;background:#fff;color:#586b78;font-size:12px}
+.extras-editor-item{display:grid;gap:6px;padding:8px;border:1px solid #ccd9e3;background:#fff;border-radius:5px}
+.extras-editor-item-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#244b65}
+.extras-editor-item-head strong{font-size:12px}
 .bw-icon-lab::before{--icon:"⚗";color:#11615a}
 .bw-icon-lab-backup::before{--icon:"⧉";color:#11615a}
 .bw-icon-lab-restore::before{--icon:"↩";color:#11615a}
