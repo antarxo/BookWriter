@@ -6,6 +6,7 @@ const X=MathExpressionV4;
 const C=BookCommandsV4;
 const S=new BookServiceV4.BookService();
 const D=DocxCoreV4;
+const W=WebCoreV4;
 const P=BookPaginationV4;
 const session=new C.WorkspaceSession();
 
@@ -1989,7 +1990,7 @@ function commandEnabled(cmd){
   const pi=pageIndex();
   const rules={
     'new-book':true,'open-book':true,'open-candidate':true,'choose-library':true,'refresh-library':!!(state.library.booksHandle||state.library.staticRootUrl)&&!state.library.loading,'reload-lab-registry':!state.labs.loading,'labs-workspace':!!state.library.booksHandle&&!state.labs.loading,'open-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'backup-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'restore-lab-registry':!!state.library.booksHandle&&!state.labs.loading,'home':true,'help':true,'about':true,
-    'new-docx':!state.busy,'insert-docx':has()&&!state.busy&&!!session.directoryHandle,'inline-equation':!!(activeRichContext?.surface?.isConnected||(['paragraph','note','side_note'].includes(item()?.type))),'docx-audit':!!state.docx.result,'clean-assets':false,
+    'new-docx':!state.busy,'insert-docx':has()&&!state.busy&&!!session.directoryHandle,'insert-web':has()&&!state.busy&&!!session.directoryHandle,'inline-equation':!!(activeRichContext?.surface?.isConnected||(['paragraph','note','side_note'].includes(item()?.type))),'docx-audit':!!state.docx.result,'clean-assets':false,
     'save':has()&&state.mode!=='migration'&&(session.isDirty()||state.mode==='new'||state.mode==='candidate'),
     'save-candidate':has()&&state.mode==='migration',
     'backup':has()&&!!session.directoryHandle,
@@ -3585,6 +3586,12 @@ function renderNavProperties(host){
 
 function activeDocxRoot(){return state.view==='insert'?$('#insertView'):$('#docxView')}
 function renderActiveDocxWorkspace(){if(state.view==='insert')renderInsertWorkspace();else renderDocxView()}
+function sourceIsWeb(){return state.docx.result?.sourceType==='web'}
+function sourceKindName(){return sourceIsWeb()?'ιστοσελίδα':'Word'}
+function sourceTitle(){return sourceIsWeb()?'Παρεμβολή από ιστοσελίδα':'Παρεμβολή από Word'}
+function sourceEntryLabel(entry){return sourceIsWeb()?W.entryLabel(entry):D.entryLabel(entry)}
+function sourceBlockText(block){return sourceIsWeb()?W.blockText(block):D.blockText(block)}
+function sourceAudit(result,entries){return sourceIsWeb()?W.audit(result,entries):D.audit(result,entries)}
 function setInsertionTarget(pageId,itemId){
   const insertion=state.docx.insertion;if(!insertion)return;
   const targetPage=session.book.pages.find(current=>current.id===pageId)||session.book.pages[0];
@@ -3640,12 +3647,12 @@ function renderInsertBookPreview(){
   });
   requestAnimationFrame(()=>{const id=draft?.firstInsertedId||anchor?.itemId;if(id)host.querySelector(`[data-insert-preview-item="${CSS.escape(id)}"]`)?.scrollIntoView({block:'center'})});
 }
-function docxPreviewHtml(){if(!state.docx.entries.length)return'<div class="tree-empty">Δεν έχει ανοιχτεί DOCX.</div>';const selected=new Set(docxRange().map(x=>x.key));return state.docx.entries.map(e=>{const edge=e.key===state.docx.startKey||e.key===state.docx.endKey,cls=['docx-preview-entry',e.heading?'heading':'',selected.has(e.key)?'range-selected':'',edge?'range-edge':''].filter(Boolean).join(' ');return`<div class="${cls}" data-docx-preview-key="${esc(e.key)}">${docxEntryHtml(e)}</div>`}).join('')}
+function docxPreviewHtml(){if(!state.docx.entries.length)return`<div class="tree-empty">Δεν έχει ανοιχτεί ${esc(sourceKindName())}.</div>`;const selected=new Set(docxRange().map(x=>x.key));return state.docx.entries.map(e=>{const edge=e.key===state.docx.startKey||e.key===state.docx.endKey,cls=['docx-preview-entry',e.heading?'heading':'',selected.has(e.key)?'range-selected':'',edge?'range-edge':''].filter(Boolean).join(' ');return`<div class="${cls}" data-docx-preview-key="${esc(e.key)}">${docxEntryHtml(e)}</div>`}).join('')}
 function renderInsertDocxSource(){
-  const tree=$('#insertDocxTree'),preview=$('#insertDocxPreview');if(!tree||!preview)return;tree.innerHTML=docxTreeHtml();preview.innerHTML=docxPreviewHtml();bindDocxPanels($('#insertView'));$('#insertDocxSelectionCaption').textContent=docxRangeSummary();$('#insertDocxFileCaption').textContent=state.docx.file?.name||'Δεν έχει ανοιχτεί DOCX';
+  const tree=$('#insertDocxTree'),preview=$('#insertDocxPreview');if(!tree||!preview)return;tree.innerHTML=docxTreeHtml();preview.innerHTML=docxPreviewHtml();bindDocxPanels($('#insertView'));$('#insertDocxSelectionCaption').textContent=docxRangeSummary();$('#insertDocxFileCaption').textContent=state.docx.file?.name||`Δεν έχει ανοιχτεί ${sourceKindName()}`;$('#insertSourceTitle').textContent=sourceIsWeb()?'Πηγή ιστοσελίδας':'Πηγή Word / Ιστοσελίδα';$('#insertSourceTreeTitle').textContent=sourceIsWeb()?'Δομή ιστοσελίδας':'Δομή πηγής';$('#insertSourcePreviewTitle').textContent=sourceIsWeb()?'Περιεχόμενο ιστοσελίδας':'Περιεχόμενο πηγής';
 }
 function renderInsertSummary(){
-  const range=docxRange(),insertion=state.docx.insertion,draft=insertion?.draft,ready=!!state.docx.result&&range.length&&!state.busy;$('#insertTargetCaption').textContent=insertion?.anchor?`${insertion.position==='before'?'Πριν':'Μετά'} από: ${insertion.anchor.label}`:'Επίλεξε block αριστερά';$('#insertPosition').value=insertion?.position||'after';$('#insertPreviewButton').disabled=!ready;const duplicate=draft?.duplicateEvidence;$('#insertAllowDuplicateLabel').hidden=!duplicate;$('#insertApplyButton').disabled=!draft||!!duplicate&&!$('#insertAllowDuplicate').checked;$('#insertSummary').innerHTML=!state.docx.result?'<b>1.</b> Επίλεξε σημείο στο βιβλίο αριστερά · <b>2.</b> άνοιξε DOCX δεξιά · <b>3.</b> επίλεξε τμήμα.':`<b>Στόχος:</b> ${esc(insertion?.anchor?.label||'—')} · <b>Πηγή:</b> ${esc(state.docx.file?.name||'—')} · <b>Επιλογή:</b> ${esc(docxRangeSummary())}${draft?` · <b>Προσωρινό αποτέλεσμα:</b> ${draft.insertedIds.length} blocks / ${draft.generatedPages.length} επηρεασμένες σελίδες / ${draft.fullAudit?.overflowPages||0} overflow`:''}`;
+  const range=docxRange(),insertion=state.docx.insertion,draft=insertion?.draft,ready=!!state.docx.result&&range.length&&!state.busy;$('#insertTargetCaption').textContent=insertion?.anchor?`${insertion.position==='before'?'Πριν':'Μετά'} από: ${insertion.anchor.label}`:'Επίλεξε block αριστερά';$('#insertPosition').value=insertion?.position||'after';$('#insertPreviewButton').disabled=!ready;const duplicate=draft?.duplicateEvidence;$('#insertAllowDuplicateLabel').hidden=!duplicate;$('#insertApplyButton').disabled=!draft||!!duplicate&&!$('#insertAllowDuplicate').checked;$('#insertSummary').innerHTML=!state.docx.result?'<b>1.</b> Επίλεξε σημείο στο βιβλίο αριστερά · <b>2.</b> άνοιξε DOCX, URL ή HTML δεξιά · <b>3.</b> επίλεξε τμήμα.':`<b>Στόχος:</b> ${esc(insertion?.anchor?.label||'—')} · <b>Πηγή:</b> ${esc(state.docx.file?.name||'—')} · <b>Επιλογή:</b> ${esc(docxRangeSummary())}${draft?` · <b>Προσωρινό αποτέλεσμα:</b> ${draft.insertedIds.length} blocks / ${draft.generatedPages.length} επηρεασμένες σελίδες / ${draft.fullAudit?.overflowPages||0} overflow`:''}`;
 }
 function renderInsertWorkspace(){
   if(state.view!=='insert'||!has())return;document.documentElement.style.setProperty('--insert-left',`${Math.max(.34,Math.min(.66,state.insert.split))*100}%`);$('#insertBookTree').innerHTML=insertTreeHtml();bindInsertBookTree();renderInsertBookPreview();renderInsertDocxSource();renderInsertSummary();renderChrome();if(state.insert.bookZoomMode==='fit')requestAnimationFrame(()=>{const scroller=$('#insertBookPreviewScroller'),width=Number(session.book?.layoutDefaults?.pageWidthPx||794),next=Math.max(.28,Math.min(1.05,(scroller.clientWidth-28)/width));if(Math.abs(next-state.insert.bookZoom)>.01){state.insert.bookZoom=next;storage.set('bw-v4_4-insert-book-zoom',String(next));renderInsertBookPreview()}})
@@ -3689,21 +3696,25 @@ function startDocxInsert(){
   if(!targetPage||!targetItem){modal('Παρεμβολή από Word','<div class="info-card warn">Το βιβλίο δεν διαθέτει block προορισμού. Πρόσθεσε πρώτα ένα item.</div>');return}
   const anchor={pageId:targetPage.id,itemId:targetItem.id,label:itemSummary(targetItem)};
   resetDocxState({mode:'insert',insertion:{anchor,position:'after',draft:null}});
-  setView('insert');setStatus('Αριστερά επίλεξε το σημείο στο βιβλίο. Δεξιά άνοιξε το DOCX και επίλεξε το τμήμα που θα εισαχθεί.');
+  setView('insert');setStatus('Αριστερά επίλεξε το σημείο στο βιβλίο. Δεξιά άνοιξε DOCX, URL ή HTML και επίλεξε το τμήμα που θα εισαχθεί.');
+}
+function startWebInsert(){
+  startDocxInsert();
+  if(state.view==='insert')requestWebUrl();
 }
 function docxIndex(key){return state.docx.entries.findIndex(entry=>entry.key===key)}
-function docxRange(){return D.entriesInRange(state.docx.result,state.docx.startKey,state.docx.endKey)}
+function docxRange(){const all=state.docx.entries||[];if(!all.length)return[];let a=all.findIndex(x=>x.key===state.docx.startKey),b=all.findIndex(x=>x.key===state.docx.endKey);if(a<0)a=0;if(b<0)b=a;if(a>b)[a,b]=[b,a];return all.slice(a,b+1)}
 function selectDocx(key,shift=false,origin='tree'){
  const index=docxIndex(key);if(index<0)return;if(shift&&state.docx.anchorKey){const a=docxIndex(state.docx.anchorKey),lo=Math.min(a,index),hi=Math.max(a,index);state.docx.startKey=state.docx.entries[lo].key;state.docx.endKey=state.docx.entries[hi].key}else{state.docx.startKey=key;state.docx.endKey=key;state.docx.anchorKey=key}state.docx.focusKey=key;if(state.docx.insertion)state.docx.insertion.draft=null;renderActiveDocxWorkspace();requestAnimationFrame(()=>syncDocxPanels(key,origin));
 }
 function selectDocxSection(key){const i=docxIndex(key);if(i<0)return;let start=i;while(start>0&&!state.docx.entries[start].heading)start--;if(!state.docx.entries[start].heading)start=i;const level=state.docx.entries[start].level||99;let end=start;for(let j=start+1;j<state.docx.entries.length;j++){const e=state.docx.entries[j];if(e.heading&&(e.level||99)<=level)break;end=j}state.docx.startKey=state.docx.entries[start].key;state.docx.endKey=state.docx.entries[end].key;state.docx.anchorKey=state.docx.startKey;state.docx.focusKey=state.docx.startKey;if(state.docx.insertion)state.docx.insertion.draft=null;renderActiveDocxWorkspace();requestAnimationFrame(()=>syncDocxPanels(state.docx.startKey,'tree'))}
 function syncDocxPanels(key,origin){const root=activeDocxRoot()||document,tree=root.querySelector(`[data-docx-tree-key="${CSS.escape(key)}"]`),preview=root.querySelector(`[data-docx-preview-key="${CSS.escape(key)}"]`);if(origin!=='tree')tree?.scrollIntoView({block:'center'});if(origin!=='preview')preview?.scrollIntoView({block:'center'})}
-function docxTreeHtml(){if(!state.docx.entries.length)return'<div class="tree-empty">Δεν έχει ανοιχτεί DOCX.</div>';const selected=new Set(docxRange().map(x=>x.key));return state.docx.entries.map(e=>{const edge=e.key===state.docx.startKey||e.key===state.docx.endKey,level=e.heading?Math.min(4,e.level||2):0,cls=['tree-row',level?'docx-h'+level:'',selected.has(e.key)?'range-selected':'',edge?'range-edge':''].filter(Boolean).join(' '),icon=e.heading?'▸':e.type==='figure'?'▧':e.block?.source==='table'?'▦':e.block?.source==='list'?'☷':'¶';return`<div class="${cls}" data-docx-tree-key="${esc(e.key)}"><span class="tree-icon">${icon}</span><span class="tree-label" title="${esc(D.entryLabel(e))}">${esc(D.entryLabel(e))}</span></div>`}).join('')}
+function docxTreeHtml(){if(!state.docx.entries.length)return`<div class="tree-empty">Δεν έχει ανοιχτεί ${esc(sourceKindName())}.</div>`;const selected=new Set(docxRange().map(x=>x.key));return state.docx.entries.map(e=>{const edge=e.key===state.docx.startKey||e.key===state.docx.endKey,level=e.heading?Math.min(4,e.level||2):0,cls=['tree-row',level?'docx-h'+level:'',selected.has(e.key)?'range-selected':'',edge?'range-edge':''].filter(Boolean).join(' '),icon=e.heading?'▸':e.type==='figure'?'▧':e.block?.source==='table'?'▦':e.type==='list'||e.block?.source==='list'?'☷':'¶',label=sourceEntryLabel(e);return`<div class="${cls}" data-docx-tree-key="${esc(e.key)}"><span class="tree-icon">${icon}</span><span class="tree-label" title="${esc(label)}">${esc(label)}</span></div>`}).join('')}
 function docxEntryHtml(e){const b=e.block;if(b.type==='part_title')return`<h2>${esc(b.title||'')}</h2>`;if(b.type==='section_heading')return`<h3>${esc(b.title||'')}</h3>`;if(b.type==='paragraph')return D.formattedParagraphHtml(b);if(b.type==='table'){const rows=(b.rows||[]).map(r=>`<tr>${(r.cells||[]).map(c=>`<td colspan="${Number(c.colspan)||1}" rowspan="${Number(c.rowspan)||1}">${c.html||''}</td>`).join('')}</tr>`).join('');return`<table><tbody>${rows}</tbody></table>`}if(b.type==='list'){const tag=b.listType==='ol'?'ol':'ul',start=b.listType==='ol'&&Number.isFinite(Number(b.start))?` start="${Number(b.start)}"`:'',style=b.numFmt==='lowerLetter'?' style="list-style-type:lower-greek"':'';return`<${tag}${start}${style}>${(b.items||[]).map(x=>`<li${Number.isFinite(Number(x.value))?` value="${Number(x.value)}"`:''}>${x.html||''}</li>`).join('')}</${tag}>`}if(b.type==='figure'){const u=state.docx.blobUrls.get(b.srcPath);return`<figure>${u?`<img src="${u}" alt="">`:'<div>Μη διαθέσιμη εικόνα</div>'}${b.caption?`<figcaption>${esc(b.caption)}</figcaption>`:''}</figure>`}return esc(D.blockText(b)||b.type)}
 function renderDocxPreview(){const host=$('#docxSourcePreview');if(host)host.innerHTML=docxPreviewHtml()}
 function bindDocxPanels(root=document){for(const row of root.querySelectorAll('[data-docx-tree-key]')){row.onclick=event=>selectDocx(row.dataset.docxTreeKey,event.shiftKey,'tree');row.ondblclick=()=>selectDocxSection(row.dataset.docxTreeKey)}for(const row of root.querySelectorAll('[data-docx-preview-key]')){row.onclick=event=>selectDocx(row.dataset.docxPreviewKey,event.shiftKey,'preview');row.ondblclick=()=>selectDocxSection(row.dataset.docxPreviewKey)}}
-function docxRangeSummary(){const range=docxRange();if(!range.length)return'Χωρίς επιλογή';return`${range.length} blocks · ${range.filter(x=>x.heading).length} επικεφαλίδες · ${range.filter(x=>x.type==='figure').length} εικόνες · σ.${range[0].page}–${range.at(-1).page}`}
-function renderDocxMetrics(){const host=$('#docxMetrics');if(!host)return;const r=state.docx.result;if(!r){host.innerHTML='';return}const range=docxRange(),metrics=[['Σελίδες Word',r.pageCount],['Επιλεγμένα blocks',range.length],['Εξισώσεις',`${r.importedMathObjects} canonical / ${r.mathCount} raw`],['Εικόνες',r.usedImages.length],['Πίνακες',r.tables],['Πλαίσια κειμένου',`${r.textBoxesImported}/${r.textBoxesUnique}`]];host.innerHTML=metrics.map(([label,value])=>`<div class="docx-metric"><b>${esc(value)}</b><span>${esc(label)}</span></div>`).join('')}
+function docxRangeSummary(){const range=docxRange();if(!range.length)return'Χωρίς επιλογή';const pageText=sourceIsWeb()?'web':`σ.${range[0].page}–${range.at(-1).page}`;return`${range.length} blocks · ${range.filter(x=>x.heading).length} επικεφαλίδες · ${range.filter(x=>x.type==='figure').length} εικόνες · ${pageText}`}
+function renderDocxMetrics(){const host=$('#docxMetrics');if(!host)return;const r=state.docx.result;if(!r){host.innerHTML='';return}const range=docxRange(),metrics=sourceIsWeb()?[['Πηγή','HTML'],['Επιλεγμένα blocks',range.length],['Εικόνες',`${r.usedImages.length}${r.skippedImages?.length?' / '+r.skippedImages.length+' μη διαθέσιμες':''}`],['Πίνακες',r.tables],['Λίστες',r.lists],['Παράγραφοι',r.paras]]:[['Σελίδες Word',r.pageCount],['Επιλεγμένα blocks',range.length],['Εξισώσεις',`${r.importedMathObjects} canonical / ${r.mathCount} raw`],['Εικόνες',r.usedImages.length],['Πίνακες',r.tables],['Πλαίσια κειμένου',`${r.textBoxesImported}/${r.textBoxesUnique}`]];host.innerHTML=metrics.map(([label,value])=>`<div class="docx-metric"><b>${esc(value)}</b><span>${esc(label)}</span></div>`).join('')}
 function updateDocxCreateSummary(){
   const range=docxRange(),title=$('#docxBookTitle')?.value.trim()||'',id=D.safeId($('#docxBookId')?.value||''),ready=!!state.docx.result&&range.length&&!state.busy&&title&&id,summary=$('#docxSummary');
   $('#docxCreateButton').disabled=!ready;$('#docxReportButton').disabled=!state.docx.report;
@@ -3720,6 +3731,52 @@ async function analyzeDocxFile(file){
   state.busy=true;renderChrome();setStatus('Ανάλυση DOCX: '+file.name+'…','warn');
   const workflow={mode:state.docx.mode,insertion:state.docx.insertion};
   try{const result=await D.parseDocx(file),entries=D.flattenEntries(result);resetDocxState(workflow);state.docx.file=file;state.docx.result=result;state.docx.entries=entries;if(entries.length){state.docx.startKey=entries[0].key;state.docx.endKey=entries.at(-1).key;state.docx.anchorKey=entries[0].key;state.docx.focusKey=entries[0].key}for(const[path,blob]of result.imageBlobs)state.docx.blobUrls.set(path,URL.createObjectURL(blob));state.docx.report=D.audit(result,docxRange());const raw=D.safeId(file.name.replace(/\.docx$/i,'').toLowerCase());$('#docxBookTitle').value=file.name.replace(/\.docx$/i,'');$('#docxBookId').value=/[A-Za-z]/.test(raw)?raw:'book_'+(raw||'new');setStatus(`Η ανάλυση ολοκληρώθηκε: ${entries.length} blocks, ${result.pageCount} σελίδες Word.`,'good')}catch(error){console.error(error);setStatus('Αποτυχία ανάλυσης DOCX: '+error.message,'bad');modal('Αποτυχία DOCX',`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderActiveDocxWorkspace()}
+}
+function adoptWebResult(result,workflow){
+  const entries=W.flattenEntries(result);
+  resetDocxState(workflow);
+  state.docx.file={name:result.fileName||'Ιστοσελίδα'};
+  state.docx.result=result;
+  state.docx.entries=entries;
+  if(entries.length){state.docx.startKey=entries[0].key;state.docx.endKey=entries.at(-1).key;state.docx.anchorKey=entries[0].key;state.docx.focusKey=entries[0].key}
+  for(const[path,blob]of result.imageBlobs)state.docx.blobUrls.set(path,URL.createObjectURL(blob));
+  state.docx.report=W.audit(result,docxRange());
+}
+async function analyzeWebUrl(url){
+  const raw=String(url||'').trim();
+  if(!raw)return;
+  state.busy=true;renderChrome();setStatus('Ανάγνωση ιστοσελίδας…','warn');
+  const workflow={mode:state.docx.mode,insertion:state.docx.insertion};
+  try{
+    const result=await W.parseUrl(raw);
+    adoptWebResult(result,workflow);
+    const skipped=result.skippedImages?.length||0;
+    setStatus(`Η ιστοσελίδα αναλύθηκε: ${state.docx.entries.length} blocks · ${result.usedImages.length} εικόνες${skipped?' · '+skipped+' εικόνες δεν ήταν αντιγράψιμες':''}.`,skipped?'warn':'good');
+  }catch(error){
+    console.error(error);
+    setStatus('Αποτυχία ιστοσελίδας: '+error.message,'bad');
+    modal('Παρεμβολή από ιστοσελίδα',`<div class="info-card bad">${esc(error.message)}</div><div class="info-card warn">Αν η σελίδα δεν επιτρέπει ανάγνωση από τον browser, αποθήκευσέ την ως HTML και χρησιμοποίησε το κουμπί <b>HTML αρχείο…</b>.</div>`);
+  }finally{state.busy=false;renderActiveDocxWorkspace()}
+}
+async function analyzeWebHtmlFile(file){
+  if(!file)return;
+  state.busy=true;renderChrome();setStatus('Ανάλυση HTML: '+file.name+'…','warn');
+  const workflow={mode:state.docx.mode,insertion:state.docx.insertion};
+  try{
+    const html=await file.text();
+    const result=await W.parseHtml(html,{fileName:file.name,baseUrl:location.href});
+    adoptWebResult(result,workflow);
+    const skipped=result.skippedImages?.length||0;
+    setStatus(`Το HTML αναλύθηκε: ${state.docx.entries.length} blocks · ${result.usedImages.length} εικόνες${skipped?' · '+skipped+' εικόνες δεν ήταν αντιγράψιμες':''}.`,skipped?'warn':'good');
+  }catch(error){
+    console.error(error);
+    setStatus('Αποτυχία HTML: '+error.message,'bad');
+    modal('Παρεμβολή από HTML',`<div class="info-card bad">${esc(error.message)}</div>`);
+  }finally{state.busy=false;renderActiveDocxWorkspace()}
+}
+function requestWebUrl(){
+  const url=prompt('Διεύθυνση ιστοσελίδας για παρεμβολή:', 'https://');
+  if(url)analyzeWebUrl(url);
 }
 async function createBookFromDocx(){
   if(!await allowReplaceCurrentBook('δημιουργία και άνοιγμα νέου βιβλίου από Word'))return;
@@ -3770,13 +3827,13 @@ async function previewDocxInsertion(){
     draft.book.pages.splice(draft.pageIndex,1,...paged.book.pages);draft.tocHeadingCount=rebuildGeneratedToc(draft.book);
     draft.fullAudit=await P.auditOverflow(draft.book,{imageCandidates:insertionImageCandidates(draft),tolerancePx:1,assetTimeout:2500});certifyInsertionAudit(draft.book,draft.fullAudit,draft.localPagination);
     insertion.draft=draft;renderInsertWorkspace();setStatus(`Η προσωρινή παρεμβολή είναι έτοιμη: ${draft.insertedIds.length} blocks σε ${draft.generatedPages.length} επηρεασμένες σελίδες · ${draft.fullAudit.overflowPages} overflow. Δεν έγινε εγγραφή.`,draft.fullAudit.ok?'good':'warn');
-  }catch(error){console.error(error);insertion.draft=null;setStatus('Αποτυχία προεπισκόπησης παρεμβολής: '+error.message,'bad');modal('Παρεμβολή από Word',`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderActiveDocxWorkspace()}
+  }catch(error){console.error(error);insertion.draft=null;setStatus('Αποτυχία προεπισκόπησης παρεμβολής: '+error.message,'bad');modal(sourceTitle(),`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderActiveDocxWorkspace()}
 }
 async function applyDocxInsertion(){
   const draft=state.docx.insertion?.draft;if(!draft)return;
   const allowDuplicate=$('#insertAllowDuplicate')?.checked;if(draft.duplicateEvidence&&!allowDuplicate)return;
   const overflowNote=draft.fullAudit&&!draft.fullAudit.ok?`<div class="info-card warn"><b>${draft.fullAudit.overflowPages} σελίδες εμφανίζουν overflow:</b><br>${draft.fullAudit.pages.slice(0,8).map(x=>`σελ. ${x.displayPage} · ${x.overflowPx}px`).join('<br>')}<br>Η παρεμβολή επιτρέπεται και το overflow μένει ως προειδοποίηση για χειροκίνητη διόρθωση.</div>`:'<div class="info-card good">Ο έλεγχος όλου του βιβλίου ολοκληρώθηκε χωρίς overflow.</div>';
-  const approved=await confirmBox('Παρεμβολή από Word',`<b>Πηγή:</b> ${esc(state.docx.file.name)}<br><b>Επιλογή:</b> ${esc(docxRangeSummary())}<br><b>Θέση:</b> ${draft.position==='after'?'μετά':'πριν'} από «${esc(draft.anchor.label)}»<br><b>Περιεχόμενα:</b> ${draft.tocHeadingCount?draft.tocHeadingCount+' επικεφαλίδες επανυπολογίστηκαν':'δεν υπάρχει ενεργός generated TOC'}<br><br>${overflowNote}<br>Θα δημιουργηθεί backup, θα αντιγραφούν οι νέες εικόνες και θα αποθηκευτεί το canonical αποτέλεσμα.`,'Παρεμβολή με backup');
+  const approved=await confirmBox(sourceTitle(),`<b>Πηγή:</b> ${esc(state.docx.file.name)}<br><b>Επιλογή:</b> ${esc(docxRangeSummary())}<br><b>Θέση:</b> ${draft.position==='after'?'μετά':'πριν'} από «${esc(draft.anchor.label)}»<br><b>Περιεχόμενα:</b> ${draft.tocHeadingCount?draft.tocHeadingCount+' επικεφαλίδες επανυπολογίστηκαν':'δεν υπάρχει ενεργός generated TOC'}<br><br>${overflowNote}<br>Θα δημιουργηθεί backup, θα αντιγραφούν οι νέες εικόνες και θα αποθηκευτεί το canonical αποτέλεσμα.`,'Παρεμβολή με backup');
   if(!approved)return;
   state.busy=true;renderChrome();setStatus('Backup, αντιγραφή εικόνων και ασφαλής εγγραφή παρεμβολής…','warn');
   try{
@@ -3787,9 +3844,9 @@ async function applyDocxInsertion(){
     const bookFile=await session.directoryHandle.getFileHandle('book.json');const first=draft.firstInsertedId;
     await attachOpened(session.directoryHandle,bookFile,draft.book,'canonical',session.directoryHandle.name);
     const foundPage=session.book.pages.find(current=>current.items.some(candidate=>candidate.id===first));if(foundPage)session.selection={pageId:foundPage.id,itemId:first};
-    session.commandStack.push({label:'Παρεμβολή από Word',at:new Date().toISOString(),before:beforeBook,after:clone(session.book),beforeSelection,afterSelection:clone(session.selection)});await scanLibrary();
+    session.commandStack.push({label:sourceTitle(),at:new Date().toISOString(),before:beforeBook,after:clone(session.book),beforeSelection,afterSelection:clone(session.selection)});await scanLibrary();
     resetDocxState({mode:'create'});renderAll();setStatus(`Η παρεμβολή ολοκληρώθηκε: ${draft.insertedIds.length} canonical blocks · ${added} εικόνες · ${draft.fullAudit?.overflowPages||0} overflow · διαθέσιμη Αναίρεση.`,draft.fullAudit?.ok?'good':'warn');
-  }catch(error){console.error(error);setStatus('Αποτυχία παρεμβολής: '+error.message,'bad');modal('Παρεμβολή από Word',`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderChrome()}
+  }catch(error){console.error(error);setStatus('Αποτυχία παρεμβολής: '+error.message,'bad');modal(sourceTitle(),`<div class="info-card bad">${esc(error.message)}</div>`)}finally{state.busy=false;renderChrome()}
 }
 function downloadDocxReport(){if(!state.docx.report)return;const blob=new Blob([JSON.stringify({...state.docx.report,selection:docxRange().map(x=>x.key)},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='docx_import_v4_4_report.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function cancelDocxWorkflow(){resetDocxState();setView(has()?'book':'home');setStatus('Η εργασία DOCX ακυρώθηκε.')}
@@ -3820,7 +3877,7 @@ async function executeCommand(cmd){
     return;
   }
   const map={
-    'new-docx':startDocxCreate,'insert-docx':startDocxInsert,'docx-audit':()=>state.view==='docx'?downloadDocxReport():startDocxCreate,
+    'new-docx':startDocxCreate,'insert-docx':startDocxInsert,'insert-web':startWebInsert,'docx-audit':()=>state.view==='docx'?downloadDocxReport():startDocxCreate,
     'new-book':newBook,'choose-library':chooseLibrary,'refresh-library':scanLibrary,'reload-lab-registry':reloadLabRegistry,'labs-workspace':openLabsWorkspace,'open-lab-registry':openLabRegistryEditor,'backup-lab-registry':backupLabRegistry,'restore-lab-registry':restoreLabRegistry,'open-book':openBook,'open-candidate':openCandidate,'save':saveBook,'save-candidate':saveCandidate,'backup':manualBackup,'reader':openUserBook,'print':openReader,'close-book':closeBook,
     'undo':undo,'redo':redo,'clone':cloneSelected,'delete':deleteSelected,'move-up':()=>moveItem(-1),'move-down':()=>moveItem(1),'move-prev-page':()=>moveAcross('prev'),'move-next-page':()=>moveAcross('next'),'split-page':splitPage,
     'insert-item':()=>insertItem(null,'after'),'insert-item-before':()=>insertItem(null,'before'),'insert-item-after':()=>insertItem(null,'after'),'insert-lab-scene':()=>openLabsWorkspace({insertPlacement:'after'}),
@@ -3841,6 +3898,9 @@ async function executeCommand(cmd){
 bindInsertSplitter();
 bindLabsSplitters();
 $('#insertDocxOpenButton').onclick=()=>$('#docxFileInput').click();
+$('#insertWebUrlButton').onclick=requestWebUrl;
+$('#insertWebFileButton').onclick=()=>$('#insertWebFileInput').click();
+$('#insertWebFileInput').onchange=event=>{const file=event.target.files?.[0];event.target.value='';if(file)analyzeWebHtmlFile(file)};
 $('#insertBookSearch').addEventListener('input',()=>{if(state.view==='insert')renderInsertWorkspace()});
 $('#insertPosition').addEventListener('change',()=>{if(state.docx.insertion){state.docx.insertion.position=$('#insertPosition').value;state.docx.insertion.draft=null}renderInsertWorkspace()});
 $('#insertPreviewButton').onclick=previewDocxInsertion;$('#insertApplyButton').onclick=applyDocxInsertion;$('#insertCancelButton').onclick=cancelDocxWorkflow;

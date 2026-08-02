@@ -119,6 +119,7 @@
       <button class="menu-command" data-command="insert-lab-scene"><span class="bw-icon bw-icon-lab" aria-hidden="true"></span><span>Σκηνή από βιβλιοθήκη εργαστηρίων…</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="insert-docx"><span class="bw-icon bw-icon-word-plus" aria-hidden="true"></span><span>Παρεμβολή από Word…</span><kbd></kbd></button>
+      <button class="menu-command" data-command="insert-web"><span>www</span><span>Παρεμβολή από ιστοσελίδα…</span><kbd></kbd></button>
       <button class="menu-command" data-command="inline-equation"><span>∑</span><span>Inline εξίσωση στη θέση δρομέα</span><kbd></kbd></button>
       <button class="menu-command" data-command="display-equation"><span>∫</span><span>Αυτόνομη εξίσωση</span><kbd></kbd></button>
     </div></div>
@@ -172,6 +173,7 @@
     <button class="tool-button" data-command="insert-item-after" title="Νέο στοιχείο μετά" aria-label="Νέο στοιχείο μετά"><span class="bw-icon bw-icon-insert-after" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="insert-page-after" title="Νέα σελίδα μετά" aria-label="Νέα σελίδα μετά"><span class="bw-icon bw-icon-new-page" aria-hidden="true"></span></button>
     <button class="tool-button word-tool-button" data-command="insert-docx" title="Παρεμβολή από Word" aria-label="Παρεμβολή από Word"><span class="bw-icon bw-icon-word-plus" aria-hidden="true"></span></button>
+    <button class="tool-button" data-command="insert-web" title="Παρεμβολή από ιστοσελίδα" aria-label="Παρεμβολή από ιστοσελίδα"><span>www</span></button>
     <span class="tool-separator"></span>
     <button class="tool-button" data-command="undo" title="Αναίρεση (Ctrl+Z)" aria-label="Αναίρεση"><span class="bw-icon bw-icon-undo" aria-hidden="true"></span></button>
     <button class="tool-button" data-command="redo" title="Επανάληψη (Ctrl+Y)" aria-label="Επανάληψη"><span class="bw-icon bw-icon-redo" aria-hidden="true"></span></button>
@@ -349,17 +351,20 @@
 
       <section class="insert-document source-document">
         <div class="document-head">
-          <span>Πηγή Word</span>
-          <span id="insertDocxFileCaption" class="muted">Δεν έχει ανοιχτεί DOCX</span>
+          <span id="insertSourceTitle">Πηγή Word / Ιστοσελίδα</span>
+          <span id="insertDocxFileCaption" class="muted">Δεν έχει ανοιχτεί πηγή</span>
           <button id="insertDocxOpenButton" type="button" class="primary-action">Άνοιγμα DOCX…</button>
+          <button id="insertWebUrlButton" type="button">URL ιστοσελίδας…</button>
+          <button id="insertWebFileButton" type="button">HTML αρχείο…</button>
+          <input id="insertWebFileInput" type="file" accept=".html,.htm,text/html" hidden>
         </div>
         <div class="document-body source-inner">
           <aside class="pane insert-source-outline">
-            <div class="pane-title">Δομή Word</div>
+            <div id="insertSourceTreeTitle" class="pane-title">Δομή πηγής</div>
             <div id="insertDocxTree" class="tree-host"></div>
           </aside>
           <section class="pane insert-source-preview-pane">
-            <div class="pane-title"><span>Περιεχόμενο Word</span><span id="insertDocxSelectionCaption" class="muted"></span></div>
+            <div class="pane-title"><span id="insertSourcePreviewTitle">Περιεχόμενο πηγής</span><span id="insertDocxSelectionCaption" class="muted"></span></div>
             <div id="insertDocxPreview" class="docx-preview"></div>
           </section>
         </div>
@@ -422,9 +427,10 @@
 <script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
 <script src="../core/v4/book-commands-v4.js"></script>
 <script src="../core/v4/book-service-v4.js"></script>
-<script src="../core/v4/docx-core-v4.js?v=20260730-docx-visible-fences-1"></script>
+<script src="../core/v4/docx-core-v4.js?v=20260802-web-import-1"></script>
+<script src="../core/v4/web-core-v4.js?v=20260802-web-import-1"></script>
 <script src="../core/v4/pagination-core-v4.js?v=20260802-extras-items-1"></script>
-<script src="workspace.js?v=20260802-extras-items-1"></script>
+<script src="workspace.js?v=20260802-web-import-1"></script>
 </body>
 </html>
 
