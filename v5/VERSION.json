@@ -1,8 +1,9 @@
 {
-  "version": "5.0-alpha-1",
+  "version": "5.0-alpha-2",
   "type": "architecture checkpoint",
-  "name": "Single Render Truth",
-  "principle": "one manifest -> one layout engine -> three shells",
+  "name": "Render Once / Capture / Replay",
+  "principle": "bookwriter-v4 -> existing BookCore render -> frozen snapshot -> author/reader/print replay",
   "legacy": "BookWriter 4.5 remains untouched",
-  "status": "scaffold only"
+  "snapshotFormat": "bookwriter-render-snapshot-v1",
+  "status": "first capture/replay proof implemented"
 }
