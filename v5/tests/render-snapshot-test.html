@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="../../core/book-core.css">
 <style>
 body{margin:0;font:14px system-ui;background:#eceff2;color:#111}
-.toolbar{position:sticky;top:0;z-index:10;display:flex;gap:8px;align-items:center;padding:10px;background:#fff;border-bottom:1px solid #bbb}
+.toolbar{position:sticky;top:0;z-index:10;display:flex;gap:8px;align-items:center;padding:10px;background:#fff;border-bottom:1px solid #bbb;flex-wrap:wrap}
 .toolbar input{min-width:420px;padding:6px}
 .toolbar button{padding:6px 10px}
 .status{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px}
@@ -50,6 +50,55 @@ async function loadCss(){
   return await response.text();
 }
 
+function rectOf(node){
+  if(!node) return null;
+  const r=node.getBoundingClientRect();
+  return {x:r.x,y:r.y,width:r.width,height:r.height};
+}
+function closeEnough(a,b,tolerance=0.75){
+  return a && b && ['width','height'].every(k=>Math.abs(a[k]-b[k])<=tolerance);
+}
+function geometryReport(sourceRoot,replayDoc){
+  const sourcePages=Array.from(sourceRoot.querySelectorAll('.book-page-root,.sheet-wrap'));
+  const replayPages=Array.from(replayDoc.querySelectorAll('.book-page-root,.sheet-wrap'));
+  const pageCountEqual=sourcePages.length===replayPages.length;
+  let pageMismatch=0;
+  let itemMismatch=0;
+  let comparedItems=0;
+  const detail=[];
+  const count=Math.min(sourcePages.length,replayPages.length);
+  for(let i=0;i<count;i++){
+    const sa=rectOf(sourcePages[i].querySelector('.sheet')||sourcePages[i]);
+    const sb=rectOf(replayPages[i].querySelector('.sheet')||replayPages[i]);
+    if(!closeEnough(sa,sb)){
+      pageMismatch++;
+      detail.push(`page ${i+1}: ${sa?.width.toFixed(2)}×${sa?.height.toFixed(2)} != ${sb?.width.toFixed(2)}×${sb?.height.toFixed(2)}`);
+    }
+    const sourceItems=Array.from(sourcePages[i].querySelectorAll('[data-book-item-index]'));
+    sourceItems.forEach(sourceItem=>{
+      const index=sourceItem.dataset.bookItemIndex;
+      const replayItem=replayPages[i].querySelector(`[data-book-item-index="${CSS.escape(index)}"]`);
+      if(!replayItem) { itemMismatch++; detail.push(`page ${i+1}, item ${index}: missing`); return; }
+      comparedItems++;
+      const ra=rectOf(sourceItem), rb=rectOf(replayItem);
+      if(!closeEnough(ra,rb)){
+        itemMismatch++;
+        if(detail.length<20) detail.push(`page ${i+1}, item ${index}: ${ra.width.toFixed(2)}×${ra.height.toFixed(2)} != ${rb.width.toFixed(2)}×${rb.height.toFixed(2)}`);
+      }
+    });
+  }
+  return {ok:pageCountEqual&&pageMismatch===0&&itemMismatch===0,pageCountEqual,pageMismatch,itemMismatch,comparedItems,detail};
+}
+
+async function waitReplayFrame(iframe){
+  await new Promise(resolve=>{
+    if(iframe.contentDocument?.readyState==='complete') return resolve();
+    iframe.addEventListener('load',resolve,{once:true});
+  });
+  if(iframe.contentDocument?.fonts?.ready) await iframe.contentDocument.fonts.ready;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+}
+
 async function run(){
   $('status').textContent='φόρτωση…';
   $('save').disabled=true;
@@ -78,9 +127,16 @@ async function run(){
     title:data?.meta?.title || 'BookWriter rendered snapshot',
     meta:{sourceBook:bookHref,renderer:`BookCore ${BookCore.VERSION}`}
   });
-  RenderSnapshotV5.replayDocument($('replayFrame'),lastSnapshot);
+  const frame=$('replayFrame');
+  RenderSnapshotV5.replayDocument(frame,lastSnapshot);
+  await waitReplayFrame(frame);
+  const parity=geometryReport(sourceHost,frame.contentDocument);
   $('save').disabled=false;
-  $('status').textContent=`${lastSnapshot.meta.pageCount} σελίδες · snapshot ${Math.round(lastSnapshot.documentHtml.length/1024)} KB`;
+  $('status').textContent=[
+    `${lastSnapshot.meta.pageCount} σελίδες · snapshot ${Math.round(lastSnapshot.documentHtml.length/1024)} KB`,
+    parity.ok ? 'PARITY: OK' : `PARITY: FAIL · page mismatches ${parity.pageMismatch} · item mismatches ${parity.itemMismatch}/${parity.comparedItems}`,
+    parity.detail.slice(0,6).join(' | ')
+  ].filter(Boolean).join('\n');
 }
 
 $('run').addEventListener('click',()=>run().catch(error=>{$('status').textContent='ΣΦΑΛΜΑ: '+(error?.message||error);console.error(error);}));
