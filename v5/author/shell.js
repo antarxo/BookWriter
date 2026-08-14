@@ -20,22 +20,32 @@ function inferredBase(){
   }
   return location.href;
 }
+async function canonicalBookFor(baseHref){
+  try{
+    const url=new URL('book.json',baseHref).href;
+    const response=await fetch(url,{cache:'no-store'});
+    if(!response.ok) return null;
+    return await response.json();
+  }catch(_e){return null;}
+}
 async function capture(){
   const host=previewHost();
   if(!host){setStatus('Δεν υπάρχει ακόμη rendered preview. Άνοιξε βιβλίο στον Author.');return;}
-  if(host.querySelector('[src^="blob:"]')){
-    setStatus('Υπάρχουν blob assets. Δήλωσε Base βιβλίου ώστε το snapshot να μη δεθεί με προσωρινά URLs.');
-  }else setStatus('καταγραφή…');
+  const baseHref=inferredBase();
+  setStatus('καταγραφή…');
   try{
+    const canonicalBook=await canonicalBookFor(baseHref);
     const snapshot=await SnapshotAuthorBridgeV5.capturePreview({
       host,
       cssUrl:'../../core/book-core.css',
-      baseHref:inferredBase(),
+      baseHref,
+      canonicalBook,
       title:frameDocument()?.title||'BookWriter rendered snapshot',
-      meta:{shell:'v5-author',sourceAuthor:'4.5.0-rc1'}
+      meta:{shell:'v5-author',sourceAuthor:'4.5.0-rc1',canonicalBookLoaded:!!canonicalBook}
     });
     RenderSnapshotV5.download(snapshot,'book.rendered.html');
-    setStatus(`${snapshot.meta.pageCount} σελίδες · ${Math.round(snapshot.documentHtml.length/1024)} KB · book.rendered.html`);
+    const assetState=canonicalBook?'canonical assets':'χωρίς canonical asset map';
+    setStatus(`${snapshot.meta.pageCount} σελίδες · ${Math.round(snapshot.documentHtml.length/1024)} KB · ${assetState}`);
   }catch(error){console.error(error);setStatus('ΣΦΑΛΜΑ: '+(error?.message||error));}
 }
 frame.addEventListener('load',()=>setStatus('Author 4.5 έτοιμος · άνοιξε βιβλίο και πάτησε Καταγραφή rendered HTML'));
