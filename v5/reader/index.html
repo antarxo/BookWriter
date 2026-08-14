@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BookWriter v5 Reader</title>
+<style>
+html,body{height:100%;margin:0;font-family:system-ui,sans-serif;background:#20262d;color:#fff}
+body{display:grid;grid-template-rows:auto 1fr;overflow:hidden}
+#bar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#151b21;border-bottom:1px solid #3c4650}
+#bar input{min-width:440px;max-width:55vw;padding:6px}
+#bar button{padding:6px 10px}
+#status{font-size:12px;color:#d7e1ea}
+#bookFrame{width:100%;height:100%;border:0;background:white}
+</style>
+</head>
+<body>
+<div id="bar">
+  <strong>Reader v5</strong>
+  <input id="snapshotUrl" aria-label="snapshot URL" value="../../books/book_new/book.rendered.html">
+  <button id="open" type="button">Άνοιγμα</button>
+  <button id="print" type="button">Εκτύπωση</button>
+  <span id="status">χωρίς snapshot</span>
+</div>
+<iframe id="bookFrame" title="Rendered book snapshot"></iframe>
+<script>
+(function(){
+'use strict';
+const input=document.getElementById('snapshotUrl');
+const frame=document.getElementById('bookFrame');
+const status=document.getElementById('status');
+const params=new URLSearchParams(location.search);
+if(params.get('snapshot')) input.value=params.get('snapshot');
+function openSnapshot(){
+  const raw=input.value.trim();
+  if(!raw){status.textContent='λείπει snapshot URL';return;}
+  try{
+    const url=new URL(raw,location.href).href;
+    frame.src=url;
+    status.textContent='φόρτωση snapshot…';
+  }catch(error){status.textContent='άκυρο URL';}
+}
+frame.addEventListener('load',()=>{
+  try{
+    const doc=frame.contentDocument;
+    const marker=doc?.querySelector('meta[name="bookwriter-snapshot-format"]')?.content||'';
+    const pages=doc?.querySelectorAll('.book-page-root,.sheet-wrap')?.length||0;
+    status.textContent=marker?`${pages} σελίδες · ${marker}`:`φορτώθηκε αρχείο χωρίς snapshot marker`;
+  }catch(_e){status.textContent='snapshot φορτώθηκε';}
+});
+document.getElementById('open').addEventListener('click',openSnapshot);
+document.getElementById('print').addEventListener('click',()=>{
+  try{frame.contentWindow?.focus();frame.contentWindow?.print();}
+  catch(error){status.textContent='αποτυχία εκτύπωσης';}
+});
+openSnapshot();
+})();
+</script>
+</body>
+</html>
