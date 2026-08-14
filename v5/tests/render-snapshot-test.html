@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BookWriter v5 — Render Snapshot Test</title>
+<link rel="stylesheet" href="../../core/book-core.css">
+<style>
+body{margin:0;font:14px system-ui;background:#eceff2;color:#111}
+.toolbar{position:sticky;top:0;z-index:10;display:flex;gap:8px;align-items:center;padding:10px;background:#fff;border-bottom:1px solid #bbb}
+.toolbar input{min-width:420px;padding:6px}
+.toolbar button{padding:6px 10px}
+.status{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;align-items:start}
+.panel{background:#dfe3e7;padding:8px;min-width:0}
+.panel h2{font-size:14px;margin:0 0 8px}
+#sourceHost{min-height:300px}
+#replayFrame{display:block;width:100%;height:1200px;border:0;background:white}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <input id="bookUrl" value="../../books/book_new/book.json" aria-label="book.json URL">
+  <button id="run" type="button">Render → Capture → Replay</button>
+  <button id="save" type="button" disabled>Αποθήκευση snapshot</button>
+  <span id="status" class="status"></span>
+</div>
+<div class="grid">
+  <section class="panel"><h2>Αρχικό BookCore render</h2><div id="sourceHost"></div></section>
+  <section class="panel"><h2>Replay από αποθηκευμένο DOM/CSS</h2><iframe id="replayFrame" title="snapshot replay"></iframe></section>
+</div>
+<script src="../../core/book-core.js"></script>
+<script src="../core/snapshot/render-snapshot.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let lastSnapshot=null;
+
+function resolveBookResource(bookBase,value){
+  const raw=String(value||'').trim();
+  if(!raw) return '';
+  try{return new URL(raw,bookBase).href;}catch(_e){return raw;}
+}
+
+async function loadCss(){
+  const response=await fetch('../../core/book-core.css',{cache:'no-store'});
+  if(!response.ok) throw new Error('book-core.css '+response.status);
+  return await response.text();
+}
+
+async function run(){
+  $('status').textContent='φόρτωση…';
+  $('save').disabled=true;
+  const requested=$('bookUrl').value.trim();
+  const bookHref=new URL(requested,location.href).href;
+  const bookBase=new URL('.',bookHref).href;
+  const response=await fetch(bookHref,{cache:'no-store'});
+  if(!response.ok) throw new Error('book.json '+response.status);
+  const raw=await response.json();
+  const data=BookCore.normalizeData(raw);
+  const sourceHost=$('sourceHost');
+  BookCore.renderPages(sourceHost,data,{
+    lang:data?.meta?.defaultLanguage==='en'?'en':'el',
+    preview:false,
+    imageCandidates:(src)=>[resolveBookResource(bookBase,src)],
+    sceneSource:(src)=>resolveBookResource(bookBase,src)
+  });
+  BookCore.bindCalloutSequences(sourceHost);
+  if(document.fonts?.ready) await document.fonts.ready;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+  const cssText=await loadCss();
+  lastSnapshot=RenderSnapshotV5.capture(sourceHost,{
+    cssText,
+    baseHref:bookBase,
+    title:data?.meta?.title || 'BookWriter rendered snapshot',
+    meta:{sourceBook:bookHref,renderer:`BookCore ${BookCore.VERSION}`}
+  });
+  RenderSnapshotV5.replayDocument($('replayFrame'),lastSnapshot);
+  $('save').disabled=false;
+  $('status').textContent=`${lastSnapshot.meta.pageCount} σελίδες · snapshot ${Math.round(lastSnapshot.documentHtml.length/1024)} KB`;
+}
+
+$('run').addEventListener('click',()=>run().catch(error=>{$('status').textContent='ΣΦΑΛΜΑ: '+(error?.message||error);console.error(error);}));
+$('save').addEventListener('click',()=>{if(lastSnapshot)RenderSnapshotV5.download(lastSnapshot,'book.rendered.html');});
+})();
+</script>
+</body>
+</html>
