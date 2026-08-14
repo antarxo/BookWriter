@@ -1,9 +1,11 @@
 {
-  "version": "5.0-alpha-2",
+  "version": "5.0-alpha-3",
   "type": "architecture checkpoint",
-  "name": "Render Once / Capture / Replay",
+  "name": "Single Render Snapshot Shells",
   "principle": "bookwriter-v4 -> existing BookCore render -> frozen snapshot -> author/reader/print replay",
   "legacy": "BookWriter 4.5 remains untouched",
   "snapshotFormat": "bookwriter-render-snapshot-v1",
-  "status": "first capture/replay proof implemented"
+  "shells": ["author", "reader", "print"],
+  "assetPolicy": "canonical image/scene paths are restored into a cloned rendered DOM before serialization",
+  "status": "three snapshot-only shells implemented; full-book browser validation pending outside container"
 }
