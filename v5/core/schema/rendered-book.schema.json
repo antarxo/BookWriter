@@ -1,0 +1,5 @@
+{
+  "version": "5.0-alpha-1",
+  "type": "RenderedBook",
+  "description": "Canonical rendered representation consumed by all shells"
+}
