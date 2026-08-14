@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BookWriter RenderedBook v5",
+  "type": "object",
+  "required": ["version", "pages"],
+  "properties": {
+    "version": {"const": "rendered-book-v1"},
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "width", "height", "items"],
+        "properties": {
+          "id": {"type": "string"},
+          "width": {"type": "number"},
+          "height": {"type": "number"},
+          "items": {"type": "array"}
+        }
+      }
+    }
+  }
+}
