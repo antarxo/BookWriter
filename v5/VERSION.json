@@ -1,0 +1,8 @@
+{
+  "version": "5.0-alpha-1",
+  "type": "architecture checkpoint",
+  "name": "Single Render Truth",
+  "principle": "one manifest -> one layout engine -> three shells",
+  "legacy": "BookWriter 4.5 remains untouched",
+  "status": "scaffold only"
+}
