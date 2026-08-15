@@ -1,0 +1,123 @@
+/* BookWriter 4.8.7e HF7 - author-only composite layout chrome. */
+.composite-layout-editing .composite-overlay-layer{pointer-events:auto!important}
+.composite-layout-editing .composite-layout-edit-target{
+  pointer-events:auto!important;
+  outline:1px dashed rgba(0,108,190,.9);
+  outline-offset:1px;
+  cursor:move;
+  z-index:20!important;
+}
+.composite-layout-editing .composite-layout-edit-target:focus{
+  outline:2px solid #006cbe;
+}
+.composite-edit-label{
+  position:absolute;
+  left:0;
+  top:-15px;
+  min-width:14px;
+  height:14px;
+  padding:0 3px;
+  box-sizing:border-box;
+  border-radius:2px;
+  background:#006cbe;
+  color:#fff;
+  font:700 9px/14px system-ui,sans-serif;
+  text-align:center;
+  pointer-events:none;
+  z-index:100;
+}
+.composite-edit-handle{
+  position:absolute;
+  width:8px;
+  height:8px;
+  box-sizing:border-box;
+  border:1px solid #fff;
+  background:#006cbe;
+  box-shadow:0 0 0 1px #006cbe;
+  z-index:101;
+}
+.composite-edit-handle.n{left:50%;top:-4px;transform:translateX(-50%);cursor:n-resize}
+.composite-edit-handle.ne{right:-4px;top:-4px;cursor:ne-resize}
+.composite-edit-handle.e{right:-4px;top:50%;transform:translateY(-50%);cursor:e-resize}
+.composite-edit-handle.se{right:-4px;bottom:-4px;cursor:se-resize}
+.composite-edit-handle.s{left:50%;bottom:-4px;transform:translateX(-50%);cursor:s-resize}
+.composite-edit-handle.sw{left:-4px;bottom:-4px;cursor:sw-resize}
+.composite-edit-handle.w{left:-4px;top:50%;transform:translateY(-50%);cursor:w-resize}
+.composite-edit-handle.nw{left:-4px;top:-4px;cursor:nw-resize}
+.selection-overlay.composite-resize-only .position-drag-surface{display:none!important}
+.selection-overlay.composite-resize-only .position-resize-handle.n,
+.selection-overlay.composite-resize-only .position-resize-handle.ne,
+.selection-overlay.composite-resize-only .position-resize-handle.w,
+.selection-overlay.composite-resize-only .position-resize-handle.nw,
+.selection-overlay.composite-resize-only .position-resize-handle.sw{display:none!important}
+@media print{
+  .composite-edit-label,.composite-edit-handle{display:none!important}
+}
+
+/* HF8 author-only chrome: independent base visual and free media over tables. */
+.composite-layout-editing .composite-base-edit-target{
+  outline:1px dashed #8b4bb7;
+  outline-offset:1px;
+  cursor:move;
+  z-index:18!important;
+}
+.composite-layout-editing .composite-base-edit-target:focus{outline:2px solid #8b4bb7}
+.composite-base-label{background:#8b4bb7!important}
+.composite-layout-editing .composite-base-edit-target .composite-edit-handle{background:#8b4bb7;box-shadow:0 0 0 1px #8b4bb7}
+.table-media-layout-editing .table-media-edit-target{
+  outline:1px dashed #c25b00;
+  outline-offset:1px;
+  cursor:move;
+  overflow:visible!important;
+  z-index:30!important;
+}
+.table-media-layout-editing .table-media-edit-target .composite-edit-handle{background:#c25b00;box-shadow:0 0 0 1px #c25b00}
+.table-media-edit-label{background:#c25b00!important}
+@media print{
+  .composite-base-edit-target,.table-media-edit-target{outline:none!important}
+  .table-media-edit-label,.composite-base-label{display:none!important}
+}
+
+/* HF8 refinement: base selection chrome is a separate author-only sibling,
+   so it does not raise the actual graphic above text/equation overlays. */
+.composite-layout-editing .composite-base-author-box{
+  position:absolute;
+  box-sizing:border-box;
+  border:1px dashed #8b4bb7;
+  pointer-events:none;
+  z-index:80;
+  background:transparent;
+}
+.composite-layout-editing .composite-base-author-box .composite-edit-label,
+.composite-layout-editing .composite-base-author-box .composite-edit-handle{pointer-events:auto}
+.composite-layout-editing .composite-base-author-box .composite-edit-handle{background:#8b4bb7;box-shadow:0 0 0 1px #8b4bb7}
+.composite-layout-editing .composite-base-author-box .composite-base-label{cursor:move}
+@media print{.composite-base-author-box{display:none!important}}
+
+
+/* HF9 — direct hit surfaces. Selection geometry is author UI, never document content. */
+.composite-layout-editing .composite-base-hit-surface{
+  position:absolute;
+  box-sizing:border-box;
+  background:transparent;
+  pointer-events:auto;
+  cursor:move;
+  z-index:2;
+}
+.composite-layout-editing .composite-base-author-box{z-index:80;pointer-events:none}
+.composite-layout-editing .composite-base-author-box .composite-edit-label,
+.composite-layout-editing .composite-base-author-box .composite-edit-handle{pointer-events:auto}
+.table-media-layout-editing .table-media-author-box{
+  position:absolute;
+  box-sizing:border-box;
+  border:1px dashed #c25b00;
+  background:transparent;
+  pointer-events:auto;
+  cursor:move;
+  z-index:200;
+}
+.table-media-layout-editing .table-media-author-box .composite-edit-label,
+.table-media-layout-editing .table-media-author-box .composite-edit-handle{pointer-events:auto}
+@media print{
+  .composite-base-hit-surface,.composite-base-author-box,.table-media-author-box{display:none!important}
+}

@@ -1,10 +1,8 @@
 (function(global){
   'use strict';
 
-  const VERSION = '0.3.0-rc1-render-parity';
+  const VERSION = '0.5.1k-hf13-multilevel-list-spanning-table-rows';
   const V4_SCHEMA = 'bookwriter-v4';
-  const LEGACY_SCHEMA = 'pages-v1';
-  const SUPPORTED_SCHEMAS = Object.freeze([LEGACY_SCHEMA,V4_SCHEMA]);
   const DEFAULT_LAYOUT = Object.freeze({
     pageSize:'A4',
     orientation:'portrait',
@@ -16,10 +14,20 @@
     pagePaddingLeftPx:44,
     headerTopPx:20,
     headerHeightPx:16,
+    headerPaddingBottomPx:8,
+    headerBorderWidthPx:1,
+    headerFontSize:0,
+    headerLineHeight:1,
+    headerFontFamily:'sans',
+    headerTextColor:'#7f8890',
     footerBottomPx:18,
     footerHeightPx:16,
-    headerFontSize:0,
+    footerPaddingTopPx:8,
+    footerBorderWidthPx:1,
     footerFontSize:0,
+    footerLineHeight:1,
+    footerFontFamily:'sans',
+    footerTextColor:'#7b8791',
     bodyFontSize:18,
     lineHeight:1.3,
     paragraphGap:6,
@@ -69,9 +77,9 @@
 
   function normalizeData(raw){
     const out = deepClone(raw);
-    const schema = String(out?.schemaVersion || LEGACY_SCHEMA);
-    if(!SUPPORTED_SCHEMAS.includes(schema)) out.schemaVersion = schema;
-    else out.schemaVersion = schema;
+    const schema = String(out?.schemaVersion || '');
+    if(schema !== V4_SCHEMA) throw new Error(`Απαιτείται ${V4_SCHEMA}. Δεν υποστηρίζεται άλλη δομή αρχείου.`);
+    out.schemaVersion = V4_SCHEMA;
     if(!out.meta || typeof out.meta !== 'object') out.meta = {};
     if(!out.layoutDefaults || typeof out.layoutDefaults !== 'object') out.layoutDefaults = {};
     out.layoutDefaults = Object.assign({}, DEFAULT_LAYOUT, out.layoutDefaults);
@@ -80,24 +88,17 @@
     if(out.nav.showApp == null) out.nav.showApp = true;
     if(out.nav.showPrint == null) out.nav.showPrint = true;
     if(!Array.isArray(out.nav.groups)) out.nav.groups = [];
-    if(schema === V4_SCHEMA){
-      if(!out.pageDefaults || typeof out.pageDefaults !== 'object') out.pageDefaults = {};
-      if(!out.pageDefaults.header || typeof out.pageDefaults.header !== 'object') out.pageDefaults.header = {inherit:false,left:'',center:'',right:''};
-      if(!out.pageDefaults.footer || typeof out.pageDefaults.footer !== 'object') out.pageDefaults.footer = {inherit:false,left:'',center:'',right:'{page}'};
-      if(!out.pageDefaults.pageNumbering || typeof out.pageDefaults.pageNumbering !== 'object') out.pageDefaults.pageNumbering = {enabled:true,startAt:1,position:'footer-right',hideOnFirstPage:false};
-    }
+    if(!out.pageDefaults || typeof out.pageDefaults !== 'object') out.pageDefaults = {};
+    if(!out.pageDefaults.header || typeof out.pageDefaults.header !== 'object') out.pageDefaults.header = {inherit:false,left:'',center:'',right:''};
+    if(!out.pageDefaults.footer || typeof out.pageDefaults.footer !== 'object') out.pageDefaults.footer = {inherit:false,left:'',center:'',right:'{page}'};
+    if(!out.pageDefaults.pageNumbering || typeof out.pageDefaults.pageNumbering !== 'object') out.pageDefaults.pageNumbering = {enabled:true,startAt:1,position:'footer-right',hideOnFirstPage:false};
     if(!Array.isArray(out.pages)) out.pages = [];
     out.pages.forEach((page, index)=>{
       if(!page || typeof page !== 'object') out.pages[index] = page = {};
       if(!page.id) page.id = `page-${index+1}`;
-      if(schema === V4_SCHEMA){
-        if(!page.header || typeof page.header !== 'object') page.header = {inherit:true,left:'',center:'',right:''};
-        if(!page.footer || typeof page.footer !== 'object') page.footer = {inherit:true,left:'',center:'',right:''};
-        if(!page.pageNumbering || typeof page.pageNumbering !== 'object') page.pageNumbering = {inherit:true,enabled:true,offset:0,hide:false};
-      }else{
-        if(!page.header || typeof page.header !== 'object') page.header = {left:'',center:'',right:''};
-        if(!page.footer || typeof page.footer !== 'object') page.footer = {left:'',center:'',right:'{page}'};
-      }
+      if(!page.header || typeof page.header !== 'object') page.header = {inherit:true,left:'',center:'',right:''};
+      if(!page.footer || typeof page.footer !== 'object') page.footer = {inherit:true,left:'',center:'',right:''};
+      if(!page.pageNumbering || typeof page.pageNumbering !== 'object') page.pageNumbering = {inherit:true,enabled:true,offset:0,hide:false};
       if(!Array.isArray(page.items)) page.items = [];
     });
     return out;
@@ -110,8 +111,8 @@
       errors.push('Το αρχείο δεν περιέχει αντικείμενο JSON.');
       return {ok:false, errors, warnings, schema:null};
     }
-    const schema = String(raw.schemaVersion || LEGACY_SCHEMA);
-    if(!SUPPORTED_SCHEMAS.includes(schema)) warnings.push(`Άγνωστη έκδοση σχήματος: ${schema}.`);
+    const schema = String(raw.schemaVersion || '');
+    if(schema !== V4_SCHEMA) errors.push(`Απαιτείται ${V4_SCHEMA}. Δεν υποστηρίζεται άλλη δομή αρχείου.`);
     if(!Array.isArray(raw.pages)){
       errors.push('Λείπει ο πίνακας pages.');
       return {ok:false, errors, warnings, schema};
@@ -136,7 +137,7 @@
           if(itemIds.has(item.id)) warnings.push(`Το id στοιχείου επαναλαμβάνεται: ${item.id}.`);
           itemIds.add(item.id);
         }
-        const sceneSrc = schema === V4_SCHEMA ? item.src : item.singleSrc;
+        const sceneSrc = item.src;
         if(item.type === 'scene' && !sceneSrc) warnings.push(`Σκηνή χωρίς URL στη ${pageName}, θέση ${itemIndex+1}.`);
         if(item.type === 'figure' && !item.src) warnings.push(`Εικόνα χωρίς αρχείο στη ${pageName}, θέση ${itemIndex+1}.`);
       });
@@ -509,7 +510,7 @@
         skip.add(calloutIndex);
         return true;
       };
-      for(let itemIndex=0; itemIndex<items.length; itemIndex++){
+    for(let itemIndex=0; itemIndex<items.length; itemIndex++){
         if(skip.has(itemIndex)) continue;
         const item = items[itemIndex];
         const next = items[itemIndex + 1];
@@ -543,7 +544,7 @@
     if(run?.subscript) html = `<sub>${html}</sub>`;
     const styles=[];
     if(run?.color) styles.push(`color:${String(run.color)}`);
-    if(run?.highlight) styles.push(`background-color:${String(run.highlight)}`);
+    if(run?.highlight) styles.push(`background-color:${String(run.highlight)}`);if(run?.fontFamily)styles.push(`font-family:${String(run.fontFamily)}`);if(Number(run?.fontSizePx)>0)styles.push(`font-size:${Number(run.fontSizePx)}px`);
     if(styles.length) html = `<span style="${escapeHtml(styles.join(';'))}">${html}</span>`;
     return html;
   }
@@ -574,7 +575,7 @@
   function itemLayout(item){
     const layout = item?.layout && typeof item.layout === 'object' ? item.layout : {};
     const media=item?.type==='figure'||item?.type==='scene';
-    const placement=String(layout.placement ?? item?.placement ?? (media?'float-right':'wide'));
+    const placement=String(layout.placement ?? item?.placement ?? (media?'float-right':'block'));
     return {
       placement,
       widthPx:layout.widthPx ?? item?.frameWidth,
@@ -592,9 +593,6 @@
 
   function itemBodyHtml(item, options={}){
     if(!item || typeof item !== 'object') return '';
-    if(typeof item.html === 'string') return item.html;
-    const preferRich = item?.provenance?.contentEdited === true || item?.extensions?.preferRichText === true;
-    if(!preferRich && typeof item.legacySourceHtml === 'string') return item.legacySourceHtml;
     const html = richTextToHtml(item.body);
     return html || (options.preview ? '<em>(κενό)</em>' : '');
   }
@@ -607,15 +605,6 @@
 
   function resolvePageFrame(data,page,pageIndex=0){
     const count = Array.isArray(data?.pages) ? data.pages.length : 1;
-    if(!isV4Data(data)){
-      return {
-        header:{left:getLoc(page?.header,'left',''),center:getLoc(page?.header,'center',''),right:getLoc(page?.header,'right','')},
-        footer:{left:getLoc(page?.footer,'left',''),center:getLoc(page?.footer,'center',''),right:getLoc(page?.footer,'right','{page}')},
-        pageNumber:pageIndex+1,
-        pageCount:count,
-        numberingEnabled:data?.layoutDefaults?.showPageNumbers !== false
-      };
-    }
     const defaults=data?.pageDefaults || {};
     const baseNumbering=defaults.pageNumbering || {};
     const own=page?.pageNumbering || {};
@@ -741,7 +730,9 @@
       ['--sheet-pad-top','pagePaddingTopPx'],['--sheet-pad-right','pagePaddingRightPx'],
       ['--sheet-pad-bottom','pagePaddingBottomPx'],['--sheet-pad-left','pagePaddingLeftPx'],
       ['--header-top','headerTopPx'],['--header-h','headerHeightPx'],
+      ['--header-pad-bottom','headerPaddingBottomPx'],['--header-border-width','headerBorderWidthPx'],
       ['--footer-bottom','footerBottomPx'],['--footer-h','footerHeightPx'],
+      ['--footer-pad-top','footerPaddingTopPx'],['--footer-border-width','footerBorderWidthPx'],
       ['--header-font-size','headerFontSize'],['--footer-font-size','footerFontSize'],
       ['--body-font-size','bodyFontSize'],['--para-gap','paragraphGap'],
       ['--section-gap','sectionGap'],['--note-gap','noteGap'],['--callout-gap','calloutGap'],
@@ -756,6 +747,12 @@
     ].forEach(([name,key])=>px(name,key));
     raw('--body-leading','lineHeight');
     raw('--note-line-height','noteLineHeight');
+    raw('--header-line-height','headerLineHeight');
+    raw('--footer-line-height','footerLineHeight');
+    raw('--header-text-color','headerTextColor');
+    raw('--footer-text-color','footerTextColor');
+    element.style.setProperty('--header-font-family', fontValue(defs.headerFontFamily, FONT_PRESETS.sans));
+    element.style.setProperty('--footer-font-family', fontValue(defs.footerFontFamily, FONT_PRESETS.sans));
     element.style.setProperty('--body-font-family', fontValue(defs.bodyFontFamily, FONT_PRESETS.serif));
     element.style.setProperty('--heading-font-family', fontValue(defs.headingFontFamily, FONT_PRESETS.serif));
     element.style.setProperty('--hero-title-font-family', fontValue(defs.heroTitleFontFamily || defs.headingFontFamily, FONT_PRESETS.serif));
@@ -770,6 +767,7 @@
     if(!layout.wrap&&(placement==='right'||placement==='float-right'))return'no-wrap-right';
     if(placement === 'left' || placement === 'float-left') return 'float-left';
     if(placement === 'right' || placement === 'float-right') return 'float-right';
+    if(placement === 'block' || placement === 'inline') return 'block-media';
     return 'wide';
   }
 
@@ -901,11 +899,113 @@
     return node;
   }
 
+  function positioningRenderMode(contract,item={}){
+    if(!contract||typeof contract!=='object')return'';
+    const explicit=String(contract.renderMode||contract.behavior||'').toLowerCase();
+    if(['exact','flow-wrap','flow-block'].includes(explicit))return explicit;
+    const mode=String(contract.mode||'page-absolute');
+    const wrap=String(contract.wrap?.type||'wrapNone');
+    if(contract.stacking?.behindDoc||mode==='page-absolute')return'exact';
+    if(mode!=='paragraph-anchored')return'';
+    if(['wrapSquare','wrapTight','wrapThrough'].includes(wrap))return'flow-wrap';
+    if(wrap==='wrapTopAndBottom')return'flow-block';
+    return'exact';
+  }
+
+  function applyPositioningContract(node,item,ctx={}){
+    const contract=item?.extensions?.positioningContract;
+    if(!node||!contract)return node;
+    const mode=String(contract.mode||'page-absolute');
+    if(!['page-absolute','paragraph-anchored'].includes(mode))return node;
+    const renderMode=positioningRenderMode(contract,item);
+    const layout=Object.assign({},DEFAULT_LAYOUT,ctx.layout||{});
+    const x=Number(contract.xPx ?? contract.horizontal?.offsetPx);
+    const y=Number(contract.yPx ?? contract.vertical?.offsetPx);
+    const width=Number(contract.widthPx ?? item?.layout?.widthPx);
+    const height=Number(contract.heightPx ?? item?.layout?.heightPx);
+    const wrap=contract.wrap||{};
+    node.dataset.positioningMode=mode;
+    node.dataset.positioningRenderMode=renderMode;
+    if(mode==='paragraph-anchored')node.dataset.positionAnchorItem=String(contract.anchor?.itemId||'');
+    if(Number.isFinite(width)&&width>0)node.style.width=`${width}px`;
+    if(Number.isFinite(height)&&height>0&&item?.type!=='figure'){node.style.height=`${height}px`;node.style.minHeight='0'}else if(Number.isFinite(height)&&height>0&&item?.type==='figure'){node.dataset.wordDisplayHeight=String(height)}
+
+    if(renderMode==='flow-wrap'){
+      node.classList.add('flow-positioned-item','flow-wrap-item');
+      node.classList.remove('positioned-item');
+      node.style.position='relative';node.style.left='';node.style.top='';node.style.zIndex='';node.style.clear='none';
+      const placement=String(item?.layout?.placement||'').toLowerCase();
+      const side=placement.includes('left')?'left':placement.includes('right')?'right':(Number.isFinite(x)&&x>Number(layout.pageWidthPx||793)/2?'right':'left');
+      node.style.float=side;
+      const top=Math.max(0,Number(wrap.distTopPx)||0),right=Math.max(0,Number(wrap.distRightPx)||0),bottom=Math.max(0,Number(wrap.distBottomPx)||0),left=Math.max(0,Number(wrap.distLeftPx)||0);
+      node.style.margin=`${top}px ${right}px ${bottom}px ${left}px`;
+      node.dataset.wrapSide=side;
+      return node;
+    }
+    if(renderMode==='flow-block'){
+      node.classList.add('flow-positioned-item','flow-block-item');
+      node.classList.remove('positioned-item');
+      node.style.position='relative';node.style.left='';node.style.top='';node.style.zIndex='';node.style.float='none';node.style.clear='both';
+      const top=Math.max(0,Number(wrap.distTopPx)||0),right=Math.max(0,Number(wrap.distRightPx)||0),bottom=Math.max(0,Number(wrap.distBottomPx)||0),left=Math.max(0,Number(wrap.distLeftPx)||0);
+      node.style.margin=`${top}px ${right}px ${bottom}px ${left}px`;
+      return node;
+    }
+
+    node.classList.add('positioned-item');
+    node.classList.remove('flow-positioned-item','flow-wrap-item','flow-block-item');
+    node.style.position='absolute';node.style.float='none';node.style.clear='none';node.style.margin='0';
+    if(mode==='page-absolute'){
+      if(Number.isFinite(x))node.style.left=`${x-Number(layout.pagePaddingLeftPx||0)}px`;
+      if(Number.isFinite(y))node.style.top=`${y-Number(layout.pagePaddingTopPx||0)}px`;
+    }else{
+      if(Number.isFinite(x))node.dataset.positionOffsetX=String(x);
+      if(Number.isFinite(y))node.dataset.positionOffsetY=String(y);
+      node.style.left='0px';node.style.top='0px';
+    }
+    const stacking=contract.stacking||{};
+    const rawZ=Number(stacking.relativeHeight||0);
+    node.style.zIndex=stacking.behindDoc?'-1':String(Math.max(1,Math.min(9999,1+Math.round(rawZ/1000000))));
+    return node;
+  }
+
+  function offsetWithin(node,ancestor){
+    let x=0,y=0,current=node;
+    while(current&&current!==ancestor){x+=Number(current.offsetLeft||0);y+=Number(current.offsetTop||0);current=current.offsetParent;}
+    return{x,y,ok:current===ancestor};
+  }
+
+  function resolvePositionedAnchors(root,page,layoutInput={}){
+    if(!root||!page)return{resolved:0,unresolved:0};
+    const body=root.querySelector?.('.sheet-body');if(!body)return{resolved:0,unresolved:0};
+    const layout=Object.assign({},DEFAULT_LAYOUT,layoutInput||{});let resolved=0,unresolved=0;
+    for(const item of page.items||[]){
+      const contract=item?.extensions?.positioningContract;
+      if(!contract||String(contract.mode||'')!=='paragraph-anchored'||positioningRenderMode(contract,item)!=='exact'||!item.id)continue;
+      const node=body.querySelector(`[data-book-item-id="${CSS.escape(String(item.id))}"]`);
+      const anchorId=String(contract.anchor?.itemId||'');
+      const anchor=anchorId?body.querySelector(`[data-book-item-id="${CSS.escape(anchorId)}"]`):null;
+      if(!node||!anchor){if(node)node.dataset.positionAnchorUnresolved='1';unresolved++;continue;}
+      const pos=offsetWithin(anchor,body);if(!pos.ok){node.dataset.positionAnchorUnresolved='1';unresolved++;continue;}
+      const dx=Number(contract.xPx ?? contract.horizontal?.offsetPx ?? 0)||0;
+      const dy=Number(contract.yPx ?? contract.vertical?.offsetPx ?? 0)||0;
+      const hRel=String(contract.horizontal?.relativeFrom||contract.xAnchor||'paragraph').toLowerCase();
+      const vRel=String(contract.vertical?.relativeFrom||contract.yAnchor||'paragraph').toLowerCase();
+      const hParagraph=['paragraph','character','line','text'].includes(hRel),vParagraph=['paragraph','character','line','text'].includes(vRel);
+      const left=hParagraph?pos.x+dx:(hRel==='page'?dx-Number(layout.pagePaddingLeftPx||0):dx);
+      const top=vParagraph?pos.y+dy:(vRel==='page'?dy-Number(layout.pagePaddingTopPx||0):dy);
+      node.style.left=`${left}px`;node.style.top=`${top}px`;
+      node.dataset.positionResolvedHorizontal=hRel;node.dataset.positionResolvedVertical=vRel;
+      delete node.dataset.positionAnchorUnresolved;resolved++;
+    }
+    return{resolved,unresolved};
+  }
+
   function addAnchor(node, item, ctx, lang){
     if(!node) return node;
     if(!visibleInMode(item,'screen')) node.dataset.screenHidden = '1';
     if(!visibleInMode(item,'print')) node.dataset.printHidden = '1';
     applyItemLayout(node,item);
+    applyPositioningContract(node,item,ctx);
     if(!ctx || !isStructuralNavItem(item)) return node;
     const id = itemAnchorId(ctx.page, ctx.pageIndex, item, ctx.itemIndex, lang);
     if(id){ node.dataset.navTargetId = id; if(!node.id) node.id = id; }
@@ -923,6 +1023,72 @@
     anchor.dataset.anchorFor = item.type || 'item';
     anchor.setAttribute('aria-hidden','true');
     return anchor;
+  }
+
+  function compositeFigureData(item){
+    const data=item?.extensions?.compositeFigure;
+    return data&&typeof data==='object'&&Array.isArray(data.overlays)?data:null;
+  }
+
+  function compositeBaseGeometry(composite){
+    const raw=composite?.baseGeometry||{},num=(v,d)=>Number.isFinite(Number(v))?Number(v):d;
+    return{x:num(raw.x,0),y:num(raw.y,0),width:Math.max(.005,num(raw.width,1)),height:Math.max(.005,num(raw.height,1)),lockAspect:raw.lockAspect!==false};
+  }
+  function applyCompositeBaseGeometry(node,composite){
+    if(!node||!composite)return node;const g=compositeBaseGeometry(composite);
+    node.style.left=`${g.x*100}%`;node.style.top=`${g.y*100}%`;node.style.width=`${g.width*100}%`;node.style.height=`${g.height*100}%`;
+    node.dataset.compositeBaseVisual='1';node.dataset.compositeBaseLockAspect=g.lockAspect?'1':'0';return node;
+  }
+
+  // HF7: equation content is document content only. Editor chrome/form controls are illegal
+  // inside a rendered book page and are stripped instead of being allowed to leak into preview/print.
+  function sanitizeEquationMarkup(markup=''){
+    const template=document.createElement('template');
+    template.innerHTML=String(markup||'');
+    const forbidden=[...template.content.querySelectorAll('input,button,select,textarea,option,datalist,[contenteditable]')];
+    let stripped=0;
+    for(const node of forbidden){
+      if(node.matches?.('[contenteditable]')&&!node.matches?.('input,button,select,textarea,option,datalist')){node.removeAttribute('contenteditable');stripped++;continue;}
+      node.remove();stripped++;
+    }
+    return{html:template.innerHTML,stripped};
+  }
+
+  function appendCompositeOverlays(frame,item,options={}){
+    const composite=compositeFigureData(item);if(!composite)return 0;
+    const layer=document.createElement('div');layer.className='composite-overlay-layer';layer.dataset.compositeId=String(composite.id||'');
+    let count=0;
+    for(const [index,overlay] of composite.overlays.entries()){
+      if(overlay?.visible===false)continue;const type=String(overlay?.type||''),g=overlay.geometry||{},clamp=(v,min=0,max=1)=>Math.max(min,Math.min(max,Number(v)||0));
+      const node=document.createElement('div');node.className=`composite-overlay ${type==='text'?'composite-text-overlay':'composite-equation-overlay'}`;node.dataset.compositeOverlayId=String(overlay.id||(`${type||'overlay'}-`+(index+1)));node.dataset.compositeOverlayIndex=String(index);node.dataset.compositeOverlayType=type;
+      node.style.left=`${clamp(g.x)*100}%`;node.style.top=`${clamp(g.y)*100}%`;node.style.width=`${clamp(g.width,.001)*100}%`;node.style.height=`${clamp(g.height,.001)*100}%`;
+      if(type==='equation'){
+        if(!String(overlay?.mathml||'').trim())continue;const immutableBase=composite.immutableBase!==false;if(immutableBase||composite.backgroundClean!==true)node.style.background=String(overlay.mask?.fallbackColor||'#FFFFFF');if(Number(overlay.fontSizePx)>0)node.style.fontSize=`${Number(overlay.fontSizePx)}px`;const safe=sanitizeEquationMarkup(overlay.mathml||'');node.innerHTML=safe.html;if(safe.stripped){node.dataset.illegalEditorChromeStripped=String(safe.stripped);console.warn('HF7 stripped illegal editor controls from composite equation',overlay.id||index,safe.stripped);}if(options.preview===true)node.title=String(overlay.plainText||'Επεξεργάσιμη εξίσωση σύνθετου σχήματος');
+      }else if(type==='text'){
+        const content=document.createElement('div');content.className='composite-text-content';content.innerHTML=richTextToHtml(overlay.body);node.appendChild(content);applyCanonicalStyle(node,overlay.style||{});if(options.preview===true)node.title=String(overlay.plainText||'Επεξεργάσιμο κείμενο σύνθετου σχήματος');
+      }else continue;
+      layer.appendChild(node);count++;
+    }
+    if(count)frame.appendChild(layer);return count;
+  }
+
+  function appendTableMediaEquations(frame,media,options={}){
+    const equations=Array.isArray(media?.equations)?media.equations:[];if(!equations.length)return 0;
+    const layer=document.createElement('div');layer.className='composite-overlay-layer table-media-equation-layer';layer.dataset.compositeId=String(media?.sourceCompositeId||'');
+    let count=0;
+    for(const [index,equation] of equations.entries()){
+      if(equation?.visible===false||(!String(equation?.mathml||'').trim()&&!String(equation?.source||'').trim()))continue;
+      const g=equation.geometry||{},clamp=(v,min=0,max=1)=>Math.max(min,Math.min(max,Number(v)||0));
+      const node=document.createElement('div');node.className='composite-overlay composite-equation-overlay standalone-table-media-equation';node.dataset.tableMediaEquationId=String(equation.id||('eq-'+(index+1)));node.dataset.tableMediaEquationIndex=String(index);
+      node.style.left=`${clamp(g.x)*100}%`;node.style.top=`${clamp(g.y)*100}%`;node.style.width=`${clamp(g.width,.001)*100}%`;node.style.height=`${clamp(g.height,.001)*100}%`;
+      if(media?.immutableBase!==false||media?.backgroundClean!==true)node.style.background=String(equation.mask?.fallbackColor||'#FFFFFF');
+      if(Number(equation.style?.fontSizePx)>0)node.style.fontSize=`${Number(equation.style.fontSizePx)}px`;
+      const safe=sanitizeEquationMarkup(equation.mathml||escapeHtml(equation.source||''));node.innerHTML=safe.html;if(safe.stripped){node.dataset.illegalEditorChromeStripped=String(safe.stripped);console.warn('HF7 stripped illegal editor controls from table equation',equation.id||index,safe.stripped);}
+      if(options.preview===true)node.title=String(equation.plainText||'Αυτόνομη επεξεργάσιμη εξίσωση μέσα σε πίνακα');
+      layer.appendChild(node);count++;
+    }
+    if(count)frame.appendChild(layer);
+    return count;
   }
 
   function renderItem(item, context={}, options={}){
@@ -986,16 +1152,22 @@
       }
       case 'figure': {
         node = document.createElement('figure');
-        node.className = `media ${placementClass(item)}`;
-        if(layout.widthPx) node.style.setProperty('--figure-width',`${Number(layout.widthPx)}px`);
+        const composite = compositeFigureData(item);
+        const imageTruth=item?.extensions?.imageGeometryTruth&&typeof item.extensions.imageGeometryTruth==='object'?item.extensions.imageGeometryTruth:null;const nativeVector=!!(composite?.nativeVector||imageTruth?.nativeVector);
+        node.className = `media ${placementClass(item)}${imageTruth?' docx-image-truth':''}${composite?' composite-media immutable-composite':''}${nativeVector?' docx-native-vector':''}`;
+        if(layout.widthPx){node.style.setProperty('--figure-width',`${Number(layout.widthPx)}px`);if(imageTruth)node.style.setProperty('--word-display-width',`${Number(layout.widthPx)}px`);}
+        if(imageTruth&&layout.heightPx)node.style.setProperty('--word-display-height',`${Number(layout.heightPx)}px`);
+        if(imageTruth){node.dataset.imageGeometrySource=String(imageTruth.geometrySource||'missing');node.dataset.imageGeometryConflict=imageTruth.geometryConflict?'1':'0';node.dataset.imageCropActive=imageTruth.cropActive?'1':'0';}
         const frame = document.createElement('div');
-        const aspect = mediaAspect(item,'figure');
-        frame.className = `media-frame ${aspect ? '' : 'natural'}`.trim();
-        if(aspect) frame.style.aspectRatio = String(aspect);
+        const aspect = imageTruth?null:mediaAspect(item,'figure');
+        frame.className = `media-frame ${aspect ? '' : 'natural'}${imageTruth?' docx-image-truth-frame':''}${composite?' composite-frame immutable-composite-frame':''}`.trim();
+        if(imageTruth&&Number(layout.widthPx)>0&&Number(layout.heightPx)>0){frame.style.width='100%';frame.style.height=`${Number(layout.heightPx)}px`;frame.style.aspectRatio='auto';}if(nativeVector){const e=composite?.effectExtentPx||imageTruth?.effectExtentPx||{};frame.style.setProperty('--effect-left',`${Math.max(0,Number(e.left)||0)}px`);frame.style.setProperty('--effect-top',`${Math.max(0,Number(e.top)||0)}px`);frame.style.setProperty('--effect-right',`${Math.max(0,Number(e.right)||0)}px`);frame.style.setProperty('--effect-bottom',`${Math.max(0,Number(e.bottom)||0)}px`);}
+        else if(aspect) frame.style.aspectRatio = String(aspect);else if(composite&&Number(layout.widthPx)>0&&Number(layout.heightPx)>0)frame.style.aspectRatio=`${Number(layout.widthPx)}/${Number(layout.heightPx)}`;
         const candidates = (options.imageCandidates || defaultImageCandidates)(item.src || '',item);
         if(candidates.length){
           const image = document.createElement('img');
           image.alt = text('alt') || text('title') || (lang === 'en' ? 'Figure' : 'Εικόνα');
+          if(imageTruth){image.className='docx-image-truth-img';image.dataset.wordDisplayWidth=String(Number(layout.widthPx)||'');image.dataset.wordDisplayHeight=String(Number(layout.heightPx)||'');}
           applyImageCandidates(image,candidates,()=>{
             image.remove();
             const placeholder = document.createElement('div');
@@ -1003,13 +1175,14 @@
             placeholder.textContent = lang === 'en' ? 'Image file not found.' : 'Το αρχείο εικόνας δεν βρέθηκε.';
             frame.appendChild(placeholder);
           });
-          frame.appendChild(image);
+          if(composite){const baseVisual=document.createElement('div');baseVisual.className='composite-base-visual';applyCompositeBaseGeometry(baseVisual,composite);baseVisual.appendChild(image);frame.appendChild(baseVisual);}else frame.appendChild(image);
         }else{
           const placeholder = document.createElement('div');
           placeholder.className = 'media-placeholder';
           placeholder.textContent = lang === 'en' ? 'No image source.' : 'Δεν έχει οριστεί αρχείο εικόνας.';
           frame.appendChild(placeholder);
         }
+        appendCompositeOverlays(frame,item,options);
         node.appendChild(frame);
         if(!item.hideCaption){
           const caption = document.createElement('figcaption');
@@ -1134,21 +1307,106 @@
       }
       case 'list': {
         node=document.createElement(item.ordered?'ol':'ul');
-        node.className='book-list';
+        const docxParagraph=!!item?.extensions?.docxListParagraph;
+        node.className=`book-list${docxParagraph?' docx-list-paragraph':''}`;
         if(item.ordered && Number.isFinite(Number(item.start))) node.start=Number(item.start);
         applyCanonicalStyle(node,item.style);
-        (item.items||[]).forEach(entry=>{const li=document.createElement('li');li.innerHTML=richTextToHtml(entry?.body);if(item.ordered&&Number.isFinite(Number(entry?.value)))li.value=Number(entry.value);if(Number(entry?.level)>0)li.style.marginLeft=`${Number(entry.level)*1.25}em`;applyCanonicalStyle(li,entry?.style);node.appendChild(li);});
+        (item.items||[]).forEach(entry=>{
+          const li=document.createElement('li'),marker=String(entry?.marker??item?.extensions?.docxVisibleListMarker??item?.extensions?.docxListString??'');
+          if(docxParagraph&&marker){
+            node.style.listStyle='none';li.style.listStyle='none';li.classList.add('docx-list-entry');
+            const markerNode=document.createElement('span');markerNode.className='docx-list-marker';markerNode.setAttribute('aria-hidden','true');markerNode.textContent=marker;if(String(entry?.markerFontFamily||item?.extensions?.docxListMarkerFontFamily||'').trim())markerNode.style.fontFamily=String(entry?.markerFontFamily||item?.extensions?.docxListMarkerFontFamily);
+            const content=document.createElement('span');content.className='docx-list-content';content.innerHTML=richTextToHtml(entry?.body);li.append(markerNode,content);
+          }else{
+            li.innerHTML=richTextToHtml(entry?.body);if(item.ordered&&Number.isFinite(Number(entry?.value)))li.value=Number(entry.value);
+          }
+          if(Number(entry?.level)>0)li.style.marginLeft=`${Number(entry.level)*1.25}em`;applyCanonicalStyle(li,entry?.style);node.appendChild(li);
+        });
         break;
       }
       case 'table': {
         node=document.createElement('table');
-        node.className='book-table';
+        const floatingTable=String(item?.style?.layoutMode||'').toLowerCase()==='floating-around'||String(item?.extensions?.positioningContract?.renderMode||'').toLowerCase()==='flow-wrap';
+        node.className=`book-table ${floatingTable?'native-floating-table':'native-flow-table'}`;
+        node.dataset.tableLayoutMode=floatingTable?'floating-around':'flow';
         applyCanonicalStyle(node,item.style);
         const widths=Array.isArray(item?.style?.columnWidthsPx)?item.style.columnWidthsPx:[];
         if(widths.length){const colgroup=document.createElement('colgroup');const total=widths.reduce((a,v)=>a+(Number(v)||0),0)||1;widths.forEach(value=>{const col=document.createElement('col');col.style.width=`${((Number(value)||0)/total)*100}%`;colgroup.appendChild(col)});node.appendChild(colgroup);}
         const tbody=document.createElement('tbody');
-        (item.rows||[]).forEach((row,rowIndex)=>{const tr=document.createElement('tr');if(rowIndex<Number(item?.style?.headerRows||0))tr.dataset.tableHeader='1';(row.cells||[]).forEach(cell=>{const td=document.createElement('td');if(Number(cell.colspan)>1)td.colSpan=Number(cell.colspan);if(Number(cell.rowspan)>1)td.rowSpan=Number(cell.rowspan);td.innerHTML=richTextToHtml(cell.body);applyCellStyle(td,cell.style);tr.appendChild(td);});tbody.appendChild(tr);});
+        (item.rows||[]).forEach((row,rowIndex)=>{
+          const tr=document.createElement('tr');if(rowIndex<Number(item?.style?.headerRows||0))tr.dataset.tableHeader='1';
+          (row.cells||[]).forEach((cell,cellIndex)=>{
+            const td=document.createElement('td');td.dataset.tableRowIndex=String(rowIndex);td.dataset.tableCellIndex=String(cellIndex);if(Number(cell.colspan)>1)td.colSpan=Number(cell.colspan);if(Number(cell.rowspan)>1)td.rowSpan=Number(cell.rowspan);
+            const renderedMedia=new Set();
+            const buildMedia=(media,mediaIndex)=>{
+              const wrap=document.createElement('span');const compositeMedia=Boolean((Array.isArray(media?.equations)&&media.equations.length)||media?.compositeFigure||media?.sourceCompositeId);const tableImageTruth=media?.imageGeometryTruth&&typeof media.imageGeometryTruth==='object'?media.imageGeometryTruth:null,free=media?.tableOverlay?.enabled===true;
+              wrap.className=`table-cell-media${tableImageTruth?' docx-image-truth-cell':''}${compositeMedia?' composite-table-media':''}${free?' table-free-overlay':''}`;wrap.dataset.tableMediaIndex=String(mediaIndex);wrap.dataset.tableMediaRow=String(rowIndex);wrap.dataset.tableMediaCell=String(cellIndex);
+              if(Number(media.widthPx)>0){wrap.style.width=`${Number(media.widthPx)}px`;if(tableImageTruth)wrap.style.setProperty('--word-display-width',`${Number(media.widthPx)}px`);}if(Number(media.heightPx)>0){wrap.style.height=`${Number(media.heightPx)}px`;if(tableImageTruth)wrap.style.setProperty('--word-display-height',`${Number(media.heightPx)}px`);}
+              if(free){const overlayZ=Math.max(1,Number(media.tableOverlay?.zIndex)||5);wrap.style.left=`${Number(media.tableOverlay?.xPx)||0}px`;wrap.style.top=`${Number(media.tableOverlay?.yPx)||0}px`;wrap.style.zIndex=String(overlayZ);wrap.dataset.tableFreeOverlay='1';td.classList.add('has-free-table-overlay');td.style.zIndex=String(Math.max(Number(td.style.zIndex)||0,overlayZ));}
+              if(tableImageTruth){wrap.dataset.imageGeometrySource=String(tableImageTruth.geometrySource||'missing');wrap.dataset.imageGeometryConflict=tableImageTruth.geometryConflict?'1':'0';wrap.dataset.imageCropActive=tableImageTruth.cropActive?'1':'0';}
+              if(media.compositeFigure?.nativeVector){wrap.classList.add('docx-native-vector-table');const e=media.compositeFigure?.effectExtentPx||tableImageTruth?.effectExtentPx||{};wrap.style.setProperty('--effect-left',`${Math.max(0,Number(e.left)||0)}px`);wrap.style.setProperty('--effect-top',`${Math.max(0,Number(e.top)||0)}px`);wrap.style.setProperty('--effect-right',`${Math.max(0,Number(e.right)||0)}px`);wrap.style.setProperty('--effect-bottom',`${Math.max(0,Number(e.bottom)||0)}px`);}
+              const candidates=(options.imageCandidates||defaultImageCandidates)(media.src||'',media);if(candidates.length){const image=document.createElement('img');image.alt=String(media.alt||'Σχήμα πίνακα');if(tableImageTruth)image.className='docx-image-truth-img';applyImageCandidates(image,candidates,()=>{image.remove();wrap.classList.add('missing')});if(media.compositeFigure){const baseVisual=document.createElement('div');baseVisual.className='composite-base-visual';applyCompositeBaseGeometry(baseVisual,media.compositeFigure);baseVisual.appendChild(image);wrap.appendChild(baseVisual);}else wrap.appendChild(image);}
+              if(media.compositeFigure)appendCompositeOverlays(wrap,{extensions:{compositeFigure:media.compositeFigure}},options);else if(Array.isArray(media.equations)&&media.equations.length)appendTableMediaEquations(wrap,media,options);
+              renderedMedia.add(mediaIndex);return wrap;
+            };
+            const flow=Array.isArray(cell.inlineMediaFlow)?cell.inlineMediaFlow:[];
+            const paragraphFlow=flow.some(token=>token?.type==='paragraph');
+            const hasFlowMedia=flow.some(token=>token?.type==='media'||token?.type==='paragraph'&&(token.tokens||[]).some(part=>part?.type==='media'));
+            if(hasFlowMedia){
+              td.classList.add('has-inline-media-flow');
+              if(paragraphFlow){
+                for(const token of flow){
+                  if(token?.type!=='paragraph')continue;
+                  const para=document.createElement('div');para.className='table-cell-paragraph-flow';para.dataset.tableCellParagraph=String(Number(token.paragraphIndex)||0);applyCanonicalStyle(para,token.style);
+                  for(const part of token.tokens||[]){
+                    if(part?.type==='html'){const span=document.createElement('span');span.className='table-cell-flow-text';span.innerHTML=richTextToHtml(part.body);para.appendChild(span);continue}
+                    if(part?.type!=='media')continue;
+                    const index=Number(part.mediaIndex),media=cell.media?.[index];if(!media)continue;
+                    const overlay=media.tableOverlay||{},space=String(overlay.coordinateSpace||'');
+                    if(overlay.enabled===true){
+                      if(space==='cell-paragraph'&&(!Number(overlay.paragraphIndex)||Number(overlay.paragraphIndex)===Number(token.paragraphIndex)))para.appendChild(buildMedia(media,index));
+                      // Other absolute coordinate systems remain unresolved here
+                      // and are appended against the cell in the fallback pass.
+                    }else para.appendChild(buildMedia(media,index));
+                  }
+                  td.appendChild(para);
+                }
+              }else{
+                for(const token of flow){
+                  if(token?.type==='html'){const span=document.createElement('span');span.className='table-cell-flow-text';span.innerHTML=richTextToHtml(token.body);td.appendChild(span);}
+                  else if(token?.type==='media'){const index=Number(token.mediaIndex),media=cell.media?.[index];if(media&&!media?.tableOverlay?.enabled)td.appendChild(buildMedia(media,index));}
+                }
+              }
+            }else td.innerHTML=richTextToHtml(cell.body);
+            for(const [mediaIndex,media] of (cell.media||[]).entries())if(!renderedMedia.has(mediaIndex))td.appendChild(buildMedia(media,mediaIndex));
+            applyCellStyle(td,cell.style);tr.appendChild(td);
+          });tbody.appendChild(tr);
+        });
         node.appendChild(tbody);
+        break;
+      }
+      case 'columns': {
+        node=document.createElement('section');
+        node.className=`book-columns${item?.extensions?.docxSourceColumns?' docx-source-columns':''}`;
+        applyCanonicalStyle(node,item.style);
+        const regions=Array.isArray(item.regions)?item.regions.filter(region=>Array.isArray(region?.items)&&region.items.length):[];
+        const equalSourceColumns=!!item?.extensions?.docxEqualColumns;
+        if(equalSourceColumns&&regions.length)node.style.gridTemplateColumns=`repeat(${regions.length},minmax(0,1fr))`;
+        else{const widths=regions.map(region=>region.widthPx?cssLength(region.widthPx):'minmax(0,1fr)');if(widths.length)node.style.gridTemplateColumns=widths.join(' ');}
+        if(item?.style?.columnGapPx!==undefined)node.style.gap=cssLength(item.style.columnGapPx);
+        regions.forEach((region,regionIndex)=>{
+          const col=document.createElement('div');
+          col.className=`book-column book-column-${escapeHtml(region.role||`col-${regionIndex+1}`)}`;
+          if(region.widthPx&&!equalSourceColumns)col.style.width=cssLength(region.widthPx);
+          (region.items||[]).forEach((child,childIndex)=>{
+            const childNode=renderItem(child,{page:context?.page,pageIndex:context?.pageIndex,itemIndex:childIndex},options);
+            if(child?.id)childNode.dataset.bookItemId=String(child.id);
+            childNode.dataset.bookItemType=String(child?.type||'unknown');
+            childNode.dataset.bookColumnRole=String(region.role||'');
+            col.appendChild(childNode);
+          });
+          node.appendChild(col);
+        });
         break;
       }
       case 'nav_anchor': {
@@ -1205,8 +1463,8 @@
       pair.dataset.sequencePair = pairMode;
       applySequencePairWidth(pair, scene);
 
-      const calloutContext = {page,pageIndex,itemIndex:calloutIndex};
-      const sceneContext = {page,pageIndex,itemIndex:sceneIndex};
+      const calloutContext = {page,pageIndex,itemIndex:calloutIndex,layout};
+      const sceneContext = {page,pageIndex,itemIndex:sceneIndex,layout};
       const calloutNode = renderItem(callout,calloutContext,options);
       if(callout?.id) calloutNode.dataset.bookItemId = String(callout.id);
       calloutNode.dataset.bookItemType = String(callout?.type || 'unknown');
@@ -1248,7 +1506,7 @@
         itemIndex++;
         continue;
       }
-      const context = {page,pageIndex,itemIndex};
+      const context = {page,pageIndex,itemIndex,layout};
       const node = renderItem(item,context,options);
       if(item?.id) node.dataset.bookItemId = String(item.id);
       node.dataset.bookItemType = String(item?.type || 'unknown');
@@ -1272,7 +1530,7 @@
   function renderPages(host, data, options={}){
     host.innerHTML = '';
     const pages = Array.isArray(data?.pages) ? data.pages : [];
-    pages.forEach((page,index)=>host.appendChild(renderPageNode(data,page,index,options)));
+    pages.forEach((page,index)=>{const node=renderPageNode(data,page,index,options);host.appendChild(node);resolvePositionedAnchors(node,page,data?.layoutDefaults||{});});
     return pages.length;
   }
 
@@ -1375,14 +1633,13 @@
 
   function auditData(data){
     const validation=validateData(data);
-    const stats={schema:String(data?.schemaVersion||LEGACY_SCHEMA),pages:0,items:0,figures:0,figuresWithCaptions:0,figuresWithAssets:0,scenes:0,scenesWithSources:0,legacyHtmlBlocks:0,richTextBlocks:0,layoutItems:0};
+    const stats={schema:String(data?.schemaVersion||''),pages:0,items:0,figures:0,figuresWithCaptions:0,figuresWithAssets:0,docxImageTruthFigures:0,imageGeometryConflicts:0,imageCropActive:0,imageMissingDisplayExtent:0,scenes:0,scenesWithSources:0,richTextBlocks:0,layoutItems:0};
     const warnings=[...validation.warnings];
     (data?.pages||[]).forEach((page,pageIndex)=>{
       stats.pages++;
       (page.items||[]).forEach((item,itemIndex)=>{
         stats.items++;
         if(['paragraph','note','side_note'].includes(item.type)){
-          if(typeof item.legacySourceHtml==='string'||typeof item.html==='string') stats.legacyHtmlBlocks++;
           if(item.body?.format==='rich-text-v1') stats.richTextBlocks++;
         }
         if(item.layout) stats.layoutItems++;
@@ -1390,6 +1647,7 @@
           stats.figures++;
           if(String(item.caption||item.title||'').trim()) stats.figuresWithCaptions++;
           if(String(item.src||'').trim()) stats.figuresWithAssets++;
+          const truth=item?.extensions?.imageGeometryTruth;if(truth&&typeof truth==='object'){stats.docxImageTruthFigures++;if(truth.geometryConflict)stats.imageGeometryConflicts++;if(truth.cropActive)stats.imageCropActive++;if(!(Number(item?.layout?.widthPx)>0&&Number(item?.layout?.heightPx)>0)){stats.imageMissingDisplayExtent++;warnings.push(`Σελίδα ${pageIndex+1}, figure ${itemIndex+1}: λείπει Word display extent.`);}}
           if(!String(item.src||'').trim()) warnings.push(`Σελίδα ${pageIndex+1}, figure ${itemIndex+1}: λείπει src.`);
         }
         if(item.type==='scene'){
@@ -1406,8 +1664,6 @@
   global.BookCore = Object.freeze({
     VERSION,
     V4_SCHEMA,
-    LEGACY_SCHEMA,
-    SUPPORTED_SCHEMAS,
     DEFAULT_LAYOUT,
     TEXT_KEYS,
     normalizeData,
@@ -1432,6 +1688,8 @@
     renderItem,
     renderPageNode,
     renderPages,
+    positioningRenderMode,
+    resolvePositionedAnchors,
     sequenceSceneUrl,
     expandScreenSequences,
     expandPrintSequences,

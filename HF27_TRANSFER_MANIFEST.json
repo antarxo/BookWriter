@@ -1,0 +1,98 @@
+﻿{
+    "package":  "HF27_ENGINE_FOR_V5",
+    "sourceRoot":  "C:\\BookWriter_Studio_4_8_7\\BookWriter",
+    "createdAt":  "2026-08-15T15:44:07+03:00",
+    "purpose":  "Golden BookWriter Studio 4.8.7e HF27 author/core runtime for v5-clean.",
+    "files":  [
+                  {
+                      "path":  "author\\index.html",
+                      "bytes":  39223,
+                      "sha256":  "F205740D7E9F9CDF5BB5124B15FDA81D9FD55B50219C7F1109235CBD764F9430",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "author\\workspace.js",
+                      "bytes":  352656,
+                      "sha256":  "7BADB527F8040C289590DFE4B815E76FF1B1341F1156B8D63EF4A79A2A0C230F",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "author\\workspace.css",
+                      "bytes":  47471,
+                      "sha256":  "83D271372E0B9BF23177B47B62305B8FF5649567F7B3D5C10104A179D8C11083",
+                      "lastWriteTime":  "2026-08-06T03:21:41"
+                  },
+                  {
+                      "path":  "author\\workspace-hf9.css",
+                      "bytes":  4935,
+                      "sha256":  "189B3B6346697CB3BE4B863ED4728941EB02A002FEBBEAB8FA185833B9E3A13A",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "author\\labs-splitters.css",
+                      "bytes":  7118,
+                      "sha256":  "BA3F096DB2504BB79F47C7C6C1E1F092CE608F9D7C3F5E1D334772099D0BB63C",
+                      "lastWriteTime":  "2026-08-06T03:21:41"
+                  },
+                  {
+                      "path":  "core\\book-core.js",
+                      "bytes":  95517,
+                      "sha256":  "FD126B5DE678B61DF20E834A5A878B8A307136DB1BC14FC6B466266A2FE8E599",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "core\\book-core.css",
+                      "bytes":  37028,
+                      "sha256":  "8D1944E131597327BD4FC4C4EE81FDFE746A648BC4C7987D19C29B707C39972B",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "core\\vendor\\jszip.min.js",
+                      "bytes":  97630,
+                      "sha256":  "ACC7E41455A80765B5FD9C7EE1B8078A6D160BBBCA455AEAE854DE65C947D59E",
+                      "lastWriteTime":  "2026-08-06T03:21:42"
+                  },
+                  {
+                      "path":  "core\\v4\\book-model-v4.js",
+                      "bytes":  27588,
+                      "sha256":  "44B47EF1571F36A2F1D4EF4DD97E47CEFF1F501F73BCFD3C5F7168F53D3A7210",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "core\\v4\\math-expression-v4.js",
+                      "bytes":  10833,
+                      "sha256":  "F6935D264597C17B135F7D05F7D05282B7E692CB3CB3FAEB045C186ADBABC6BE",
+                      "lastWriteTime":  "2026-08-06T03:21:42"
+                  },
+                  {
+                      "path":  "core\\v4\\book-commands-v4.js",
+                      "bytes":  10575,
+                      "sha256":  "6BC6E2B89984D3F9A1811CEFE5832F45FF35F287321A9EC0927F58B0B326384C",
+                      "lastWriteTime":  "2026-08-06T03:21:42"
+                  },
+                  {
+                      "path":  "core\\v4\\book-service-v4.js",
+                      "bytes":  3345,
+                      "sha256":  "41CBE5E8990D1BE3BD738F21AB5726A897D2DC1CE712EF9F8CAE80A176BEAC16",
+                      "lastWriteTime":  "2026-08-06T03:21:42"
+                  },
+                  {
+                      "path":  "core\\v4\\docx-core-v4.js",
+                      "bytes":  178668,
+                      "sha256":  "CA8857E18A40DC5F4E1868DD90CEFE917868724213FB5F8624E8E1CE00545551",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  },
+                  {
+                      "path":  "core\\v4\\web-core-v4.js",
+                      "bytes":  10066,
+                      "sha256":  "1DFDAE53A900870BF773D820D4E84CAF5697100D7A525448C034CE35ADF993AD",
+                      "lastWriteTime":  "2026-08-06T03:21:42"
+                  },
+                  {
+                      "path":  "core\\v4\\pagination-core-v4.js",
+                      "bytes":  23150,
+                      "sha256":  "56506B7240B302D946954D0E0495731F907E2159811881DC0080E6ACAC4B7E6E",
+                      "lastWriteTime":  "2026-08-14T17:55:43"
+                  }
+              ]
+}

@@ -1,3 +1,35 @@
+
+/* 4.8.7e HF17 — Word script typography + mixed native group truth.
+   Chromium defaults leave Word superscripts/subscripts visibly too large.
+   Keep the source run size as the parent size and scale/shift only the script glyph. */
+.book-page-root sup,
+.book-page-root sub{
+  font-size:.60em;
+  line-height:0;
+  position:relative;
+  vertical-align:baseline
+}
+.book-page-root sup{top:-.56em}
+.book-page-root sub{bottom:-.23em}
+/* OMML→MathML already applies script-level reduction; tighten it one step so
+   chemistry/oxidation-number scripts match the visibly smaller Word scripts. */
+.book-page-root math msup > :nth-child(2),
+.book-page-root math msub > :nth-child(2),
+.book-page-root math msubsup > :nth-child(2),
+.book-page-root math msubsup > :nth-child(3){font-size:.78em}
+
+/* HF14: one real block child inside a flex-positioned composite text box.
+   Without this wrapper each strong/span/br became an independent flex item and
+   Word text was flattened horizontally across the diagram. */
+.book-page-root .composite-text-content{
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal
+}
 .book-page-root{
   --paper:#fffdf9;
   --ink:#1d2730;
@@ -22,10 +54,20 @@
   --callout-gap:7px;
   --header-top:20px;
   --header-h:16px;
+  --header-pad-bottom:8px;
+  --header-border-width:1px;
+  --header-font-size:0px;
+  --header-line-height:1;
+  --header-font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --header-text-color:#7f8890;
   --footer-bottom:18px;
   --footer-h:16px;
-  --header-font-size:0px;
+  --footer-pad-top:8px;
+  --footer-border-width:1px;
   --footer-font-size:0px;
+  --footer-line-height:1;
+  --footer-font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --footer-text-color:#7b8791;
   --body-font-family:Georgia,"Noto Serif",serif;
   --heading-font-family:Georgia,"Noto Serif",serif;
   --hero-eyebrow-font-size:13px;
@@ -82,24 +124,25 @@
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   align-items:center;
-  color:#7b8791;
+  color:var(--header-text-color);
   text-transform:none;
 }
 .book-page-root .sheet-header{
   top:var(--header-top);
   height:var(--header-h);
-  border-bottom:1px solid rgba(0,0,0,.08);
-  padding-bottom:8px;
-  font:700 var(--header-font-size)/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  border-bottom:var(--header-border-width) solid rgba(0,0,0,.08);
+  padding-bottom:var(--header-pad-bottom);
+  font:700 var(--header-font-size)/var(--header-line-height) var(--header-font-family);
   letter-spacing:.04em;
-  color:#7f8890;
+  color:var(--header-text-color);
 }
 .book-page-root .sheet-footer{
   bottom:var(--footer-bottom);
   height:var(--footer-h);
-  padding-top:8px;
-  border-top:1px solid rgba(0,0,0,.08);
-  font:600 var(--footer-font-size)/1 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  padding-top:var(--footer-pad-top);
+  border-top:var(--footer-border-width) solid rgba(0,0,0,.08);
+  font:600 var(--footer-font-size)/var(--footer-line-height) var(--footer-font-family);
+  color:var(--footer-text-color);
 }
 .book-page-root .sheet-header .c,
 .book-page-root .sheet-footer .c{text-align:center}
@@ -107,7 +150,8 @@
 .book-page-root .sheet-footer .r{text-align:right}
 .book-page-root .sheet-header.hidden,
 .book-page-root .sheet-footer.hidden{display:none}
-.book-page-root .sheet-body{display:flow-root}
+.book-page-root .sheet-body{display:flow-root;position:relative;min-height:calc(var(--sheet-height) - var(--sheet-pad-top) - var(--sheet-pad-bottom))}
+.book-page-root .positioned-item{box-sizing:border-box;max-width:none!important}
 .book-page-root .hero{margin:0 0 var(--section-gap)}
 .book-page-root .eyebrow{
   margin:0 0 10px;
@@ -218,6 +262,57 @@
 .book-page-root .print-scene-snapshot{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 .book-page-root .media-frame img{object-fit:cover}
 .book-page-root .media-frame.natural img{position:static;inset:auto;width:100%;height:auto;object-fit:contain}
+
+/* 4.8.7e HF3 — Word composite media are transparent drawing surfaces, not cards. */
+.book-page-root figure.media.composite-media{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  overflow:visible
+}
+.book-page-root figure.media.composite-media .media-frame.composite-frame{
+  background:transparent;
+  overflow:visible
+}
+.book-page-root figure.media.composite-media .media-frame.composite-frame img{
+  object-fit:contain
+}
+.book-page-root .table-cell-media.composite-table-media{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  overflow:visible
+}
+
+
+.book-page-root figure.media.immutable-composite{
+  contain:none;
+  break-inside:avoid;
+  page-break-inside:avoid
+}
+.book-page-root .immutable-composite-frame{
+  position:relative;
+  isolation:isolate;
+  line-height:0
+}
+.book-page-root .immutable-composite-frame > img{
+  display:block;
+  width:100%;
+  height:auto
+}
+.book-page-root .immutable-composite-frame .composite-overlay-layer{line-height:normal}
+
+.book-page-root .composite-overlay-layer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:visible}
+.book-page-root .composite-overlay{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:visible;color:#000;line-height:1;transform-origin:center center}
+.book-page-root .composite-equation-overlay math{display:block;max-width:100%;max-height:100%;font-size:inherit}
+.book-page-root .composite-equation-overlay .math-display{display:block!important;overflow:visible!important;max-width:none!important;margin:0!important;scrollbar-width:none!important}
+.book-page-root .composite-equation-overlay .math-display::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+.book-page-root .composite-equation-overlay mtext{font-family:Cambria Math,STIX Two Math,serif}
+/* HF7 document invariant: authoring controls never belong to page content. */
+.book-page-root .composite-equation-overlay input,
+.book-page-root .composite-equation-overlay button,
+.book-page-root .composite-equation-overlay select,
+.book-page-root .composite-equation-overlay textarea{display:none!important}
 .book-page-root .media-placeholder{
   display:grid;
   place-items:center;
@@ -402,6 +497,60 @@
 .book-page-root .sequence-wrap-right > figure.media{float:right;margin:4px 0 10px 18px}
 .book-page-root .sequence-wrap-left > figure.media{float:left;margin:4px 18px 10px 0}
 .book-page-root .clear{clear:both}
+.book-page-root .book-columns{
+  clear:both;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:12px;
+  margin:0 0 var(--section-gap);
+  align-items:start
+}
+.book-page-root .book-column{
+  min-width:0;
+  display:flow-root
+}
+.book-page-root .book-column > .side-note,
+.book-page-root .book-column > figure.media{
+  float:none!important;
+  clear:none!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0 0 8px!important
+}
+.book-page-root .book-column > .note{
+  margin:0 0 8px
+}
+.book-page-root .book-column > .paragraph{
+  margin-bottom:var(--para-gap)
+}
+.book-page-root .book-columns.docx-source-columns{
+  margin-bottom:8px
+}
+.book-page-root .book-columns.docx-source-columns .book-column > .note{
+  border-radius:4px;
+  padding:5px 6px;
+  margin:0 0 6px;
+  background:#fffdfa;
+  border-color:#d8a64a;
+  font-size:var(--note-font-size);
+  line-height:1.32
+}
+.book-page-root .book-columns.docx-source-columns .book-column > figure.media{
+  width:min(var(--figure-width,100%),100%)!important;
+  margin:0 auto 8px!important;
+  border-radius:4px;
+  border-color:#d9e0e5;
+  background:#fff;
+  overflow:visible
+}
+.book-page-root .book-columns.docx-source-columns .book-column > figure.media .media-frame{
+  background:#fff
+}
+.book-page-root .book-columns.docx-source-columns .book-column > figure.media figcaption{
+  padding:5px 7px 7px;
+  font-size:calc(var(--caption-font-size) * .92);
+  line-height:1.32
+}
 .book-page-root .nav-anchor{display:block;position:relative;height:0;overflow:hidden;scroll-margin-top:120px}
 .book-page-root .nav-anchor-preview{display:block;padding:6px 8px;border:1px dashed #94a3b8;color:#64748b;font:600 11px/1.3 system-ui}
 .book-page-root .item-highlight{outline:3px solid #f97316;outline-offset:3px}
@@ -464,7 +613,9 @@
 
 @media print{
   .book-page-root{
+    box-sizing:border-box!important;
     width:var(--sheet-width)!important;
+    height:var(--sheet-height)!important;
     min-height:var(--sheet-height)!important;
     page-break-after:always;
     break-after:page;
@@ -480,7 +631,8 @@
     position:relative!important;
     left:auto!important;
     top:auto!important;
-    border:1px solid transparent!important;
+    box-sizing:border-box!important;
+    border:0!important;
     box-shadow:none!important;
     overflow:hidden!important
   }
@@ -500,6 +652,11 @@
 .book-page-root .equation-number{position:absolute;right:0;top:50%;transform:translateY(-50%);font-family:var(--body-font-family);font-size:.85em}
 .book-page-root .equation-caption{margin-top:4px;font-family:var(--body-font-family);font-size:var(--caption-font-size);color:#66727d}
 .book-page-root .book-list{margin:var(--para-gap) 0;padding-left:1.5em}
+.book-page-root .book-list.docx-list-paragraph{margin:0;padding-left:1.5em}
+.book-page-root .book-list.docx-list-paragraph li{margin:0}
+.book-page-root .book-list.docx-list-paragraph .docx-list-entry{position:relative;list-style:none}
+.book-page-root .book-list.docx-list-paragraph .docx-list-marker{position:absolute;right:calc(100% + .42em);top:0;white-space:pre;line-height:inherit;text-align:right}
+.book-page-root .book-list.docx-list-paragraph .docx-list-content{display:inline}
 .book-page-root .book-list li{margin:.2em 0}
 .book-page-root .book-table{
   width:100%;
@@ -509,6 +666,23 @@
   margin:var(--section-gap) 0;
   font-size:.92em;
   box-sizing:border-box
+}
+.book-page-root .book-table.native-flow-table{
+  float:none;
+  clear:both
+}
+.book-page-root .book-table.native-floating-table,
+.book-page-root .book-table.flow-wrap-item{
+  width:auto;
+  max-width:100%;
+  margin-top:0;
+  margin-bottom:0;
+  clear:none
+}
+.book-page-root .book-table.native-floating-table td,
+.book-page-root .book-table.native-floating-table th{
+  overflow-wrap:normal;
+  word-break:normal
 }
 .book-page-root .book-table td,.book-page-root .book-table th{
   min-width:0;
@@ -582,4 +756,211 @@
 @media print{
   .book-page-root .callout-step-arrow{display:none}
   .book-page-root .callout-sequence-head{grid-template-columns:1fr}
+}
+
+.book-page-root figure.media.block-media{clear:both;width:min(var(--figure-width,var(--shape-width)),100%);max-width:100%;margin:8px auto 12px}
+
+/* 4.8.4: flow blocks with Word indents must shrink inside the active body, not keep a 100% width plus margins. */
+.book-page-root .sheet-body > .paragraph,
+.book-page-root .sheet-body > .display-equation,
+.book-page-root .sheet-body > .section-heading,
+.book-page-root .sheet-body > .part-head,
+.book-page-root .sheet-body > .book-list,
+.book-page-root .sheet-body > .note{width:auto;min-width:0;}
+.book-page-root .book-columns.docx-source-columns{width:auto;max-width:100%;grid-auto-flow:column;}
+.book-page-root .book-columns.docx-source-columns > .book-column{width:auto!important;min-width:0;max-width:100%;}
+.book-page-root .book-columns.docx-source-columns .paragraph,
+.book-page-root .book-columns.docx-source-columns .display-equation,
+.book-page-root .book-columns.docx-source-columns .section-heading,
+.book-page-root .book-columns.docx-source-columns .book-list{width:auto!important;min-width:0;max-width:100%;}
+
+/* 4.8.7d — native Word compound pictures retained inside table cells. */
+.book-page-root .table-cell-media{
+  position:relative;
+  display:inline-block;
+  max-width:100%;
+  vertical-align:middle;
+  line-height:0;
+  margin:2px 3px;
+}
+.book-page-root .table-cell-media > img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  object-fit:contain;
+}
+.book-page-root .table-cell-media.missing{
+  min-width:24px;
+  min-height:18px;
+  outline:1px dashed #b45;
+}
+
+@media print{
+  .book-page-root .sheet-inner{box-sizing:border-box!important}
+  .book-page-root figure.media.immutable-composite,
+  .book-page-root figure.media.immutable-composite .immutable-composite-frame{break-inside:avoid!important;page-break-inside:avoid!important}
+}
+
+/* 4.8.7e HF5 — IMAGE GEOMETRY TRUTH PROBE.
+   DOCX image instances use the Word display box exactly. No responsive max-width,
+   no 42% float cap, no natural-height substitution, no decorative card geometry. */
+.book-page-root figure.media.docx-image-truth{
+  box-sizing:border-box!important;
+  width:var(--word-display-width)!important;
+  min-width:0!important;
+  max-width:none!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:visible!important;
+}
+.book-page-root figure.media.docx-image-truth .media-frame.docx-image-truth-frame{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:var(--word-display-height)!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  background:transparent!important;
+  overflow:hidden!important;
+}
+.book-page-root figure.media.docx-image-truth .media-frame.docx-image-truth-frame > img.docx-image-truth-img{
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:fill!important;
+}
+.book-page-root .table-cell-media.docx-image-truth-cell{
+  box-sizing:border-box!important;
+  display:inline-block!important;
+  width:var(--word-display-width)!important;
+  height:var(--word-display-height)!important;
+  max-width:none!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.book-page-root .table-cell-media.docx-image-truth-cell > img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:fill!important;
+}
+
+
+/* 4.8.7e HF6 — native DrawingML vector composites. No raster fallback. */
+.book-page-root figure.media.docx-native-vector .media-frame.docx-image-truth-frame{
+  overflow:visible!important;
+  isolation:isolate;
+}
+.book-page-root figure.media.docx-native-vector .media-frame.docx-image-truth-frame > img.docx-image-truth-img{
+  left:calc(-1 * var(--effect-left,0px))!important;
+  top:calc(-1 * var(--effect-top,0px))!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:calc(100% + var(--effect-left,0px) + var(--effect-right,0px))!important;
+  height:calc(100% + var(--effect-top,0px) + var(--effect-bottom,0px))!important;
+  object-fit:fill!important;
+}
+.book-page-root .composite-text-overlay{
+  align-items:flex-start;
+  justify-content:flex-start;
+  white-space:normal;
+  line-height:normal;
+  background:transparent!important;
+}
+.book-page-root .composite-text-overlay > div{width:100%;margin:0;padding:0}
+.book-page-root .docx-native-vector .composite-overlay-layer{z-index:4}
+.book-page-root .docx-native-vector .composite-overlay{pointer-events:auto}
+/* HF6 truth rule: effectExtent must be allowed to paint outside the Word layout box.
+   The legacy immutable-composite paint containment would clip exactly the strokes/
+   arrowheads/effects that wp:effectExtent says are visually outside wp:extent. */
+.book-page-root figure.media.docx-native-vector.immutable-composite{
+  contain:none!important;
+  overflow:visible!important;
+}
+
+/* 4.8.7e HF8 — editable composite base visual + free table overlays.
+   The base visual is a real child of the composite, independent from text/math overlays. */
+.book-page-root .composite-base-visual{
+  position:absolute;
+  box-sizing:border-box;
+  transform-origin:0 0;
+  overflow:visible;
+  z-index:1;
+  line-height:0;
+}
+.book-page-root .composite-base-visual > img{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:fill;
+}
+.book-page-root figure.media.docx-native-vector .media-frame.docx-image-truth-frame > .composite-base-visual > img.docx-image-truth-img{
+  left:calc(-1 * var(--effect-left,0px))!important;
+  top:calc(-1 * var(--effect-top,0px))!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:calc(100% + var(--effect-left,0px) + var(--effect-right,0px))!important;
+  height:calc(100% + var(--effect-top,0px) + var(--effect-bottom,0px))!important;
+  object-fit:fill!important;
+}
+.book-page-root .book-table td,
+.book-page-root .book-table th{
+  position:relative;
+  overflow:visible;
+}
+.book-page-root .table-cell-media.table-free-overlay{
+  position:absolute!important;
+  display:block!important;
+  margin:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  overflow:visible!important;
+  pointer-events:auto;
+}
+.book-page-root .table-cell-media.table-free-overlay > img,
+.book-page-root .table-cell-media.table-free-overlay > .composite-base-visual{
+  max-width:none!important;
+}
+.book-page-root .table-cell-media.docx-native-vector-table > .composite-base-visual > img.docx-image-truth-img{
+  left:calc(-1 * var(--effect-left,0px))!important;
+  top:calc(-1 * var(--effect-top,0px))!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:calc(100% + var(--effect-left,0px) + var(--effect-right,0px))!important;
+  height:calc(100% + var(--effect-top,0px) + var(--effect-bottom,0px))!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:fill!important;
+}
+.book-page-root .book-table td.has-free-table-overlay,
+.book-page-root .book-table th.has-free-table-overlay{overflow:visible!important}
+
+/* 4.8.7e HF18 — preserve Word inline media order inside table cells. */
+.book-page-root .book-table td.has-inline-media-flow .table-cell-flow-text{display:inline;}
+.book-page-root .book-table td.has-inline-media-flow .table-cell-media:not(.table-free-overlay){vertical-align:middle;}
+
+/* 4.8.7e HF19 — Word anchor coordinate truth inside table cells.
+   Paragraph-relative anchors are positioned against their owning Word paragraph,
+   not against the full td. Unresolved page/margin/line coordinate systems are
+   kept in source metadata and fall back conservatively. */
+.book-page-root .book-table .table-cell-paragraph-flow{
+  position:relative;
+  display:block;
+  min-width:0;
+}
+.book-page-root .book-table .table-cell-paragraph-flow > .table-cell-media.table-free-overlay{
+  position:absolute!important;
 }

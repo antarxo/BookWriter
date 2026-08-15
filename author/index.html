@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter v4.5.0 RC1</title>
-<link rel="stylesheet" href="../core/book-core.css?v=20260802-extras-items-1">
-<link rel="stylesheet" href="workspace.css?v=20260802-extras-items-1">
+<title>ΣΥΓΓΡΑΦΕΑΣ — BookWriter Studio 4.8.7e</title>
+<link rel="stylesheet" href="../core/book-core.css?v=20260814-hf27-font-style-theme-truth">
+<link rel="stylesheet" href="workspace.css?v=20260805-composite-math-page-1">
+<link rel="stylesheet" href="workspace-hf9.css?v=20260814-hf27-font-style-theme-truth">
 <link rel="stylesheet" href="labs-splitters.css?v=20260731-scene-previewer-splitters-1">
+<style>.runtime-build-identity.build-mismatch{font-weight:800;outline:3px solid currentColor;padding:3px 7px;}</style>
 </head>
 <body>
 <svg class="bw-icon-sprite" aria-hidden="true" focusable="false">
@@ -59,9 +61,6 @@
   <symbol id="bw-i-new-page" viewBox="0 0 24 24">
     <path d="M6 4.5h8l4 4v11H6zM14 4.5v4h4M12 11v5M9.5 13.5h5"/>
   </symbol>
-  <symbol id="bw-i-migrate" viewBox="0 0 24 24">
-    <path d="M5 8h13M15 5l3 3-3 3M19 16H6M9 13l-3 3 3 3"/>
-  </symbol>
 </svg>
 <div id="app" class="app-shell">
   <header class="titlebar">
@@ -69,6 +68,7 @@
     <strong>ΣΥΓΓΡΑΦΕΑΣ</strong>
     <span id="windowBookTitle" class="window-book-title">Χωρίς ανοιχτό βιβλίο</span>
     <span id="windowViewTitle" class="window-view-title">Αρχική</span>
+    <span id="runtimeBuildIdentity" class="runtime-build-identity" title="">BW-STUDIO-20260814-FONT-STYLE-THEME-TRUTH-HF27</span>
   </header>
 
   <nav class="menubar" aria-label="Κεντρικό μενού">
@@ -147,8 +147,7 @@
 
     <div class="menu"><button class="menu-button">Εργαλεία</button><div class="menu-popup">
       <button class="menu-command" data-command="audit"><span>✓</span><span>Έλεγχος IDs, συνδέσμων και renderer</span><kbd></kbd></button>
-      <button class="menu-command" data-command="reflow"><span>↯</span><span>Canonical reflow και νέα σελιδοποίηση</span><kbd></kbd></button>
-      <button class="menu-command" data-command="selftest"><span>⚒</span><span>Transaction self-test</span><kbd></kbd></button>
+<button class="menu-command" data-command="selftest"><span>⚒</span><span>Transaction self-test</span><kbd></kbd></button>
       <div class="menu-separator"></div>
       <button class="menu-command" data-command="docx-audit"><span class="bw-icon bw-icon-word" aria-hidden="true"></span><span>Έλεγχος πληρότητας DOCX</span><kbd></kbd></button>
       <button class="menu-command" data-command="clean-assets"><span>⌫</span><span>Καθαρισμός μη χρησιμοποιούμενων assets</span><kbd></kbd></button>
@@ -311,6 +310,7 @@
             <label>Βάθος Περιεχομένων<select id="docxTocDepth"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
           </div>
           <label class="check-row"><input id="docxPreserveColors" type="checkbox" checked> Διατήρηση φόντων/στοίχισης επικεφαλίδων</label>
+          <label>Αναλογική κλίμακα γραμματοσειρών εισαγωγής (%)<input id="docxTypographyScale" type="number" min="60" max="180" step="1" value="100"></label>
           <div id="docxMetrics" class="docx-metrics"></div>
           <div id="docxSummary" class="info-card">Άνοιξε DOCX και επίλεξε το τμήμα που θα αποτελέσει το νέο βιβλίο.</div>
           <button id="docxCreateButton" class="primary-action" disabled>Δημιουργία και άμεσο άνοιγμα</button>
@@ -351,7 +351,7 @@
 
       <section class="insert-document source-document">
         <div class="document-head">
-          <span id="insertSourceTitle">Πηγή Word / Ιστοσελίδα</span>
+          <span id="insertSourceTitle">Πηγή canonical Word / Ιστοσελίδα</span>
           <span id="insertDocxFileCaption" class="muted">Δεν έχει ανοιχτεί πηγή</span>
           <button id="insertDocxOpenButton" type="button" class="primary-action">Άνοιγμα DOCX…</button>
           <button id="insertWebUrlButton" type="button">URL ιστοσελίδας…</button>
@@ -418,19 +418,30 @@
   </footer>
 </div>
 
-<div id="selectionOverlay" class="selection-overlay hidden"><span id="selectionOverlayLabel"></span></div>
+<div id="selectionOverlay" class="selection-overlay hidden" aria-hidden="true">
+  <span id="selectionOverlayLabel"></span>
+  <div class="position-drag-surface" title="Σύρε για μετακίνηση"></div>
+  <i class="position-resize-handle n" data-position-resize="n"></i>
+  <i class="position-resize-handle ne" data-position-resize="ne"></i>
+  <i class="position-resize-handle e" data-position-resize="e"></i>
+  <i class="position-resize-handle se" data-position-resize="se"></i>
+  <i class="position-resize-handle s" data-position-resize="s"></i>
+  <i class="position-resize-handle sw" data-position-resize="sw"></i>
+  <i class="position-resize-handle w" data-position-resize="w"></i>
+  <i class="position-resize-handle nw" data-position-resize="nw"></i>
+</div>
 <div id="modalBackdrop" class="modal-backdrop hidden"><div class="modal-dialog" role="dialog" aria-modal="true"><div id="modalTitle" class="modal-title"></div><div id="modalBody" class="modal-body"></div><div id="modalButtons" class="modal-buttons"></div></div></div>
 
-<script src="../core/book-core.js?v=20260802-extras-items-1"></script>
+<script src="../core/book-core.js?v=20260814-hf27-font-style-theme-truth"></script>
 <script src="../core/vendor/jszip.min.js"></script>
-<script src="../core/v4/book-model-v4.js?v=20260802-extras-items-1"></script>
+<script src="../core/v4/book-model-v4.js?v=20260814-hf27-font-style-theme-truth"></script>
 <script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
 <script src="../core/v4/book-commands-v4.js"></script>
 <script src="../core/v4/book-service-v4.js"></script>
-<script src="../core/v4/docx-core-v4.js?v=20260802-web-import-1"></script>
+<script src="../core/v4/docx-core-v4.js?v=20260814-hf27-font-style-theme-truth"></script>
 <script src="../core/v4/web-core-v4.js?v=20260802-web-import-1"></script>
-<script src="../core/v4/pagination-core-v4.js?v=20260802-extras-items-1"></script>
-<script src="workspace.js?v=20260802-web-import-1"></script>
+<script src="../core/v4/pagination-core-v4.js?v=20260814-hf27-font-style-theme-truth"></script>
+<script src="workspace.js?v=20260814-hf27-font-style-theme-truth"></script>
 </body>
 </html>
 
