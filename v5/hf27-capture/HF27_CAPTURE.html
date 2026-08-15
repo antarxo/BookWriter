@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BookWriter v5 — HF27 Capture</title>
+<style>
+html,body{margin:0;height:100%;font:14px system-ui;background:#eef1f4;color:#18212a}
+body{display:grid;grid-template-rows:auto 1fr}
+.bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#fff;border-bottom:1px solid #bbb;flex-wrap:wrap}
+.bar button{padding:7px 10px}.status{font:12px ui-monospace,Consolas,monospace;white-space:pre-wrap}
+iframe{width:100%;height:100%;border:0;background:#fff}
+</style>
+</head>
+<body>
+<div class="bar">
+  <strong>HF27 Author capture</strong>
+  <button id="capture" type="button">Καταγραφή τελικού HF27 DOM</button>
+  <span id="status" class="status">Άνοιξε το book_new μέσα στον Author που εμφανίζεται από κάτω.</span>
+</div>
+<iframe id="authorFrame" src="../../author/index.html" title="HF27 Author"></iframe>
+<script>
+(function(){
+'use strict';
+const FORMAT='bookwriter-render-snapshot-v1';
+const $=id=>document.getElementById(id);
+const frame=$('authorFrame');
+const status=$('status');
+
+function esc(value){return String(value??'').replace(/[&<>\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));}
+function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(r.error||new Error('FileReader error'));r.readAsDataURL(blob);});}
+async function inlineBlobImages(liveRoot,cloneRoot){
+  const live=[...liveRoot.querySelectorAll('img')],clones=[...cloneRoot.querySelectorAll('img')];
+  let inlined=0,failed=0;
+  for(let i=0;i<Math.min(live.length,clones.length);i++){
+    const src=live[i].currentSrc||live[i].src||live[i].getAttribute('src')||'';
+    if(!/^blob:/i.test(src))continue;
+    try{const response=await fetch(src);if(!response.ok)throw new Error(String(response.status));clones[i].setAttribute('src',await blobToDataUrl(await response.blob()));inlined++;}
+    catch(_e){failed++;}
+  }
+  return{inlined,failed};
+}
+function cleanAuthorChrome(root){
+  root.querySelectorAll('.render-overflow-marker,.composite-edit-label,.composite-edit-handle,.composite-base-author-box,.composite-base-hit-surface,.table-media-author-box').forEach(n=>n.remove());
+  root.querySelectorAll('.selected-preview-item,.selected-preview-page,.preview-overflow-page,.preview-hit-target,.composite-layout-editing,.table-media-layout-editing').forEach(n=>{
+    n.classList.remove('selected-preview-item','selected-preview-page','preview-overflow-page','preview-hit-target','composite-layout-editing','table-media-layout-editing');
+  });
+  root.querySelectorAll('[data-preview-item],[data-preview-page],[data-overflow-px]').forEach(n=>{delete n.dataset.previewItem;delete n.dataset.previewPage;delete n.dataset.overflowPx;});
+  root.querySelectorAll('.book-page-root').forEach(n=>n.style.setProperty('--screen-scale','1'));
+}
+async function waitStable(doc){
+  if(doc.fonts?.ready)try{await doc.fonts.ready}catch(_e){}
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+}
+async function capture(){
+  try{
+    const win=frame.contentWindow,doc=frame.contentDocument;
+    if(!win||!doc)throw new Error('Δεν υπάρχει πρόσβαση στον HF27 Author.');
+    const liveRoot=doc.querySelector('#bookPreviewPages');
+    if(!liveRoot)throw new Error('Δεν βρέθηκε #bookPreviewPages.');
+    const pages=liveRoot.querySelectorAll('.book-page-root').length;
+    if(!pages)throw new Error('Δεν υπάρχει ανοιχτό βιβλίο στον Author.');
+    status.textContent='Σταθεροποίηση τελικού HF27 DOM…';
+    await waitStable(doc);
+    const clone=liveRoot.cloneNode(true);
+    cleanAuthorChrome(clone);
+    const assets=await inlineBlobImages(liveRoot,clone);
+    const cssResponse=await fetch('../../core/book-core.css',{cache:'no-store'});
+    if(!cssResponse.ok)throw new Error('book-core.css '+cssResponse.status);
+    const css=await cssResponse.text();
+    const title=doc.querySelector('#windowBookTitle')?.textContent?.trim()||'BookWriter HF27 snapshot';
+    const meta={format:FORMAT,createdAt:new Date().toISOString(),pageCount:pages,sourceBuild:doc.querySelector('#runtimeBuildIdentity')?.textContent?.trim()||'',blobImagesInlined:assets.inlined,blobImagesFailed:assets.failed};
+    const html='<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><meta name="bookwriter-snapshot-format" content="'+FORMAT+'"><style>html,body{margin:0;padding:0;background:#fff}#bookwriter-render-snapshot{width:max-content;min-width:100%}.book-page-root{margin:0 auto 18px!important}'+css+'</style></head><body><main id="bookwriter-render-snapshot" data-snapshot-format="'+FORMAT+'">'+clone.innerHTML+'</main><script type="application/json" id="bookwriter-snapshot-meta">'+JSON.stringify(meta).replace(/</g,'\\u003c')+'<\/script></body></html>';
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='book.rendered.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    status.textContent=`OK · ${pages} σελίδες · ${Math.round(html.length/1024)} KB · blob images ${assets.inlined} inline${assets.failed?` · αποτυχίες ${assets.failed}`:''}`;
+  }catch(error){console.error(error);status.textContent='ΣΦΑΛΜΑ: '+(error?.message||error);}
+}
+$('capture').addEventListener('click',capture);
+})();
+</script>
+</body>
+</html>
