@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BookWriter v5 — Floating Table Wrap Diagnostic</title>
+<link rel="stylesheet" href="../../core/book-core.css">
+<style>
+html,body{margin:0;background:#e9edf1;color:#111;font:14px system-ui,sans-serif}
+.toolbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 10px;background:#fff;border-bottom:1px solid #aeb7c0}
+.toolbar input{min-width:420px;padding:6px}.toolbar button{padding:6px 10px}.status{font:12px ui-monospace,monospace;white-space:pre-wrap}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;align-items:start}.panel{min-width:0;background:#d9dfe5;padding:8px;overflow:auto}.panel h2{font-size:14px;margin:0 0 8px}
+.host{min-height:400px}.host .book-page-root{margin-inline:auto}.hidden-page{display:none!important}
+.guard-hit{outline:3px solid #d33!important;outline-offset:2px}
+@media(max-width:1200px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <input id="bookUrl" value="../../books/book_new/book.json" aria-label="book.json URL">
+  <label>Σελίδα <input id="pageNo" type="number" min="1" value="4" style="min-width:60px;width:70px"></label>
+  <button id="run" type="button">Σύγκριση</button>
+  <span id="status" class="status"></span>
+</div>
+<div class="grid">
+  <section class="panel"><h2>Αριστερά — σημερινό BookCore</h2><div id="before" class="host"></div></section>
+  <section class="panel"><h2>Δεξιά — πείραμα προστασίας από μη αναγνώσιμη λωρίδα wrap</h2><div id="after" class="host"></div></section>
+</div>
+<script src="../../core/book-core.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+function resolveBookResource(base,value){try{return new URL(String(value||''),base).href}catch(_e){return String(value||'')}}
+function nextFrames(){return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))}
+function render(host,data,bookBase){
+  BookCore.renderPages(host,data,{lang:data?.meta?.defaultLanguage==='en'?'en':'el',preview:false,imageCandidates:src=>[resolveBookResource(bookBase,src)],sceneSource:src=>resolveBookResource(bookBase,src)});
+  BookCore.bindCalloutSequences(host);
+}
+function showOnlyPage(host,pageIndex){
+  const pages=Array.from(host.querySelectorAll('.book-page-root,.sheet-wrap'));
+  pages.forEach((p,i)=>p.classList.toggle('hidden-page',i!==pageIndex));
+  return pages[pageIndex]||null;
+}
+function px(v){const n=parseFloat(v);return Number.isFinite(n)?n:0}
+function applyReadableWrapGuard(pageRoot){
+  if(!pageRoot)return [];
+  const body=pageRoot.querySelector('.sheet-body')||pageRoot.querySelector('.sheet-inner')||pageRoot;
+  const bodyRect=body.getBoundingClientRect();
+  const bodyStyle=getComputedStyle(body);
+  const bodyFont=px(bodyStyle.fontSize)||18;
+  const minReadable=Math.max(180,bodyFont*12);
+  const hits=[];
+  pageRoot.querySelectorAll('.book-table').forEach(table=>{
+    const cs=getComputedStyle(table);
+    if(cs.float!=='left'&&cs.float!=='right')return;
+    const r=table.getBoundingClientRect();
+    const free=Math.max(0,bodyRect.width-r.width-px(cs.marginLeft)-px(cs.marginRight));
+    if(free>=minReadable)return;
+    const side=cs.float;
+    hits.push({id:table.dataset.bookItemId||'',index:table.dataset.bookItemIndex||'',side,bodyWidth:bodyRect.width,tableWidth:r.width,free,minReadable});
+    table.classList.add('guard-hit');
+    table.dataset.v5WrapGuard='1';
+    table.style.float='none';
+    table.style.clear='both';
+    table.style.width=`${r.width}px`;
+    table.style.maxWidth='100%';
+    if(side==='right'){table.style.marginLeft='auto';table.style.marginRight='0'}
+    else {table.style.marginLeft='0';table.style.marginRight='auto'}
+  });
+  return hits;
+}
+async function run(){
+  $('status').textContent='φόρτωση…';
+  const bookHref=new URL($('bookUrl').value.trim(),location.href).href;
+  const bookBase=new URL('.',bookHref).href;
+  const response=await fetch(bookHref,{cache:'no-store'});if(!response.ok)throw new Error(`book.json ${response.status}`);
+  const data=BookCore.normalizeData(await response.json());
+  $('before').innerHTML='';$('after').innerHTML='';
+  render($('before'),data,bookBase);render($('after'),data,bookBase);
+  if(document.fonts?.ready)await document.fonts.ready;await nextFrames();
+  const pageIndex=Math.max(0,(Number($('pageNo').value)||1)-1);
+  const beforePage=showOnlyPage($('before'),pageIndex);const afterPage=showOnlyPage($('after'),pageIndex);
+  await nextFrames();
+  const hits=applyReadableWrapGuard(afterPage);await nextFrames();
+  const detail=hits.map(h=>`item ${h.index||'?'} ${Math.round(h.tableWidth)}px / body ${Math.round(h.bodyWidth)}px → λωρίδα ${Math.round(h.free)}px < όριο ${Math.round(h.minReadable)}px`).join(' | ');
+  $('status').textContent=hits.length?`Σελίδα ${pageIndex+1}: ${hits.length} floating table(s) μπλοκαρίστηκαν. ${detail}`:`Σελίδα ${pageIndex+1}: κανένα floating table δεν παραβίασε το όριο αναγνωσιμότητας.`;
+}
+$('run').addEventListener('click',()=>run().catch(e=>{$('status').textContent='ΣΦΑΛΜΑ: '+(e?.message||e);console.error(e)}));
+})();
+</script>
+</body>
+</html>
