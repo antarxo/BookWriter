@@ -1,0 +1,126 @@
+{
+  "sourceFile": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΟΝΟΜΑΤΟΛΟΓΙΑ ΟΡΓΑΝΙΚΩΝ ΕΝΩΣΕΩΝ.docx",
+  "totalSourcePages": 15,
+  "selectedBlocks": 168,
+  "selectedPages": {
+    "start": 2,
+    "end": 15
+  },
+  "paragraphs": 241,
+  "listParagraphs": 90,
+  "tables": 16,
+  "mathObjectsDetectedRaw": 18,
+  "mathObjectsImportedCanonical": 18,
+  "mathDuplicatesSkipped": 0,
+  "inlineMath": 16,
+  "displayMath": 2,
+  "rawImageRefs": 104,
+  "imagesAfterDedupe": 11,
+  "duplicateImagesRemoved": 0,
+  "fallbackImagesSkipped": 9,
+  "textBoxesRaw": 40,
+  "textBoxesUnique": 8,
+  "textBoxCaptions": 0,
+  "textBoxesImported": 1,
+  "textBoxLabelsRetained": 5,
+  "drawings": 79,
+  "reconciledPageBreaks": 4,
+  "skippedStaticTocParagraphs": 0,
+  "unsupportedMath": [],
+  "documentLayout": {
+    "pageWidthPx": 793.7333333333333,
+    "pageHeightPx": 1122.5333333333333,
+    "marginsPx": {
+      "top": 37.8,
+      "right": 73.73333333333333,
+      "bottom": 37.8,
+      "left": 72
+    },
+    "headerDistancePx": 47.2,
+    "footerDistancePx": 47.2,
+    "bodyFontFamily": "Cambria",
+    "bodyFontSize": 14.666666666666666,
+    "lineHeight": 1.15,
+    "paragraphGap": 13.333333333333334
+  },
+  "canonicalTarget": "bookwriter-v4",
+  "converter": "bookwriter-4.5.0-rc1-docx",
+  "bookId": "book_newest",
+  "title": "ΠΡΟΣΧΕΔΙΟ ΦΥΛΛΑΔΙΟ ΟΝΟΜΑΤΟΛΟΓΙΑ ΟΡΓΑΝΙΚΩΝ ΕΝΩΣΕΩΝ",
+  "createdAt": "2026-08-15T10:50:09.681Z",
+  "canonicalValidation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "stats": {
+      "pages": 14,
+      "items": 170,
+      "byType": {
+        "part_title": 3,
+        "paragraph": 77,
+        "list": 33,
+        "section_heading": 23,
+        "figure": 15,
+        "table": 16,
+        "side_note": 1,
+        "equation": 2
+      },
+      "internalLinks": 16,
+      "externalLinks": 0,
+      "assets": 15,
+      "scenes": 0
+    }
+  },
+  "pagination": {
+    "version": "1.2.0-overflow-page-diagnostics",
+    "startedAt": "2026-08-15T10:49:28.938Z",
+    "sourcePages": 2,
+    "outputPages": 14,
+    "splitItems": 0,
+    "splitByType": {},
+    "resizedFigures": 0,
+    "oversizeItems": [],
+    "hardBreaks": 0,
+    "rendererVersion": "0.3.0-rc1-render-parity",
+    "completedAt": "2026-08-15T10:49:29.400Z",
+    "audit": {
+      "ok": true,
+      "pagesChecked": 14,
+      "overflowPages": 0,
+      "pages": [],
+      "rendererVersion": "0.3.0-rc1-render-parity",
+      "paginationVersion": "1.2.0-overflow-page-diagnostics",
+      "auditTolerancePx": 1
+    },
+    "pagination": {
+      "version": "1.2.0-overflow-page-diagnostics",
+      "generatedAt": "2026-08-15T10:49:29.565Z",
+      "sourcePages": 2,
+      "outputPages": 14,
+      "splitItems": 0,
+      "splitByType": {},
+      "resizedFigures": 0,
+      "oversizeItems": [],
+      "hardBreaks": 0,
+      "rendererVersion": "0.3.0-rc1-render-parity",
+      "audit": {
+        "ok": true,
+        "pagesChecked": 14,
+        "overflowPages": 0,
+        "pages": [],
+        "rendererVersion": "0.3.0-rc1-render-parity",
+        "paginationVersion": "1.2.0-overflow-page-diagnostics",
+        "auditTolerancePx": 1
+      }
+    }
+  },
+  "overflowAudit": {
+    "ok": true,
+    "pagesChecked": 14,
+    "overflowPages": 0,
+    "pages": [],
+    "rendererVersion": "0.3.0-rc1-render-parity",
+    "paginationVersion": "1.2.0-overflow-page-diagnostics",
+    "auditTolerancePx": 1
+  }
+}

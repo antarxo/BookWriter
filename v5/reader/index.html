@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BookWriter v5 — Snapshot Reader</title>
+<style>
+html,body{margin:0;height:100%;font:14px/1.35 "Segoe UI",Arial,sans-serif;background:#d8d8d8;color:#1d2730}
+body{display:grid;grid-template-rows:42px minmax(0,1fr)}
+header{display:flex;align-items:center;gap:8px;padding:5px 9px;background:#f4f4f4;border-bottom:1px solid #aaa}
+header strong{white-space:nowrap}
+header input{flex:1;min-width:160px;height:29px;border:1px solid #999;padding:0 7px}
+header button{height:30px;border:1px solid #888;background:#fff;padding:0 10px}
+#status{white-space:nowrap;font-size:12px;color:#46515b}
+iframe{width:100%;height:100%;border:0;background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <strong>BookWriter v5 Reader</strong>
+  <input id="snapshot" value="../../books/book_new/book.rendered.html" aria-label="Snapshot URL">
+  <button id="open" type="button">Άνοιγμα</button>
+  <button id="print" type="button">Εκτύπωση</button>
+  <span id="status">—</span>
+</header>
+<iframe id="book" title="Βιβλίο"></iframe>
+<script>
+(function(){
+'use strict';
+const input=document.getElementById('snapshot');
+const frame=document.getElementById('book');
+const status=document.getElementById('status');
+
+function openSnapshot(){
+  const raw=input.value.trim();
+  if(!raw)return;
+  frame.src=raw;
+  status.textContent='φόρτωση…';
+}
+frame.addEventListener('load',()=>{
+  try{
+    const doc=frame.contentDocument;
+    const marker=doc?.querySelector('meta[name="bookwriter-snapshot-format"]')?.content||'';
+    const pages=doc?.querySelectorAll('.book-page-root')?.length||0;
+    status.textContent=marker?`${pages} σελίδες · ${marker}`:'χωρίς snapshot marker';
+  }catch(error){
+    status.textContent='φορτώθηκε';
+  }
+});
+document.getElementById('open').addEventListener('click',openSnapshot);
+document.getElementById('print').addEventListener('click',()=>{try{frame.contentWindow.print()}catch(_e){}});
+const params=new URLSearchParams(location.search);
+if(params.get('snapshot'))input.value=params.get('snapshot');
+openSnapshot();
+})();
+</script>
+</body>
+</html>
