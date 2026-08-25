@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from lxml import etree
-from .markdown_element_map import extract_markdown_element_map
+from .markdown_element_map_v03 import extract_markdown_element_map
 from .markdown_equation_donor import extract_markdown_equations
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
