@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDF/Mathpix → DOCX</title>
+  <link rel="stylesheet" href="style.css?v=20260824-hf35-build-identity">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="titlebar">
+      <span class="app-icon" aria-hidden="true">Σ</span>
+      <strong>Μετατροπέας PDF/Mathpix → DOCX</strong>
+      <span class="window-subtitle">Αυτόνομο εργαστήριο ανακατασκευής Word</span>
+      <span id="gatewayBuildBadge" class="build-badge build-badge-loading" title="Έλεγχος τοπικής πύλης">πύλη: έλεγχος…</span>
+      <span id="runBadge" class="run-badge">αναμονή</span>
+    </header>
+
+    <nav class="menubar" aria-label="Μενού εφαρμογής">
+      <div class="menu">
+        <button class="menu-button" type="button">Αρχείο</button>
+        <div class="menu-popup">
+          <button class="menu-command" type="button" data-app-command="tab-conversion"><span>⇥</span><span>Μετατροπή</span></button>
+          <button class="menu-command" type="button" data-app-command="start"><span>▶</span><span>Έναρξη μετατροπής</span></button>
+          <button class="menu-command" type="button" data-app-command="reset"><span>×</span><span>Καθαρισμός εισόδων</span></button>
+          <div class="menu-separator"></div>
+          <button class="menu-command" type="button" data-app-command="download-docx"><span>W</span><span>Λήψη DOCX</span></button>
+          <button class="menu-command" type="button" data-app-command="download-report"><span>{}</span><span>Λήψη report JSON</span></button>
+        </div>
+      </div>
+      <div class="menu">
+        <button class="menu-button" type="button">Προβολή</button>
+        <div class="menu-popup">
+          <button class="menu-command" type="button" data-app-command="tab-conversion"><span>1</span><span>Καρτέλα μετατροπής</span></button>
+          <button class="menu-command" type="button" data-app-command="tab-intervention"><span>2</span><span>Καρτέλα παρέμβασης</span></button>
+          <button class="menu-command" type="button" data-app-command="tab-report"><span>3</span><span>Καρτέλα αναφοράς</span></button>
+        </div>
+      </div>
+      <div class="menu">
+        <button class="menu-button" type="button">Βοήθεια</button>
+        <div class="menu-popup menu-popup-right">
+          <div class="menu-note">Προϊόν του μετατροπέα είναι το reconstructed DOCX. Η κανονικοποίηση για βιβλίο ανήκει στον Συγγραφέα.</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="toolbar">
+      <button class="tool-button primary-tool" type="button" data-app-command="start" title="Έναρξη μετατροπής">▶</button>
+      <button class="tool-button" type="button" data-app-command="reset" title="Καθαρισμός">×</button>
+      <span class="tool-separator"></span>
+      <button class="tool-button wide" type="button" data-app-command="tab-conversion">Μετατροπή</button>
+      <button class="tool-button wide" type="button" data-app-command="tab-intervention">Παρέμβαση</button>
+      <button class="tool-button wide" type="button" data-app-command="tab-report">Αναφορά</button>
+      <span class="toolbar-spacer"></span>
+      <button class="tool-button word-tool" type="button" data-app-command="download-docx" title="Λήψη DOCX">W</button>
+      <button class="tool-button" type="button" data-app-command="download-report" title="Λήψη report JSON">{}</button>
+    </div>
+
+    <div class="workspace-tabs" role="tablist">
+      <button id="tabConversion" class="active" type="button" role="tab" data-workspace-tab="conversion">Μετατροπή</button>
+      <button id="tabIntervention" type="button" role="tab" data-workspace-tab="intervention">Παρέμβαση <span id="interventionCount">0</span></button>
+      <button id="tabReport" type="button" role="tab" data-workspace-tab="report">Αναφορά</button>
+    </div>
+
+    <main class="converter-shell">
+      <section id="conversionPane" class="workspace-pane active" role="tabpanel" aria-labelledby="tabConversion">
+        <div class="pane-title">Μετατροπή <span>PDF + Mathpix sources → reconstructed DOCX</span></div>
+        <div class="pane-body">
+          <section class="notice">
+            <b>Πηγές μετατροπής</b>
+            <p>Ο χρήστης προσκομίζει πηγές, όχι τεχνικό πακέτο. Το εσωτερικό working package δημιουργείται από τον μετατροπέα.</p>
+          </section>
+
+          <section class="tool-grid">
+            <form id="converterForm" class="tool-panel">
+              <label>
+                <span>Αρχικό PDF</span>
+                <input id="pdfInput" type="file" accept=".pdf,application/pdf">
+              </label>
+              <label>
+                <span>Mathpix Markdown ZIP με εικόνες</span>
+                <input id="markdownInput" type="file" accept=".zip,application/zip">
+              </label>
+              <label>
+                <span>Mathpix DOCX donor</span>
+                <input id="docxInput" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              </label>
+              <div class="field-row">
+                <label>
+                  <span>Σελίδες PDF</span>
+                  <input id="pagesInput" type="text" placeholder="π.χ. 1-3 ή 17-64" autocomplete="off">
+                </label>
+                <label>
+                  <span>Calibration</span>
+                  <select id="calibrationInput">
+                    <option value="fast">fast</option>
+                    <option value="full">full</option>
+                    <option value="none">none</option>
+                  </select>
+                </label>
+              </div>
+              <label class="check-row">
+                <input id="renderFidelityInput" type="checkbox" checked>
+                <span>Έλεγχος Word/PDF σελιδοποίησης</span>
+              </label>
+              <div id="formHint" class="notice small">Για πρώτη δοκιμή προτίμησε μικρό εύρος, όπως <code>1-3</code> ή <code>17-20</code>.</div>
+              <div class="actions">
+                <button id="startButton" class="primary" type="submit">Έναρξη μετατροπής</button>
+                <button id="resetButton" type="button">Καθαρισμός</button>
+              </div>
+            </form>
+
+            <aside class="status-panel">
+              <h2>Κατάσταση</h2>
+              <div class="status-grid">
+                <span>Στάδιο</span><b id="stageText">αναμονή</b>
+                <span>Χρόνος</span><b id="elapsedText">0s</b>
+                <span>Server build</span><b id="gatewayBuildText">έλεγχος…</b>
+                <span>Pipeline</span><b id="pipelineBuildText">έλεγχος…</b>
+                <span>Προϊόν</span><b>reconstructed DOCX</b>
+              </div>
+              <div class="progress-track"><div id="progressBar"></div></div>
+              <p id="statusText">Ο μετατροπέας δεν έχει ξεκινήσει.</p>
+            </aside>
+          </section>
+        </div>
+      </section>
+
+      <section id="interventionPane" class="workspace-pane" role="tabpanel" aria-labelledby="tabIntervention">
+        <div class="pane-title">Παρέμβαση <span>PDF μάρτυρας, Markdown, preview και rich editor</span></div>
+        <div class="pane-body">
+          <section id="decisionPanel" class="decision-panel empty">
+            <div class="empty-state">
+              <b>Δεν υπάρχει ακόμη run για επέμβαση.</b>
+              <span>Μετά τη μετατροπή εδώ θα εμφανιστούν οι αποφάσεις και τα σημεία ελέγχου.</span>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="reportPane" class="workspace-pane" role="tabpanel" aria-labelledby="tabReport">
+        <div class="pane-title">Αναφορά <span>σύνοψη πιστότητας, λήψεις και report</span></div>
+        <div class="pane-body">
+          <section id="resultPanel" class="result-panel empty" aria-live="polite">
+            <div class="empty-state">
+              <b>Δεν υπάρχει ακόμη αναφορά.</b>
+              <span>Η σύνοψη πιστότητας και οι λήψεις θα εμφανιστούν μετά τη μετατροπή.</span>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="statusbar">
+      <span id="statusMessage">Έτοιμο.</span>
+      <span class="status-spacer"></span>
+      <span>PDF = μάρτυρας · Markdown = περιεχόμενο · DOCX = donor</span>
+    </footer>
+  </div>
+
+  <script src="../core/v4/math-expression-v4.js?v=20260730-equation-system-brace-1"></script>
+  <script src="app.js?v=20260824-hf35-build-identity"></script>
+</body>
+</html>

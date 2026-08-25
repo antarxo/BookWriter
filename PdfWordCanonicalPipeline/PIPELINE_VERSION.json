@@ -1,0 +1,14 @@
+{
+  "version": "0.4.7zf-hf54-maps-first-layout-preflight",
+  "build": "BW-STUDIO-20260825-MAPS-FIRST-LAYOUT-PREFLIGHT-HF54",
+  "compositePolicy": "hf26-source-page-fidelity-boundary-sidecar",
+  "activeCleanBackgroundBranch": false,
+  "activeTransparencyMutationBranch": false,
+  "activeWordComCompositeRasterization": false,
+  "activeRasterFallback": true,
+  "normalizerExecutionPath": "canonical-word-v1 + maps-first PDF/Markdown spine + required layoutPreflight page setup estimate + PDF main-flow mirrored margins + per-item PDF typography sizes + enforced calibration contract + Word free-flow single-section build + no hard page/section breaks between PDF pages + hidden global font-scale sandbox disabled + explicit body-size/gap/line-spacing candidates + Word page-count probe before PDF export + PDF paragraph geometry fit audit + overflow-hard/underfill-diagnostic boundary policy + Word COM thread initialization + renderer failure fast stop",
+  "checkpoint": "HF54 Maps-First Layout Preflight",
+  "activeWordComRenderedPageMapping": true,
+  "hotfix": "HF54",
+  "label": "Maps-First Layout Preflight"
+}

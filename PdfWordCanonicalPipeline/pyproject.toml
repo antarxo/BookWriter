@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-word-canonical-pipeline"
+version = "0.4.7"
+description = "BookWriter DOCX gateway with Word COM composite rasterization, canonical math and PDF reconstruction"
+requires-python = ">=3.10"
+dependencies = [
+  "PyMuPDF>=1.23,<2",
+  "python-docx>=1.1,<2",
+  "lxml>=5,<7",
+  "rapidfuzz>=3.6,<4",
+  "Pillow>=10,<12",
+  "pywin32>=306; platform_system == 'Windows'"
+]
+
+[project.scripts]
+pdf-word-canonical = "pdf_word_canonical_pipeline.pipeline:main"
+pdf-word-reconstructor = "pdf_word_reconstructor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
