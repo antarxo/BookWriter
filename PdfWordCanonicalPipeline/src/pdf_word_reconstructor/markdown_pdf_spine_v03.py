@@ -4,7 +4,7 @@ from collections import Counter
 from statistics import median
 from typing import Any
 
-from .markdown_pdf_spine import build_markdown_pdf_spine as _build_v02
+from .markdown_pdf_spine_v02 import build_markdown_pdf_spine as _build_v02
 
 
 VERSION = "markdown-pdf-spine-0.3"
@@ -68,7 +68,6 @@ def _flags_summary(spans: list[dict[str, Any]]) -> dict[str, Any]:
         )
         return round(weight / total, 5)
 
-    # PyMuPDF span flags: superscript=1, italic=2, serif=4, monospaced=8, bold=16.
     return {
         "boldRatio": ratio(16),
         "italicRatio": ratio(2),
@@ -121,6 +120,8 @@ def _typography_from_lines(lines: list[dict[str, Any]], bbox: list[float] | None
     direction_profile = Counter(tuple(line.get("dir") or []) for line in lines if line.get("dir"))
     dominant_direction = list(direction_profile.most_common(1)[0][0]) if direction_profile else None
     pitch = _line_pitch(lines)
+    ascenders = [float(span.get("ascender")) for span in spans if span.get("ascender") is not None]
+    descenders = [float(span.get("descender")) for span in spans if span.get("descender") is not None]
     return {
         "source": source,
         "confidence": "high" if spans else "none",
@@ -142,8 +143,8 @@ def _typography_from_lines(lines: list[dict[str, Any]], bbox: list[float] | None
         "emphasis": _flags_summary(spans),
         "linePitch": pitch,
         "direction": dominant_direction,
-        "ascenderPt": round(float(median([float(span.get("ascender")) for span in spans if span.get("ascender") is not None])), 4) if any(span.get("ascender") is not None for span in spans) else None,
-        "descenderPt": round(float(median([float(span.get("descender")) for span in spans if span.get("descender") is not None])), 4) if any(span.get("descender") is not None for span in spans) else None,
+        "ascender": round(float(median(ascenders)), 4) if ascenders else None,
+        "descender": round(float(median(descenders)), 4) if descenders else None,
         "spanCount": len(spans),
         "spans": spans,
     }
@@ -170,10 +171,7 @@ def _pdf_witness(item: dict[str, Any], regions: dict[str, dict[str, Any]], line_
             start = max(0, int(line_index) - 1)
         except (TypeError, ValueError):
             start = 0
-        span = 1
         if row_granularity == "pdf-line-cluster":
-            # The v0.2 row id carries the cluster geometry but not span count; use the row bbox
-            # to retain only lines whose centers fall within that matched box.
             match_box = _bbox(item.get("bbox"))
             if match_box:
                 selected = []
@@ -181,14 +179,11 @@ def _pdf_witness(item: dict[str, Any], regions: dict[str, dict[str, Any]], line_
                     box = _bbox(line.get("bbox"))
                     if box and match_box[1] - 1.0 <= (box[1] + box[3]) / 2.0 <= match_box[3] + 1.0:
                         selected.append(line)
-                if selected:
-                    lines = selected
-                else:
-                    lines = lines[start:start + span]
+                lines = selected or lines[start:start + 1]
             else:
-                lines = lines[start:start + span]
+                lines = lines[start:start + 1]
         else:
-            lines = lines[start:start + span]
+            lines = lines[start:start + 1]
         return {
             "typography": _typography_from_lines(lines, _bbox(item.get("bbox")), row_granularity or "pdf-parent-line"),
             "regionBBox": _bbox(region.get("bbox")),
@@ -211,12 +206,15 @@ def _pdf_witness(item: dict[str, Any], regions: dict[str, dict[str, Any]], line_
             "confidence": "none",
             "bbox": _bbox(item.get("bbox")),
             "lineCount": 0,
+            "lineBoxes": [],
             "fontFamily": {"dominant": None, "profile": []},
             "fontSizePt": {"dominant": None, "profile": []},
             "color": {"dominant": None, "profile": []},
             "emphasis": _flags_summary([]),
             "linePitch": {"medianPt": None, "samplesPt": []},
             "direction": None,
+            "ascender": None,
+            "descender": None,
             "spanCount": 0,
             "spans": [],
         },
@@ -238,7 +236,6 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         authoritative = source.get("authoritativeContent") or {}
         item["authoritativeContent"] = authoritative
         item["rawMarkdown"] = str(source.get("rawMarkdown") or "")
-        # Retain the full semantic text for construction. The old compact field remains diagnostic only.
         item["text"] = str(
             authoritative.get("text")
             or source.get("text")
@@ -250,15 +247,16 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         )
         witness = _pdf_witness(item, regions, line_lookup)
         item["pdfTypography"] = witness["typography"]
+        page = pages.get(int(item.get("pdfPage") or 0)) or {}
         item["pdfGeometry"] = {
             "bbox": _bbox(item.get("bbox")),
             "regionBBox": witness.get("regionBBox"),
             "originalBlockBBox": witness.get("originalBlockBBox"),
             "page": item.get("pdfPage"),
             "pageBox": {
-                "widthPt": (pages.get(int(item.get("pdfPage") or 0)) or {}).get("width_pt"),
-                "heightPt": (pages.get(int(item.get("pdfPage") or 0)) or {}).get("height_pt"),
-                "rotation": (pages.get(int(item.get("pdfPage") or 0)) or {}).get("rotation"),
+                "widthPt": page.get("width_pt"),
+                "heightPt": page.get("height_pt"),
+                "rotation": page.get("rotation"),
             },
         }
         if str((item.get("pdfTypography") or {}).get("confidence")) == "high":
