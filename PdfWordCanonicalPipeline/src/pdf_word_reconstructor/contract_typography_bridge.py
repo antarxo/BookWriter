@@ -84,16 +84,17 @@ def _apply_contract_to_structure(contract: dict[str, Any], page_structure: dict[
             by_slot[(page, slot)] = contract_item
     for page in page_structure.get("pages", []) or []:
         page_no = int(page.get("page") or 0)
-        for item in page.get("flow", []) or []:
-            slot = str(item.get("id") or "")
-            contract_item = by_slot.get((page_no, slot))
-            if contract_item is None and slot.startswith("flow-"):
-                contract_item = by_slot.get((page_no, slot[5:]))
-            if contract_item is None:
-                continue
-            item["__wordParagraph"] = contract_item.get("wordParagraph") or {}
-            item["__pdfTypography"] = contract_item.get("pdfTypography") or {}
-            item["__buildContractId"] = contract_item.get("id")
+        for collection_name in ("flow", "callouts"):
+            for item in page.get(collection_name, []) or []:
+                slot = str(item.get("id") or "")
+                contract_item = by_slot.get((page_no, slot))
+                if contract_item is None and slot.startswith("flow-"):
+                    contract_item = by_slot.get((page_no, slot[5:]))
+                if contract_item is None:
+                    continue
+                item["__wordParagraph"] = contract_item.get("wordParagraph") or {}
+                item["__pdfTypography"] = contract_item.get("pdfTypography") or {}
+                item["__buildContractId"] = contract_item.get("id")
 
 
 def _alignment_value(legacy_module: Any, value: Any):
@@ -158,17 +159,41 @@ def _apply_paragraph_contract(legacy_module: Any, paragraph: Any, contract_item:
     return applied
 
 
+def _apply_contract_run(legacy_module: Any, paragraph: Any, text: str, item: dict[str, Any]) -> None:
+    src = _contract_run(text, item)
+    run = paragraph.add_run(text)
+    run.bold = bool(src.get("bold"))
+    run.italic = bool(src.get("italic"))
+    run.underline = bool(src.get("underline"))
+    run.font.superscript = bool(src.get("superscript"))
+    font = str(src.get("font") or "").strip()
+    if font:
+        run.font.name = font
+    size = src.get("size_pt")
+    if isinstance(size, (int, float)):
+        run.font.size = Pt(float(size))
+    pdf_rgb = _pdf_color(src.get("pdf_color"))
+    if pdf_rgb is not None:
+        run.font.color.rgb = pdf_rgb
+    legacy_module._set_run_language(run)
+
+
 @contextmanager
 def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], page_structure: dict[str, Any]) -> Iterator[dict[str, Any]]:
     """Route legacy text rendering through the maps-first contract.
 
     Ordinary flow text receives contract-controlled content typography and Word
-    paragraph geometry. The physical legacy renderer still creates the paragraph,
-    but contract formatting is re-applied immediately before document save so
-    hardcoded alignment/indent/spacing decisions cannot remain authoritative.
+    paragraph geometry. Positioned callouts are rendered from their frame contract;
+    no border, fill or font-shrink styling is invented when the source maps do not
+    contain that evidence.
     """
     _apply_contract_to_structure(contract, page_structure)
     region_map = _region_contracts(contract, page_structure)
+    contract_by_id = {
+        str(item.get("id")): item
+        for item in contract.get("items", []) or []
+        if item.get("id")
+    }
 
     original_document = legacy_module.Document
     original_item_text = legacy_module._item_text_and_runs
@@ -177,13 +202,17 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     original_max = legacy_module._max_span_size
     original_line_height = legacy_module._line_height
     original_gap = legacy_module._word_flow_gap
+    original_add_callout = legacy_module._add_callout
 
     pending: dict[str, Any] = {"contractItem": None}
     paragraph_bindings: list[tuple[Any, dict[str, Any]]] = []
+    callout_rows: list[dict[str, Any]] = []
     audit: dict[str, Any] = {
         "policy": "build-contract-paragraph-format-before-save",
         "boundParagraphCount": 0,
         "appliedParagraphCount": 0,
+        "calloutCount": 0,
+        "callouts": callout_rows,
         "items": [],
     }
 
@@ -216,11 +245,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     def item_text_and_runs(item: dict[str, Any], matches: dict[str, Any], docx_paras: dict[str, Any]):
         text = str(item.get("text") or "")
         if item.get("type") == "text" and item.get("__pdfTypography"):
-            contract_id = item.get("__buildContractId")
-            contract_item = next(
-                (row for row in contract.get("items", []) or [] if row.get("id") == contract_id),
-                None,
-            )
+            contract_item = contract_by_id.get(str(item.get("__buildContractId") or ""))
             pending["contractItem"] = contract_item
             return text, [_contract_run(text, item)], "markdown-via-build-contract", []
         return original_item_text(item, matches, docx_paras)
@@ -251,6 +276,54 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
                         run.add_break(legacy_module.WD_BREAK.LINE)
             return
         return original_add_runs(paragraph, text, source_runs, font_size, color, force_bold, italic, preserve_line_breaks)
+
+    def add_callout(doc, callout, text, body_size, source_paragraphs=None, paragraph_ids=None):
+        contract_item = contract_by_id.get(str(callout.get("__buildContractId") or ""))
+        if not contract_item:
+            raise RuntimeError(f"Maps-first callout build blocked: no contract for {callout.get('id')}")
+        word = contract_item.get("wordParagraph") if isinstance(contract_item.get("wordParagraph"), dict) else {}
+        frame = word.get("frame") if isinstance(word.get("frame"), dict) else {}
+        typography = contract_item.get("pdfTypography") if isinstance(contract_item.get("pdfTypography"), dict) else {}
+        bbox = frame.get("bboxPt") or callout.get("bbox")
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+            raise RuntimeError(f"Maps-first callout build blocked: missing frame bbox for {callout.get('id')}")
+        size = _font_size(typography)
+        line_height = _float_or_none(((word.get("geometry") or {}).get("lineHeightPt")))
+        if size is None or line_height is None or line_height <= 0:
+            raise RuntimeError(
+                f"Maps-first callout build blocked: missing PDF typography/line-height for {callout.get('id')}"
+            )
+
+        pending["contractItem"] = contract_item
+        paragraph = doc.add_paragraph()
+        legacy_module._set_frame(paragraph, list(map(float, bbox)))
+        paragraph.paragraph_format.keep_together = True
+        paragraph.paragraph_format.widow_control = False
+        _apply_contract_run(legacy_module, paragraph, str(text or ""), callout)
+
+        border = frame.get("border") if isinstance(frame.get("border"), dict) else {}
+        fill = frame.get("fill") if isinstance(frame.get("fill"), dict) else {}
+        row = {
+            "id": callout.get("id"),
+            "buildContractId": contract_item.get("id"),
+            "bbox": list(map(float, bbox)),
+            "font_size_pt": round(size, 3),
+            "line_height_pt": round(line_height, 3),
+            "contentSource": "markdown-via-build-contract",
+            "typographySource": "pdf-via-build-contract",
+            "frameSource": "wordParagraph.frame",
+            "borderStatus": border.get("status") or "unresolved-not-extracted",
+            "fillStatus": fill.get("status") or "unresolved-not-extracted",
+            "inventedBorder": False,
+            "inventedFill": False,
+            "fontShrinkApplied": False,
+            "native_math_count": 0,
+            "source_paragraphs": [],
+            "contained_visual_groups": list(callout.get("contained_visual_groups", [])),
+        }
+        callout_rows.append(row)
+        audit["calloutCount"] = len(callout_rows)
+        return row
 
     def contract_for_regions(region_ids: Any) -> dict[str, Any] | None:
         key = tuple(str(value) for value in region_ids or [])
@@ -317,6 +390,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     legacy_module._max_span_size = maximum
     legacy_module._line_height = line_height
     legacy_module._word_flow_gap = flow_gap
+    legacy_module._add_callout = add_callout
     try:
         yield audit
     finally:
@@ -327,3 +401,4 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
         legacy_module._max_span_size = original_max
         legacy_module._line_height = original_line_height
         legacy_module._word_flow_gap = original_gap
+        legacy_module._add_callout = original_add_callout
