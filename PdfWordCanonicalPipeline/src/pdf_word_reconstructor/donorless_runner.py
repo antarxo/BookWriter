@@ -16,11 +16,11 @@ from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
 from .page_structure import build_page_structure
 from .pdf_analyzer import analyze_pdf
-from .region_classifier import classify_pdf_regions
+from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.3"
+VERSION = "donorless-reconstruction-0.4"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
