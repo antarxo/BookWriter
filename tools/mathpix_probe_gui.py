@@ -19,8 +19,8 @@ class MathpixProbeApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Mathpix Lines Probe")
-        self.geometry("860x610")
-        self.minsize(780, 540)
+        self.geometry("900x610")
+        self.minsize(820, 540)
 
         self.pdf_var = tk.StringVar()
         self.key_var = tk.StringVar(value=os.environ.get("MATHPIX_APP_KEY", ""))
@@ -55,9 +55,15 @@ class MathpixProbeApp(tk.Tk):
         ttk.Label(root, text="Mathpix APP KEY").grid(row=3, column=0, sticky="w", padx=(0, 10), pady=6)
         self.key_entry = ttk.Entry(root, textvariable=self.key_var, show="•")
         self.key_entry.grid(row=3, column=1, sticky="ew", pady=6)
-        ttk.Checkbutton(root, text="Εμφάνιση", variable=self.show_key_var, command=self._toggle_key).grid(
-            row=3, column=2, padx=(10, 0), pady=6, sticky="w"
-        )
+        key_buttons = ttk.Frame(root)
+        key_buttons.grid(row=3, column=2, padx=(10, 0), pady=6, sticky="e")
+        ttk.Button(key_buttons, text="Επικόλληση", command=self._paste_key).pack(side="left", padx=(0, 8))
+        ttk.Checkbutton(
+            key_buttons,
+            text="Εμφάνιση",
+            variable=self.show_key_var,
+            command=self._toggle_key,
+        ).pack(side="left")
 
         ttk.Label(root, text="Τελικός φάκελος αποτελεσμάτων").grid(
             row=4, column=0, sticky="w", padx=(0, 10), pady=6
@@ -126,6 +132,19 @@ class MathpixProbeApp(tk.Tk):
     def _mark_custom_output(self, _event=None) -> None:
         self.output_is_custom = bool(self.output_var.get().strip())
 
+    def _paste_key(self) -> None:
+        try:
+            value = self.clipboard_get().strip()
+        except tk.TclError:
+            messagebox.showerror("Mathpix Lines Probe", "Δεν υπάρχει κείμενο στο Windows clipboard.")
+            return
+        if not value:
+            messagebox.showerror("Mathpix Lines Probe", "Το Windows clipboard είναι κενό.")
+            return
+        self.key_var.set(value)
+        self.key_entry.icursor("end")
+        self.key_entry.focus_set()
+
     def _toggle_key(self) -> None:
         self.key_entry.configure(show="" if self.show_key_var.get() else "•")
 
@@ -185,7 +204,7 @@ class MathpixProbeApp(tk.Tk):
 
             summary = probe.inspect_lines_json(lines)
             probe.write_json(run_dir / "manifest.json", {
-                "probe_version": 3,
+                "probe_version": 4,
                 "execution_path": "Mathpix Files API /files/v1",
                 "api_region": "eu" if use_eu else "global",
                 "source": str(source),
