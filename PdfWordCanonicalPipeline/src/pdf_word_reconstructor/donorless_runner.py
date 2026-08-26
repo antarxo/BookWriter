@@ -21,7 +21,7 @@ from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.5"
+VERSION = "donorless-reconstruction-0.6"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -169,7 +169,7 @@ def _equation_classification_audit(
             "pdfEquationCandidates": _pdf_equation_candidates(pdf_analysis, page_no),
         })
     return {
-        "version": "equation-classification-audit-0.2",
+        "version": "equation-classification-audit-0.3",
         "purpose": "Distinguish real Markdown/PDF equation mapping gaps from false equation classification and fragmented PDF equation regions.",
         "policy": "diagnostic-only-after-clustered-group-binding; no raw-fragment binding",
         "unresolvedDisplayEquationCount": len(items),
@@ -189,6 +189,24 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
         for row in group_pages
         if row.get("unplacedMarkdownDisplayEquationCount")
     )
+    mismatch_preview_parts: list[str] = []
+    for row in group_pages:
+        if not row.get("unplacedMarkdownDisplayEquationCount"):
+            continue
+        if row.get("unplacedMarkdownDisplayEquationCount") == row.get("pdfEquationGroupCount"):
+            continue
+        groups = row.get("groups") or []
+        group_texts = []
+        for index, group in enumerate(groups[:7], start=1):
+            member_text = " | ".join(
+                compact_text(str(member.get("text") or ""), 70)
+                for member in (group.get("members") or [])[:3]
+                if str(member.get("text") or "").strip()
+            )
+            group_texts.append(f"g{index}={member_text or '∅'}")
+        mismatch_preview_parts.append(
+            f"p{row.get('page')}[{'; '.join(group_texts)}]"
+        )
     samples: list[str] = []
     for item in (audit.get("items") or [])[:4]:
         candidates = item.get("pdfEquationCandidates") or []
@@ -204,6 +222,8 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
     suffix = ""
     if group_preview:
         suffix += " | equation groups: " + group_preview
+    if mismatch_preview_parts:
+        suffix += " | group evidence: " + " || ".join(mismatch_preview_parts[:3])
     if samples:
         suffix += " | equation audit: " + " || ".join(samples)
     return (
@@ -272,7 +292,7 @@ def run_donorless_reconstruction(
     write_json(analysis_dir / "page_structure.json", page_structure)
 
     markdown_pdf_spine = build_markdown_pdf_spine(markdown_element_map, pdf_analysis)
-    equation_group_binding = bind_display_equations_to_pdf_groups(markdown_pdf_spine, page_structure)
+    equation_group_binding = bind_display_equations_to_pdf_groups(markdown_pdf_spine, page_structure, pdf_analysis)
     write_json(analysis_dir / "equation_group_binding.json", equation_group_binding)
     write_json(analysis_dir / "markdown_pdf_spine.json", markdown_pdf_spine)
 
