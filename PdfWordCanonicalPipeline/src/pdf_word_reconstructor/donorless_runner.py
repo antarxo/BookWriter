@@ -11,18 +11,19 @@ from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdow
 from .benchmark_report import build_benchmark_report
 from .build_contract import build_build_contract
 from .common import compact_text, parse_page_range, write_json
-from .donorless_equation_groups_v06 import bind_display_equations_to_pdf_groups
+from .donorless_equation_groups_v07 import bind_display_equations_to_pdf_groups
 from .mapping_fidelity import build_mapping_fidelity
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
 from .page_structure import build_page_structure
 from .pdf_analyzer import analyze_pdf
+from .poppler_equation_witness import extract_poppler_equation_witness
 from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.9"
+VERSION = "donorless-reconstruction-1.0"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -231,6 +232,15 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
         suffix += " | group evidence: " + " || ".join(mismatch_preview_parts[:3])
     if samples:
         suffix += " | equation audit: " + " || ".join(samples)
+    poppler = (audit.get("equationGroupBinding") or {}).get("popplerNeighborBoundedRecovery") or {}
+    if poppler:
+        preview = "; ".join(
+            f"p{row.get('page')}:before={row.get('unresolvedBefore')}/bound={row.get('boundCount')}"
+            for row in (poppler.get("pages") or [])
+            if row.get("page")
+        )
+        if preview:
+            suffix += " | poppler recovery: " + preview
     return (
         "Maps-first build contract unresolved: "
         f"{unresolved}/{int(summary.get('itemCount') or 0)} item(s). "
@@ -297,7 +307,14 @@ def run_donorless_reconstruction(
     write_json(analysis_dir / "page_structure.json", page_structure)
 
     markdown_pdf_spine = build_markdown_pdf_spine(markdown_element_map, pdf_analysis)
-    equation_group_binding = bind_display_equations_to_pdf_groups(markdown_pdf_spine, page_structure, pdf_analysis)
+    poppler_witness = extract_poppler_equation_witness(pdf_path, pages)
+    write_json(analysis_dir / "poppler_equation_witness.json", poppler_witness)
+    equation_group_binding = bind_display_equations_to_pdf_groups(
+        markdown_pdf_spine,
+        page_structure,
+        pdf_analysis,
+        poppler_witness,
+    )
     write_json(analysis_dir / "equation_group_binding.json", equation_group_binding)
     write_json(analysis_dir / "markdown_pdf_spine.json", markdown_pdf_spine)
 
@@ -366,7 +383,7 @@ def run_donorless_reconstruction(
         "mode": "pdf-markdown-donorless-baseline",
         "authority": {
             "content": "mathpix-markdown",
-            "layoutTypography": "pdf",
+            "layoutTypography": "pdf+poppler-geometry-fallback",
             "docxDonor": "absent-by-policy",
         },
         "inputs": {
@@ -386,6 +403,11 @@ def run_donorless_reconstruction(
         "markdownElementCount": int(markdown_element_map.get("count") or 0),
         "benchmark": benchmark_report,
         "equationGroupBinding": equation_group_binding,
+        "popplerEquationWitness": {
+            "available": poppler_witness.get("available"),
+            "pdftotext": poppler_witness.get("pdftotext"),
+            "errors": poppler_witness.get("errors") or [],
+        },
         "mappingPreflight": mapping_preflight,
         "pageLayoutSummary": page_layout_spine.get("summary") or {},
         "buildReport": build_report,
