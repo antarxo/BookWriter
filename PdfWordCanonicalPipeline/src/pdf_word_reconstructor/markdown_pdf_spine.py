@@ -4,15 +4,16 @@ from __future__ import annotations
 # high-confidence monotonic Markdown↔PDF text anchors. Then build the normal
 # Markdown/PDF spine and apply page-scoped, neighbor-bounded, conservative
 # directional, conflict-aware, structural, adjacent-page, and short-heading
-# exact recovery for items that still lack a usable PDF slot. v0.17 adds a
-# post-recovery audit so diagnostics reflect the current unresolved set.
+# exact recovery for items that still lack a usable PDF slot. v0.18 keeps the
+# post-recovery audit current and exposes compact best-candidate details through
+# the existing server diagnostics channel.
 from typing import Any
 
 from .markdown_pdf_page_alignment import infer_missing_markdown_pages
-from .markdown_pdf_spine_v17 import build_markdown_pdf_spine as _build_v17
+from .markdown_pdf_spine_v18 import build_markdown_pdf_spine as _build_v18
 
 
-VERSION = "markdown-pdf-spine-wrapper-0.17"
+VERSION = "markdown-pdf-spine-wrapper-0.18"
 
 
 def build_markdown_pdf_spine(
@@ -21,7 +22,7 @@ def build_markdown_pdf_spine(
 ) -> dict[str, Any]:
     markdown_map = markdown_element_map or {}
     page_alignment = infer_missing_markdown_pages(markdown_map, pdf_analysis)
-    result = _build_v17(markdown_map, pdf_analysis)
+    result = _build_v18(markdown_map, pdf_analysis)
     result["canonicalWrapperVersion"] = VERSION
     result["pageAlignmentFallback"] = page_alignment
     return result
