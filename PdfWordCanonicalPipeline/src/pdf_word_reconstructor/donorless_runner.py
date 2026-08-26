@@ -10,6 +10,7 @@ from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdow
 
 from .build_contract import build_build_contract
 from .common import compact_text, parse_page_range, write_json
+from .donorless_equation_groups import bind_display_equations_to_pdf_groups
 from .mapping_fidelity import build_mapping_fidelity
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .native_builder import build_native_page_document
@@ -20,7 +21,7 @@ from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.4"
+VERSION = "donorless-reconstruction-0.5"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -54,7 +55,6 @@ def _extract_markdown_package(markdown_zip: Path, target: Path) -> tuple[list[Pa
 
 
 def _reset_generated_output(output_dir: Path) -> None:
-    """Reset only runner-owned artifacts; never delete gateway uploads."""
     output_dir.mkdir(parents=True, exist_ok=True)
     for name in _GENERATED_DIRS:
         path = output_dir / name
@@ -126,6 +126,7 @@ def _equation_classification_audit(
     build_contract: dict[str, Any],
     page_layout_spine: dict[str, Any],
     pdf_analysis: dict[str, Any],
+    equation_group_binding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     rows_by_id = {
         str(row.get("markdownId") or ""): row
@@ -168,10 +169,11 @@ def _equation_classification_audit(
             "pdfEquationCandidates": _pdf_equation_candidates(pdf_analysis, page_no),
         })
     return {
-        "version": "equation-classification-audit-0.1",
-        "purpose": "Distinguish real Markdown/PDF equation mapping gaps from false equation classification before any fallback binding.",
-        "policy": "diagnostic-only-no-binding-no-gate-relaxation",
+        "version": "equation-classification-audit-0.2",
+        "purpose": "Distinguish real Markdown/PDF equation mapping gaps from false equation classification and fragmented PDF equation regions.",
+        "policy": "diagnostic-only-after-clustered-group-binding; no raw-fragment binding",
         "unresolvedDisplayEquationCount": len(items),
+        "equationGroupBinding": equation_group_binding or {},
         "items": items,
     }
 
@@ -181,6 +183,12 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
     unresolved = int(summary.get("unresolvedCount") or 0)
     reasons = summary.get("unresolvedReasonCounts") or {}
     details = ", ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
+    group_pages = (audit.get("equationGroupBinding") or {}).get("pages") or []
+    group_preview = "; ".join(
+        f"p{row.get('page')}:MD={row.get('unplacedMarkdownDisplayEquationCount')}/groups={row.get('pdfEquationGroupCount')}/bound={row.get('boundCount')}"
+        for row in group_pages
+        if row.get("unplacedMarkdownDisplayEquationCount")
+    )
     samples: list[str] = []
     for item in (audit.get("items") or [])[:4]:
         candidates = item.get("pdfEquationCandidates") or []
@@ -191,9 +199,13 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
         samples.append(
             f"{item.get('markdownId')}@p{item.get('page')} "
             f"MD={compact_text(str(item.get('markdownOrLatex') or ''), 90)!r} "
-            f"PDFeq={len(candidates)}[{compact_text(candidate_preview, 180)}]"
+            f"PDFeqFragments={len(candidates)}[{compact_text(candidate_preview, 180)}]"
         )
-    suffix = " | equation audit: " + " || ".join(samples) if samples else ""
+    suffix = ""
+    if group_preview:
+        suffix += " | equation groups: " + group_preview
+    if samples:
+        suffix += " | equation audit: " + " || ".join(samples)
     return (
         "Maps-first build contract unresolved: "
         f"{unresolved}/{int(summary.get('itemCount') or 0)} item(s). "
@@ -260,6 +272,8 @@ def run_donorless_reconstruction(
     write_json(analysis_dir / "page_structure.json", page_structure)
 
     markdown_pdf_spine = build_markdown_pdf_spine(markdown_element_map, pdf_analysis)
+    equation_group_binding = bind_display_equations_to_pdf_groups(markdown_pdf_spine, page_structure)
+    write_json(analysis_dir / "equation_group_binding.json", equation_group_binding)
     write_json(analysis_dir / "markdown_pdf_spine.json", markdown_pdf_spine)
 
     donor_map = _absent_donor_map()
@@ -283,7 +297,12 @@ def run_donorless_reconstruction(
     build_contract = build_build_contract(page_layout_spine)
     write_json(analysis_dir / "build_contract.json", build_contract)
     if int((build_contract.get("summary") or {}).get("unresolvedCount") or 0):
-        equation_audit = _equation_classification_audit(build_contract, page_layout_spine, pdf_analysis)
+        equation_audit = _equation_classification_audit(
+            build_contract,
+            page_layout_spine,
+            pdf_analysis,
+            equation_group_binding,
+        )
         write_json(analysis_dir / "equation_classification_audit.json", equation_audit)
         raise RuntimeError(_classification_error_message(build_contract, equation_audit))
 
@@ -333,6 +352,7 @@ def run_donorless_reconstruction(
             "docx_native_payload_search",
         ],
         "markdownElementCount": int(markdown_element_map.get("count") or 0),
+        "equationGroupBinding": equation_group_binding,
         "mappingPreflight": mapping_preflight,
         "pageLayoutSummary": page_layout_spine.get("summary") or {},
         "buildReport": build_report,
