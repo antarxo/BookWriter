@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Any
 
 
-BUILD_CONTRACT_VERSION = "build-contract-0.2"
+BUILD_CONTRACT_VERSION = "build-contract-0.3"
 
 
 def _output_kind(row: dict[str, Any]) -> str:
@@ -28,12 +28,25 @@ def _output_kind(row: dict[str, Any]) -> str:
     return "paragraph"
 
 
+def _authoritative_payload(row: dict[str, Any]) -> dict[str, Any]:
+    """Return the existing Markdown-authoritative payload without reinterpretation."""
+    explicit = row.get("contentContract")
+    if isinstance(explicit, dict) and explicit:
+        return explicit
+    authoritative = row.get("authoritativeContent")
+    if isinstance(authoritative, dict) and authoritative:
+        return authoritative
+    return {}
+
+
 def _content_text(row: dict[str, Any]) -> str:
-    content = row.get("contentContract") if isinstance(row.get("contentContract"), dict) else {}
+    content = _authoritative_payload(row)
     authoritative = row.get("authoritativeContent") if isinstance(row.get("authoritativeContent"), dict) else {}
     for value in (
         content.get("text"),
+        content.get("plainText"),
         authoritative.get("text"),
+        authoritative.get("plainText"),
         row.get("markdownText"),
     ):
         text = str(value or "")
@@ -48,14 +61,14 @@ def _unresolved_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
     layout_contract = row.get("layoutContract") or {}
     word_paragraph = row.get("wordParagraph") or {}
     typography = row.get("pdfTypography") or {}
-    content = row.get("contentContract") or {}
+    content = _authoritative_payload(row)
 
     if not markdown_id:
         reasons.append("missing-markdown-id")
     if str(layout_contract.get("status") or "") != "usable":
         reasons.append("missing-layout-contract")
-    if not isinstance(content, dict) or not content:
-        reasons.append("missing-content-contract")
+    if not content:
+        reasons.append("missing-markdown-authoritative-payload")
     if output_kind not in {"visual", "equation", "table"} and not _content_text(row).strip():
         reasons.append("missing-markdown-content")
     if output_kind in {"paragraph", "heading", "caption", "callout", "list"}:
@@ -83,6 +96,7 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
         reason_counts.update(unresolved)
 
         layout = row.get("layout") or {}
+        content_payload = _authoritative_payload(row)
         items.append({
             "id": f"build-{index:05d}",
             "status": status,
@@ -91,7 +105,7 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "markdownType": row.get("markdownType"),
             "markdownOrder": row.get("markdownOrder"),
             "outputKind": output_kind,
-            "content": row.get("contentContract") or {},
+            "content": content_payload,
             "authoritativeContent": row.get("authoritativeContent") or {},
             "rawMarkdown": str(row.get("rawMarkdown") or ""),
             "placement": {
