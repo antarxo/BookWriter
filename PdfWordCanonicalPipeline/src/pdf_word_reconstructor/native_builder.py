@@ -230,8 +230,9 @@ def build_native_page_document(
     """Mandatory maps-first boundary followed by the preserved Word renderer.
 
     The physical renderer is still the preserved HF55 implementation. Its prose,
-    ordinary typography and paragraph geometry are materialized from the build
-    contract before save; legacy alignment matches are removed.
+    ordinary typography, paragraph geometry and positioned callout frame geometry
+    are materialized from the build contract before save; legacy alignment matches
+    are removed and callout border/fill are never invented.
     """
     contract = _prepare_build_contract(page_layout_spine, Path(output_path))
     materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
@@ -282,12 +283,25 @@ def build_native_page_document(
             "spaceAfter": "wordParagraph.spacing.spaceAfterPt",
             "audit": paragraph_audit,
         }
+        report["callout_lineage"] = {
+            "policy": "positioned-callout-from-build-contract",
+            "frame": "wordParagraph.frame",
+            "content": "markdown-via-build-contract",
+            "typography": "pdf-via-build-contract",
+            "borderFillPolicy": "do-not-invent-until-extracted",
+            "fontShrinkAllowed": False,
+            "count": int(paragraph_audit.get("calloutCount") or 0),
+            "items": list(paragraph_audit.get("callouts") or []),
+        }
         report["execution_boundary"] = {
             "policy": "maps-first-contract-materialization-before-legacy-renderer",
             "contractCheckedBeforeRender": True,
             "markdownTextMaterializedBeforeRender": True,
             "ordinaryFlowTypographyMaterializedBeforeRender": True,
             "paragraphFormatReappliedFromContractBeforeSave": True,
+            "calloutFrameGeometryFromContract": True,
+            "inventedCalloutBorderFillAllowed": False,
+            "calloutFontShrinkAllowed": False,
             "alignmentMatchesVisibleToRenderer": False,
             "silentFallbackAllowed": False,
             "legacyRendererStillActive": True,
