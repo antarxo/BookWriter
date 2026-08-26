@@ -23,7 +23,7 @@ from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-1.0"
+VERSION = "donorless-reconstruction-1.0.1"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -232,6 +232,7 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
         suffix += " | group evidence: " + " || ".join(mismatch_preview_parts[:3])
     if samples:
         suffix += " | equation audit: " + " || ".join(samples)
+
     poppler = (audit.get("equationGroupBinding") or {}).get("popplerNeighborBoundedRecovery") or {}
     if poppler:
         preview = "; ".join(
@@ -241,6 +242,32 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
         )
         if preview:
             suffix += " | poppler recovery: " + preview
+
+        reject_parts: list[str] = []
+        for page_row in (poppler.get("pages") or []):
+            page_no = page_row.get("page")
+            for item in (page_row.get("items") or []):
+                reason = str(item.get("reason") or "")
+                if not reason or reason == "accepted":
+                    continue
+                detail = f"p{page_no}/{item.get('markdownId')}:{reason}"
+                if item.get("score") is not None:
+                    detail += f",score={item.get('score')}"
+                if item.get("mathSignalRatio") is not None:
+                    detail += f",math={item.get('mathSignalRatio')}"
+                band = item.get("band")
+                if isinstance(band, (list, tuple)) and len(band) == 2:
+                    try:
+                        detail += f",band={round(float(band[0]),1)}-{round(float(band[1]),1)}"
+                    except (TypeError, ValueError):
+                        pass
+                text = compact_text(str(item.get("popplerText") or ""), 90)
+                if text:
+                    detail += f",text={text!r}"
+                reject_parts.append(detail)
+        if reject_parts:
+            suffix += " | poppler rejects: " + " || ".join(reject_parts[:10])
+
     return (
         "Maps-first build contract unresolved: "
         f"{unresolved}/{int(summary.get('itemCount') or 0)} item(s). "
