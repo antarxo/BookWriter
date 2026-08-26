@@ -108,6 +108,7 @@ def bind_display_equations_to_pdf_groups(
             "page": page_no,
             "unplacedMarkdownDisplayEquationCount": len(items),
             "pdfEquationGroupCount": len(groups),
+            "groupDelta": len(groups) - len(items),
             "groupMemberCounts": [len(group.get("member_ids") or []) for group in groups],
             "groups": [_group_audit_record(page_no, group, region_lookup) for group in groups],
             "markdownItems": [
@@ -160,11 +161,30 @@ def bind_display_equations_to_pdf_groups(
         page_record["policy"] = "bound-by-equal-count-and-vertical-order"
         pages.append(page_record)
 
+    equation_pages = [row for row in pages if int(row.get("unplacedMarkdownDisplayEquationCount") or 0) > 0]
+    mismatch_pages = [row for row in equation_pages if row.get("policy") == "no-bind-count-mismatch"]
+    markdown_equation_count = sum(int(row.get("unplacedMarkdownDisplayEquationCount") or 0) for row in equation_pages)
+    pdf_group_count = sum(int(row.get("pdfEquationGroupCount") or 0) for row in equation_pages)
+    extra_group_count = sum(max(0, int(row.get("groupDelta") or 0)) for row in equation_pages)
+    missing_group_count = sum(max(0, -int(row.get("groupDelta") or 0)) for row in equation_pages)
+
     audit = {
-        "version": "donorless-equation-group-binding-0.2",
+        "version": "donorless-equation-group-binding-0.3",
         "source": "page_structure.visual_groups[kind=equation]",
         "boundCount": bound,
         "policy": "never-bind-raw-pdf-equation-fragments; bind clustered groups only when per-page counts agree",
+        "summary": {
+            "equationPageCount": len(equation_pages),
+            "mismatchPageCount": len(mismatch_pages),
+            "mismatchPageRate": round(len(mismatch_pages) / len(equation_pages), 5) if equation_pages else 0.0,
+            "markdownDisplayEquationCount": markdown_equation_count,
+            "pdfEquationGroupCount": pdf_group_count,
+            "boundDisplayEquationCount": bound,
+            "bindingCoverage": round(bound / markdown_equation_count, 5) if markdown_equation_count else 1.0,
+            "extraPdfEquationGroupCount": extra_group_count,
+            "missingPdfEquationGroupCount": missing_group_count,
+            "extraGroupPerMarkdownEquation": round(extra_group_count / markdown_equation_count, 5) if markdown_equation_count else 0.0,
+        },
         "pages": pages,
     }
     markdown_pdf_spine["displayEquationGroupBinding"] = audit
