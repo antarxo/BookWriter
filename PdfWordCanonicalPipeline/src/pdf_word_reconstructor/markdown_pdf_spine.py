@@ -7,10 +7,10 @@ from __future__ import annotations
 from typing import Any
 
 from .markdown_pdf_page_alignment import infer_missing_markdown_pages
-from .markdown_pdf_spine_v08 import build_markdown_pdf_spine as _build_v08
+from .markdown_pdf_spine_v09 import build_markdown_pdf_spine as _build_v09
 
 
-VERSION = "markdown-pdf-spine-wrapper-0.8"
+VERSION = "markdown-pdf-spine-wrapper-0.9"
 
 
 def build_markdown_pdf_spine(
@@ -19,7 +19,7 @@ def build_markdown_pdf_spine(
 ) -> dict[str, Any]:
     markdown_map = markdown_element_map or {}
     page_alignment = infer_missing_markdown_pages(markdown_map, pdf_analysis)
-    result = _build_v08(markdown_map, pdf_analysis)
+    result = _build_v09(markdown_map, pdf_analysis)
     result["canonicalWrapperVersion"] = VERSION
     result["pageAlignmentFallback"] = page_alignment
     return result
