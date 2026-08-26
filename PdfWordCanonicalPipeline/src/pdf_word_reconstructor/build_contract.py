@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Any
 
 
-BUILD_CONTRACT_VERSION = "build-contract-0.3"
+BUILD_CONTRACT_VERSION = "build-contract-0.4"
 
 
 def _output_kind(row: dict[str, Any]) -> str:
@@ -29,7 +29,6 @@ def _output_kind(row: dict[str, Any]) -> str:
 
 
 def _authoritative_payload(row: dict[str, Any]) -> dict[str, Any]:
-    """Return the existing Markdown-authoritative payload without reinterpretation."""
     explicit = row.get("contentContract")
     if isinstance(explicit, dict) and explicit:
         return explicit
@@ -86,6 +85,9 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
     status_counts: Counter[str] = Counter()
     reason_counts: Counter[str] = Counter()
     output_counts: Counter[str] = Counter()
+    unresolved_by_kind: Counter[str] = Counter()
+    unresolved_by_reason_and_kind: Counter[str] = Counter()
+    unresolved_samples: list[dict[str, Any]] = []
 
     for index, row in enumerate(rows):
         output_kind = _output_kind(row)
@@ -94,6 +96,27 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
         status_counts[status] += 1
         output_counts[output_kind] += 1
         reason_counts.update(unresolved)
+        if unresolved:
+            unresolved_by_kind[output_kind] += 1
+            for reason in unresolved:
+                unresolved_by_reason_and_kind[f"{reason}:{output_kind}"] += 1
+            if len(unresolved_samples) < 24:
+                layout = row.get("layout") or {}
+                typography = row.get("pdfTypography") or {}
+                unresolved_samples.append({
+                    "markdownId": row.get("markdownId"),
+                    "markdownType": row.get("markdownType"),
+                    "outputKind": output_kind,
+                    "reasons": list(unresolved),
+                    "page": layout.get("page"),
+                    "slotId": layout.get("slotId"),
+                    "slotSource": layout.get("slotSource"),
+                    "bbox": layout.get("bbox") or (row.get("pdfGeometry") or {}).get("bbox"),
+                    "layoutStatus": (row.get("layoutContract") or {}).get("status"),
+                    "typographySource": typography.get("source"),
+                    "typographyConfidence": typography.get("confidence"),
+                    "textPreview": _content_text(row)[:140],
+                })
 
         layout = row.get("layout") or {}
         content_payload = _authoritative_payload(row)
@@ -161,6 +184,9 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "readyCoverage": round(ready / len(items), 5) if items else 1.0,
             "statusCounts": dict(status_counts),
             "unresolvedReasonCounts": dict(reason_counts),
+            "unresolvedByOutputKind": dict(unresolved_by_kind),
+            "unresolvedByReasonAndKind": dict(unresolved_by_reason_and_kind),
+            "unresolvedSamples": unresolved_samples,
             "outputKindCounts": dict(output_counts),
         },
         "items": items,
