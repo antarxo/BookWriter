@@ -7,9 +7,11 @@ from typing import Any
 # The previous HF55 builder is preserved verbatim. This module is the mandatory
 # maps-first execution boundary used by every existing call site.
 from .native_builder_legacy import *  # noqa: F401,F403
+from . import native_builder_legacy as _legacy_module
 from .native_builder_legacy import build_native_page_document as _legacy_build_native_page_document
 from .build_contract import build_build_contract
 from .common import write_json
+from .contract_typography_bridge import contract_typography_bridge
 
 
 _TEXT_OUTPUT_KINDS = {"paragraph", "heading", "caption", "callout", "list"}
@@ -146,6 +148,9 @@ def _materialize_contract_text(
             flow_item["text"] = text
             flow_item["content_source"] = "markdown-via-build-contract"
             flow_item["markdown_id"] = contract_item.get("markdownId")
+            flow_item["__buildContractId"] = contract_item.get("id")
+            flow_item["__wordParagraph"] = contract_item.get("wordParagraph") or {}
+            flow_item["__pdfTypography"] = contract_item.get("pdfTypography") or {}
             bound += 1
             lineage.append({
                 "page": page_no,
@@ -153,6 +158,7 @@ def _materialize_contract_text(
                 "markdownId": contract_item.get("markdownId"),
                 "outputKind": output_kind,
                 "contentSource": "markdown-via-build-contract",
+                "typographySource": "pdf-via-build-contract",
             })
 
         for callout in page.get("callouts", []) or []:
@@ -168,6 +174,9 @@ def _materialize_contract_text(
             callout["text"] = text
             callout["content_source"] = "markdown-via-build-contract"
             callout["markdown_id"] = contract_item.get("markdownId")
+            callout["__buildContractId"] = contract_item.get("id")
+            callout["__wordParagraph"] = contract_item.get("wordParagraph") or {}
+            callout["__pdfTypography"] = contract_item.get("pdfTypography") or {}
             bound += 1
             lineage.append({
                 "page": page_no,
@@ -175,6 +184,7 @@ def _materialize_contract_text(
                 "markdownId": contract_item.get("markdownId"),
                 "outputKind": "callout",
                 "contentSource": "markdown-via-build-contract",
+                "typographySource": "pdf-via-build-contract",
             })
 
     if missing:
@@ -185,7 +195,7 @@ def _materialize_contract_text(
         )
 
     return materialized, {
-        "policy": "contract-materialized-markdown-text",
+        "policy": "contract-materialized-markdown-text-and-pdf-typography",
         "boundTextSlotCount": bound,
         "missingTextSlotCount": len(missing),
         "items": lineage,
@@ -220,28 +230,29 @@ def build_native_page_document(
     """Mandatory maps-first boundary followed by the preserved Word renderer.
 
     The physical renderer is still the preserved HF55 implementation. Its prose
-    source is no longer legacy alignment/DOCX/PDF text: text is materialized from
-    the build contract before entry and alignment matches are removed.
+    source and ordinary flow typography are materialized from the build contract
+    before entry; alignment matches are removed.
     """
     contract = _prepare_build_contract(page_layout_spine, Path(output_path))
     materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
     render_alignment = _sanitized_alignment(alignment)
 
-    report = _legacy_build_native_page_document(
-        pdf_analysis,
-        materialized_structure,
-        render_alignment,
-        docx_analysis,
-        style_profile,
-        output_path,
-        body_size_override=body_size_override,
-        font_scale=font_scale,
-        gap_scale=gap_scale,
-        body_line_spacing_multiple=body_line_spacing_multiple,
-        docx_donor_map=docx_donor_map,
-        page_layout_spine=page_layout_spine,
-        flow_mode=flow_mode,
-    )
+    with contract_typography_bridge(_legacy_module, contract, materialized_structure):
+        report = _legacy_build_native_page_document(
+            pdf_analysis,
+            materialized_structure,
+            render_alignment,
+            docx_analysis,
+            style_profile,
+            output_path,
+            body_size_override=body_size_override,
+            font_scale=font_scale,
+            gap_scale=gap_scale,
+            body_line_spacing_multiple=body_line_spacing_multiple,
+            docx_donor_map=docx_donor_map,
+            page_layout_spine=page_layout_spine,
+            flow_mode=flow_mode,
+        )
     if isinstance(report, dict):
         report["build_contract"] = {
             "version": contract.get("version"),
@@ -250,10 +261,21 @@ def build_native_page_document(
             "policy": contract.get("policy") or {},
         }
         report["content_lineage"] = text_lineage
+        report["typography_lineage"] = {
+            "policy": "ordinary-flow-typography-from-build-contract",
+            "fontFamily": "pdfTypography.fontFamily.dominant",
+            "fontSize": "pdfTypography.fontSizePt.dominant",
+            "emphasis": "pdfTypography.emphasis",
+            "color": "pdfTypography.color.dominant",
+            "lineHeight": "wordParagraph.geometry.lineHeightPt",
+            "paragraphGap": "wordParagraph.spacing.observedGapBeforePt",
+            "legacyTimesNewRomanForOrdinaryFlow": False,
+        }
         report["execution_boundary"] = {
             "policy": "maps-first-contract-materialization-before-legacy-renderer",
             "contractCheckedBeforeRender": True,
             "markdownTextMaterializedBeforeRender": True,
+            "ordinaryFlowTypographyMaterializedBeforeRender": True,
             "alignmentMatchesVisibleToRenderer": False,
             "silentFallbackAllowed": False,
             "legacyRendererStillActive": True,
