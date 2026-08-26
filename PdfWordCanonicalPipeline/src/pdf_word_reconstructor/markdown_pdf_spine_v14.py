@@ -11,13 +11,13 @@ from .markdown_pdf_spine_v08 import _attach, _placed
 from .markdown_pdf_spine_v07 import _item_text, _page_no, _region_lookup
 from .markdown_pdf_spine_v02 import _score
 
-VERSION = "markdown-pdf-spine-0.14"
+VERSION = "markdown-pdf-spine-0.14.1"
 
 HEADING_TYPES = {"heading", "title"}
 PARAGRAPH_TYPES = {"paragraph"}
 
 # Visual homoglyphs that commonly appear when Greek text is extracted through
-# mixed Cyrillic/Latin fonts.  Canonicalize only characters with an essentially
+# mixed Cyrillic/Latin fonts. Canonicalize only characters with an essentially
 # identical glyph; do not transliterate ordinary Greek text.
 _HOMOGLYPHS = str.maketrans({
     "А": "A", "а": "a", "В": "B", "Е": "E", "е": "e", "К": "K", "М": "M",
@@ -62,25 +62,28 @@ def _raw_text_regions(pdf_analysis: dict[str, Any]) -> dict[int, list[dict[str, 
     return result
 
 
-def _clear_pdf_binding(item: dict[str, Any]) -> None:
-    for key in (
-        "pdfPage", "pdfRegion", "pdfParentRegion", "pdfLineIndex", "pdfRowGranularity",
-        "pdfText", "bbox", "pdfGeometry", "pdfTypography", "score", "matchMode",
-    ):
-        item.pop(key, None)
-    item["status"] = "unplaced"
-
-
 def _exact_heading_repair(
     items: list[dict[str, Any]],
     raw_regions: dict[int, list[dict[str, Any]]],
     regions: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Recover only unresolved headings into currently unused PDF regions.
+
+    This stage is intentionally monotonic: it may add a binding, but it must
+    never remove or replace an earlier resolved binding. Later recovery passes
+    are fallbacks, not authorities over already accepted evidence.
+    """
     markdown_by_page_key: dict[tuple[int, str], list[dict[str, Any]]] = defaultdict(list)
     pdf_by_page_key: dict[tuple[int, str], list[dict[str, Any]]] = defaultdict(list)
 
+    used_regions = {
+        (int(item.get("pdfPage") or 0), str(item.get("pdfRegion") or ""))
+        for item in items
+        if item.get("pdfRegion")
+    }
+
     for item in items:
-        if str(item.get("type") or "") not in HEADING_TYPES:
+        if str(item.get("type") or "") not in HEADING_TYPES or _placed(item):
             continue
         page = _page_no(item)
         key = _heading_key(_item_text(item))
@@ -91,14 +94,14 @@ def _exact_heading_repair(
         for row in rows:
             if str(row.get("semanticType") or "") != "heading":
                 continue
+            region_id = str(row.get("id") or "")
+            if (page, region_id) in used_regions:
+                continue
             key = _heading_key(str(row.get("text") or ""))
             if key and len(key) >= 4:
                 pdf_by_page_key[(page, key)].append(row)
 
     repairs: list[dict[str, Any]] = []
-    target_pairs: list[tuple[dict[str, Any], dict[str, Any], int, str]] = []
-    target_region_ids: set[tuple[int, str]] = set()
-
     for page_key, md_items in markdown_by_page_key.items():
         pdf_rows = pdf_by_page_key.get(page_key) or []
         if len(md_items) != 1 or len(pdf_rows) != 1:
@@ -106,38 +109,19 @@ def _exact_heading_repair(
         page, key = page_key
         item = md_items[0]
         row = pdf_rows[0]
-        target_pairs.append((item, row, page, key))
-        target_region_ids.add((page, str(row.get("id") or "")))
-
-    if not target_pairs:
-        return repairs
-
-    # Exact page/key evidence outranks earlier fuzzy ownership.  Clear every
-    # current owner of a region that will be reassigned, then attach all exact
-    # pairs in one pass so repeated numbered headings cannot steal each other.
-    for item in items:
-        page = int(item.get("pdfPage") or 0)
-        region = str(item.get("pdfRegion") or "")
-        if (page, region) in target_region_ids:
-            expected = next((pair[0] for pair in target_pairs if pair[2] == page and str(pair[1].get("id") or "") == region), None)
-            if expected is not item:
-                _clear_pdf_binding(item)
-
-    for item, row, page, key in target_pairs:
-        old_region = str(item.get("pdfRegion") or "")
-        new_region = str(row.get("id") or "")
-        if old_region == new_region and _placed(item):
+        region_id = str(row.get("id") or "")
+        if (page, region_id) in used_regions:
             continue
-        _clear_pdf_binding(item)
+
         _attach(item, row, page, 100.0, regions)
-        item["matchMode"] = "exact-heading-homoglyph-key"
+        item["matchMode"] = "exact-heading-homoglyph-key-unused-only"
+        used_regions.add((page, region_id))
         repairs.append({
             "markdownId": item.get("id"),
             "page": page,
             "key": key,
-            "pdfRegion": new_region,
+            "pdfRegion": region_id,
             "pdfText": str(row.get("text") or "")[:180],
-            "previousPdfRegion": old_region or None,
         })
     return repairs
 
@@ -207,8 +191,8 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         "headingRepairs": heading_repairs[:120],
         "paragraphRecoveries": paragraph_recoveries[:120],
         "policy": (
-            "unique exact heading key per page after visual-homoglyph normalization may repair prior fuzzy ownership; "
-            "long paragraphs may bind only to unused full PDF text regions with high score/margin; headers/footers excluded"
+            "unresolved unique exact heading keys may bind only to unused PDF semantic headings; "
+            "existing bindings are never cleared or reassigned; long paragraphs may bind only to unused full PDF text regions with high score/margin; headers/footers excluded"
         ),
     }
     return result
