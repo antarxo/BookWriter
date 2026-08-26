@@ -67,7 +67,6 @@ def _benchmark_error_suffix(benchmark: dict) -> str:
     samples = (((benchmark.get("unresolved") or {}).get("nonEquationSamples")) or [])
     if not samples:
         return ""
-
     selected: list[dict] = []
     per_kind: dict[str, int] = {}
     for sample in samples:
@@ -78,7 +77,6 @@ def _benchmark_error_suffix(benchmark: dict) -> str:
         per_kind[kind] = per_kind.get(kind, 0) + 1
         if len(selected) >= 8:
             break
-
     parts: list[str] = []
     for sample in selected:
         text = re.sub(r"\s+", " ", str(sample.get("textPreview") or "")).strip()
@@ -131,6 +129,27 @@ def _text_error_suffix(text_diagnostics: dict) -> str:
     return suffix
 
 
+def _semantic_error_suffix(semantic_diagnostics: dict) -> str:
+    if not isinstance(semantic_diagnostics, dict):
+        return ""
+    parts: list[str] = []
+    for item in (semantic_diagnostics.get("items") or [])[:6]:
+        candidates = []
+        for candidate in (item.get("topCandidates") or [])[:3]:
+            text = re.sub(r"\s+", " ", str(candidate.get("text") or "")).strip()
+            if len(text) > 55:
+                text = text[:54] + "…"
+            candidates.append(
+                f"{candidate.get('score')}:{candidate.get('semanticType') or '∅'}/"
+                f"{candidate.get('flowZone') or '∅'}:{text!r}"
+            )
+        parts.append(
+            f"{item.get('markdownId')}@p{item.get('page')}:MD={item.get('type')} -> "
+            + (" | ".join(candidates) if candidates else "no-candidates")
+        )
+    return " | semantic candidates: " + " || ".join(parts) if parts else ""
+
+
 def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     analysis_dir = run_dir / "analysis"
     benchmark = _read_json(analysis_dir / "BENCHMARK_REPORT.json")
@@ -140,12 +159,13 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     visual_binding = page_layout_spine.get("visualGroupBinding") if isinstance(page_layout_spine.get("visualGroupBinding"), dict) else {}
     markdown_pdf_spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
     text_diagnostics = markdown_pdf_spine.get("neighborBoundedDiagnostics") if isinstance(markdown_pdf_spine.get("neighborBoundedDiagnostics"), dict) else {}
+    semantic_diagnostics = markdown_pdf_spine.get("semanticCandidateDiagnostics") if isinstance(markdown_pdf_spine.get("semanticCandidateDiagnostics"), dict) else {}
     page_alignment = _read_json(analysis_dir / "markdown_pdf_page_alignment.json")
     if not page_alignment:
         page_alignment = markdown_pdf_spine.get("pageAlignmentFallback") if isinstance(markdown_pdf_spine.get("pageAlignmentFallback"), dict) else {}
 
     failure = {
-        "version": "donorless-failure-0.3",
+        "version": "donorless-failure-0.4",
         "runId": token,
         "build": BUILD,
         "exception": {
@@ -162,6 +182,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
         } if equation_audit else {},
         "visualGroupBinding": visual_binding,
         "neighborBoundedDiagnostics": text_diagnostics,
+        "semanticCandidateDiagnostics": semantic_diagnostics,
         "pageAlignmentFallback": page_alignment or {},
     }
     (run_dir / "DONORLESS_FAILURE.json").write_text(
@@ -172,7 +193,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    server_version = "DonorlessReconstructionGateway/1.3"
+    server_version = "DonorlessReconstructionGateway/1.4"
 
     def translate_path(self, path: str) -> str:
         relative = Path(unquote(urlparse(path).path).lstrip("/"))
@@ -282,11 +303,13 @@ class Handler(SimpleHTTPRequestHandler):
             benchmark = failure.get("benchmark") if isinstance(failure.get("benchmark"), dict) else {}
             visual_binding = failure.get("visualGroupBinding") if isinstance(failure.get("visualGroupBinding"), dict) else {}
             text_diagnostics = failure.get("neighborBoundedDiagnostics") if isinstance(failure.get("neighborBoundedDiagnostics"), dict) else {}
+            semantic_diagnostics = failure.get("semanticCandidateDiagnostics") if isinstance(failure.get("semanticCandidateDiagnostics"), dict) else {}
             error = (
                 str(exc)
                 + _benchmark_error_suffix(benchmark)
                 + _visual_error_suffix(visual_binding)
                 + _text_error_suffix(text_diagnostics)
+                + _semantic_error_suffix(semantic_diagnostics)
             )
             payload = {
                 "ok": False,
