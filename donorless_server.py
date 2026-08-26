@@ -108,6 +108,29 @@ def _visual_error_suffix(visual_binding: dict) -> str:
     return " | visual groups: " + "; ".join(parts) if parts else ""
 
 
+def _text_error_suffix(text_diagnostics: dict) -> str:
+    if not isinstance(text_diagnostics, dict):
+        return ""
+    counts = text_diagnostics.get("reasonCounts") or {}
+    parts = [f"{key}={value}" for key, value in sorted(counts.items()) if int(value or 0) > 0]
+    samples: list[str] = []
+    for item in (text_diagnostics.get("items") or [])[:6]:
+        detail = str(item.get("reason") or "unknown")
+        if item.get("candidateCount") is not None:
+            detail += f",cand={item.get('candidateCount')}"
+        if item.get("bestScore") is not None:
+            detail += f",best={item.get('bestScore')}"
+        if item.get("secondScore") is not None:
+            detail += f",second={item.get('secondScore')}"
+        samples.append(f"{item.get('markdownId')}@p{item.get('page') or 0}:{detail}")
+    suffix = ""
+    if parts:
+        suffix += " | text diagnostics: " + ", ".join(parts)
+    if samples:
+        suffix += " [" + "; ".join(samples) + "]"
+    return suffix
+
+
 def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     analysis_dir = run_dir / "analysis"
     benchmark = _read_json(analysis_dir / "BENCHMARK_REPORT.json")
@@ -115,13 +138,14 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     equation_audit = _read_json(analysis_dir / "equation_classification_audit.json")
     page_layout_spine = _read_json(analysis_dir / "page_layout_spine.json")
     visual_binding = page_layout_spine.get("visualGroupBinding") if isinstance(page_layout_spine.get("visualGroupBinding"), dict) else {}
+    markdown_pdf_spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
+    text_diagnostics = markdown_pdf_spine.get("neighborBoundedDiagnostics") if isinstance(markdown_pdf_spine.get("neighborBoundedDiagnostics"), dict) else {}
     page_alignment = _read_json(analysis_dir / "markdown_pdf_page_alignment.json")
     if not page_alignment:
-        spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
-        page_alignment = spine.get("pageAlignmentFallback") if isinstance(spine.get("pageAlignmentFallback"), dict) else {}
+        page_alignment = markdown_pdf_spine.get("pageAlignmentFallback") if isinstance(markdown_pdf_spine.get("pageAlignmentFallback"), dict) else {}
 
     failure = {
-        "version": "donorless-failure-0.2",
+        "version": "donorless-failure-0.3",
         "runId": token,
         "build": BUILD,
         "exception": {
@@ -137,6 +161,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
             "equationGroupBinding": equation_audit.get("equationGroupBinding") or {},
         } if equation_audit else {},
         "visualGroupBinding": visual_binding,
+        "neighborBoundedDiagnostics": text_diagnostics,
         "pageAlignmentFallback": page_alignment or {},
     }
     (run_dir / "DONORLESS_FAILURE.json").write_text(
@@ -147,7 +172,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    server_version = "DonorlessReconstructionGateway/1.2"
+    server_version = "DonorlessReconstructionGateway/1.3"
 
     def translate_path(self, path: str) -> str:
         relative = Path(unquote(urlparse(path).path).lstrip("/"))
@@ -256,7 +281,13 @@ class Handler(SimpleHTTPRequestHandler):
                     failure = {}
             benchmark = failure.get("benchmark") if isinstance(failure.get("benchmark"), dict) else {}
             visual_binding = failure.get("visualGroupBinding") if isinstance(failure.get("visualGroupBinding"), dict) else {}
-            error = str(exc) + _benchmark_error_suffix(benchmark) + _visual_error_suffix(visual_binding)
+            text_diagnostics = failure.get("neighborBoundedDiagnostics") if isinstance(failure.get("neighborBoundedDiagnostics"), dict) else {}
+            error = (
+                str(exc)
+                + _benchmark_error_suffix(benchmark)
+                + _visual_error_suffix(visual_binding)
+                + _text_error_suffix(text_diagnostics)
+            )
             payload = {
                 "ok": False,
                 "error": error,
