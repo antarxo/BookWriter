@@ -4,9 +4,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shutil
 import sys
-import tempfile
+import traceback
 import uuid
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -54,8 +53,85 @@ def parse_multipart_form(content_type: str, body: bytes) -> dict[str, dict]:
     return fields
 
 
+def _read_json(path: Path) -> dict:
+    try:
+        if path.exists():
+            value = json.loads(path.read_text(encoding="utf-8"))
+            return value if isinstance(value, dict) else {}
+    except Exception:
+        pass
+    return {}
+
+
+def _benchmark_error_suffix(benchmark: dict) -> str:
+    samples = (((benchmark.get("unresolved") or {}).get("nonEquationSamples")) or [])
+    if not samples:
+        return ""
+
+    # Show a representative spread instead of allowing one output kind to
+    # consume the whole preview. The complete set remains in BENCHMARK_REPORT.
+    selected: list[dict] = []
+    per_kind: dict[str, int] = {}
+    for sample in samples:
+        kind = str(sample.get("outputKind") or "unknown")
+        if per_kind.get(kind, 0) >= 2:
+            continue
+        selected.append(sample)
+        per_kind[kind] = per_kind.get(kind, 0) + 1
+        if len(selected) >= 8:
+            break
+
+    parts: list[str] = []
+    for sample in selected:
+        text = re.sub(r"\s+", " ", str(sample.get("textPreview") or "")).strip()
+        if len(text) > 110:
+            text = text[:109] + "…"
+        page = sample.get("page") or 0
+        parts.append(
+            f"{sample.get('outputKind')}/{sample.get('markdownType')} "
+            f"{sample.get('markdownId')}@p{page} "
+            f"slot={sample.get('slotId') or '∅'} {text!r}"
+        )
+    return " | non-equation samples: " + " || ".join(parts) if parts else ""
+
+
+def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
+    analysis_dir = run_dir / "analysis"
+    benchmark = _read_json(analysis_dir / "BENCHMARK_REPORT.json")
+    build_contract = _read_json(analysis_dir / "build_contract.json")
+    equation_audit = _read_json(analysis_dir / "equation_classification_audit.json")
+    page_alignment = _read_json(analysis_dir / "markdown_pdf_page_alignment.json")
+    if not page_alignment:
+        spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
+        page_alignment = spine.get("pageAlignmentFallback") if isinstance(spine.get("pageAlignmentFallback"), dict) else {}
+
+    failure = {
+        "version": "donorless-failure-0.1",
+        "runId": token,
+        "build": BUILD,
+        "exception": {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "traceback": traceback.format_exc(),
+        },
+        "benchmark": benchmark,
+        "buildContractSummary": build_contract.get("summary") or {},
+        "equationAudit": {
+            "version": equation_audit.get("version"),
+            "unresolvedDisplayEquationCount": equation_audit.get("unresolvedDisplayEquationCount"),
+            "equationGroupBinding": equation_audit.get("equationGroupBinding") or {},
+        } if equation_audit else {},
+        "pageAlignmentFallback": page_alignment or {},
+    }
+    (run_dir / "DONORLESS_FAILURE.json").write_text(
+        json.dumps(failure, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return failure
+
+
 class Handler(SimpleHTTPRequestHandler):
-    server_version = "DonorlessReconstructionGateway/1.0"
+    server_version = "DonorlessReconstructionGateway/1.1"
 
     def translate_path(self, path: str) -> str:
         relative = Path(unquote(urlparse(path).path).lstrip("/"))
@@ -82,17 +158,22 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/donorless-status":
             self.json_response(HTTPStatus.OK, {"ok": True, "build": BUILD, "mode": "pdf-markdown-donorless-baseline"})
             return
-        match = re.fullmatch(r"/api/donorless-run/([a-f0-9-]{36})/(report|docx)", path)
+        match = re.fullmatch(r"/api/donorless-run/([a-f0-9-]{36})/(report|failure|docx)", path)
         if match:
             token, kind = match.groups()
             run_dir = RUNTIME_ROOT / token
-            target = run_dir / ("DONORLESS_REPORT.json" if kind == "report" else "reconstructed.docx")
+            names = {
+                "report": "DONORLESS_REPORT.json",
+                "failure": "DONORLESS_FAILURE.json",
+                "docx": "reconstructed.docx",
+            }
+            target = run_dir / names[kind]
             if not target.exists():
                 self.send_error(HTTPStatus.NOT_FOUND)
                 return
             data = target.read_bytes()
             self.send_response(HTTPStatus.OK)
-            if kind == "report":
+            if kind in {"report", "failure"}:
                 self.send_header("Content-Type", "application/json; charset=utf-8")
             else:
                 self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
@@ -107,6 +188,9 @@ class Handler(SimpleHTTPRequestHandler):
         if urlparse(self.path).path != "/api/donorless-convert":
             self.send_error(HTTPStatus.NOT_FOUND)
             return
+
+        token: str | None = None
+        run_dir: Path | None = None
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0 or length > MAX_UPLOAD:
@@ -152,11 +236,23 @@ class Handler(SimpleHTTPRequestHandler):
                 "report": report,
             })
         except Exception as exc:
-            self.json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {
+            failure: dict = {}
+            if token and run_dir:
+                try:
+                    failure = _write_failure_bundle(run_dir, token, exc)
+                except Exception:
+                    failure = {}
+            benchmark = failure.get("benchmark") if isinstance(failure.get("benchmark"), dict) else {}
+            error = str(exc) + _benchmark_error_suffix(benchmark)
+            payload = {
                 "ok": False,
-                "error": str(exc),
+                "error": error,
                 "type": type(exc).__name__,
-            })
+            }
+            if token:
+                payload["token"] = token
+                payload["failureUrl"] = f"/api/donorless-run/{token}/failure"
+            self.json_response(HTTPStatus.INTERNAL_SERVER_ERROR, payload)
 
 
 def main() -> int:
