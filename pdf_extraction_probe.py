@@ -4,13 +4,14 @@ import argparse
 import json
 import shutil
 import subprocess
-import sys
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
 import fitz
+
+VERSION = "pdf-extraction-probe-0.2"
 
 
 def _parse_pages(spec: str, max_pages: int) -> list[int]:
@@ -51,6 +52,24 @@ def _find_pdftotext(explicit: str | None = None) -> Path | None:
         if path.exists():
             return path
     return None
+
+
+def _local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1] if "}" in tag else tag
+
+
+def _iter_local(root: ET.Element, name: str):
+    for node in root.iter():
+        if _local_name(str(node.tag)) == name:
+            yield node
+
+
+def _children_local(node: ET.Element, name: str):
+    for child in node.iter():
+        if child is node:
+            continue
+        if _local_name(str(child.tag)) == name:
+            yield child
 
 
 def _pymupdf_page(page: fitz.Page, page_no: int) -> dict[str, Any]:
@@ -111,7 +130,7 @@ def _pymupdf_page(page: fitz.Page, page_no: int) -> dict[str, Any]:
 
 def _poppler_page(pdf: Path, pdftotext: Path, page_no: int) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="poppler_probe_") as tmp:
-        xml_path = Path(tmp) / f"page-{page_no}.xml"
+        xml_path = Path(tmp) / f"page-{page_no}.html"
         cmd = [
             str(pdftotext),
             "-f", str(page_no),
@@ -125,15 +144,15 @@ def _poppler_page(pdf: Path, pdftotext: Path, page_no: int) -> dict[str, Any]:
         if proc.returncode != 0:
             raise RuntimeError(f"pdftotext απέτυχε στη σελίδα {page_no}: {proc.stderr.strip()}")
         if not xml_path.exists():
-            raise RuntimeError(f"Το pdftotext δεν παρήγαγε XML για τη σελίδα {page_no}.")
+            raise RuntimeError(f"Το pdftotext δεν παρήγαγε XHTML για τη σελίδα {page_no}.")
         root = ET.parse(xml_path).getroot()
 
-    page_node = next(iter(root.iter("page")), None)
+    page_node = next(_iter_local(root, "page"), None)
     words: list[dict[str, Any]] = []
     lines: list[dict[str, Any]] = []
-    for line_index, line_node in enumerate(root.iter("line"), start=1):
+    for line_index, line_node in enumerate(_iter_local(root, "line"), start=1):
         line_words: list[dict[str, Any]] = []
-        for word_node in line_node.iter("word"):
+        for word_node in _children_local(line_node, "word"):
             text = "".join(word_node.itertext())
             try:
                 bbox = [
@@ -200,41 +219,28 @@ def _write_text_report(data: dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(out), encoding="utf-8")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Compare PyMuPDF and Poppler PDF text extraction.")
-    parser.add_argument("pdf", type=Path)
-    parser.add_argument("--pages", default="20,26,29")
-    parser.add_argument("--output", type=Path, default=Path("pdf_extraction_probe_output"))
-    parser.add_argument("--pdftotext", default=None)
-    args = parser.parse_args()
-
-    pdf = args.pdf.expanduser().resolve()
+def run_probe(pdf: Path, pages_spec: str, output: Path, pdftotext_path: str | None = None) -> dict[str, Any]:
+    pdf = Path(pdf).expanduser().resolve()
     if not pdf.exists():
-        print(f"ERROR: Δεν βρέθηκε PDF: {pdf}")
-        return 2
-    pdftotext = _find_pdftotext(args.pdftotext)
+        raise FileNotFoundError(f"Δεν βρέθηκε PDF: {pdf}")
+    pdftotext = _find_pdftotext(pdftotext_path)
     if pdftotext is None:
-        print("ERROR: Δεν βρέθηκε pdftotext.exe (Poppler).")
-        print("Εγκατέστησε Poppler ή δώσε --pdftotext C:\\...\\pdftotext.exe")
-        return 3
-
-    output = args.output.expanduser().resolve()
+        raise FileNotFoundError("Δεν βρέθηκε pdftotext.exe (Poppler).")
+    output = Path(output).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
 
     with fitz.open(pdf) as doc:
-        pages = _parse_pages(args.pages, doc.page_count)
+        pages = _parse_pages(pages_spec, doc.page_count)
         result_pages: list[dict[str, Any]] = []
         for page_no in pages:
-            print(f"Page {page_no}: PyMuPDF...")
             py = _pymupdf_page(doc[page_no - 1], page_no)
-            print(f"Page {page_no}: Poppler...")
             po = _poppler_page(pdf, pdftotext, page_no)
             result_pages.append({"page": page_no, "pymupdf": py, "poppler": po})
 
     data = {
-        "version": "pdf-extraction-probe-0.1",
+        "version": VERSION,
         "pdf": str(pdf),
-        "pagesSpec": args.pages,
+        "pagesSpec": pages_spec,
         "pdftotext": str(pdftotext),
         "pages": result_pages,
     }
@@ -242,9 +248,27 @@ def main() -> int:
     txt_path = output / "PDF_EXTRACTION_COMPARISON.txt"
     json_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_text_report(data, txt_path)
-    print("")
-    print(f"OK: {json_path}")
-    print(f"OK: {txt_path}")
+    return {
+        "data": data,
+        "json": json_path,
+        "txt": txt_path,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Compare PyMuPDF and Poppler PDF text extraction.")
+    parser.add_argument("pdf", type=Path)
+    parser.add_argument("--pages", default="20,26,29")
+    parser.add_argument("--output", type=Path, default=Path("pdf_extraction_probe_output"))
+    parser.add_argument("--pdftotext", default=None)
+    args = parser.parse_args()
+    try:
+        result = run_probe(args.pdf, args.pages, args.output, args.pdftotext)
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"OK: {result['json']}")
+    print(f"OK: {result['txt']}")
     return 0
 
 
