@@ -19,8 +19,10 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.1"
+VERSION = "donorless-reconstruction-0.2"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
+_GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
+_GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
 
 
 def _extract_markdown_package(markdown_zip: Path, target: Path) -> tuple[list[Path], list[Path]]:
@@ -48,6 +50,19 @@ def _extract_markdown_package(markdown_zip: Path, target: Path) -> tuple[list[Pa
         if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
     )
     return markdown_files, asset_files
+
+
+def _reset_generated_output(output_dir: Path) -> None:
+    """Reset only runner-owned artifacts; never delete gateway uploads."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for name in _GENERATED_DIRS:
+        path = output_dir / name
+        if path.exists():
+            shutil.rmtree(path)
+    for name in _GENERATED_FILES:
+        path = output_dir / name
+        if path.exists():
+            path.unlink()
 
 
 def _absent_donor_map() -> dict[str, Any]:
@@ -87,9 +102,12 @@ def run_donorless_reconstruction(
     pdf_path = Path(pdf_path).resolve()
     markdown_zip = Path(markdown_zip).resolve()
     output_dir = Path(output_dir).resolve()
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    _reset_generated_output(output_dir)
+
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"Δεν βρέθηκε PDF upload: {pdf_path}")
+    if not markdown_zip.exists():
+        raise FileNotFoundError(f"Δεν βρέθηκε Markdown ZIP upload: {markdown_zip}")
 
     work_dir = output_dir / "work"
     analysis_dir = output_dir / "analysis"
