@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import json
 import mimetypes
-import shutil
 import uuid
+import webbrowser
 from email.parser import BytesParser
 from email.policy import default
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -82,7 +83,7 @@ def _parse_multipart(handler: BaseHTTPRequestHandler) -> tuple[dict[str, str], d
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "PdfExtractionProbe/0.2"
+    server_version = "PdfExtractionProbe/0.3"
 
     def log_message(self, format: str, *args) -> None:
         print(format % args)
@@ -190,11 +191,18 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Local PDF extraction comparison server.")
+    parser.add_argument("--open-browser", action="store_true")
+    parser.add_argument("--port", type=int, default=8776)
+    args = parser.parse_args()
+
     RUNTIME.mkdir(parents=True, exist_ok=True)
     host = "127.0.0.1"
-    port = 8776
-    server = ThreadingHTTPServer((host, port), Handler)
-    print(f"PDF extraction probe: http://{host}:{port}/", flush=True)
+    server = ThreadingHTTPServer((host, args.port), Handler)
+    url = f"http://{host}:{args.port}/"
+    print(f"PDF extraction probe: {url}", flush=True)
+    if args.open_browser:
+        webbrowser.open(url, new=2)
     server.serve_forever()
 
 
