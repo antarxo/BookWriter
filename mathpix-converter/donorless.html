@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDF + Markdown → DOCX baseline</title>
+  <link rel="stylesheet" href="style.css?v=20260826-donorless-baseline">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="titlebar">
+      <span class="app-icon" aria-hidden="true">Σ</span>
+      <strong>PDF + Mathpix Markdown → DOCX</strong>
+      <span class="window-subtitle">Donorless baseline reconstruction</span>
+      <span id="gatewayBuildBadge" class="build-badge build-badge-loading">πύλη: έλεγχος…</span>
+      <span id="runBadge" class="run-badge">αναμονή</span>
+    </header>
+
+    <main class="converter-shell">
+      <section class="workspace-pane active">
+        <div class="pane-title">Καθαρό baseline <span>χωρίς Mathpix DOCX donor</span></div>
+        <div class="pane-body">
+          <section class="notice good">
+            <b>Πηγές αλήθειας</b>
+            <p>Markdown = περιεχόμενο/σημασιολογία · PDF = γεωμετρία/τυπογραφία. Το Mathpix DOCX αγνοείται απολύτως σε αυτή τη δοκιμή.</p>
+          </section>
+
+          <section class="tool-grid">
+            <form id="converterForm" class="tool-panel">
+              <label>
+                <span>Αρχικό PDF</span>
+                <input id="pdfInput" type="file" accept=".pdf,application/pdf">
+              </label>
+              <label>
+                <span>Mathpix Markdown ZIP με εικόνες</span>
+                <input id="markdownInput" type="file" accept=".zip,application/zip">
+              </label>
+              <label>
+                <span>Σελίδες PDF</span>
+                <input id="pagesInput" type="text" placeholder="π.χ. 17-20" autocomplete="off">
+              </label>
+              <div id="formHint" class="notice small">Για την πρώτη δοκιμή προτίμησε μικρό εύρος, π.χ. <code>17-20</code>.</div>
+              <div class="actions">
+                <button id="startButton" class="primary" type="submit">Έναρξη donorless μετατροπής</button>
+                <button id="resetButton" type="button">Καθαρισμός</button>
+              </div>
+            </form>
+
+            <aside class="status-panel">
+              <h2>Κατάσταση</h2>
+              <div class="status-grid">
+                <span>Mode</span><b>PDF + Markdown only</b>
+                <span>DOCX donor</span><b>absent-by-policy</b>
+                <span>Στάδιο</span><b id="stageText">αναμονή</b>
+                <span>Χρόνος</span><b id="elapsedText">0s</b>
+                <span>Server build</span><b id="gatewayBuildText">έλεγχος…</b>
+              </div>
+              <div class="progress-track"><div id="progressBar"></div></div>
+              <p id="statusText">Δεν έχει ξεκινήσει run.</p>
+            </aside>
+          </section>
+
+          <section id="resultPanel" class="result-panel empty" aria-live="polite">
+            <div class="empty-state"><b>Δεν υπάρχει ακόμη αποτέλεσμα.</b><span>Μετά το run θα εμφανιστούν DOCX και report.</span></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="statusbar">
+      <span id="statusMessage">Έτοιμο.</span>
+      <span class="status-spacer"></span>
+      <span>Markdown = περιεχόμενο · PDF = μάρτυρας · DOCX donor = OFF</span>
+    </footer>
+  </div>
+  <script src="donorless.js?v=20260826-donorless-baseline"></script>
+</body>
+</html>
