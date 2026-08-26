@@ -6,7 +6,6 @@ from typing import Any, Iterator
 from docx.shared import Pt, RGBColor
 
 
-
 def _font_name(typography: dict[str, Any]) -> str | None:
     value = ((typography.get("fontFamily") or {}).get("dominant"))
     return str(value).strip() if value else None
@@ -20,33 +19,47 @@ def _font_size(typography: dict[str, Any]) -> float | None:
         return None
 
 
-def _pdf_color(value: Any) -> RGBColor | None:
+def _rgb_hex(value: Any) -> str | None:
+    if isinstance(value, str):
+        text = value.strip().lstrip("#")
+        if len(text) == 6 and all(ch in "0123456789abcdefABCDEF" for ch in text):
+            return text.upper()
+        return None
     try:
         number = int(value)
     except (TypeError, ValueError):
         return None
-    number &= 0xFFFFFF
-    return RGBColor((number >> 16) & 0xFF, (number >> 8) & 0xFF, number & 0xFF)
+    return f"{number & 0xFFFFFF:06X}"
+
+
+def _pdf_color(value: Any) -> RGBColor | None:
+    text = _rgb_hex(value)
+    if not text:
+        return None
+    return RGBColor(int(text[0:2], 16), int(text[2:4], 16), int(text[4:6], 16))
 
 
 def _contract_run(text: str, item: dict[str, Any]) -> dict[str, Any]:
     typography = item.get("__pdfTypography") if isinstance(item.get("__pdfTypography"), dict) else {}
     emphasis = typography.get("emphasis") if isinstance(typography.get("emphasis"), dict) else {}
-    bold_ratio = emphasis.get("boldRatio")
-    italic_ratio = emphasis.get("italicRatio")
-    superscript_ratio = emphasis.get("superscriptRatio")
-    underline_ratio = emphasis.get("underlineRatio")
-    color = ((typography.get("color") or {}).get("dominant"))
     return {
         "text": text,
-        "bold": bool(isinstance(bold_ratio, (int, float)) and float(bold_ratio) >= 0.55),
-        "italic": bool(isinstance(italic_ratio, (int, float)) and float(italic_ratio) >= 0.55),
-        "underline": bool(isinstance(underline_ratio, (int, float)) and float(underline_ratio) >= 0.55),
-        "superscript": bool(isinstance(superscript_ratio, (int, float)) and float(superscript_ratio) >= 0.55),
+        "bold": bool(isinstance(emphasis.get("boldRatio"), (int, float)) and float(emphasis["boldRatio"]) >= 0.55),
+        "italic": bool(isinstance(emphasis.get("italicRatio"), (int, float)) and float(emphasis["italicRatio"]) >= 0.55),
+        "underline": bool(isinstance(emphasis.get("underlineRatio"), (int, float)) and float(emphasis["underlineRatio"]) >= 0.55),
+        "superscript": bool(isinstance(emphasis.get("superscriptRatio"), (int, float)) and float(emphasis["superscriptRatio"]) >= 0.55),
         "font": _font_name(typography),
         "size_pt": _font_size(typography),
-        "pdf_color": color,
+        "pdf_color": ((typography.get("color") or {}).get("dominant")),
         "__contract": True,
+    }
+
+
+def _contract_by_id(contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(item.get("id")): item
+        for item in contract.get("items", []) or []
+        if item.get("id")
     }
 
 
@@ -98,14 +111,12 @@ def _apply_contract_to_structure(contract: dict[str, Any], page_structure: dict[
 
 
 def _alignment_value(legacy_module: Any, value: Any):
-    key = str(value or "").strip().lower()
-    mapping = {
+    return {
         "left": legacy_module.WD_ALIGN_PARAGRAPH.LEFT,
         "center": legacy_module.WD_ALIGN_PARAGRAPH.CENTER,
         "right": legacy_module.WD_ALIGN_PARAGRAPH.RIGHT,
         "justify": legacy_module.WD_ALIGN_PARAGRAPH.JUSTIFY,
-    }
-    return mapping.get(key)
+    }.get(str(value or "").strip().lower())
 
 
 def _float_or_none(value: Any) -> float | None:
@@ -122,9 +133,9 @@ def _apply_paragraph_contract(legacy_module: Any, paragraph: Any, contract_item:
     applied: dict[str, Any] = {"buildContractId": contract_item.get("id")}
 
     alignment = geometry.get("alignment") if isinstance(geometry.get("alignment"), dict) else {}
-    alignment_value = _alignment_value(legacy_module, alignment.get("value"))
-    if alignment_value is not None:
-        paragraph.alignment = alignment_value
+    align = _alignment_value(legacy_module, alignment.get("value"))
+    if align is not None:
+        paragraph.alignment = align
         applied["alignment"] = alignment.get("value")
 
     left = _float_or_none(geometry.get("leftIndentPt"))
@@ -155,7 +166,6 @@ def _apply_paragraph_contract(legacy_module: Any, paragraph: Any, contract_item:
     if after is not None:
         paragraph.paragraph_format.space_after = Pt(max(0.0, after))
         applied["spaceAfterPt"] = round(max(0.0, after), 3)
-
     return applied
 
 
@@ -178,22 +188,82 @@ def _apply_contract_run(legacy_module: Any, paragraph: Any, text: str, item: dic
     legacy_module._set_run_language(run)
 
 
+def _dash_style(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    if not text or text in {"[] 0", "[]0", "none"}:
+        return "single"
+    return "dashed"
+
+
+def _apply_frame_style(legacy_module: Any, paragraph: Any, frame: dict[str, Any]) -> dict[str, Any]:
+    border = frame.get("border") if isinstance(frame.get("border"), dict) else {}
+    fill = frame.get("fill") if isinstance(frame.get("fill"), dict) else {}
+    applied: dict[str, Any] = {
+        "evidenceStatus": frame.get("evidenceStatus"),
+        "evidenceConfidence": frame.get("evidenceConfidence"),
+        "drawingId": frame.get("drawingId"),
+        "borderApplied": False,
+        "fillApplied": False,
+    }
+    if frame.get("evidenceStatus") != "matched" or frame.get("evidenceConfidence") not in {"high", "medium"}:
+        applied["reason"] = "no-confident-vector-style"
+        return applied
+
+    p_pr = paragraph._p.get_or_add_pPr()
+    border_color = _rgb_hex(border.get("color"))
+    border_opacity = _float_or_none(border.get("opacity"))
+    border_width = _float_or_none(border.get("widthPt"))
+    if border.get("status") == "extracted" and border_color and border_width is not None:
+        if border_opacity is None or border_opacity >= 0.99:
+            borders = p_pr.find(legacy_module.qn("w:pBdr"))
+            if borders is None:
+                borders = legacy_module.OxmlElement("w:pBdr")
+                p_pr.append(borders)
+            size_eighth_points = max(2, min(96, round(max(0.25, border_width) * 8.0)))
+            for edge in ("top", "left", "bottom", "right"):
+                node = borders.find(legacy_module.qn(f"w:{edge}"))
+                if node is None:
+                    node = legacy_module.OxmlElement(f"w:{edge}")
+                    borders.append(node)
+                node.set(legacy_module.qn("w:val"), _dash_style(border.get("dashes")))
+                node.set(legacy_module.qn("w:sz"), str(size_eighth_points))
+                node.set(legacy_module.qn("w:space"), "0")
+                node.set(legacy_module.qn("w:color"), border_color)
+            applied["borderApplied"] = True
+            applied["borderColor"] = f"#{border_color}"
+            applied["borderWidthPt"] = round(border_width, 3)
+            applied["borderStyle"] = _dash_style(border.get("dashes"))
+        else:
+            applied["borderReason"] = "unsupported-nonopaque-pdf-stroke"
+    else:
+        applied["borderReason"] = border.get("status") or "no-painted-stroke"
+
+    fill_color = _rgb_hex(fill.get("color"))
+    fill_opacity = _float_or_none(fill.get("opacity"))
+    if fill.get("status") == "extracted" and fill_color:
+        if fill_opacity is None or fill_opacity >= 0.99:
+            shd = p_pr.find(legacy_module.qn("w:shd"))
+            if shd is None:
+                shd = legacy_module.OxmlElement("w:shd")
+                p_pr.append(shd)
+            shd.set(legacy_module.qn("w:val"), "clear")
+            shd.set(legacy_module.qn("w:color"), "auto")
+            shd.set(legacy_module.qn("w:fill"), fill_color)
+            applied["fillApplied"] = True
+            applied["fillColor"] = f"#{fill_color}"
+        else:
+            applied["fillReason"] = "unsupported-nonopaque-pdf-fill"
+    else:
+        applied["fillReason"] = fill.get("status") or "no-painted-fill"
+    return applied
+
+
 @contextmanager
 def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], page_structure: dict[str, Any]) -> Iterator[dict[str, Any]]:
-    """Route legacy text rendering through the maps-first contract.
-
-    Ordinary flow text receives contract-controlled content typography and Word
-    paragraph geometry. Positioned callouts are rendered from their frame contract;
-    no border, fill or font-shrink styling is invented when the source maps do not
-    contain that evidence.
-    """
+    """Route Word rendering through the maps-first build contract."""
     _apply_contract_to_structure(contract, page_structure)
     region_map = _region_contracts(contract, page_structure)
-    contract_by_id = {
-        str(item.get("id")): item
-        for item in contract.get("items", []) or []
-        if item.get("id")
-    }
+    contract_by_id = _contract_by_id(contract)
 
     original_document = legacy_module.Document
     original_item_text = legacy_module._item_text_and_runs
@@ -208,7 +278,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     paragraph_bindings: list[tuple[Any, dict[str, Any]]] = []
     callout_rows: list[dict[str, Any]] = []
     audit: dict[str, Any] = {
-        "policy": "build-contract-paragraph-format-before-save",
+        "policy": "build-contract-paragraph-format-and-vector-frame-before-save",
         "boundParagraphCount": 0,
         "appliedParagraphCount": 0,
         "calloutCount": 0,
@@ -245,8 +315,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     def item_text_and_runs(item: dict[str, Any], matches: dict[str, Any], docx_paras: dict[str, Any]):
         text = str(item.get("text") or "")
         if item.get("type") == "text" and item.get("__pdfTypography"):
-            contract_item = contract_by_id.get(str(item.get("__buildContractId") or ""))
-            pending["contractItem"] = contract_item
+            pending["contractItem"] = contract_by_id.get(str(item.get("__buildContractId") or ""))
             return text, [_contract_run(text, item)], "markdown-via-build-contract", []
         return original_item_text(item, matches, docx_paras)
 
@@ -290,9 +359,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
         size = _font_size(typography)
         line_height = _float_or_none(((word.get("geometry") or {}).get("lineHeightPt")))
         if size is None or line_height is None or line_height <= 0:
-            raise RuntimeError(
-                f"Maps-first callout build blocked: missing PDF typography/line-height for {callout.get('id')}"
-            )
+            raise RuntimeError(f"Maps-first callout build blocked: missing PDF typography/line-height for {callout.get('id')}")
 
         pending["contractItem"] = contract_item
         paragraph = doc.add_paragraph()
@@ -300,6 +367,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
         paragraph.paragraph_format.keep_together = True
         paragraph.paragraph_format.widow_control = False
         _apply_contract_run(legacy_module, paragraph, str(text or ""), callout)
+        frame_style = _apply_frame_style(legacy_module, paragraph, frame)
 
         border = frame.get("border") if isinstance(frame.get("border"), dict) else {}
         fill = frame.get("fill") if isinstance(frame.get("fill"), dict) else {}
@@ -311,9 +379,11 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
             "line_height_pt": round(line_height, 3),
             "contentSource": "markdown-via-build-contract",
             "typographySource": "pdf-via-build-contract",
-            "frameSource": "wordParagraph.frame",
-            "borderStatus": border.get("status") or "unresolved-not-extracted",
-            "fillStatus": fill.get("status") or "unresolved-not-extracted",
+            "frameSource": frame.get("geometrySource") or "wordParagraph.frame",
+            "drawingId": frame.get("drawingId"),
+            "borderStatus": border.get("status") or "unresolved",
+            "fillStatus": fill.get("status") or "unresolved",
+            "frameStyle": frame_style,
             "inventedBorder": False,
             "inventedFill": False,
             "fontShrinkApplied": False,
@@ -326,8 +396,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
         return row
 
     def contract_for_regions(region_ids: Any) -> dict[str, Any] | None:
-        key = tuple(str(value) for value in region_ids or [])
-        return region_map.get(key)
+        return region_map.get(tuple(str(value) for value in region_ids or []))
 
     def dominant(regions_by_id, region_ids, fallback):
         item = contract_for_regions(region_ids)
@@ -341,7 +410,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
         item = contract_for_regions(region_ids)
         if item:
             profile = ((item.get("pdfTypography") or {}).get("fontSizePt") or {}).get("profile") or []
-            values = []
+            values: list[float] = []
             for row in profile:
                 try:
                     values.append(float(row.get("value")))
