@@ -17,10 +17,9 @@ if errorlevel 1 (
   exit /b 3
 )
 
-echo Starting PDF extraction probe at http://127.0.0.1:8776/
+echo Starting PDF extraction probe...
 echo Keep this window open while using the probe.
-start "" cmd /c "timeout /t 2 /nobreak >nul & start \"\" http://127.0.0.1:8776/"
-"%PYTHON_EXE%" pdf_extraction_probe_server.py
+"%PYTHON_EXE%" pdf_extraction_probe_server.py --open-browser
 
 set "RC=%ERRORLEVEL%"
 echo.
