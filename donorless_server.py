@@ -54,14 +54,6 @@ def parse_multipart_form(content_type: str, body: bytes) -> dict[str, dict]:
     return fields
 
 
-def safe_name(value: str, default: str, suffix: str) -> str:
-    name = Path(unquote(value or default)).name
-    name = re.sub(r"[\\/:*?\"<>|\x00-\x1f]+", "_", name).strip(" .") or default
-    if not name.lower().endswith(suffix):
-        name = Path(name).stem + suffix
-    return name
-
-
 class Handler(SimpleHTTPRequestHandler):
     server_version = "DonorlessReconstructionGateway/1.0"
 
@@ -134,8 +126,13 @@ class Handler(SimpleHTTPRequestHandler):
             run_dir = RUNTIME_ROOT / token
             upload_dir = run_dir / "_uploads"
             upload_dir.mkdir(parents=True, exist_ok=True)
-            pdf_path = upload_dir / safe_name(pdf_part.get("filename", "source.pdf"), "source.pdf", ".pdf")
-            markdown_path = upload_dir / safe_name(markdown_part.get("filename", "markdown.zip"), "markdown.zip", ".zip")
+
+            # Deliberately ignore multipart filenames. Browser Content-Disposition
+            # filenames may arrive mojibaked (especially Greek/UTF-8 names) when
+            # decoded through the legacy latin-1 header path. Local execution does
+            # not need the user's filename, so use deterministic ASCII paths.
+            pdf_path = upload_dir / "source.pdf"
+            markdown_path = upload_dir / "markdown.zip"
             pdf_path.write_bytes(pdf_part["content"])
             markdown_path.write_bytes(markdown_part["content"])
 
