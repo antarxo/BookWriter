@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import cgi
 import json
 import mimetypes
 import shutil
 import uuid
+from email.parser import BytesParser
+from email.policy import default
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -40,8 +41,48 @@ def _send_file(handler: BaseHTTPRequestHandler, path: Path, *, download_name: st
     handler.wfile.write(body)
 
 
+def _parse_multipart(handler: BaseHTTPRequestHandler) -> tuple[dict[str, str], dict[str, tuple[str, bytes]]]:
+    content_type = handler.headers.get("Content-Type", "")
+    if "multipart/form-data" not in content_type:
+        raise ValueError("Αναμενόταν multipart upload.")
+    try:
+        length = int(handler.headers.get("Content-Length") or 0)
+    except ValueError as exc:
+        raise ValueError("Μη έγκυρο Content-Length.") from exc
+    if length <= 0:
+        raise ValueError("Κενό upload.")
+
+    body = handler.rfile.read(length)
+    envelope = (
+        f"Content-Type: {content_type}\r\n"
+        "MIME-Version: 1.0\r\n\r\n"
+    ).encode("utf-8") + body
+    message = BytesParser(policy=default).parsebytes(envelope)
+
+    fields: dict[str, str] = {}
+    files: dict[str, tuple[str, bytes]] = {}
+    if not message.is_multipart():
+        raise ValueError("Το multipart body δεν αναγνωρίστηκε.")
+
+    for part in message.iter_parts():
+        name = part.get_param("name", header="content-disposition")
+        if not name:
+            continue
+        filename = part.get_filename()
+        payload = part.get_payload(decode=True) or b""
+        if filename:
+            files[str(name)] = (Path(str(filename)).name, payload)
+        else:
+            charset = part.get_content_charset() or "utf-8"
+            try:
+                fields[str(name)] = payload.decode(charset, errors="replace")
+            except LookupError:
+                fields[str(name)] = payload.decode("utf-8", errors="replace")
+    return fields, files
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "PdfExtractionProbe/0.1"
+    server_version = "PdfExtractionProbe/0.2"
 
     def log_message(self, format: str, *args) -> None:
         print(format % args)
@@ -87,28 +128,23 @@ class Handler(BaseHTTPRequestHandler):
             _json(self, {"ok": False, "error": "Δεν βρέθηκε Poppler/pdftotext.exe."}, 503)
             return
 
-        content_type = self.headers.get("Content-Type", "")
-        if "multipart/form-data" not in content_type:
-            _json(self, {"ok": False, "error": "Αναμενόταν multipart upload."}, 400)
+        try:
+            fields, files = _parse_multipart(self)
+        except Exception as exc:
+            _json(self, {"ok": False, "error": str(exc)}, 400)
             return
 
-        form = cgi.FieldStorage(
-            fp=self.rfile,
-            headers=self.headers,
-            environ={
-                "REQUEST_METHOD": "POST",
-                "CONTENT_TYPE": content_type,
-            },
-        )
-        pdf_field = form["pdf"] if "pdf" in form else None
-        pages = str(form.getfirst("pages", "20,26,29") or "20,26,29").strip()
-        if pdf_field is None or not getattr(pdf_field, "file", None):
+        pages = str(fields.get("pages") or "20,26,29").strip()
+        pdf_upload = files.get("pdf")
+        if not pdf_upload:
             _json(self, {"ok": False, "error": "Δεν επιλέχθηκε PDF."}, 400)
             return
-
-        filename = Path(getattr(pdf_field, "filename", "source.pdf") or "source.pdf").name
+        filename, pdf_bytes = pdf_upload
         if Path(filename).suffix.lower() != ".pdf":
             _json(self, {"ok": False, "error": "Το αρχείο πρέπει να είναι PDF."}, 400)
+            return
+        if not pdf_bytes:
+            _json(self, {"ok": False, "error": "Το PDF upload είναι κενό."}, 400)
             return
 
         run_id = str(uuid.uuid4())
@@ -118,8 +154,7 @@ class Handler(BaseHTTPRequestHandler):
         upload_dir.mkdir(parents=True, exist_ok=True)
         output_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = upload_dir / "source.pdf"
-        with pdf_path.open("wb") as handle:
-            shutil.copyfileobj(pdf_field.file, handle)
+        pdf_path.write_bytes(pdf_bytes)
 
         try:
             result = run_probe(pdf_path, pages, output_dir, str(poppler))
@@ -159,7 +194,7 @@ def main() -> None:
     host = "127.0.0.1"
     port = 8776
     server = ThreadingHTTPServer((host, port), Handler)
-    print(f"PDF extraction probe: http://{host}:{port}/")
+    print(f"PDF extraction probe: http://{host}:{port}/", flush=True)
     server.serve_forever()
 
 
