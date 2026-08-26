@@ -8,7 +8,8 @@ from typing import Any
 from pdf_word_canonical_pipeline.markdown_equation_donor import extract_markdown_equations
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 
-from .common import parse_page_range, write_json
+from .build_contract import build_build_contract
+from .common import compact_text, parse_page_range, write_json
 from .mapping_fidelity import build_mapping_fidelity
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .native_builder import build_native_page_document
@@ -19,7 +20,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.2"
+VERSION = "donorless-reconstruction-0.3"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -89,6 +90,115 @@ def _absent_donor_map() -> dict[str, Any]:
         "markdownAssociations": [],
         "associationByMarkdownId": {},
     }
+
+
+def _pdf_equation_candidates(pdf_analysis: dict[str, Any], page_no: int) -> list[dict[str, Any]]:
+    page = next(
+        (page for page in (pdf_analysis or {}).get("pages", []) or [] if int(page.get("page") or 0) == page_no),
+        None,
+    )
+    result: list[dict[str, Any]] = []
+    for region in (page or {}).get("regions", []) or []:
+        if region.get("type") != "text":
+            continue
+        semantic = region.get("semantic") if isinstance(region.get("semantic"), dict) else {}
+        if str(semantic.get("type") or "") != "equation":
+            continue
+        stats = semantic.get("stats") if isinstance(semantic.get("stats"), dict) else {}
+        result.append({
+            "id": region.get("id"),
+            "bbox": region.get("bbox"),
+            "text": compact_text(str(region.get("text") or ""), 260),
+            "confidence": semantic.get("confidence"),
+            "reasons": list(semantic.get("reasons") or []),
+            "stats": {
+                key: stats.get(key)
+                for key in (
+                    "math_ratio", "alpha_ratio", "private_use", "line_count", "char_count",
+                    "width_ratio", "x0_ratio", "x1_ratio", "y0_ratio", "y1_ratio",
+                )
+            },
+        })
+    return result
+
+
+def _equation_classification_audit(
+    build_contract: dict[str, Any],
+    page_layout_spine: dict[str, Any],
+    pdf_analysis: dict[str, Any],
+) -> dict[str, Any]:
+    rows_by_id = {
+        str(row.get("markdownId") or ""): row
+        for row in (page_layout_spine or {}).get("rows", []) or []
+        if row.get("markdownId")
+    }
+    items: list[dict[str, Any]] = []
+    for contract_item in build_contract.get("items", []) or []:
+        reasons = list(contract_item.get("unresolved") or [])
+        if "missing-layout-contract" not in reasons:
+            continue
+        if str(contract_item.get("markdownType") or "") != "display_equation":
+            continue
+        markdown_id = str(contract_item.get("markdownId") or "")
+        row = rows_by_id.get(markdown_id) or {}
+        placement = contract_item.get("placement") if isinstance(contract_item.get("placement"), dict) else {}
+        page_no = int(placement.get("page") or 0)
+        content = contract_item.get("content") if isinstance(contract_item.get("content"), dict) else {}
+        markdown_text = str(
+            content.get("latex")
+            or content.get("raw")
+            or content.get("text")
+            or content.get("plainText")
+            or contract_item.get("rawMarkdown")
+            or row.get("markdownText")
+            or ""
+        )
+        items.append({
+            "markdownId": markdown_id,
+            "page": page_no,
+            "markdownType": contract_item.get("markdownType"),
+            "rawMarkdown": compact_text(str(contract_item.get("rawMarkdown") or ""), 500),
+            "markdownOrLatex": compact_text(markdown_text, 500),
+            "markdownPdfSpine": {
+                "status": row.get("status"),
+                "pdfRegion": (row.get("layout") or {}).get("slotId"),
+                "bbox": (row.get("pdfGeometry") or {}).get("bbox") or placement.get("bbox"),
+                "pdfTypographySource": (row.get("pdfTypography") or {}).get("source"),
+            },
+            "pdfEquationCandidates": _pdf_equation_candidates(pdf_analysis, page_no),
+        })
+    return {
+        "version": "equation-classification-audit-0.1",
+        "purpose": "Distinguish real Markdown/PDF equation mapping gaps from false equation classification before any fallback binding.",
+        "policy": "diagnostic-only-no-binding-no-gate-relaxation",
+        "unresolvedDisplayEquationCount": len(items),
+        "items": items,
+    }
+
+
+def _classification_error_message(build_contract: dict[str, Any], audit: dict[str, Any]) -> str:
+    summary = build_contract.get("summary") or {}
+    unresolved = int(summary.get("unresolvedCount") or 0)
+    reasons = summary.get("unresolvedReasonCounts") or {}
+    details = ", ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
+    samples: list[str] = []
+    for item in (audit.get("items") or [])[:4]:
+        candidates = item.get("pdfEquationCandidates") or []
+        candidate_preview = "; ".join(
+            f"{candidate.get('id')}:{candidate.get('text') or '∅'}"
+            for candidate in candidates[:3]
+        ) or "none"
+        samples.append(
+            f"{item.get('markdownId')}@p{item.get('page')} "
+            f"MD={compact_text(str(item.get('markdownOrLatex') or ''), 90)!r} "
+            f"PDFeq={len(candidates)}[{compact_text(candidate_preview, 180)}]"
+        )
+    suffix = " | equation audit: " + " || ".join(samples) if samples else ""
+    return (
+        "Maps-first build contract unresolved: "
+        f"{unresolved}/{int(summary.get('itemCount') or 0)} item(s). "
+        f"{details or 'See build_contract.json.'}{suffix}"
+    )
 
 
 def run_donorless_reconstruction(
@@ -169,6 +279,13 @@ def run_donorless_reconstruction(
         require_conversion=False,
     )
     write_json(analysis_dir / "mapping_fidelity_preflight.json", mapping_preflight)
+
+    build_contract = build_build_contract(page_layout_spine)
+    write_json(analysis_dir / "build_contract.json", build_contract)
+    if int((build_contract.get("summary") or {}).get("unresolvedCount") or 0):
+        equation_audit = _equation_classification_audit(build_contract, page_layout_spine, pdf_analysis)
+        write_json(analysis_dir / "equation_classification_audit.json", equation_audit)
+        raise RuntimeError(_classification_error_message(build_contract, equation_audit))
 
     final_docx = output_dir / "reconstructed.docx"
     build_report = build_native_page_document(
