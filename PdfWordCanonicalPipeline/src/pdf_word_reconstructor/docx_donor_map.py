@@ -9,7 +9,7 @@ from rapidfuzz import fuzz
 from .common import normalize_text
 
 
-VERSION = "docx-donor-map-0.2"
+VERSION = "docx-donor-map-0.3"
 
 
 def _math_signature(text: str) -> str:
@@ -33,6 +33,7 @@ def _markdown_text(record: dict[str, Any]) -> str:
     authoritative = record.get("authoritativeContent") if isinstance(record.get("authoritativeContent"), dict) else {}
     for value in (
         authoritative.get("text"),
+        authoritative.get("plainText"),
         record.get("text"),
         record.get("captionText"),
         record.get("alt"),
@@ -48,9 +49,11 @@ def _markdown_text(record: dict[str, Any]) -> str:
 
 
 def _donor_type(paragraph: dict[str, Any]) -> str:
-    text = normalize_text(paragraph.get("text", ""))
-    omml_count = int(paragraph.get("omml_count", 0) or 0)
-    drawing_count = int(paragraph.get("drawing_count", 0) or 0)
+    text = paragraph.get("normalizedText")
+    if text is None:
+        text = normalize_text(paragraph.get("text", ""))
+    omml_count = int(paragraph.get("omml_count", paragraph.get("ommlCount", 0)) or 0)
+    drawing_count = int(paragraph.get("drawing_count", paragraph.get("drawingCount", 0)) or 0)
     numbering = paragraph.get("numbering")
     style = str(paragraph.get("style") or "").casefold()
     if omml_count and len(text) <= 3:
@@ -84,17 +87,28 @@ def _semantic_compatible(markdown_type: str, donor_type: str) -> bool:
     return donor_type in {"prose", "heading", "title", "mixed-omml", "numbered-paragraph"}
 
 
+def _prepare_markdown_record(record: dict[str, Any]) -> dict[str, Any]:
+    prepared = dict(record)
+    text = _markdown_text(record)
+    prepared["__matchText"] = text
+    prepared["__normalizedText"] = normalize_text(text)
+    prepared["__mathSignature"] = _math_signature(str(record.get("latex") or text))
+    return prepared
+
+
 def _match_score(markdown: dict[str, Any], paragraph: dict[str, Any]) -> float:
     kind = str(markdown.get("type") or "")
-    donor_type = _donor_type(paragraph)
+    donor_type = str(paragraph.get("donorType") or _donor_type(paragraph))
     if not _semantic_compatible(kind, donor_type):
         return 0.0
     if kind in {"display_equation", "equation"}:
-        source = _math_signature(str(markdown.get("latex") or _markdown_text(markdown)))
-        target = _math_signature(str(paragraph.get("omml_text") or paragraph.get("text") or ""))
+        source = str(markdown.get("__mathSignature") or "")
+        target = str(paragraph.get("ommlSignature") or "")
+        if not target:
+            target = _math_signature(str(paragraph.get("ommlText") or paragraph.get("omml_text") or paragraph.get("text") or ""))
         return float(fuzz.ratio(source, target)) if source and target else 0.0
-    source = normalize_text(_markdown_text(markdown))
-    target = normalize_text(paragraph.get("text", ""))
+    source = str(markdown.get("__normalizedText") or "")
+    target = str(paragraph.get("normalizedText") or "")
     if not source or not target:
         return 0.0
     if source == target:
@@ -121,7 +135,7 @@ def _build_markdown_associations(
     markdown_element_map: dict[str, Any] | None,
     paragraphs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    records = list((markdown_element_map or {}).get("records", []) or [])
+    records = [_prepare_markdown_record(record) for record in ((markdown_element_map or {}).get("records", []) or [])]
     associations: list[dict[str, Any]] = []
     used_strong: set[str] = set()
     paragraph_count = len(paragraphs)
@@ -200,16 +214,21 @@ def _build_markdown_associations(
 
 def _table_associations(markdown_element_map: dict[str, Any] | None, tables: list[dict[str, Any]]) -> list[dict[str, Any]]:
     markdown_tables = [
-        record for record in (markdown_element_map or {}).get("records", []) or []
+        _prepare_markdown_record(record) for record in (markdown_element_map or {}).get("records", []) or []
         if str(record.get("type") or "") in {"table", "latex_table"}
     ]
+    prepared_tables = []
+    for table in tables:
+        prepared = dict(table)
+        prepared["normalizedText"] = normalize_text(table.get("text", ""))
+        prepared_tables.append(prepared)
     associations: list[dict[str, Any]] = []
     used: set[str] = set()
     for record in markdown_tables:
-        source = normalize_text(_markdown_text(record))
+        source = str(record.get("__normalizedText") or "")
         scored: list[tuple[float, dict[str, Any]]] = []
-        for table in tables:
-            target = normalize_text(table.get("text", ""))
+        for table in prepared_tables:
+            target = str(table.get("normalizedText") or "")
             if not source or not target:
                 continue
             score = 0.45 * float(fuzz.partial_ratio(source, target)) + 0.55 * float(fuzz.token_set_ratio(source, target))
@@ -245,7 +264,10 @@ def build_docx_donor_map(
     paragraphs: list[dict[str, Any]] = []
     type_counts: Counter[str] = Counter()
     for paragraph in docx_analysis.get("paragraphs", []) or []:
-        donor_type = _donor_type(paragraph)
+        normalized_text = normalize_text(paragraph.get("text", ""))
+        donor_seed = dict(paragraph)
+        donor_seed["normalizedText"] = normalized_text
+        donor_type = _donor_type(donor_seed)
         type_counts[donor_type] += 1
         paragraphs.append({
             "id": paragraph.get("id"),
@@ -255,7 +277,7 @@ def build_docx_donor_map(
             "style": paragraph.get("style"),
             "donorType": donor_type,
             "text": str(paragraph.get("text") or ""),
-            "normalizedText": normalize_text(paragraph.get("text", "")),
+            "normalizedText": normalized_text,
             "paragraphFormat": paragraph.get("paragraph_format"),
             "numbering": paragraph.get("numbering"),
             "runs": paragraph.get("runs") or [],
@@ -303,6 +325,7 @@ def build_docx_donor_map(
             "allowedUses": ["omml", "native-table", "native-drawing", "numbering", "verified-style-hint"],
             "association": "direct-markdown-to-docx-donor-map",
             "legacyAlignmentRequired": False,
+            "matchingCache": "precomputed-normalized-text-and-math-signatures",
         },
         "source": docx_analysis.get("source"),
         "sourceAnalysisVersion": docx_analysis.get("version"),
