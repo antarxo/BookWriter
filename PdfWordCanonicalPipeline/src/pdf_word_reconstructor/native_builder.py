@@ -229,15 +229,15 @@ def build_native_page_document(
 ) -> dict[str, Any]:
     """Mandatory maps-first boundary followed by the preserved Word renderer.
 
-    The physical renderer is still the preserved HF55 implementation. Its prose
-    source and ordinary flow typography are materialized from the build contract
-    before entry; alignment matches are removed.
+    The physical renderer is still the preserved HF55 implementation. Its prose,
+    ordinary typography and paragraph geometry are materialized from the build
+    contract before save; legacy alignment matches are removed.
     """
     contract = _prepare_build_contract(page_layout_spine, Path(output_path))
     materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
     render_alignment = _sanitized_alignment(alignment)
 
-    with contract_typography_bridge(_legacy_module, contract, materialized_structure):
+    with contract_typography_bridge(_legacy_module, contract, materialized_structure) as paragraph_audit:
         report = _legacy_build_native_page_document(
             pdf_analysis,
             materialized_structure,
@@ -268,14 +268,26 @@ def build_native_page_document(
             "emphasis": "pdfTypography.emphasis",
             "color": "pdfTypography.color.dominant",
             "lineHeight": "wordParagraph.geometry.lineHeightPt",
-            "paragraphGap": "wordParagraph.spacing.observedGapBeforePt",
             "legacyTimesNewRomanForOrdinaryFlow": False,
+        }
+        report["paragraph_format_lineage"] = {
+            "policy": "observed-word-paragraph-format-from-build-contract-before-save",
+            "alignment": "wordParagraph.geometry.alignment",
+            "leftIndent": "wordParagraph.geometry.leftIndentPt",
+            "rightIndent": "wordParagraph.geometry.rightIndentPt",
+            "firstLineIndent": "wordParagraph.geometry.firstLineIndentPt",
+            "hangingIndent": "wordParagraph.geometry.hangingIndentPt",
+            "lineHeight": "wordParagraph.geometry.lineHeightPt",
+            "spaceBefore": "wordParagraph.spacing.spaceBeforePt",
+            "spaceAfter": "wordParagraph.spacing.spaceAfterPt",
+            "audit": paragraph_audit,
         }
         report["execution_boundary"] = {
             "policy": "maps-first-contract-materialization-before-legacy-renderer",
             "contractCheckedBeforeRender": True,
             "markdownTextMaterializedBeforeRender": True,
             "ordinaryFlowTypographyMaterializedBeforeRender": True,
+            "paragraphFormatReappliedFromContractBeforeSave": True,
             "alignmentMatchesVisibleToRenderer": False,
             "silentFallbackAllowed": False,
             "legacyRendererStillActive": True,
