@@ -98,12 +98,16 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         reason = str(diag.get("reason") or "unknown")
         reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
-    result["version"] = VERSION
-    result["postDirectionalDiagnostics"] = {
+    final_diagnostics = {
         "count": len(diagnostics),
         "reasonCounts": reason_counts,
         "items": diagnostics[:120],
     }
+    result["version"] = VERSION
+    result["postDirectionalDiagnostics"] = final_diagnostics
+    # Compatibility alias consumed by the existing donorless server. This must
+    # reflect the final post-v0.10 state, not the stale v0.9 snapshot.
+    result["neighborBoundedDiagnostics"] = final_diagnostics
     return result
 
 
