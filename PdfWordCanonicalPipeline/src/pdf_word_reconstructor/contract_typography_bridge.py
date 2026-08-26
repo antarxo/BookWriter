@@ -96,17 +96,81 @@ def _apply_contract_to_structure(contract: dict[str, Any], page_structure: dict[
             item["__buildContractId"] = contract_item.get("id")
 
 
-@contextmanager
-def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], page_structure: dict[str, Any]) -> Iterator[None]:
-    """Temporarily route legacy text helpers through the maps-first contract.
+def _alignment_value(legacy_module: Any, value: Any):
+    key = str(value or "").strip().lower()
+    mapping = {
+        "left": legacy_module.WD_ALIGN_PARAGRAPH.LEFT,
+        "center": legacy_module.WD_ALIGN_PARAGRAPH.CENTER,
+        "right": legacy_module.WD_ALIGN_PARAGRAPH.RIGHT,
+        "justify": legacy_module.WD_ALIGN_PARAGRAPH.JUSTIFY,
+    }
+    return mapping.get(key)
 
-    This bridge is deliberately narrow: it changes only ordinary flow-text
-    typography/line-height/gap decisions. Paragraph alignment/indents and callout
-    frame formatting remain explicit follow-up work rather than hidden guesses.
+
+def _float_or_none(value: Any) -> float | None:
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _apply_paragraph_contract(legacy_module: Any, paragraph: Any, contract_item: dict[str, Any]) -> dict[str, Any]:
+    word = contract_item.get("wordParagraph") if isinstance(contract_item.get("wordParagraph"), dict) else {}
+    geometry = word.get("geometry") if isinstance(word.get("geometry"), dict) else {}
+    spacing = word.get("spacing") if isinstance(word.get("spacing"), dict) else {}
+    applied: dict[str, Any] = {"buildContractId": contract_item.get("id")}
+
+    alignment = geometry.get("alignment") if isinstance(geometry.get("alignment"), dict) else {}
+    alignment_value = _alignment_value(legacy_module, alignment.get("value"))
+    if alignment_value is not None:
+        paragraph.alignment = alignment_value
+        applied["alignment"] = alignment.get("value")
+
+    left = _float_or_none(geometry.get("leftIndentPt"))
+    right = _float_or_none(geometry.get("rightIndentPt"))
+    first = _float_or_none(geometry.get("firstLineIndentPt")) or 0.0
+    hanging = _float_or_none(geometry.get("hangingIndentPt")) or 0.0
+    if left is not None:
+        paragraph.paragraph_format.left_indent = Pt(max(0.0, left))
+        applied["leftIndentPt"] = round(max(0.0, left), 3)
+    if right is not None:
+        paragraph.paragraph_format.right_indent = Pt(max(0.0, right))
+        applied["rightIndentPt"] = round(max(0.0, right), 3)
+    paragraph.paragraph_format.first_line_indent = Pt(first - hanging)
+    applied["firstLineIndentPt"] = round(first, 3)
+    applied["hangingIndentPt"] = round(hanging, 3)
+
+    line_height = _float_or_none(geometry.get("lineHeightPt"))
+    if line_height is not None and line_height > 0:
+        paragraph.paragraph_format.line_spacing_rule = legacy_module.WD_LINE_SPACING.EXACTLY
+        paragraph.paragraph_format.line_spacing = Pt(line_height)
+        applied["lineHeightPt"] = round(line_height, 3)
+
+    before = _float_or_none(spacing.get("spaceBeforePt"))
+    after = _float_or_none(spacing.get("spaceAfterPt"))
+    if before is not None:
+        paragraph.paragraph_format.space_before = Pt(max(0.0, before))
+        applied["spaceBeforePt"] = round(max(0.0, before), 3)
+    if after is not None:
+        paragraph.paragraph_format.space_after = Pt(max(0.0, after))
+        applied["spaceAfterPt"] = round(max(0.0, after), 3)
+
+    return applied
+
+
+@contextmanager
+def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], page_structure: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    """Route legacy text rendering through the maps-first contract.
+
+    Ordinary flow text receives contract-controlled content typography and Word
+    paragraph geometry. The physical legacy renderer still creates the paragraph,
+    but contract formatting is re-applied immediately before document save so
+    hardcoded alignment/indent/spacing decisions cannot remain authoritative.
     """
     _apply_contract_to_structure(contract, page_structure)
     region_map = _region_contracts(contract, page_structure)
 
+    original_document = legacy_module.Document
     original_item_text = legacy_module._item_text_and_runs
     original_add_runs = legacy_module._add_runs
     original_dominant = legacy_module._dominant_span_size
@@ -114,9 +178,50 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     original_line_height = legacy_module._line_height
     original_gap = legacy_module._word_flow_gap
 
+    pending: dict[str, Any] = {"contractItem": None}
+    paragraph_bindings: list[tuple[Any, dict[str, Any]]] = []
+    audit: dict[str, Any] = {
+        "policy": "build-contract-paragraph-format-before-save",
+        "boundParagraphCount": 0,
+        "appliedParagraphCount": 0,
+        "items": [],
+    }
+
+    def document_factory(*args, **kwargs):
+        doc = original_document(*args, **kwargs)
+        original_add_paragraph = doc.add_paragraph
+        original_save = doc.save
+
+        def add_paragraph(*p_args, **p_kwargs):
+            paragraph = original_add_paragraph(*p_args, **p_kwargs)
+            contract_item = pending.get("contractItem")
+            if isinstance(contract_item, dict):
+                paragraph_bindings.append((paragraph, contract_item))
+                audit["boundParagraphCount"] = len(paragraph_bindings)
+                pending["contractItem"] = None
+            return paragraph
+
+        def save(*s_args, **s_kwargs):
+            applied_rows: list[dict[str, Any]] = []
+            for paragraph, contract_item in paragraph_bindings:
+                applied_rows.append(_apply_paragraph_contract(legacy_module, paragraph, contract_item))
+            audit["appliedParagraphCount"] = len(applied_rows)
+            audit["items"] = applied_rows
+            return original_save(*s_args, **s_kwargs)
+
+        doc.add_paragraph = add_paragraph
+        doc.save = save
+        return doc
+
     def item_text_and_runs(item: dict[str, Any], matches: dict[str, Any], docx_paras: dict[str, Any]):
         text = str(item.get("text") or "")
         if item.get("type") == "text" and item.get("__pdfTypography"):
+            contract_id = item.get("__buildContractId")
+            contract_item = next(
+                (row for row in contract.get("items", []) or [] if row.get("id") == contract_id),
+                None,
+            )
+            pending["contractItem"] = contract_item
             return text, [_contract_run(text, item)], "markdown-via-build-contract", []
         return original_item_text(item, matches, docx_paras)
 
@@ -189,7 +294,7 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
 
     def flow_gap(raw_gap, item, body_size, gap_scale):
         spacing = ((item.get("__wordParagraph") or {}).get("spacing") or {})
-        value = spacing.get("observedGapBeforePt")
+        value = spacing.get("spaceBeforePt")
         try:
             if value is not None:
                 gap = max(0.0, float(value))
@@ -199,12 +304,13 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
                     "applied_gap_pt": round(gap, 2),
                     "gap_clamped": False,
                     "gap_quantized": False,
-                    "gap_policy": "build-contract-pdf-observed-gap-before",
+                    "gap_policy": "build-contract-space-before",
                 }
         except (TypeError, ValueError):
             pass
         return original_gap(raw_gap, item, body_size, gap_scale)
 
+    legacy_module.Document = document_factory
     legacy_module._item_text_and_runs = item_text_and_runs
     legacy_module._add_runs = add_runs
     legacy_module._dominant_span_size = dominant
@@ -212,8 +318,9 @@ def contract_typography_bridge(legacy_module: Any, contract: dict[str, Any], pag
     legacy_module._line_height = line_height
     legacy_module._word_flow_gap = flow_gap
     try:
-        yield
+        yield audit
     finally:
+        legacy_module.Document = original_document
         legacy_module._item_text_and_runs = original_item_text
         legacy_module._add_runs = original_add_runs
         legacy_module._dominant_span_size = original_dominant
