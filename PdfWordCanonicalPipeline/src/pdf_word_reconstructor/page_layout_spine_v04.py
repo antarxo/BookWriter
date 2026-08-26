@@ -7,7 +7,7 @@ from typing import Any
 from .page_layout_spine_v03 import build_page_layout_spine as _build_v03
 
 
-VERSION = "page-layout-spine-0.4"
+VERSION = "page-layout-spine-0.5"
 
 
 def _bbox(value: Any) -> list[float] | None:
@@ -136,8 +136,13 @@ def _paragraph_geometry(row: dict[str, Any], source_item: dict[str, Any]) -> dic
     col_box = _column_box(layout_contract)
     line_boxes = list(typography.get("lineBoxes") or [])
     indent = _first_line_indent(line_boxes)
-    left_indent = max(0.0, (box[0] - col_box[0])) if box and col_box else None
-    right_indent = max(0.0, (col_box[2] - box[2])) if box and col_box else None
+    positioned_frame = layout_contract.get("placement") == "positioned-text-frame"
+    if positioned_frame:
+        left_indent = 0.0
+        right_indent = 0.0
+    else:
+        left_indent = max(0.0, (box[0] - col_box[0])) if box and col_box else None
+        right_indent = max(0.0, (col_box[2] - box[2])) if box and col_box else None
     return {
         "source": "pdf-geometry",
         "bboxPt": box,
@@ -147,11 +152,48 @@ def _paragraph_geometry(row: dict[str, Any], source_item: dict[str, Any]) -> dic
         "firstLineIndentPt": indent["firstLineIndentPt"],
         "hangingIndentPt": indent["hangingIndentPt"],
         "indentConfidence": indent["confidence"],
-        "alignment": _alignment(box, line_boxes, col_box),
+        "alignment": _alignment(box, line_boxes, box if positioned_frame else col_box),
         "lineHeightPt": ((typography.get("linePitch") or {}).get("medianPt")),
         "lineHeightSource": "pdf-line-pitch",
         "lineCount": typography.get("lineCount"),
         "lineBoxes": line_boxes,
+    }
+
+
+def _frame_contract(row: dict[str, Any]) -> dict[str, Any] | None:
+    layout = row.get("layout") or {}
+    layout_contract = row.get("layoutContract") or {}
+    if layout_contract.get("placement") != "positioned-text-frame":
+        return None
+    box = _bbox(((layout_contract.get("box") or {}).get("absolutePt"))) or _bbox(layout.get("bbox"))
+    return {
+        "kind": "word-paragraph-frame",
+        "source": "pdf-layout-slot",
+        "bboxPt": box,
+        "anchor": {"horizontal": "page", "vertical": "page"},
+        "wrap": "around",
+        "sizeRule": "exact",
+        "lockAnchor": True,
+        "textInsetsPt": {
+            "left": 0.0,
+            "right": 0.0,
+            "top": 0.0,
+            "bottom": 0.0,
+            "source": "text-region-bbox-no-extra-inset-evidence",
+        },
+        "border": {
+            "status": "unresolved-not-extracted",
+            "source": None,
+            "color": None,
+            "widthPt": None,
+            "style": None,
+        },
+        "fill": {
+            "status": "unresolved-not-extracted",
+            "source": None,
+            "color": None,
+        },
+        "rendererPolicy": "do-not-invent-border-or-fill",
     }
 
 
@@ -213,6 +255,7 @@ def build_page_layout_spine(
     typography_ready = 0
     geometry_ready = 0
     donor_ready = 0
+    frame_count = 0
 
     for row in result.get("rows", []) or []:
         markdown_id = str(row.get("markdownId") or "")
@@ -247,6 +290,10 @@ def build_page_layout_spine(
                 "nativeDonor": "docx-secondary",
             },
         }
+        frame = _frame_contract(row)
+        if frame:
+            row["wordParagraph"]["frame"] = frame
+            frame_count += 1
         contract = row.get("layoutContract") or {}
         contract["wordParagraph"] = row["wordParagraph"]
         contract["authoritativeContent"] = authoritative
@@ -257,7 +304,8 @@ def build_page_layout_spine(
     result["version"] = VERSION
     result["policy"] = (
         "Builder-ready maps-first layout spine. Markdown owns content; PDF owns page geometry, columns, paragraph geometry and typography; "
-        "DOCX contributes only explicitly associated native donors. Paragraph spacing is derived once from observed PDF neighbour gaps."
+        "DOCX contributes only explicitly associated native donors. Paragraph spacing is derived once from observed PDF neighbour gaps. "
+        "Positioned callouts receive explicit Word frame geometry; border/fill remain unresolved until independently extracted and must not be invented by the renderer."
     )
     summary = result.setdefault("summary", {})
     total = len(result.get("rows", []) or [])
@@ -266,6 +314,7 @@ def build_page_layout_spine(
         "typographyReadyCount": typography_ready,
         "geometryReadyCount": geometry_ready,
         "nativeDonorResolvedCount": donor_ready,
+        "positionedFrameCount": frame_count,
         "typographyCoverage": round(typography_ready / total, 5) if total else 1.0,
         "geometryCoverage": round(geometry_ready / total, 5) if total else 1.0,
         "authority": {
@@ -273,6 +322,7 @@ def build_page_layout_spine(
             "geometry": "pdf",
             "typography": "pdf",
             "nativeDonor": "docx-secondary",
+            "frameBorderFill": "unresolved-until-extracted",
         },
     }
     return result
