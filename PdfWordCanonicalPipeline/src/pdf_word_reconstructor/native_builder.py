@@ -1,24 +1,21 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-# The previous HF55 builder is preserved verbatim.  This module is now the
-# mandatory maps-first gate used by every existing call site.
+# The previous HF55 builder is preserved verbatim. This module is the mandatory
+# maps-first execution boundary used by every existing call site.
 from .native_builder_legacy import *  # noqa: F401,F403
 from .native_builder_legacy import build_native_page_document as _legacy_build_native_page_document
 from .build_contract import build_build_contract
 from .common import write_json
 
 
-def _analysis_dir_for_output(output_path: Path) -> Path | None:
-    """Resolve the established run analysis directory without inventing a path.
+_TEXT_OUTPUT_KINDS = {"paragraph", "heading", "caption", "callout", "list"}
 
-    CLI outputs are either directly under RUN/ or under RUN/work/calibration/.
-    We only select an ancestor whose existing `analysis` directory proves that it
-    is the run root.  If no such directory exists, no diagnostic side effect is
-    attempted.
-    """
+
+def _analysis_dir_for_output(output_path: Path) -> Path | None:
     output_path = Path(output_path)
     candidates = [output_path.parent, *output_path.parents]
     seen: set[str] = set()
@@ -61,6 +58,150 @@ def _prepare_build_contract(
     return contract
 
 
+def _contract_text(item: dict[str, Any]) -> str:
+    content = item.get("content") if isinstance(item.get("content"), dict) else {}
+    authoritative = item.get("authoritativeContent") if isinstance(item.get("authoritativeContent"), dict) else {}
+    for value in (content.get("text"), authoritative.get("text")):
+        text = str(value or "")
+        if text:
+            return text
+    return ""
+
+
+def _contract_by_slot(contract: dict[str, Any]) -> dict[tuple[int, str], dict[str, Any]]:
+    result: dict[tuple[int, str], dict[str, Any]] = {}
+    for item in contract.get("items", []) or []:
+        placement = item.get("placement") or {}
+        page = placement.get("page")
+        slot_id = placement.get("slotId")
+        if page is None or not slot_id:
+            continue
+        try:
+            key = (int(page), str(slot_id))
+        except (TypeError, ValueError):
+            continue
+        if key in result:
+            raise RuntimeError(f"Maps-first build blocked: duplicate contract binding for slot {key}.")
+        result[key] = item
+    return result
+
+
+def _slot_keys(item: dict[str, Any]) -> list[str]:
+    keys: list[str] = []
+    for value in (item.get("id"), item.get("visual_group_id")):
+        if value:
+            keys.append(str(value))
+    item_id = str(item.get("id") or "")
+    if item_id.startswith("flow-"):
+        keys.append(item_id[5:])
+    return list(dict.fromkeys(keys))
+
+
+def _find_contract_item(
+    by_slot: dict[tuple[int, str], dict[str, Any]],
+    page_no: int,
+    item: dict[str, Any],
+) -> dict[str, Any] | None:
+    for key in _slot_keys(item):
+        found = by_slot.get((page_no, key))
+        if found is not None:
+            return found
+    return None
+
+
+def _materialize_contract_text(
+    page_structure: dict[str, Any],
+    contract: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Create the renderer input from the pre-built contract.
+
+    Text-bearing flow/callout objects receive Markdown-authoritative text here.
+    The legacy renderer is therefore no longer allowed to choose prose from PDF
+    text or donor DOCX text. Missing bindings are fatal instead of falling back.
+    """
+    materialized = deepcopy(page_structure)
+    by_slot = _contract_by_slot(contract)
+    bound = 0
+    missing: list[str] = []
+    lineage: list[dict[str, Any]] = []
+
+    for page in materialized.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+
+        for flow_item in page.get("flow", []) or []:
+            if str(flow_item.get("type") or "") != "text":
+                continue
+            contract_item = _find_contract_item(by_slot, page_no, flow_item)
+            slot_id = str(flow_item.get("id") or "")
+            if contract_item is None:
+                missing.append(f"page={page_no}:flow={slot_id}")
+                continue
+            output_kind = str(contract_item.get("outputKind") or "")
+            if output_kind not in _TEXT_OUTPUT_KINDS:
+                continue
+            text = _contract_text(contract_item)
+            if not text.strip():
+                missing.append(f"page={page_no}:flow={slot_id}:empty-markdown")
+                continue
+            flow_item["text"] = text
+            flow_item["content_source"] = "markdown-via-build-contract"
+            flow_item["markdown_id"] = contract_item.get("markdownId")
+            bound += 1
+            lineage.append({
+                "page": page_no,
+                "slotId": slot_id,
+                "markdownId": contract_item.get("markdownId"),
+                "outputKind": output_kind,
+                "contentSource": "markdown-via-build-contract",
+            })
+
+        for callout in page.get("callouts", []) or []:
+            contract_item = _find_contract_item(by_slot, page_no, callout)
+            slot_id = str(callout.get("id") or "")
+            if contract_item is None:
+                missing.append(f"page={page_no}:callout={slot_id}")
+                continue
+            text = _contract_text(contract_item)
+            if not text.strip():
+                missing.append(f"page={page_no}:callout={slot_id}:empty-markdown")
+                continue
+            callout["text"] = text
+            callout["content_source"] = "markdown-via-build-contract"
+            callout["markdown_id"] = contract_item.get("markdownId")
+            bound += 1
+            lineage.append({
+                "page": page_no,
+                "slotId": slot_id,
+                "markdownId": contract_item.get("markdownId"),
+                "outputKind": "callout",
+                "contentSource": "markdown-via-build-contract",
+            })
+
+    if missing:
+        preview = "; ".join(missing[:12])
+        raise RuntimeError(
+            "Maps-first build blocked: renderer text slot(s) lack authoritative contract binding: "
+            f"{preview}"
+        )
+
+    return materialized, {
+        "policy": "contract-materialized-markdown-text",
+        "boundTextSlotCount": bound,
+        "missingTextSlotCount": len(missing),
+        "items": lineage,
+    }
+
+
+def _sanitized_alignment(alignment: dict[str, Any] | None) -> dict[str, Any]:
+    """Preserve diagnostics only; remove donor/PDF prose matching from rendering."""
+    source = alignment or {}
+    return {
+        "summary": deepcopy(source.get("summary") or {}),
+        "matches": [],
+        "renderPolicy": "alignment-matches-disabled-for-text-authority",
+    }
+
+
 def build_native_page_document(
     pdf_analysis: dict[str, Any],
     page_structure: dict[str, Any],
@@ -76,19 +217,20 @@ def build_native_page_document(
     page_layout_spine: dict[str, Any] | None = None,
     flow_mode: str = "free",
 ) -> dict[str, Any]:
-    """Mandatory maps-first gate followed by the preserved HF55 renderer.
+    """Mandatory maps-first boundary followed by the preserved Word renderer.
 
-    This is a transitional execution boundary: the legacy implementation still
-    performs the physical Word rendering, but it cannot run unless the complete
-    pre-build contract is ready.  No PDF/DOCX text fallback is permitted to hide
-    an unresolved mapping at this boundary.
+    The physical renderer is still the preserved HF55 implementation. Its prose
+    source is no longer legacy alignment/DOCX/PDF text: text is materialized from
+    the build contract before entry and alignment matches are removed.
     """
     contract = _prepare_build_contract(page_layout_spine, Path(output_path))
+    materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
+    render_alignment = _sanitized_alignment(alignment)
 
     report = _legacy_build_native_page_document(
         pdf_analysis,
-        page_structure,
-        alignment,
+        materialized_structure,
+        render_alignment,
         docx_analysis,
         style_profile,
         output_path,
@@ -107,9 +249,12 @@ def build_native_page_document(
             "summary": contract.get("summary") or {},
             "policy": contract.get("policy") or {},
         }
+        report["content_lineage"] = text_lineage
         report["execution_boundary"] = {
-            "policy": "maps-first-contract-gate-before-legacy-renderer",
+            "policy": "maps-first-contract-materialization-before-legacy-renderer",
             "contractCheckedBeforeRender": True,
+            "markdownTextMaterializedBeforeRender": True,
+            "alignmentMatchesVisibleToRenderer": False,
             "silentFallbackAllowed": False,
             "legacyRendererStillActive": True,
         }
