@@ -51,10 +51,21 @@ def _prepare_build_contract(
     if unresolved:
         reasons = summary.get("unresolvedReasonCounts") or {}
         details = ", ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
+        samples = []
+        for sample in list(summary.get("unresolvedSamples") or [])[:8]:
+            samples.append(
+                f"{sample.get('markdownType') or '?'}"
+                f"@p{sample.get('page') or '?'}"
+                f" id={sample.get('markdownId') or '?'}"
+                f" slot={sample.get('slotId') or '-'}"
+                f" status={sample.get('layoutStatus') or '-'}"
+            )
+        sample_text = " | samples: " + "; ".join(samples) if samples else ""
         raise RuntimeError(
             "Maps-first build contract unresolved: "
             f"{unresolved}/{int(summary.get('itemCount') or 0)} item(s). "
             f"{details or 'See build_contract.json.'}"
+            f"{sample_text}"
         )
 
     return contract
@@ -63,7 +74,12 @@ def _prepare_build_contract(
 def _contract_text(item: dict[str, Any]) -> str:
     content = item.get("content") if isinstance(item.get("content"), dict) else {}
     authoritative = item.get("authoritativeContent") if isinstance(item.get("authoritativeContent"), dict) else {}
-    for value in (content.get("text"), authoritative.get("text")):
+    for value in (
+        content.get("text"),
+        content.get("plainText"),
+        authoritative.get("text"),
+        authoritative.get("plainText"),
+    ):
         text = str(value or "")
         if text:
             return text
