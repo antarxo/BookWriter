@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDF Extraction Probe</title>
+  <style>
+    :root{font-family:Segoe UI,Arial,sans-serif;color:#1f2937;background:#eef2f7}
+    body{margin:0;padding:32px}
+    .shell{max-width:980px;margin:0 auto;background:white;border-radius:18px;box-shadow:0 14px 40px rgba(15,23,42,.12);overflow:hidden}
+    header{padding:26px 30px;border-bottom:1px solid #e5e7eb}
+    h1{margin:0 0 8px;font-size:28px}
+    header p{margin:0;color:#64748b}
+    main{padding:30px}
+    .grid{display:grid;grid-template-columns:1fr 260px;gap:20px}
+    label{display:block;font-weight:650;margin-bottom:8px}
+    input[type=file],input[type=text]{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:12px;background:#fff;font-size:15px}
+    .hint{font-size:13px;color:#64748b;margin-top:7px}
+    button{margin-top:22px;border:0;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#111827;color:white}
+    button:disabled{opacity:.55;cursor:wait}
+    .status{margin-top:22px;padding:14px 16px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;white-space:pre-wrap}
+    .status.error{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+    .status.ok{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+    table{width:100%;border-collapse:collapse;margin-top:22px}
+    th,td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left}
+    th{font-size:13px;color:#475569;background:#f8fafc}
+    .links{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    .links a{display:inline-block;text-decoration:none;border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;color:#0f172a;background:white;font-weight:650}
+    .poppler{margin-top:14px;font-size:14px;color:#475569}
+    @media(max-width:720px){body{padding:12px}.grid{grid-template-columns:1fr}header,main{padding:20px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <h1>Σύγκριση PDF extraction</h1>
+    <p>PyMuPDF ↔ Poppler, χωρίς αλλαγή στον κύριο converter.</p>
+  </header>
+  <main>
+    <div class="grid">
+      <div>
+        <label for="pdf">Αρχείο PDF</label>
+        <input id="pdf" type="file" accept="application/pdf,.pdf">
+        <div class="hint">Επίλεξε το PDF που χρησιμοποιείται στη δοκιμή.</div>
+      </div>
+      <div>
+        <label for="pages">Σελίδες</label>
+        <input id="pages" type="text" value="20,26,29" placeholder="20,26,29 ή 20-29">
+        <div class="hint">Δέχεται λίστα και εύρη.</div>
+      </div>
+    </div>
+
+    <button id="run">Σύγκριση extraction</button>
+    <div id="poppler" class="poppler">Έλεγχος Poppler…</div>
+    <div id="status" class="status">Έτοιμο.</div>
+    <div id="results"></div>
+  </main>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+
+async function checkStatus(){
+  try{
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    $('poppler').textContent = d.popplerFound ? `Poppler: ${d.pdftotext}` : 'Poppler: δεν βρέθηκε';
+  }catch(e){
+    $('poppler').textContent = 'Δεν ήταν δυνατός ο έλεγχος του backend.';
+  }
+}
+
+$('run').addEventListener('click', async () => {
+  const file = $('pdf').files[0];
+  const pages = $('pages').value.trim() || '20,26,29';
+  if(!file){
+    $('status').className='status error';
+    $('status').textContent='Επίλεξε πρώτα PDF.';
+    return;
+  }
+  const form = new FormData();
+  form.append('pdf', file, file.name);
+  form.append('pages', pages);
+  $('run').disabled=true;
+  $('status').className='status';
+  $('status').textContent='Γίνεται extraction με PyMuPDF και Poppler…';
+  $('results').innerHTML='';
+  try{
+    const r = await fetch('/api/compare', {method:'POST', body:form});
+    const d = await r.json();
+    if(!r.ok || !d.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    $('status').className='status ok';
+    $('status').textContent=`Ολοκληρώθηκε. Run: ${d.runId}`;
+    let html='<table><thead><tr><th>Σελίδα</th><th>PyMuPDF blocks</th><th>PyMuPDF lines</th><th>PyMuPDF spans</th><th>Poppler lines</th><th>Poppler words</th></tr></thead><tbody>';
+    for(const row of d.summary){
+      html += `<tr><td>${row.page}</td><td>${row.pymupdf.blocks}</td><td>${row.pymupdf.lines}</td><td>${row.pymupdf.spans}</td><td>${row.poppler.lines}</td><td>${row.poppler.words}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    html += `<div class="links"><a href="${d.txtUrl}" target="_blank">Άνοιγμα TXT</a><a href="${d.jsonUrl}" target="_blank">Άνοιγμα JSON</a></div>`;
+    $('results').innerHTML=html;
+  }catch(e){
+    $('status').className='status error';
+    $('status').textContent='Αποτυχία: '+e.message;
+  }finally{
+    $('run').disabled=false;
+  }
+});
+
+checkStatus();
+</script>
+</body>
+</html>
