@@ -68,8 +68,6 @@ def _benchmark_error_suffix(benchmark: dict) -> str:
     if not samples:
         return ""
 
-    # Show a representative spread instead of allowing one output kind to
-    # consume the whole preview. The complete set remains in BENCHMARK_REPORT.
     selected: list[dict] = []
     per_kind: dict[str, int] = {}
     for sample in samples:
@@ -95,18 +93,35 @@ def _benchmark_error_suffix(benchmark: dict) -> str:
     return " | non-equation samples: " + " || ".join(parts) if parts else ""
 
 
+def _visual_error_suffix(visual_binding: dict) -> str:
+    pages = visual_binding.get("pages") if isinstance(visual_binding, dict) else []
+    parts: list[str] = []
+    for row in pages or []:
+        md = int(row.get("unplacedMarkdownVisualCount") or 0)
+        if md <= 0:
+            continue
+        groups = int(row.get("pdfFigureGroupCount") or 0)
+        bound = int(row.get("boundCount") or 0)
+        parts.append(f"p{row.get('page')}:MD={md}/groups={groups}/bound={bound}")
+        if len(parts) >= 12:
+            break
+    return " | visual groups: " + "; ".join(parts) if parts else ""
+
+
 def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     analysis_dir = run_dir / "analysis"
     benchmark = _read_json(analysis_dir / "BENCHMARK_REPORT.json")
     build_contract = _read_json(analysis_dir / "build_contract.json")
     equation_audit = _read_json(analysis_dir / "equation_classification_audit.json")
+    page_layout_spine = _read_json(analysis_dir / "page_layout_spine.json")
+    visual_binding = page_layout_spine.get("visualGroupBinding") if isinstance(page_layout_spine.get("visualGroupBinding"), dict) else {}
     page_alignment = _read_json(analysis_dir / "markdown_pdf_page_alignment.json")
     if not page_alignment:
         spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
         page_alignment = spine.get("pageAlignmentFallback") if isinstance(spine.get("pageAlignmentFallback"), dict) else {}
 
     failure = {
-        "version": "donorless-failure-0.1",
+        "version": "donorless-failure-0.2",
         "runId": token,
         "build": BUILD,
         "exception": {
@@ -121,6 +136,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
             "unresolvedDisplayEquationCount": equation_audit.get("unresolvedDisplayEquationCount"),
             "equationGroupBinding": equation_audit.get("equationGroupBinding") or {},
         } if equation_audit else {},
+        "visualGroupBinding": visual_binding,
         "pageAlignmentFallback": page_alignment or {},
     }
     (run_dir / "DONORLESS_FAILURE.json").write_text(
@@ -131,7 +147,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    server_version = "DonorlessReconstructionGateway/1.1"
+    server_version = "DonorlessReconstructionGateway/1.2"
 
     def translate_path(self, path: str) -> str:
         relative = Path(unquote(urlparse(path).path).lstrip("/"))
@@ -211,10 +227,6 @@ class Handler(SimpleHTTPRequestHandler):
             upload_dir = run_dir / "_uploads"
             upload_dir.mkdir(parents=True, exist_ok=True)
 
-            # Deliberately ignore multipart filenames. Browser Content-Disposition
-            # filenames may arrive mojibaked (especially Greek/UTF-8 names) when
-            # decoded through the legacy latin-1 header path. Local execution does
-            # not need the user's filename, so use deterministic ASCII paths.
             pdf_path = upload_dir / "source.pdf"
             markdown_path = upload_dir / "markdown.zip"
             pdf_path.write_bytes(pdf_part["content"])
@@ -243,7 +255,8 @@ class Handler(SimpleHTTPRequestHandler):
                 except Exception:
                     failure = {}
             benchmark = failure.get("benchmark") if isinstance(failure.get("benchmark"), dict) else {}
-            error = str(exc) + _benchmark_error_suffix(benchmark)
+            visual_binding = failure.get("visualGroupBinding") if isinstance(failure.get("visualGroupBinding"), dict) else {}
+            error = str(exc) + _benchmark_error_suffix(benchmark) + _visual_error_suffix(visual_binding)
             payload = {
                 "ok": False,
                 "error": error,
