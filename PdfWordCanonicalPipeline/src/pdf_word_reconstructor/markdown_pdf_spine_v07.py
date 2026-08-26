@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from .common import normalize_text
 from .markdown_pdf_spine_v05 import build_markdown_pdf_spine as _build_v05
 from .markdown_pdf_spine_v02 import TEXT_TYPES, _pdf_regions, _reading_order_key, _score
 from .markdown_pdf_spine_v03 import _bbox, _typography_from_lines
 
-VERSION = "markdown-pdf-spine-0.7"
+VERSION = "markdown-pdf-spine-0.7.1"
 
 
 def _region_lookup(pdf_analysis: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -70,13 +71,19 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         text = _item_text(item)
         if len(text.strip()) < 4:
             continue
+        normalized_text = normalize_text(text)
+        if len(normalized_text) < 4:
+            continue
 
         best: tuple[float, dict[str, Any]] | None = None
         for row in rows_by_page.get(page, []) or []:
             key = (page, str(row.get("id") or ""))
             if key in used_keys:
                 continue
-            score = _score(text, str(row.get("text") or row.get("normalized") or ""))
+            row_normalized = str(row.get("normalized") or "").strip() or normalize_text(str(row.get("text") or ""))
+            if not row_normalized:
+                continue
+            score = _score(normalized_text, row_normalized)
             if best is None or score > best[0]:
                 best = (score, row)
         if not best or best[0] < 70.0:
@@ -95,7 +102,7 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
         item["pdfText"] = str(row.get("text") or "")
         item["status"] = "strong" if score >= 84.0 else "medium"
         item["manifestOutcome"] = "pdf-witness-confirmed"
-        item["matchMode"] = "page-scoped-unplaced-recovery"
+        item["matchMode"] = "page-scoped-unplaced-recovery-normalized"
         item["score"] = round(float(score), 2)
 
         source_region = regions.get(parent_id or row_id) or {}
@@ -106,7 +113,7 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
             except (TypeError, ValueError):
                 idx = 0
             lines = lines[idx:idx + 1]
-        item["pdfTypography"] = _typography_from_lines(lines, bbox, "page-scoped-unplaced-recovery")
+        item["pdfTypography"] = _typography_from_lines(lines, bbox, "page-scoped-unplaced-recovery-normalized")
         geometry = item.get("pdfGeometry") if isinstance(item.get("pdfGeometry"), dict) else {}
         geometry["bbox"] = bbox
         geometry["regionBBox"] = _bbox(source_region.get("bbox"))
@@ -125,7 +132,7 @@ def build_markdown_pdf_spine(markdown_element_map: dict[str, Any] | None, pdf_an
     result["version"] = VERSION
     result["pageScopedRecovery"] = {
         "recoveredCount": len(recovered),
-        "policy": "same-page unused PDF row; score>=70; uniqueness keyed by (page, pdfRegion)",
+        "policy": "same-page unused PDF row; normalized Markdown/PDF scoring; score>=70; uniqueness keyed by (page, pdfRegion)",
         "items": recovered[:120],
     }
     return result
