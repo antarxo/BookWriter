@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import json
 import shutil
 import zipfile
 from pathlib import Path
 from typing import Any
 
+from pdf_word_canonical_pipeline.markdown_equation_donor import extract_markdown_equations
+from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
+
 from .common import parse_page_range, write_json
 from .mapping_fidelity import build_mapping_fidelity
-from .markdown_equation_donor import extract_markdown_equations
-from .markdown_element_map_v03 import extract_markdown_element_map
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
@@ -28,8 +28,6 @@ def _extract_markdown_package(markdown_zip: Path, target: Path) -> tuple[list[Pa
     with zipfile.ZipFile(markdown_zip) as archive:
         archive.extractall(target)
 
-    # Mathpix Markdown exports may contain one nested image/archive ZIP. Expand
-    # nested archives once, without attempting recursive package archaeology.
     nested_root = target / "__nested__"
     for index, archive_path in enumerate(list(target.rglob("*.zip")), start=1):
         nested_target = nested_root / f"zip_{index:03d}"
