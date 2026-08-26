@@ -150,6 +150,29 @@ def _semantic_error_suffix(semantic_diagnostics: dict) -> str:
     return " | semantic candidates: " + " || ".join(parts) if parts else ""
 
 
+def _conflict_error_suffix(conflict_diagnostics: dict) -> str:
+    if not isinstance(conflict_diagnostics, dict):
+        return ""
+    parts: list[str] = []
+    for item in (conflict_diagnostics.get("items") or [])[:8]:
+        rows = item.get("topPageRows") or []
+        if not rows:
+            parts.append(f"{item.get('markdownId')}@p{item.get('page')}:no-page-rows")
+            continue
+        best = rows[0]
+        owner = best.get("owner") if isinstance(best.get("owner"), dict) else {}
+        text = re.sub(r"\s+", " ", str(best.get("text") or "")).strip()
+        if len(text) > 60:
+            text = text[:59] + "…"
+        owner_text = f",owner={owner.get('markdownId')}" if owner else ",owner=∅"
+        parts.append(
+            f"{item.get('markdownId')}@p{item.get('page')} -> "
+            f"{best.get('score')}:{best.get('semanticType') or '∅'}:{best.get('pdfRegion')}"
+            f",used={bool(best.get('used'))}{owner_text}:{text!r}"
+        )
+    return " | page-wide conflicts: " + " || ".join(parts) if parts else ""
+
+
 def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     analysis_dir = run_dir / "analysis"
     benchmark = _read_json(analysis_dir / "BENCHMARK_REPORT.json")
@@ -160,12 +183,13 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
     markdown_pdf_spine = _read_json(analysis_dir / "markdown_pdf_spine.json")
     text_diagnostics = markdown_pdf_spine.get("neighborBoundedDiagnostics") if isinstance(markdown_pdf_spine.get("neighborBoundedDiagnostics"), dict) else {}
     semantic_diagnostics = markdown_pdf_spine.get("semanticCandidateDiagnostics") if isinstance(markdown_pdf_spine.get("semanticCandidateDiagnostics"), dict) else {}
+    conflict_diagnostics = markdown_pdf_spine.get("pageWideConflictDiagnostics") if isinstance(markdown_pdf_spine.get("pageWideConflictDiagnostics"), dict) else {}
     page_alignment = _read_json(analysis_dir / "markdown_pdf_page_alignment.json")
     if not page_alignment:
         page_alignment = markdown_pdf_spine.get("pageAlignmentFallback") if isinstance(markdown_pdf_spine.get("pageAlignmentFallback"), dict) else {}
 
     failure = {
-        "version": "donorless-failure-0.4",
+        "version": "donorless-failure-0.5",
         "runId": token,
         "build": BUILD,
         "exception": {
@@ -183,6 +207,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
         "visualGroupBinding": visual_binding,
         "neighborBoundedDiagnostics": text_diagnostics,
         "semanticCandidateDiagnostics": semantic_diagnostics,
+        "pageWideConflictDiagnostics": conflict_diagnostics,
         "pageAlignmentFallback": page_alignment or {},
     }
     (run_dir / "DONORLESS_FAILURE.json").write_text(
@@ -193,7 +218,7 @@ def _write_failure_bundle(run_dir: Path, token: str, exc: Exception) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    server_version = "DonorlessReconstructionGateway/1.4"
+    server_version = "DonorlessReconstructionGateway/1.5"
 
     def translate_path(self, path: str) -> str:
         relative = Path(unquote(urlparse(path).path).lstrip("/"))
@@ -304,12 +329,14 @@ class Handler(SimpleHTTPRequestHandler):
             visual_binding = failure.get("visualGroupBinding") if isinstance(failure.get("visualGroupBinding"), dict) else {}
             text_diagnostics = failure.get("neighborBoundedDiagnostics") if isinstance(failure.get("neighborBoundedDiagnostics"), dict) else {}
             semantic_diagnostics = failure.get("semanticCandidateDiagnostics") if isinstance(failure.get("semanticCandidateDiagnostics"), dict) else {}
+            conflict_diagnostics = failure.get("pageWideConflictDiagnostics") if isinstance(failure.get("pageWideConflictDiagnostics"), dict) else {}
             error = (
                 str(exc)
                 + _benchmark_error_suffix(benchmark)
                 + _visual_error_suffix(visual_binding)
                 + _text_error_suffix(text_diagnostics)
                 + _semantic_error_suffix(semantic_diagnostics)
+                + _conflict_error_suffix(conflict_diagnostics)
             )
             payload = {
                 "ok": False,
