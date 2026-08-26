@@ -8,6 +8,7 @@ from typing import Any
 from pdf_word_canonical_pipeline.markdown_equation_donor import extract_markdown_equations
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 
+from .benchmark_report import build_benchmark_report
 from .build_contract import build_build_contract
 from .common import compact_text, parse_page_range, write_json
 from .donorless_equation_groups import bind_display_equations_to_pdf_groups
@@ -21,7 +22,7 @@ from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.6"
+VERSION = "donorless-reconstruction-0.7"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
@@ -183,6 +184,8 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
     unresolved = int(summary.get("unresolvedCount") or 0)
     reasons = summary.get("unresolvedReasonCounts") or {}
     details = ", ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
+    by_kind = summary.get("unresolvedByOutputKind") or {}
+    kind_preview = ", ".join(f"{key}={value}" for key, value in sorted(by_kind.items()))
     group_pages = (audit.get("equationGroupBinding") or {}).get("pages") or []
     group_preview = "; ".join(
         f"p{row.get('page')}:MD={row.get('unplacedMarkdownDisplayEquationCount')}/groups={row.get('pdfEquationGroupCount')}/bound={row.get('boundCount')}"
@@ -220,6 +223,8 @@ def _classification_error_message(build_contract: dict[str, Any], audit: dict[st
             f"PDFeqFragments={len(candidates)}[{compact_text(candidate_preview, 180)}]"
         )
     suffix = ""
+    if kind_preview:
+        suffix += " | unresolved kinds: " + kind_preview
     if group_preview:
         suffix += " | equation groups: " + group_preview
     if mismatch_preview_parts:
@@ -316,6 +321,13 @@ def run_donorless_reconstruction(
 
     build_contract = build_build_contract(page_layout_spine)
     write_json(analysis_dir / "build_contract.json", build_contract)
+    benchmark_report = build_benchmark_report(
+        build_contract=build_contract,
+        equation_group_binding=equation_group_binding,
+        selected_pages=pages,
+    )
+    write_json(analysis_dir / "BENCHMARK_REPORT.json", benchmark_report)
+
     if int((build_contract.get("summary") or {}).get("unresolvedCount") or 0):
         equation_audit = _equation_classification_audit(
             build_contract,
@@ -372,6 +384,7 @@ def run_donorless_reconstruction(
             "docx_native_payload_search",
         ],
         "markdownElementCount": int(markdown_element_map.get("count") or 0),
+        "benchmark": benchmark_report,
         "equationGroupBinding": equation_group_binding,
         "mappingPreflight": mapping_preflight,
         "pageLayoutSummary": page_layout_spine.get("summary") or {},
