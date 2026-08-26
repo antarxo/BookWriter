@@ -19,11 +19,19 @@ def _callout_lookup(page_structure: dict[str, Any] | None) -> dict[tuple[int, st
     return result
 
 
+def _usable_vector_evidence(evidence: dict[str, Any] | None) -> bool:
+    evidence = evidence if isinstance(evidence, dict) else {}
+    return (
+        str(evidence.get("status") or "") == "matched"
+        and str(evidence.get("confidence") or "") in {"high", "medium"}
+    )
+
+
 def _style_from_evidence(evidence: dict[str, Any] | None) -> dict[str, Any]:
     evidence = evidence if isinstance(evidence, dict) else {}
     status = str(evidence.get("status") or "unresolved")
     confidence = str(evidence.get("confidence") or "none")
-    usable = status == "matched" and confidence in {"high", "medium"}
+    usable = _usable_vector_evidence(evidence)
     stroke = evidence.get("stroke") if isinstance(evidence.get("stroke"), dict) else {}
     fill = evidence.get("fill") if isinstance(evidence.get("fill"), dict) else {}
     if usable:
@@ -92,13 +100,20 @@ def build_page_layout_spine(
         callout = callouts.get((page_no, slot_id))
         evidence = (callout or {}).get("frame_evidence") if isinstance(callout, dict) else None
         style = _style_from_evidence(evidence)
+        original_text_bbox = frame.get("bboxPt")
         frame.update(style)
+        if _usable_vector_evidence(evidence):
+            drawing_bbox = evidence.get("drawingBBoxPt") if isinstance(evidence, dict) else None
+            if isinstance(drawing_bbox, (list, tuple)) and len(drawing_bbox) == 4:
+                frame["textBBoxPt"] = original_text_bbox
+                frame["bboxPt"] = [float(value) for value in drawing_bbox]
+                frame["geometrySource"] = "matched-pdf-vector-drawing"
         word["frame"] = frame
         row["wordParagraph"] = word
         layout_contract = row.get("layoutContract") if isinstance(row.get("layoutContract"), dict) else {}
         layout_contract["wordParagraph"] = word
         row["layoutContract"] = layout_contract
-        if style.get("evidenceStatus") == "matched" and style.get("evidenceConfidence") in {"high", "medium"}:
+        if _usable_vector_evidence(evidence):
             styled_rows += 1
         else:
             unresolved_rows += 1
@@ -106,7 +121,7 @@ def build_page_layout_spine(
     result["version"] = VERSION
     result["policy"] = (
         str(result.get("policy") or "")
-        + " Callout border/fill authority comes only from matched PyMuPDF vector drawings; unresolved style remains absent rather than guessed."
+        + " Callout border/fill and outer frame geometry come only from matched PyMuPDF vector drawings; unresolved style remains absent rather than guessed."
     ).strip()
     summary = result.setdefault("summary", {})
     summary["frameStyleEvidence"] = {
