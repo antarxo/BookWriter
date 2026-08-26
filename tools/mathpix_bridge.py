@@ -6,8 +6,10 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sys
 import time
+import zipfile
 from pathlib import Path
 from typing import Any, Callable
 
@@ -68,7 +70,12 @@ def submit_file(
     use_eu: bool = True,
     improve_mathpix: bool = False,
 ) -> str:
-    opts: dict[str, Any] = {"metadata": {"improve_mathpix": improve_mathpix}}
+    # mmd is always produced. mmd.zip must be explicitly requested so that
+    # the result is self-contained and carries all inline images locally.
+    opts: dict[str, Any] = {
+        "metadata": {"improve_mathpix": improve_mathpix},
+        "conversion_formats": {"mmd.zip": True},
+    }
     normalized_pages = validate_page_ranges(page_ranges)
     if normalized_pages:
         opts["page_ranges"] = normalized_pages
@@ -121,7 +128,7 @@ def download_output(app_key: str, file_id: str, extension: str, *, use_eu: bool 
     response = requests.get(
         f"{api_base(use_eu)}/files/v1/{file_id}.{extension}",
         headers={"app_key": app_key},
-        timeout=120,
+        timeout=180,
     )
     _raise_for_response(response, f"Download {extension}")
     return response.content
@@ -163,6 +170,42 @@ def default_output_for_pdf(pdf: Path) -> Path:
     return pdf.parent / f"{pdf.stem}_mathpix"
 
 
+def _safe_extract_zip(zip_path: Path, destination: Path) -> list[str]:
+    """Extract a ZIP without allowing paths to escape destination."""
+    destination = destination.resolve()
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.mkdir(parents=True, exist_ok=True)
+
+    extracted: list[str] = []
+    with zipfile.ZipFile(zip_path, "r") as archive:
+        for info in archive.infolist():
+            target = (destination / info.filename).resolve()
+            try:
+                target.relative_to(destination)
+            except ValueError as exc:
+                raise MathpixBridgeError(
+                    f"Unsafe path in Mathpix ZIP: {info.filename}"
+                ) from exc
+            archive.extract(info, destination)
+            if not info.is_dir():
+                extracted.append(info.filename.replace("\\", "/"))
+    return extracted
+
+
+def _package_summary(package_dir: Path, members: list[str]) -> dict[str, Any]:
+    mmd_files = [name for name in members if name.lower().endswith(".mmd")]
+    image_exts = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
+    images = [name for name in members if Path(name).suffix.lower() in image_exts]
+    return {
+        "directory": package_dir.name,
+        "file_count": len(members),
+        "mmd_files": mmd_files,
+        "image_count": len(images),
+        "image_files": images,
+    }
+
+
 def run_conversion(
     source: Path,
     app_key: str,
@@ -198,14 +241,23 @@ def run_conversion(
     if status.get("status") != "completed":
         raise MathpixBridgeError("Mathpix ended in error state. See status.json.")
 
+    # Always-produced canonical/diagnostic outputs.
     mmd = download_output(app_key.strip(), file_id, "mmd", use_eu=use_eu)
     (run_dir / "result.mmd").write_bytes(mmd)
     lines = download_output(app_key.strip(), file_id, "lines.json", use_eu=use_eu)
     (run_dir / "result.lines.json").write_bytes(lines)
-    summary = inspect_lines_json(lines)
 
+    # Self-contained Mathpix Markdown package with all referenced images.
+    mmd_zip = download_output(app_key.strip(), file_id, "mmd.zip", use_eu=use_eu)
+    zip_path = run_dir / "result.mmd.zip"
+    zip_path.write_bytes(mmd_zip)
+    package_dir = run_dir / "mmd_package"
+    members = _safe_extract_zip(zip_path, package_dir)
+    package = _package_summary(package_dir, members)
+
+    summary = inspect_lines_json(lines)
     manifest = {
-        "bridge_version": 1,
+        "bridge_version": 2,
         "status": "completed",
         "execution_path": "Mathpix Files API /files/v1",
         "api_region": "eu" if use_eu else "global",
@@ -215,9 +267,12 @@ def run_conversion(
         "file_id": file_id,
         "outputs": {
             "mmd": "result.mmd",
+            "mmd_zip": "result.mmd.zip",
+            "mmd_package": "mmd_package",
             "lines_json": "result.lines.json",
             "status": "status.json",
         },
+        "mmd_package": package,
         "lines_summary": summary,
     }
     write_json(run_dir / "manifest.json", manifest)
@@ -240,6 +295,7 @@ def cli_main(argv: list[str] | None = None) -> int:
 
     try:
         last_marker: tuple[Any, Any] | None = None
+
         def progress(data: dict[str, Any]) -> None:
             nonlocal last_marker
             marker = (data.get("status"), data.get("percent_done"))
@@ -268,7 +324,7 @@ def cli_main(argv: list[str] | None = None) -> int:
         if "Timed out" in text:
             return 4
         return 1
-    except requests.RequestException as exc:
+    except (requests.RequestException, zipfile.BadZipFile) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
