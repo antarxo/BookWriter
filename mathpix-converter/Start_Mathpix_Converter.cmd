@@ -7,16 +7,23 @@ set "PORT=8766"
 set "MAX_PORT=8785"
 
 cd /d "%ROOT%" || (
-  echo Cannot find BookWriter root:
+  echo Cannot find converter root:
   echo %ROOT%
   pause
   exit /b 1
 )
 
-if not exist "%ROOT%\.venv\Scripts\python.exe" (
+set "PYTHON=%ROOT%\.venv\Scripts\python.exe"
+if not exist "%PYTHON%" (
+  for %%I in ("%ROOT%\..\BookWriter\.venv\Scripts\python.exe") do set "PYTHON=%%~fI"
+)
+
+if not exist "%PYTHON%" (
   echo.
-  echo BookWriter private Python environment is missing.
-  echo Run the BookWriter setup first.
+  echo Python environment not found.
+  echo Checked:
+  echo   %ROOT%\.venv\Scripts\python.exe
+  echo   %ROOT%\..\BookWriter\.venv\Scripts\python.exe
   echo.
   pause
   exit /b 1
@@ -61,6 +68,7 @@ title PDF Mathpix to DOCX Converter
 echo ====================================================================
 echo PDF/Mathpix to DOCX Converter
 echo Folder:   %ROOT%\mathpix-converter
+echo Python:   %PYTHON%
 echo URL:      %URL%
 echo Gateway:  /api/convert-mathpix-docx
 echo Status:   http://127.0.0.1:%PORT%/api/status
@@ -71,7 +79,7 @@ echo.
 
 start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Milliseconds 1100; Start-Process '%URL%'"
 
-"%ROOT%\.venv\Scripts\python.exe" "%ROOT%\server.py" --port %PORT% --bind 127.0.0.1
+"%PYTHON%" "%ROOT%\server.py" --port %PORT% --bind 127.0.0.1
 
 echo.
 echo Mathpix Converter server stopped.
