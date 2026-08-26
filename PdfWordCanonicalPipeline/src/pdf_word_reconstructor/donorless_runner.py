@@ -11,7 +11,7 @@ from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdow
 from .benchmark_report import build_benchmark_report
 from .build_contract import build_build_contract
 from .common import compact_text, parse_page_range, write_json
-from .donorless_equation_groups import bind_display_equations_to_pdf_groups
+from .donorless_equation_groups_v05 import bind_display_equations_to_pdf_groups
 from .mapping_fidelity import build_mapping_fidelity
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .native_builder import build_native_page_document
@@ -22,7 +22,7 @@ from .region_classifier_v02 import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "donorless-reconstruction-0.7"
+VERSION = "donorless-reconstruction-0.8"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _GENERATED_DIRS = ("work", "analysis", "page_assets", "markdown_package")
 _GENERATED_FILES = ("reconstructed.docx", "DONORLESS_REPORT.json")
