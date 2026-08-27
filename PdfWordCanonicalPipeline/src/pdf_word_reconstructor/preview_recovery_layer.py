@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import Any
 
 
-VERSION = "preview-recovery-layer-0.1"
+VERSION = "preview-recovery-layer-0.2"
 
 
 def _text_from_row(row: dict[str, Any]) -> str:
@@ -49,8 +49,6 @@ def _callout_bbox(page: dict[str, Any], ordinal: int, text: str) -> list[float]:
     x0 = float(main.get("x0") or 40.0)
     x1 = float(main.get("x1") or (width - 40.0))
     top = float(main.get("y0") or 72.0)
-    # Recovery frames deliberately overlay the reconstructed page. They are a
-    # diagnostic/manual-edit surface, not reconstructed layout.
     estimated_lines = max(3, min(16, (len(text) // 85) + 2))
     box_height = max(72.0, min(180.0, 18.0 + estimated_lines * 9.0))
     y0 = top + 6.0 + ordinal * 18.0
@@ -177,6 +175,76 @@ def _synthetic_row(
     }
 
 
+def _usable_slot_keys(rows: list[dict[str, Any]]) -> dict[int, set[str]]:
+    result: dict[int, set[str]] = {}
+    for row in rows:
+        contract = row.get("layoutContract") if isinstance(row.get("layoutContract"), dict) else {}
+        layout = row.get("layout") if isinstance(row.get("layout"), dict) else {}
+        if str(contract.get("status") or "") != "usable":
+            continue
+        page_no = _row_page(row)
+        slot_id = str(layout.get("slotId") or "")
+        if page_no and slot_id:
+            result.setdefault(page_no, set()).add(slot_id)
+    return result
+
+
+def _item_claimed(item: dict[str, Any], claimed: set[str]) -> bool:
+    item_id = str(item.get("id") or "")
+    if item_id in claimed:
+        return True
+    if item_id.startswith("flow-") and item_id[5:] in claimed:
+        return True
+    visual_group_id = str(item.get("visual_group_id") or "")
+    return bool(visual_group_id and visual_group_id in claimed)
+
+
+def _prune_unbound_physical_text_slots(
+    page_structure: dict[str, Any],
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Preview-only: remove PDF text geometry that has no independent MMD binding.
+
+    These slots are physical fragments, often already absorbed by a larger MMD
+    semantic record. Rendering their PDF prose would violate Markdown authority
+    and can duplicate content. Visual objects are never pruned here.
+    """
+    claimed_by_page = _usable_slot_keys(rows)
+    removed: list[dict[str, Any]] = []
+    for page in page_structure.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+        claimed = claimed_by_page.get(page_no, set())
+
+        new_flow: list[dict[str, Any]] = []
+        for item in page.get("flow", []) or []:
+            if str(item.get("type") or "") != "text" or _item_claimed(item, claimed):
+                new_flow.append(item)
+                continue
+            removed.append({
+                "page": page_no,
+                "collection": "flow",
+                "slotId": item.get("id"),
+                "semanticType": item.get("semantic_type"),
+                "reason": "physical-text-slot-without-independent-mmd-contract",
+            })
+        page["flow"] = new_flow
+
+        new_callouts: list[dict[str, Any]] = []
+        for item in page.get("callouts", []) or []:
+            if _item_claimed(item, claimed):
+                new_callouts.append(item)
+                continue
+            removed.append({
+                "page": page_no,
+                "collection": "callouts",
+                "slotId": item.get("id"),
+                "semanticType": item.get("semantic_type") or "callout",
+                "reason": "physical-callout-slot-without-independent-mmd-contract",
+            })
+        page["callouts"] = new_callouts
+    return removed
+
+
 def prepare_preview_recovery_layer(
     page_layout_spine: dict[str, Any],
     page_structure: dict[str, Any],
@@ -185,8 +253,9 @@ def prepare_preview_recovery_layer(
 
     Strict reconstruction is untouched. In preview, one canonical row keeps each
     physical slot. Extra claimants and already-unresolved rows become synthetic
-    callout contracts anchored to their referenced source page. No content is
-    discarded and no ambiguous row is inserted into normal Word flow.
+    callout contracts anchored to their referenced source page. Physical PDF text
+    fragments with no independent MMD contract are omitted from preview rendering
+    rather than being filled with PDF prose.
     """
     rows = list(page_layout_spine.get("rows", []) or [])
     page_by_no = {
@@ -278,17 +347,23 @@ def prepare_preview_recovery_layer(
         })
 
     page_layout_spine.setdefault("rows", []).extend(synthetic_rows)
+    final_rows = list(page_layout_spine.get("rows", []) or [])
+    pruned_slots = _prune_unbound_physical_text_slots(page_structure, final_rows)
+
     report = {
         "version": VERSION,
         "duplicateBindingCount": len(duplicate_rows),
         "recoverySourceCount": len(recovery_sources),
         "syntheticCalloutCount": len(synthetic_rows),
+        "prunedUnboundPhysicalTextSlotCount": len(pruned_slots),
         "pagesWithRecovery": sorted(per_page_count),
         "policy": (
             "preview only: preserve all unresolved/ambiguous Markdown content as editable positioned callouts; "
-            "one canonical binding remains in normal flow per physical slot; strict build unchanged"
+            "one canonical binding remains in normal flow per physical slot; unbound PDF text fragments are not rendered as prose; "
+            "strict build unchanged"
         ),
         "items": audit_items,
+        "prunedPhysicalSlots": pruned_slots,
     }
     page_layout_spine["previewRecoveryLayer"] = report
     page_structure["previewRecoveryLayer"] = report
