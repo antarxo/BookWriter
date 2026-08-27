@@ -17,7 +17,7 @@ from pdf_word_reconstructor.region_classifier_v02 import classify_pdf_regions  #
 from pdf_word_reconstructor.style_profile import build_style_profile  # noqa: E402
 from pdf_word_reconstructor.page_structure_legacy import _detect_columns  # noqa: E402
 
-VERSION = "pdf-column-detector-audit-0.1"
+VERSION = "pdf-column-detector-audit-0.2"
 
 
 def run(pdf_path: Path, output: Path | None = None) -> dict:
@@ -39,6 +39,7 @@ def run(pdf_path: Path, output: Path | None = None) -> dict:
         rows = []
         accepted_pages = []
         reasons = Counter()
+        rejected_candidates = []
         for page in pdf_analysis.get("pages", []) or []:
             columns, diagnostics = _detect_columns(page)
             page_no = int(page.get("page") or 0)
@@ -46,6 +47,21 @@ def run(pdf_path: Path, output: Path | None = None) -> dict:
             reasons[reason] += 1
             if columns:
                 accepted_pages.append(page_no)
+            elif bool(diagnostics.get("candidate")):
+                rejected_candidates.append({
+                    "page": page_no,
+                    "reason": reason,
+                    "leftLineCount": diagnostics.get("leftLineCount"),
+                    "rightLineCount": diagnostics.get("rightLineCount"),
+                    "leftChars": diagnostics.get("leftChars"),
+                    "rightChars": diagnostics.get("rightChars"),
+                    "robustLeftWidthPt": diagnostics.get("robustLeftWidthPt"),
+                    "robustRightWidthPt": diagnostics.get("robustRightWidthPt"),
+                    "equalWidthRatio": diagnostics.get("equalWidthRatio"),
+                    "gutterPt": diagnostics.get("gutterPt"),
+                    "verticalOverlapRatio": diagnostics.get("verticalOverlapRatio"),
+                    "contentBalance": diagnostics.get("contentBalance"),
+                })
             rows.append({
                 "page": page_no,
                 "accepted": bool(columns),
@@ -62,6 +78,8 @@ def run(pdf_path: Path, output: Path | None = None) -> dict:
             "acceptedTwoColumnPageCount": len(accepted_pages),
             "acceptedTwoColumnPages": accepted_pages,
             "reasonCounts": dict(sorted(reasons.items())),
+            "rejectedCandidateCount": len(rejected_candidates),
+            "rejectedCandidates": rejected_candidates,
         },
         "pages": rows,
         "policy": (
