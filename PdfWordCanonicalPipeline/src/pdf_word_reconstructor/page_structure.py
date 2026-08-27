@@ -11,9 +11,10 @@ from .page_structure_legacy import build_page_structure as _build_legacy
 from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpix_lines
 from .mathpix_package_input import build_mathpix_package_map
 from .mathpix_package_enrichment import enrich_with_mathpix_package
+from .page_furniture import analyze_page_furniture
 
 
-VERSION = "page-structure-frame-evidence-0.3"
+VERSION = "page-structure-frame-evidence-0.4"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -247,6 +248,12 @@ def build_page_structure(
     equation_donor_path=None,
     mathpix_lines_path=None,
 ) -> dict[str, Any]:
+    # Build Mathpix evidence before the legacy map so page-furniture semantic
+    # roles can be refined first. PDF-native coordinates remain authoritative.
+    mathpix_line_layout_map = build_mathpix_line_layout_map(Path(mathpix_lines_path), pdf_analysis) if mathpix_lines_path else None
+    if mathpix_line_layout_map:
+        analyze_page_furniture(pdf_analysis, mathpix_line_layout_map=mathpix_line_layout_map)
+
     result = _build_legacy(
         pdf_analysis,
         work_dir,
@@ -255,7 +262,6 @@ def build_page_structure(
         external_asset_paths=external_asset_paths,
         equation_donor_path=equation_donor_path,
     )
-    mathpix_line_layout_map = build_mathpix_line_layout_map(Path(mathpix_lines_path), pdf_analysis) if mathpix_lines_path else None
     mathpix_lines_summary = (mathpix_line_layout_map or {}).get("summary") or (summarize_mathpix_lines(Path(mathpix_lines_path)) if mathpix_lines_path else {
         "available": False,
         "reason": "mathpix_lines_path not provided",
@@ -287,6 +293,9 @@ def build_page_structure(
         drawings = list((pdf_pages.get(page_no) or {}).get("drawings", []) or [])
         page["pdf_drawings"] = drawings
         page["drawing_count"] = len(drawings)
+        pdf_geometry = (pdf_pages.get(page_no) or {}).get("pageGeometry")
+        if pdf_geometry:
+            page["pageGeometry"] = pdf_geometry
         for callout in page.get("callouts", []) or []:
             evidence = _frame_evidence(callout, drawings)
             callout["frame_evidence"] = evidence
@@ -328,5 +337,11 @@ def build_page_structure(
         "reviewCalloutCount": review,
         "unresolvedCalloutCount": unresolved,
         "policy": "callout border/fill may be reconstructed only from matched PDF vector evidence",
+    }
+    result["pageGeometryPolicy"] = {
+        "geometryAuthority": "PDF",
+        "semanticWitness": "Mathpix page_info",
+        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt"],
+        "policy": "Mathpix may refine semantic role; final coordinates stored in maps come from PDF-native regions only.",
     }
     return result
