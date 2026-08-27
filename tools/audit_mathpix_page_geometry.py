@@ -18,7 +18,7 @@ from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout
 from pdf_word_reconstructor.mathpix_page_geometry_adapter import build_mathpix_page_geometry_evidence  # noqa: E402
 
 
-VERSION = "mathpix-page-geometry-audit-0.2"
+VERSION = "mathpix-page-geometry-audit-0.3"
 
 
 def _extract_recursive(source_zip: Path, target: Path) -> None:
@@ -44,7 +44,10 @@ def _find_source_pdf(package_dir: Path) -> Path | None:
 
 
 def _pdf_size_analysis(pdf_path: Path) -> dict:
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
     pages = []
     with fitz.open(pdf_path) as doc:
         for index, page in enumerate(doc, start=1):
@@ -76,37 +79,33 @@ def run(package_zip: Path, pdf_path: Path | None = None, output: Path | None = N
         geometry = build_mathpix_page_geometry_evidence(line_map)
 
         pages = geometry.get("pages") or []
-        header_counts = Counter()
-        footer_counts = Counter()
+        header_status_counts = Counter()
+        footer_status_counts = Counter()
         column_counts = Counter()
         body_counts = Counter()
-        no_header = []
-        no_footer = []
-        medium_header = []
-        medium_footer = []
+        header_pages: dict[str, list[int]] = {}
+        footer_pages: dict[str, list[int]] = {}
+        margin_safe_pages = []
+        margin_blocked_pages = []
 
         for page in pages:
             page_no = int(page.get("page") or 0)
-            header = page.get("headerBand") or {}
-            footer = page.get("footerBand") or {}
+            furniture = page.get("headerFooterClassification") or {}
+            header_status = str(furniture.get("headerStatus") or "unknown")
+            footer_status = str(furniture.get("footerStatus") or "unknown")
             body = page.get("bodyBox") or {}
             columns = page.get("columnEvidence") or {}
 
-            hc = str(header.get("confidence") or "none")
-            fc = str(footer.get("confidence") or "none")
-            bc = str(body.get("confidence") or "none")
-            header_counts[hc] += 1
-            footer_counts[fc] += 1
-            body_counts[bc] += 1
+            header_status_counts[header_status] += 1
+            footer_status_counts[footer_status] += 1
+            header_pages.setdefault(header_status, []).append(page_no)
+            footer_pages.setdefault(footer_status, []).append(page_no)
+            body_counts[str(body.get("confidence") or "none")] += 1
             column_counts[str(columns.get("classification") or "unknown")] += 1
-            if hc == "none":
-                no_header.append(page_no)
-            if fc == "none":
-                no_footer.append(page_no)
-            if hc == "medium":
-                medium_header.append(page_no)
-            if fc == "medium":
-                medium_footer.append(page_no)
+            if furniture.get("safeForMarginInference"):
+                margin_safe_pages.append(page_no)
+            else:
+                margin_blocked_pages.append(page_no)
 
         report = {
             "version": VERSION,
@@ -115,16 +114,17 @@ def run(package_zip: Path, pdf_path: Path | None = None, output: Path | None = N
             "sourcePdf": str(source_pdf),
             "summary": {
                 "pageCount": len(pages),
-                "headerConfidenceCounts": dict(sorted(header_counts.items())),
-                "footerConfidenceCounts": dict(sorted(footer_counts.items())),
+                "headerStatusCounts": dict(sorted(header_status_counts.items())),
+                "footerStatusCounts": dict(sorted(footer_status_counts.items())),
                 "bodyConfidenceCounts": dict(sorted(body_counts.items())),
                 "columnClassificationCounts": dict(sorted(column_counts.items())),
-                "pagesWithoutHeader": no_header,
-                "pagesWithoutFooter": no_footer,
-                "pagesWithMediumHeader": medium_header,
-                "pagesWithMediumFooter": medium_footer,
+                "headerPagesByStatus": {key: value for key, value in sorted(header_pages.items())},
+                "footerPagesByStatus": {key: value for key, value in sorted(footer_pages.items())},
+                "marginSafePageCount": len(margin_safe_pages),
+                "marginBlockedPageCount": len(margin_blocked_pages),
+                "marginBlockedPages": margin_blocked_pages,
             },
-            "policy": "diagnostic only: inspect header/footer classification before allowing body margins or columns into page_structure",
+            "policy": "diagnostic only: unresolved/no-page-info header or footer states block margin and column overrides until cross-checked",
             "geometry": geometry,
         }
 
