@@ -26,7 +26,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.3"
+VERSION = "mathpix-package-reconstruction-cli-0.4"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -76,6 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pages", default="17-60", help="1-based page range, e.g. 17-60")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--dpi", type=int, default=160)
+    parser.add_argument(
+        "--preview-unresolved",
+        action="store_true",
+        help=(
+            "Diagnostic preview only: render ready contract items and omit unresolved items only when "
+            "they own no physical page-map slot. Strict production behavior remains the default."
+        ),
+    )
     return parser
 
 
@@ -182,8 +190,10 @@ def main(argv: list[str] | None = None) -> int:
         "policy": "package-first-no-docx-alignment",
     }
 
-    final_docx = output / f"native_page_structure_{args.pages.replace(',', '_')}_package_first.docx"
-    print(f"[8/8] Build Word document: {final_docx.name}")
+    suffix = "_preview" if args.preview_unresolved else ""
+    final_docx = output / f"native_page_structure_{args.pages.replace(',', '_')}_package_first{suffix}.docx"
+    mode_text = " [diagnostic preview]" if args.preview_unresolved else ""
+    print(f"[8/8] Build Word document: {final_docx.name}{mode_text}")
     report = build_native_page_document(
         pdf_analysis,
         page_structure,
@@ -198,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
         docx_donor_map=None,
         page_layout_spine=page_layout_spine,
         flow_mode="free",
+        allow_unresolved_preview=bool(args.preview_unresolved),
     )
     if isinstance(report, dict):
         report["package_first_entrypoint"] = {
@@ -215,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
             "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
             "mathpixExactLayoutRecovery": exact_recovery,
             "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
+            "diagnosticPreview": bool(args.preview_unresolved),
         }
     write_json(analysis_dir / "build_report.json", report or {})
 
@@ -224,6 +236,7 @@ def main(argv: list[str] | None = None) -> int:
         "pages": [pages[0], pages[-1]],
         "pageCount": len(pages),
         "outputDocx": str(final_docx),
+        "diagnosticPreview": bool(args.preview_unresolved),
         "markdownRecordCount": int(markdown_element_map.get("count") or 0),
         "spineCoverage": markdown_pdf_spine.get("coverage"),
         "layoutCoverage": ((page_layout_spine.get("summary") or {}).get("coverage")),
