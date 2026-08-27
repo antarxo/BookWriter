@@ -12,6 +12,7 @@ from .native_builder_legacy import build_native_page_document as _legacy_build_n
 from .build_contract import build_build_contract
 from .common import write_json
 from .contract_typography_bridge import contract_typography_bridge
+from .word_section_plan import build_word_section_plan
 
 
 _TEXT_OUTPUT_KINDS = {"paragraph", "heading", "caption", "callout", "list"}
@@ -252,6 +253,15 @@ def build_native_page_document(
     """
     contract = _prepare_build_contract(page_layout_spine, Path(output_path))
     materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
+
+    # From this point on, Word section decisions are derived exclusively from the
+    # completed per-page map. PDF/Mathpix are upstream evidence sources only.
+    word_section_plan = build_word_section_plan(materialized_structure)
+    materialized_structure["wordSectionPlan"] = word_section_plan
+    analysis_dir = _analysis_dir_for_output(Path(output_path))
+    if analysis_dir is not None:
+        write_json(analysis_dir / "word_section_plan.json", word_section_plan)
+
     render_alignment = _sanitized_alignment(alignment)
 
     with contract_typography_bridge(_legacy_module, contract, materialized_structure) as paragraph_audit:
@@ -276,6 +286,13 @@ def build_native_page_document(
             "status": "ready",
             "summary": contract.get("summary") or {},
             "policy": contract.get("policy") or {},
+        }
+        report["word_section_plan"] = {
+            "version": word_section_plan.get("version"),
+            "pageCount": word_section_plan.get("pageCount"),
+            "sectionCount": word_section_plan.get("sectionCount"),
+            "policy": word_section_plan.get("policy") or {},
+            "source": "page_structure-only",
         }
         report["content_lineage"] = text_lineage
         report["typography_lineage"] = {
@@ -316,6 +333,7 @@ def build_native_page_document(
             "ordinaryFlowTypographyMaterializedBeforeRender": True,
             "paragraphFormatReappliedFromContractBeforeSave": True,
             "calloutFrameGeometryFromContract": True,
+            "wordSectionPlanFromPageStructureOnly": True,
             "inventedCalloutBorderFillAllowed": False,
             "calloutFontShrinkAllowed": False,
             "alignmentMatchesVisibleToRenderer": False,
