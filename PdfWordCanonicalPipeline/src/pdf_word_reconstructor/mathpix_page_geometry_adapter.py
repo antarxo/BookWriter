@@ -6,7 +6,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "mathpix-page-geometry-adapter-0.2"
+VERSION = "mathpix-page-geometry-adapter-0.3"
 
 
 def _box(obj: dict[str, Any]) -> list[float] | None:
@@ -142,13 +142,31 @@ def _classify_page_furniture(page: dict[str, Any], profiles: dict[str, Any]) -> 
             "semanticPolicy": "page_info becomes header/footer only after edge-zone plus recurrence/stable-band classification",
         }
 
+    header = band(top, "header")
+    footer = band(bottom, "footer")
+
+    def status(rows: list[dict[str, Any]], accepted_band: dict[str, Any] | None) -> str:
+        if accepted_band:
+            return "present-high" if accepted_band.get("confidence") == "high" else "present-medium"
+        if rows:
+            return "unresolved-candidates"
+        return "no-page-info-evidence"
+
+    header_status = status(top, header)
+    footer_status = status(bottom, footer)
+    fully_resolved = header_status.startswith("present-") and footer_status.startswith("present-")
+
     return {
-        "headerBand": band(top, "header"),
-        "footerBand": band(bottom, "footer"),
+        "headerBand": header,
+        "footerBand": footer,
+        "headerStatus": header_status,
+        "footerStatus": footer_status,
         "middlePageInfo": middle,
         "topCandidates": top,
         "bottomCandidates": bottom,
         "classificationComplete": True,
+        "safeForMarginInference": fully_resolved,
+        "policy": "absence is never inferred merely from missing Mathpix page_info; unresolved/no-evidence furniture blocks margin override until cross-checked",
     }
 
 
@@ -169,7 +187,7 @@ def _candidate_body_objects(page: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _robust_body_box(page: dict[str, Any], furniture: dict[str, Any]) -> dict[str, Any] | None:
-    if not furniture.get("classificationComplete"):
+    if not furniture.get("classificationComplete") or not furniture.get("safeForMarginInference"):
         return None
     width, height = _page_dimensions(page)
     if width <= 0 or height <= 0:
@@ -180,9 +198,11 @@ def _robust_body_box(page: dict[str, Any], furniture: dict[str, Any]) -> dict[st
 
     header = furniture.get("headerBand") or {}
     footer = furniture.get("footerBand") or {}
-    header_end = float((header.get("bbox") or [0, 0, 0, 0])[3]) if header else 0.0
-    footer_start = float((footer.get("bbox") or [0, height, 0, height])[1]) if footer else height
-    vertical = [row for row in objects if row["bbox"][3] > header_end and row["bbox"][1] < footer_start] or objects
+    header_end = float((header.get("bbox") or [0, 0, 0, 0])[3])
+    footer_start = float((footer.get("bbox") or [0, height, 0, height])[1])
+    vertical = [row for row in objects if row["bbox"][3] > header_end and row["bbox"][1] < footer_start]
+    if not vertical:
+        return None
 
     x0s = sorted(row["bbox"][0] for row in vertical)
     x1s = sorted(row["bbox"][2] for row in vertical)
@@ -195,10 +215,8 @@ def _robust_body_box(page: dict[str, Any], furniture: dict[str, Any]) -> dict[st
 
     robust = [q(x0s, 0.08), q(y0s, 0.04), q(x1s, 0.92), q(y1s, 0.96)]
     raw = _union([row["bbox"] for row in vertical])
-    if header:
-        robust[1] = max(robust[1], header_end)
-    if footer:
-        robust[3] = min(robust[3], footer_start)
+    robust[1] = max(robust[1], header_end)
+    robust[3] = min(robust[3], footer_start)
     if robust[2] <= robust[0] or robust[3] <= robust[1]:
         return None
     return {
@@ -213,7 +231,7 @@ def _robust_body_box(page: dict[str, Any], furniture: dict[str, Any]) -> dict[st
         },
         "confidence": "high" if len(vertical) >= 8 else "medium",
         "dependsOnFurnitureClassification": True,
-        "policy": "body bounds are inferred only after header/footer classification; robust envelope prevents side furniture from redefining margins",
+        "policy": "body bounds are inferred only after both header and footer are positively classified; robust envelope prevents side furniture from redefining margins",
     }
 
 
@@ -241,10 +259,10 @@ def _column_rows(page: dict[str, Any], body_box: list[float] | None) -> list[dic
 
 
 def _classify_columns(page: dict[str, Any], body: dict[str, Any] | None, furniture: dict[str, Any]) -> dict[str, Any]:
-    if not furniture.get("classificationComplete"):
-        return {"classification": "blocked-until-furniture-classified", "confidence": "none", "pageColumns": [], "sidebars": [], "localColumns": []}
+    if not furniture.get("safeForMarginInference") or not body:
+        return {"classification": "blocked-until-furniture-resolved", "confidence": "none", "pageColumns": [], "sidebars": [], "localColumns": []}
     width, _height = _page_dimensions(page)
-    rows = _column_rows(page, (body or {}).get("bbox"))
+    rows = _column_rows(page, body.get("bbox"))
     if not rows:
         return {"classification": "no-explicit-page-columns", "confidence": "low", "pageColumns": [], "sidebars": [], "localColumns": []}
 
@@ -282,7 +300,7 @@ def _classify_columns(page: dict[str, Any], body: dict[str, Any] | None, furnitu
         "localColumns": [row for row in rows if row["id"] not in page_ids],
         "allMathpixColumnObjects": rows,
         "dependsOnFurnitureClassification": True,
-        "policy": "Mathpix column objects become Word page columns only after page-furniture/body classification and page-coverage tests",
+        "policy": "Mathpix column objects become Word page columns only after positively resolved page furniture and body geometry",
     }
 
 
@@ -291,15 +309,15 @@ def build_mathpix_page_geometry_evidence(line_map: dict[str, Any]) -> dict[str, 
     profiles = _zone_profiles(pages)
     out = []
     class_counts: Counter[str] = Counter()
-    header_counts = Counter(); footer_counts = Counter()
+    header_status_counts = Counter(); footer_status_counts = Counter()
 
     for page in pages:
         width, height = _page_dimensions(page)
         furniture = _classify_page_furniture(page, profiles)
         header = furniture.get("headerBand")
         footer = furniture.get("footerBand")
-        header_counts[(header or {}).get("confidence") or "none"] += 1
-        footer_counts[(footer or {}).get("confidence") or "none"] += 1
+        header_status_counts[furniture.get("headerStatus") or "unknown"] += 1
+        footer_status_counts[furniture.get("footerStatus") or "unknown"] += 1
         body = _robust_body_box(page, furniture)
         columns = _classify_columns(page, body, furniture)
         class_counts[columns["classification"]] += 1
@@ -317,11 +335,11 @@ def build_mathpix_page_geometry_evidence(line_map: dict[str, Any]) -> dict[str, 
 
     return {
         "version": VERSION,
-        "policy": "strict dependency order: classify headers and footers first; only then infer body/margins; only then classify page columns",
+        "policy": "strict dependency order: positively resolve headers and footers first; only then infer body/margins; only then classify page columns",
         "summary": {
             "pageCount": len(out),
-            "headerConfidenceCounts": dict(sorted(header_counts.items())),
-            "footerConfidenceCounts": dict(sorted(footer_counts.items())),
+            "headerStatusCounts": dict(sorted(header_status_counts.items())),
+            "footerStatusCounts": dict(sorted(footer_status_counts.items())),
             "columnClassificationCounts": dict(sorted(class_counts.items())),
         },
         "pages": out,
@@ -338,6 +356,7 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
             continue
         page["mathpixGeometryEvidence"] = ev
 
+        furniture = ev.get("headerFooterClassification") or {}
         header = ev.get("headerBand")
         footer = ev.get("footerBand")
         if header and header.get("confidence") == "high":
@@ -349,7 +368,7 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
 
         body = ev.get("bodyBox") or {}
         body_box = body.get("bbox")
-        if body_box and body.get("confidence") == "high":
+        if furniture.get("safeForMarginInference") and body_box and body.get("confidence") == "high":
             page["body_box"] = list(body_box)
             page["margins"] = dict(body.get("marginsPt") or {})
             override_counts["bodyBoxAndMargins"] += 1
@@ -383,6 +402,6 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
         "version": VERSION,
         "overrideCounts": dict(sorted(override_counts.items())),
         "dependencyOrder": ["header", "footer", "body-margins", "columns"],
-        "policy": "headers/footers are resolved before margins; true page columns may override legacy columns; sidebar/local columns never redefine page margins or Word columns",
+        "policy": "unresolved/no-evidence headers or footers block margin and column overrides; only positively resolved furniture may authorize downstream geometry",
     }
     return page_structure
