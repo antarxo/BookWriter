@@ -22,11 +22,12 @@ from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
 from .page_structure import build_page_structure
 from .pdf_analyzer import analyze_pdf
+from .preview_recovery_layer import prepare_preview_recovery_layer
 from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.4"
+VERSION = "mathpix-package-reconstruction-cli-0.5"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -80,8 +81,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--preview-unresolved",
         action="store_true",
         help=(
-            "Diagnostic preview only: render ready contract items and omit unresolved items only when "
-            "they own no physical page-map slot. Strict production behavior remains the default."
+            "Diagnostic preview only: render ready contract items and preserve unresolved/ambiguous "
+            "content as editable positioned recovery callouts. Strict production behavior remains the default."
         ),
     )
     return parser
@@ -179,7 +180,18 @@ def main(argv: list[str] | None = None) -> int:
         page_structure,
     )
     write_json(analysis_dir / "mathpix_exact_layout_recovery.json", exact_recovery)
+
+    preview_recovery = {}
+    if args.preview_unresolved:
+        preview_recovery = prepare_preview_recovery_layer(
+            page_layout_spine,
+            page_structure,
+        )
+        write_json(analysis_dir / "preview_recovery_layer.json", preview_recovery)
+
     write_json(analysis_dir / "page_layout_spine.json", page_layout_spine)
+    if args.preview_unresolved:
+        write_json(analysis_dir / "page_structure_preview.json", page_structure)
 
     print("[7/8] Prepare neutral legacy API shim (not a content/typography donor)")
     shim_path = work_dir / "__empty_renderer_api_shim.docx"
@@ -192,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
 
     suffix = "_preview" if args.preview_unresolved else ""
     final_docx = output / f"native_page_structure_{args.pages.replace(',', '_')}_package_first{suffix}.docx"
-    mode_text = " [diagnostic preview]" if args.preview_unresolved else ""
+    mode_text = " [diagnostic preview + recovery callouts]" if args.preview_unresolved else ""
     print(f"[8/8] Build Word document: {final_docx.name}{mode_text}")
     report = build_native_page_document(
         pdf_analysis,
@@ -227,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
             "mathpixExactLayoutRecovery": exact_recovery,
             "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
             "diagnosticPreview": bool(args.preview_unresolved),
+            "previewRecoveryLayer": preview_recovery,
         }
     write_json(analysis_dir / "build_report.json", report or {})
 
@@ -237,6 +250,7 @@ def main(argv: list[str] | None = None) -> int:
         "pageCount": len(pages),
         "outputDocx": str(final_docx),
         "diagnosticPreview": bool(args.preview_unresolved),
+        "previewRecoveryLayer": preview_recovery,
         "markdownRecordCount": int(markdown_element_map.get("count") or 0),
         "spineCoverage": markdown_pdf_spine.get("coverage"),
         "layoutCoverage": ((page_layout_spine.get("summary") or {}).get("coverage")),
