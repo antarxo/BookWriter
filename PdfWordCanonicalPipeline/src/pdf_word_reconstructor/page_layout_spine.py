@@ -11,7 +11,7 @@ from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpi
 from .page_layout_spine_v08 import build_page_layout_spine as _build_v08
 
 
-VERSION = "page-layout-spine-wrapper-0.10"
+VERSION = "page-layout-spine-wrapper-0.11"
 
 
 def _line_map_from_page_structure(page_structure: dict[str, Any]) -> dict[str, Any] | None:
@@ -61,8 +61,14 @@ def build_page_layout_spine(
     if isinstance(package_map, dict):
         result["mathpixPackageSummary"] = page_structure.get("mathpixPackageSummary") or {}
         result["mathpixPackageMap"] = package_map
+        result["mathpixMarkdownMap"] = page_structure.get("mathpixMarkdownMap") or {}
+        result["mathpixAssetMap"] = page_structure.get("mathpixAssetMap") or {}
+        result["mathpixPackageCompletenessAudit"] = page_structure.get("mathpixPackageCompletenessAudit") or (package_map.get("audit") or {})
+        result["mathpixEnrichment"] = dict(page_structure.get("mathpixEnrichment") or {})
         result.setdefault("summary", {})["mathpixPackageAvailable"] = True
         result.setdefault("summary", {})["mathpixPackageAuditStatus"] = (package_map.get("audit") or {}).get("status")
+        result.setdefault("summary", {})["mathpixPackagedAssetCount"] = ((package_map.get("audit") or {}).get("assetCount"))
+        result.setdefault("summary", {})["mathpixUnreferencedPackagedAssetCount"] = ((package_map.get("audit") or {}).get("unreferencedPackagedAssetCount"))
     else:
         result["mathpixPackageSummary"] = {"available": False, "reason": "package map not present in page_structure"}
         result.setdefault("summary", {})["mathpixPackageAvailable"] = False
