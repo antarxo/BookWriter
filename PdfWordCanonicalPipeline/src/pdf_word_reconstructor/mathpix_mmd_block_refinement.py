@@ -5,17 +5,15 @@ from pathlib import Path
 from typing import Any
 
 
-VERSION = "mathpix-mmd-block-refinement-0.1"
+VERSION = "mathpix-mmd-block-refinement-0.2"
 
-# These are semantic block starts, not page-specific exceptions. They cover the
-# common question/answer notation emitted by Mathpix in educational material.
 _BLOCK_START_RE = re.compile(
     r"^(?:"
-    r"\d+(?:\.\d+)+(?:\.)?\s+"          # 2.3. ...
-    r"|(?:i{1,3}|iv|v|vi{0,3}|ix|x)\.\s+" # i. / ii. ...
-    r"|[A-DΑ-ΔА-ГГ△]\)\s*"                 # A) / Α) / Г) / △)
-    r"|\\\(\\Delta\)?\s*\)?"            # \(\Delta) ...
-    r"|\[[^\]]*(?:ΕΞΕΤΑΣ|EΞETAΣ)[^\]]*\]" # [ΕΞΕΤΑΣΕΙΣ ...]
+    r"\d+(?:\.\d+)+(?:\.)?\s+"
+    r"|(?:i{1,3}|iv|v|vi{0,3}|ix|x)\.\s+"
+    r"|[A-DΑ-ΔА-ГГ△]\)\s*"
+    r"|\\\(\\Delta\)?\s*\)?"
+    r"|\[[^\]]*(?:ΕΞΕΤΑΣ|EΞETAΣ)[^\]]*\]"
     r")",
     re.IGNORECASE,
 )
@@ -28,7 +26,11 @@ def _normalize(value: Any) -> str:
     text = text.replace("\\Delta", "Δ").replace("\\delta", "δ")
     text = re.sub(r"\\begin\{[^{}]+\}|\\end\{[^{}]+\}", " ", text)
     text = re.sub(r"\\item(?:\[[^\]]*\])?", " ", text)
-    text = re.sub(r"\\(?:mathrm|text|operatorname|mathbf|boldsymbol|emph|textbf|textit)\s*\{([^{}]*)\}", r"\1", text)
+    text = re.sub(
+        r"\\(?:mathrm|text|operatorname|mathbf|boldsymbol|emph|textbf|textit)\s*\{([^{}]*)\}",
+        r"\1",
+        text,
+    )
     text = re.sub(r"\\[A-Za-z]+", " ", text)
     text = re.sub(r"[{}$|&]", " ", text)
     return re.sub(r"[^0-9A-Za-zΑ-Ωα-ωΆ-Ώά-ώ]+", "", text.casefold())
@@ -62,8 +64,10 @@ def _line_records_by_page(page_structure: dict[str, Any]) -> dict[int, list[dict
         page_no = int(page.get("page") or 0)
         line_page = page.get("mathpixLinePageMap") if isinstance(page.get("mathpixLinePageMap"), dict) else {}
         records = [
-            record for record in (line_page.get("objects", []) or [])
-            if str(record.get("type") or "").lower() in {"text", "paragraph", "list_item", "section_header", "heading"}
+            record
+            for record in (line_page.get("objects", []) or [])
+            if str(record.get("type") or "").lower()
+            in {"text", "paragraph", "list_item", "section_header", "heading"}
             and _record_text(record)
         ]
         records.sort(key=_reading_key)
@@ -72,12 +76,17 @@ def _line_records_by_page(page_structure: dict[str, Any]) -> dict[int, list[dict
     return result
 
 
-def _unique_page_for_text(text: str, records_by_page: dict[int, list[dict[str, Any]]], max_span: int = 8) -> int | None:
+def _unique_page_for_text(
+    text: str,
+    records_by_page: dict[int, list[dict[str, Any]]],
+    max_span: int = 8,
+) -> int | None:
     target = _normalize(text)
     if not target:
         return None
-    pages: list[int] = []
+    matches: list[int] = []
     for page_no, records in records_by_page.items():
+        found = False
         for start in range(len(records)):
             joined = ""
             for index in range(start, min(len(records), start + max_span)):
@@ -86,15 +95,16 @@ def _unique_page_for_text(text: str, records_by_page: dict[int, list[dict[str, A
                     break
                 joined += piece
                 if joined == target:
-                    pages.append(page_no)
+                    matches.append(page_no)
+                    found = True
                     break
                 if len(joined) >= len(target) or not target.startswith(joined):
                     break
-            if pages and pages[-1] == page_no:
+            if found:
                 break
-        if len(set(pages)) > 1:
+        if len(set(matches)) > 1:
             return None
-    unique = sorted(set(pages))
+    unique = sorted(set(matches))
     return unique[0] if len(unique) == 1 else None
 
 
@@ -141,11 +151,12 @@ def refine_markdown_element_map(
     *,
     min_large_block_lines: int = 8,
 ) -> dict[str, Any]:
-    """Split only oversized paragraph records and page-bind exact child blocks.
+    """Split an oversized MMD paragraph only after cross-page identity is proven.
 
-    Normal Markdown records remain unchanged. Refinement is triggered only for a
-    paragraph whose original mapper grouped many consecutive nonblank MMD lines.
-    Child page hints come only from unique exact Mathpix-lines identity.
+    The proposed logical chunks are first matched against Mathpix lines. A parent
+    is replaced only when at least two child chunks have unique exact identities
+    on at least two distinct pages. Otherwise the original Markdown record is
+    preserved byte-for-byte. No PDF/fuzzy/page-specific exception is used.
     """
     source_text = Path(mmd_path).read_text(encoding="utf-8", errors="replace")
     records_by_page = _line_records_by_page(page_structure)
@@ -154,6 +165,7 @@ def refine_markdown_element_map(
     split_parent_count = 0
     child_count = 0
     page_bound_count = 0
+    rejected_parent_count = 0
     audit_rows: list[dict[str, Any]] = []
 
     for record in original:
@@ -166,24 +178,48 @@ def refine_markdown_element_map(
         except (TypeError, ValueError):
             output.append(dict(record))
             continue
+
         raw = source_text[start:end]
         chunks = _split_logical_lines(raw)
         if len(chunks) <= 1:
             output.append(dict(record))
             continue
 
-        split_parent_count += 1
-        child_rows: list[dict[str, Any]] = []
+        proposed: list[tuple[int, int, str, int | None]] = []
         for local_start, local_end, text in chunks:
+            proposed.append(
+                (local_start, local_end, text, _unique_page_for_text(text, records_by_page))
+            )
+
+        bound_pages = [page for _, _, _, page in proposed if page is not None]
+        distinct_pages = sorted(set(bound_pages))
+
+        # Critical gate: do not refine ordinary long paragraphs. Splitting is
+        # justified only when Mathpix lines prove that the parent spans pages.
+        if len(bound_pages) < 2 or len(distinct_pages) < 2:
+            output.append(dict(record))
+            rejected_parent_count += 1
+            audit_rows.append({
+                "parentId": record.get("id"),
+                "decision": "preserve-original",
+                "originalLineCount": record.get("lineCount"),
+                "proposedChildCount": len(proposed),
+                "pageBoundChildCount": len(bound_pages),
+                "distinctBoundPages": distinct_pages,
+            })
+            continue
+
+        split_parent_count += 1
+        emitted = 0
+        for local_start, local_end, text, page in proposed:
             absolute_start = start + local_start
             absolute_end = start + local_end
-            page = _unique_page_for_text(text, records_by_page)
             child = dict(record)
             child.update({
                 "offset": absolute_start,
                 "endOffset": absolute_end,
                 "line": source_text.count("\n", 0, absolute_start) + 1,
-                "lineCount": max(1, text.count("\n") + 1),
+                "lineCount": max(1, source_text[absolute_start:absolute_end].count("\n") + 1),
                 "text": text,
                 "textPreview": text[:240],
                 "refinedFromOversizedParagraph": True,
@@ -195,17 +231,19 @@ def refine_markdown_element_map(
                 child["pageWindow"] = [page, page]
                 child["mathpixLinesPageIdentity"] = page
                 page_bound_count += 1
-            child_rows.append(child)
             output.append(child)
             child_count += 1
+            emitted += 1
+
         audit_rows.append({
             "parentId": record.get("id"),
+            "decision": "split-cross-page-proven",
             "originalLineCount": record.get("lineCount"),
-            "childCount": len(child_rows),
-            "pageBoundChildCount": sum(1 for child in child_rows if child.get("mathpixLinesPageIdentity")),
+            "childCount": emitted,
+            "pageBoundChildCount": len(bound_pages),
+            "distinctBoundPages": distinct_pages,
         })
 
-    # Renumber after splitting so downstream order/id assumptions stay simple.
     for index, record in enumerate(output):
         record["id"] = f"mdel-{index + 1:05d}"
         record["orderIndex"] = index
@@ -221,9 +259,14 @@ def refine_markdown_element_map(
     markdown_element_map["mmdBlockRefinement"] = {
         "version": VERSION,
         "splitParentCount": split_parent_count,
+        "rejectedParentCount": rejected_parent_count,
         "refinedChildCount": child_count,
         "pageBoundChildCount": page_bound_count,
-        "policy": "split oversized paragraph blocks by logical educational block starts; assign child page only by unique exact Mathpix-lines identity; no PDF/fuzzy/page exceptions",
+        "policy": (
+            "propose logical split for oversized paragraph, but materialize it only when "
+            "unique exact Mathpix-lines identities prove at least two child blocks on at least "
+            "two distinct pages; otherwise preserve original record"
+        ),
         "parents": audit_rows,
     }
     return markdown_element_map
