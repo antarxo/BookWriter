@@ -3,13 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 
-VERSION = "mathpix-package-input-0.1"
+VERSION = "mathpix-package-input-0.2"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".svg"}
 _IMAGE_REF_RE = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 _ASSET_NAME_RE = re.compile(
@@ -47,7 +47,7 @@ def _find_packaged_mmd(package_dir: Path) -> Path | None:
         return None
     # Prefer the unpacked mmd.zip representation because its image references
     # point at durable local package assets instead of temporary CDN crops.
-    ranked = sorted(
+    return sorted(
         candidates,
         key=lambda path: (
             0 if "mmd_package" in {part.lower() for part in path.parts} else 1,
@@ -55,12 +55,17 @@ def _find_packaged_mmd(package_dir: Path) -> Path | None:
             len(path.parts),
             str(path),
         ),
-    )
-    return ranked[0]
+    )[0]
 
 
 def _extract_image_refs(markdown: str) -> list[str]:
     return [match.strip() for match in _IMAGE_REF_RE.findall(markdown or "") if match.strip()]
+
+
+def _int_token(value: Any) -> int | None:
+    """Read a numeric Mathpix query token even when MMD escaping adds '\\'."""
+    match = re.search(r"\d+", str(value or ""))
+    return int(match.group(0)) if match else None
 
 
 def _cdn_geometry(ref: str) -> dict[str, Any] | None:
@@ -68,16 +73,13 @@ def _cdn_geometry(ref: str) -> dict[str, Any] | None:
         return None
     parsed = urlparse(ref)
     query = parse_qs(parsed.query)
-    try:
-        page_match = re.search(r"-(\d{3})\.[A-Za-z0-9]+$", Path(parsed.path).name)
-        page = int(page_match.group(1)) if page_match else None
-        height = int((query.get("height") or [None])[0])
-        width = int((query.get("width") or [None])[0])
-        top_left_y = int((query.get("top_left_y") or [None])[0])
-        top_left_x = int((query.get("top_left_x") or [None])[0])
-    except (TypeError, ValueError):
-        return None
-    if page is None:
+    page_match = re.search(r"-(\d{3})\.[A-Za-z0-9]+$", Path(parsed.path).name)
+    page = int(page_match.group(1)) if page_match else None
+    height = _int_token((query.get("height") or [None])[0])
+    width = _int_token((query.get("width") or [None])[0])
+    top_left_y = _int_token((query.get("top_left_y") or [None])[0])
+    top_left_x = _int_token((query.get("top_left_x") or [None])[0])
+    if None in {page, height, width, top_left_y, top_left_x}:
         return None
     return {
         "page": page,
@@ -159,6 +161,7 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
         path for path in (asset_root.rglob("*") if asset_root else [])
         if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
     )
+    asset_by_name = {path.name: path for path in asset_paths}
 
     canonical_by_geometry: dict[tuple[int, int, int, int, int], list[str]] = defaultdict(list)
     for ref in canonical_refs:
@@ -196,6 +199,25 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
                 "conversion_output": obj.get("conversion_output"),
             })
 
+    reference_pairs: list[dict[str, Any]] = []
+    for index in range(max(len(canonical_refs), len(packaged_refs))):
+        canonical_ref = canonical_refs[index] if index < len(canonical_refs) else None
+        packaged_ref = packaged_refs[index] if index < len(packaged_refs) else None
+        canonical_geometry = _cdn_geometry(canonical_ref) if canonical_ref else None
+        packaged_name = Path(packaged_ref.replace("\\", "/")).name if packaged_ref else None
+        packaged_path = asset_by_name.get(packaged_name or "")
+        packaged_geometry = _asset_geometry(packaged_path) if packaged_path else None
+        reference_pairs.append({
+            "ordinal": index + 1,
+            "canonicalReference": canonical_ref,
+            "packagedReference": packaged_ref,
+            "packagedAssetFilename": packaged_name,
+            "packagedAssetExists": packaged_path is not None,
+            "canonicalGeometry": canonical_geometry,
+            "packagedGeometry": packaged_geometry,
+            "geometryMatches": _geometry_key(canonical_geometry) == _geometry_key(packaged_geometry),
+        })
+
     assets: list[dict[str, Any]] = []
     page_assets: dict[int, list[dict[str, Any]]] = defaultdict(list)
     matched_canonical_refs: set[str] = set()
@@ -208,7 +230,13 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
             ref for ref in packaged_refs
             if Path(ref.replace("\\", "/")).name == path.name
         )
-        matched_canonical_refs.update(canonical_matches)
+        paired_canonical_matches = [
+            pair["canonicalReference"]
+            for pair in reference_pairs
+            if pair.get("packagedAssetFilename") == path.name and pair.get("canonicalReference")
+        ]
+        all_canonical_matches = list(dict.fromkeys(canonical_matches + paired_canonical_matches))
+        matched_canonical_refs.update(all_canonical_matches)
         matched_packaged_refs.update(local_ref_matches)
         related_lines = list(line_objects_by_geometry.get(key, [])) if key else []
         record = {
@@ -219,9 +247,11 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
             "sha256": _sha256(path),
             "sizeBytes": path.stat().st_size,
             "geometry": geometry,
-            "canonicalMmdReferenced": bool(canonical_matches),
+            "canonicalMmdReferenced": bool(all_canonical_matches),
             "packagedMmdReferenced": bool(local_ref_matches),
-            "canonicalMmdReferences": canonical_matches,
+            "canonicalMmdReferences": all_canonical_matches,
+            "canonicalGeometryMatchedReferences": canonical_matches,
+            "canonicalOrdinalPairedReferences": paired_canonical_matches,
             "packagedMmdReferences": local_ref_matches,
             "relatedLineObjects": related_lines,
         }
@@ -236,25 +266,32 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
     manifest_image_count = (((manifest or {}).get("mmd_package") or {}).get("image_count"))
     status_page_count = (status or {}).get("num_pages")
     line_page_count = ((lines_map or {}).get("summary") or {}).get("pageCount")
+    pair_count = min(len(canonical_refs), len(packaged_refs))
+    geometry_pair_matches = sum(1 for pair in reference_pairs if pair.get("canonicalReference") and pair.get("packagedReference") and pair.get("geometryMatches"))
+    resolved_pair_count = sum(1 for pair in reference_pairs if pair.get("canonicalReference") and pair.get("packagedReference") and pair.get("packagedAssetExists"))
 
     audit = {
-        "status": "complete" if not packaged_unmatched else "incomplete",
+        "status": "complete" if not packaged_unmatched and not canonical_unmatched and resolved_pair_count == pair_count else "incomplete",
         "assetCount": len(assets),
         "canonicalMmdImageReferenceCount": len(canonical_refs),
         "canonicalMmdUniqueImageReferenceCount": len(set(canonical_refs)),
         "packagedMmdImageReferenceCount": len(packaged_refs),
         "packagedMmdUniqueImageReferenceCount": len(set(packaged_refs)),
+        "referencePairCount": len(reference_pairs),
+        "pairedReferenceCount": pair_count,
+        "resolvedReferencePairCount": resolved_pair_count,
+        "geometryMatchingReferencePairCount": geometry_pair_matches,
         "packagedMmdResolvedReferenceCount": len(matched_packaged_refs),
         "packagedMmdUnresolvedReferences": packaged_unmatched,
-        "canonicalMmdGeometryResolvedReferenceCount": len(matched_canonical_refs),
-        "canonicalMmdGeometryUnresolvedReferences": canonical_unmatched,
+        "canonicalMmdResolvedReferenceCount": len(matched_canonical_refs),
+        "canonicalMmdUnresolvedReferences": canonical_unmatched,
         "unreferencedPackagedAssetCount": len(unreferenced_assets),
         "manifestImageCount": manifest_image_count,
         "manifestImageCountMatches": manifest_image_count in (None, len(assets)),
         "statusPageCount": status_page_count,
         "linesPageCount": line_page_count,
         "pageCountsAgree": status_page_count in (None, line_page_count) or line_page_count is None,
-        "policy": "no packaged asset is discarded merely because canonical MMD does not reference it",
+        "policy": "all packaged assets are retained; canonical CDN and packaged local MMD references are paired ordinally and cross-checked geometrically",
     }
 
     pages = [
@@ -283,10 +320,13 @@ def build_mathpix_package_map(package_dir: Path, lines_map: dict[str, Any] | Non
             "status": status,
         },
         "markdown": {
+            "canonicalMmdSha256": _sha256(canonical_mmd_path) if canonical_mmd_path else None,
+            "packagedMmdSha256": _sha256(packaged_mmd_path) if packaged_mmd_path else None,
             "canonicalImageReferences": canonical_refs,
             "packagedImageReferences": packaged_refs,
             "canonicalReferenceCount": len(canonical_refs),
             "packagedReferenceCount": len(packaged_refs),
+            "referencePairs": reference_pairs,
         },
         "assets": assets,
         "pages": pages,
@@ -306,7 +346,7 @@ def summarize_mathpix_package(package_map: dict[str, Any] | None) -> dict[str, A
         "assetCount": audit.get("assetCount"),
         "canonicalMmdImageReferenceCount": audit.get("canonicalMmdImageReferenceCount"),
         "packagedMmdImageReferenceCount": audit.get("packagedMmdImageReferenceCount"),
-        "packagedMmdResolvedReferenceCount": audit.get("packagedMmdResolvedReferenceCount"),
+        "resolvedReferencePairCount": audit.get("resolvedReferencePairCount"),
         "unreferencedPackagedAssetCount": audit.get("unreferencedPackagedAssetCount"),
         "packageAuditStatus": audit.get("status"),
         "manifestAvailable": bool(source.get("manifest")),
