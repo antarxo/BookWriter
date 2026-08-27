@@ -18,7 +18,7 @@ from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout
 from pdf_word_reconstructor.mathpix_page_geometry_adapter import build_mathpix_page_geometry_evidence  # noqa: E402
 
 
-VERSION = "mathpix-page-geometry-audit-0.1"
+VERSION = "mathpix-page-geometry-audit-0.2"
 
 
 def _extract_recursive(source_zip: Path, target: Path) -> None:
@@ -53,19 +53,24 @@ def _pdf_size_analysis(pdf_path: Path) -> dict:
     return {"pages": pages}
 
 
-def run(package_zip: Path, output: Path | None = None) -> dict:
+def run(package_zip: Path, pdf_path: Path | None = None, output: Path | None = None) -> dict:
     package_zip = package_zip.resolve()
+    if pdf_path is not None:
+        pdf_path = pdf_path.resolve()
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"source PDF not found: {pdf_path}")
+
     with tempfile.TemporaryDirectory(prefix="bookwriter_geometry_audit_") as temp_name:
         package_dir = Path(temp_name) / "package"
         package_dir.mkdir(parents=True, exist_ok=True)
         _extract_recursive(package_zip, package_dir)
 
         lines_path = find_mathpix_lines_json(package_dir)
-        source_pdf = _find_source_pdf(package_dir)
+        source_pdf = pdf_path or _find_source_pdf(package_dir)
         if lines_path is None:
             raise FileNotFoundError("result.lines.json not found")
         if source_pdf is None:
-            raise FileNotFoundError("source.pdf not found")
+            raise FileNotFoundError("source PDF not found; pass it explicitly with --pdf")
 
         line_map = build_mathpix_line_layout_map(lines_path, _pdf_size_analysis(source_pdf))
         geometry = build_mathpix_page_geometry_evidence(line_map)
@@ -94,10 +99,14 @@ def run(package_zip: Path, output: Path | None = None) -> dict:
             footer_counts[fc] += 1
             body_counts[bc] += 1
             column_counts[str(columns.get("classification") or "unknown")] += 1
-            if hc == "none": no_header.append(page_no)
-            if fc == "none": no_footer.append(page_no)
-            if hc == "medium": medium_header.append(page_no)
-            if fc == "medium": medium_footer.append(page_no)
+            if hc == "none":
+                no_header.append(page_no)
+            if fc == "none":
+                no_footer.append(page_no)
+            if hc == "medium":
+                medium_header.append(page_no)
+            if fc == "medium":
+                medium_footer.append(page_no)
 
         report = {
             "version": VERSION,
@@ -128,9 +137,10 @@ def run(package_zip: Path, output: Path | None = None) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit Mathpix headers/footers before margins and columns.")
     parser.add_argument("package_zip", type=Path)
+    parser.add_argument("--pdf", type=Path, default=None, help="Original source PDF; required when the Mathpix package does not contain a PDF")
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
-    report = run(args.package_zip, args.output)
+    report = run(args.package_zip, args.pdf, args.output)
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
     print("Mathpix page geometry audit: PASS")
     return 0
