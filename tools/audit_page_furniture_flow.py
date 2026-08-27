@@ -19,7 +19,7 @@ from pdf_word_reconstructor.pdf_analyzer import analyze_pdf  # noqa: E402
 from pdf_word_reconstructor.region_classifier_v02 import classify_pdf_regions  # noqa: E402
 from pdf_word_reconstructor.style_profile import build_style_profile  # noqa: E402
 
-VERSION = "page-furniture-flow-audit-0.1"
+VERSION = "page-furniture-flow-audit-0.2"
 
 
 def _flow_region_ids(page: dict) -> set[str]:
@@ -29,6 +29,13 @@ def _flow_region_ids(page: dict) -> set[str]:
             if region_id:
                 ids.add(str(region_id))
     return ids
+
+
+def _has_value(page: dict, field: str) -> bool:
+    if field not in page:
+        return False
+    value = page.get(field)
+    return value is not None
 
 
 def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
@@ -83,6 +90,40 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
         pages_with_footers = []
         layout_counts = Counter()
 
+        tracked_fields = [
+            "width_pt",
+            "height_pt",
+            "page_fullness",
+            "main_column",
+            "layout_mode",
+            "layout_detection",
+            "columns",
+            "flow",
+            "callouts",
+            "headers",
+            "footers",
+            "banners",
+            "visual_groups",
+            "pageGeometry",
+            "pdf_drawings",
+            "drawing_count",
+            "mathpixLinePageMap",
+        ]
+        field_present_counts = Counter()
+        field_missing_pages: dict[str, list[int]] = {field: [] for field in tracked_fields}
+        geometry_subfields = [
+            "pageBBox",
+            "pageContentBBox",
+            "bodyBBox",
+            "bodyTextBBox",
+            "headerBBox",
+            "footerBBox",
+            "bodyBand",
+            "inferredMarginsPt",
+        ]
+        geometry_present_counts = Counter()
+        geometry_missing_pages: dict[str, list[int]] = {field: [] for field in geometry_subfields}
+
         for page in structure.get("pages", []) or []:
             page_no = int(page.get("page") or 0)
             layout_counts[str(page.get("layout_mode") or "unknown")] += 1
@@ -95,6 +136,19 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
                 pages_with_headers.append(page_no)
             if footers:
                 pages_with_footers.append(page_no)
+
+            for field in tracked_fields:
+                if _has_value(page, field):
+                    field_present_counts[field] += 1
+                else:
+                    field_missing_pages[field].append(page_no)
+
+            geometry = page.get("pageGeometry") if isinstance(page.get("pageGeometry"), dict) else {}
+            for field in geometry_subfields:
+                if field in geometry and geometry.get(field) is not None:
+                    geometry_present_counts[field] += 1
+                else:
+                    geometry_missing_pages[field].append(page_no)
 
             page_leaks = []
             for kind, rows in (("header", headers), ("footer", footers)):
@@ -119,8 +173,29 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
                 "footerCount": len(footers),
                 "headers": headers,
                 "footers": footers,
+                "pageGeometry": page.get("pageGeometry"),
+                "layoutDetection": page.get("layout_detection"),
+                "columnCount": len(page.get("columns", []) or []),
                 "leakageCount": len(page_leaks),
             })
+
+    page_count = len(page_rows)
+    field_coverage = {
+        field: {
+            "presentCount": int(field_present_counts.get(field, 0)),
+            "missingCount": len(field_missing_pages[field]),
+            "missingPages": field_missing_pages[field],
+        }
+        for field in tracked_fields
+    }
+    geometry_coverage = {
+        field: {
+            "presentCount": int(geometry_present_counts.get(field, 0)),
+            "missingCount": len(geometry_missing_pages[field]),
+            "missingPages": geometry_missing_pages[field],
+        }
+        for field in geometry_subfields
+    }
 
     report = {
         "version": VERSION,
@@ -128,7 +203,7 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
         "sourcePdf": str(pdf_path),
         "sourceManifestZip": str(manifest_zip),
         "summary": {
-            "pageCount": len(page_rows),
+            "pageCount": page_count,
             "headerCount": header_count,
             "footerCount": footer_count,
             "pagesWithHeadersCount": len(pages_with_headers),
@@ -137,12 +212,14 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
             "pagesWithFooters": pages_with_footers,
             "flowLeakageCount": len(leakage),
             "layoutModeCounts": dict(sorted(layout_counts.items())),
+            "pageFieldCoverage": field_coverage,
+            "pageGeometryFieldCoverage": geometry_coverage,
         },
         "leakage": leakage,
         "pages": page_rows,
         "policy": (
             "Headers and footers are page-furniture map objects. They must never appear in main body flow. "
-            "Their PDF-native bbox/text are retained for later Word section/page-pagination reconstruction."
+            "This audit also inventories the fields already present in the existing per-page map; it does not define a new schema."
         ),
     }
     if output:
@@ -152,7 +229,7 @@ def run(pdf_path: Path, manifest_zip: Path, output: Path | None = None) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Audit header/footer exclusion from the Word body flow map.")
+    parser = argparse.ArgumentParser(description="Audit page-furniture flow exclusion and completeness of the existing per-page map.")
     parser.add_argument("pdf", type=Path)
     parser.add_argument("manifest_zip", type=Path)
     parser.add_argument("--output", type=Path, default=None)
