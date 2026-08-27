@@ -36,6 +36,8 @@ def _analysis_dir_for_output(output_path: Path) -> Path | None:
 def _prepare_build_contract(
     page_layout_spine: dict[str, Any] | None,
     output_path: Path,
+    *,
+    allow_unresolved_preview: bool = False,
 ) -> dict[str, Any]:
     if not page_layout_spine:
         raise RuntimeError(
@@ -49,6 +51,54 @@ def _prepare_build_contract(
 
     summary = contract.get("summary") or {}
     unresolved = int(summary.get("unresolvedCount") or 0)
+    if unresolved and allow_unresolved_preview:
+        skipped = [item for item in (contract.get("items") or []) if item.get("status") != "ready"]
+        unsafe = [
+            item for item in skipped
+            if ((item.get("placement") or {}).get("slotId"))
+        ]
+        if unsafe:
+            ids = ", ".join(str(item.get("markdownId") or item.get("id")) for item in unsafe[:8])
+            raise RuntimeError(
+                "Maps-first preview blocked: unresolved item(s) already own physical slots and cannot be silently omitted: "
+                f"{ids}"
+            )
+        ready_items = [item for item in (contract.get("items") or []) if item.get("status") == "ready"]
+        preview_contract = deepcopy(contract)
+        preview_contract["items"] = ready_items
+        preview_contract["preview"] = {
+            "enabled": True,
+            "mode": "diagnostic-ready-items-only",
+            "originalItemCount": len(contract.get("items") or []),
+            "renderedReadyItemCount": len(ready_items),
+            "skippedUnresolvedCount": len(skipped),
+            "skipped": [
+                {
+                    "markdownId": item.get("markdownId"),
+                    "markdownType": item.get("markdownType"),
+                    "outputKind": item.get("outputKind"),
+                    "unresolved": item.get("unresolved") or [],
+                    "page": (item.get("placement") or {}).get("page"),
+                    "slotId": (item.get("placement") or {}).get("slotId"),
+                }
+                for item in skipped
+            ],
+            "policy": "diagnostic preview only; omit unresolved items only when they own no physical slot; no fallback or invented placement",
+        }
+        preview_contract["summary"] = {
+            **summary,
+            "previewMode": True,
+            "originalUnresolvedCount": unresolved,
+            "unresolvedCount": 0,
+            "readyCount": len(ready_items),
+            "itemCount": len(ready_items),
+            "readyCoverage": 1.0,
+        }
+        if analysis_dir is not None:
+            write_json(analysis_dir / "build_contract_preview.json", preview_contract)
+            write_json(analysis_dir / "preview_skipped_unresolved.json", preview_contract["preview"])
+        return preview_contract
+
     if unresolved:
         reasons = summary.get("unresolvedReasonCounts") or {}
         details = ", ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
@@ -243,6 +293,7 @@ def build_native_page_document(
     docx_donor_map: dict[str, Any] | None = None,
     page_layout_spine: dict[str, Any] | None = None,
     flow_mode: str = "free",
+    allow_unresolved_preview: bool = False,
 ) -> dict[str, Any]:
     """Mandatory maps-first boundary followed by the preserved Word renderer.
 
@@ -251,7 +302,11 @@ def build_native_page_document(
     are materialized from the build contract before save; legacy alignment matches
     are removed and callout border/fill are never invented.
     """
-    contract = _prepare_build_contract(page_layout_spine, Path(output_path))
+    contract = _prepare_build_contract(
+        page_layout_spine,
+        Path(output_path),
+        allow_unresolved_preview=allow_unresolved_preview,
+    )
     materialized_structure, text_lineage = _materialize_contract_text(page_structure, contract)
 
     # From this point on, Word section decisions are derived exclusively from the
@@ -283,9 +338,10 @@ def build_native_page_document(
     if isinstance(report, dict):
         report["build_contract"] = {
             "version": contract.get("version"),
-            "status": "ready",
+            "status": "preview-ready" if contract.get("preview") else "ready",
             "summary": contract.get("summary") or {},
             "policy": contract.get("policy") or {},
+            "preview": contract.get("preview"),
         }
         report["word_section_plan"] = {
             "version": word_section_plan.get("version"),
@@ -339,5 +395,6 @@ def build_native_page_document(
             "alignmentMatchesVisibleToRenderer": False,
             "silentFallbackAllowed": False,
             "legacyRendererStillActive": True,
+            "diagnosticPreview": bool(contract.get("preview")),
         }
     return report
