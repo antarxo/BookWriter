@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 
-VERSION = "mathpix-lines-input-0.1"
+VERSION = "mathpix-lines-input-0.2"
 
 
 def find_mathpix_lines_json(package_dir: Path) -> Path | None:
@@ -101,7 +101,7 @@ def _page_size_lookup(pdf_analysis: dict[str, Any] | None) -> dict[int, tuple[fl
 
 def _line_record(item: dict[str, Any], page_scale: float | None) -> dict[str, Any]:
     box_px = _box(item)
-    record = {
+    return {
         "id": item.get("id"),
         "line": item.get("line"),
         "type": item.get("type"),
@@ -128,25 +128,27 @@ def _line_record(item: dict[str, Any], page_scale: float | None) -> dict[str, An
         "bbox_pt": _scale_box(box_px, page_scale),
         "raw": item,
     }
-    return record
 
 
 def build_mathpix_line_layout_map(path: Path, pdf_analysis: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Preserve and normalize every Mathpix line object for map enrichment.
+    """Preserve and normalize the complete Mathpix lines payload.
 
-    The `raw` entry keeps the original Mathpix object intact. The sibling fields
-    expose stable geometry/style/hierarchy names for the existing map pipeline.
+    `objects[].raw` preserves every line-object field. `pages[].rawPage` preserves
+    page-envelope fields such as image_id and languages_detected that do not
+    belong to any individual line object.
     """
     data = load_mathpix_lines(path)
     pdf_sizes = _page_size_lookup(pdf_analysis)
     pages: list[dict[str, Any]] = []
     type_counts: Counter[str] = Counter()
     field_counts: Counter[str] = Counter()
+    page_field_counts: Counter[str] = Counter()
     object_count = 0
 
     for page in data.get("pages", []) or []:
         if not isinstance(page, dict):
             continue
+        page_field_counts.update(str(key) for key in page.keys())
         try:
             page_no = int(page.get("page") or 0)
             page_width_px = float(page.get("page_width") or 0)
@@ -174,6 +176,8 @@ def build_mathpix_line_layout_map(path: Path, pdf_analysis: dict[str, Any] | Non
                 children_by_parent.setdefault(str(parent), []).append(str(record["id"]))
         pages.append({
             "page": page_no,
+            "image_id": page.get("image_id"),
+            "languages_detected": list(page.get("languages_detected") or []),
             "page_width_px": page_width_px,
             "page_height_px": page_height_px,
             "page_width_pt": page_width_pt or None,
@@ -182,16 +186,19 @@ def build_mathpix_line_layout_map(path: Path, pdf_analysis: dict[str, Any] | Non
             "objects": sorted(records, key=lambda item: (float(((item.get("bbox_px") or {}).get("y0") or 0)), float(((item.get("bbox_px") or {}).get("x0") or 0)), int(item.get("line") or 0))),
             "objectIdsByType": {key: value for key, value in sorted(by_type.items())},
             "childrenByParent": {key: value for key, value in sorted(children_by_parent.items())},
+            "rawPage": page,
         })
     return {
-        "version": "mathpix-line-layout-map-0.1",
+        "version": "mathpix-line-layout-map-0.2",
         "source": str(Path(path)),
-        "policy": "all Mathpix line fields are preserved under objects[].raw and normalized beside it for map enrichment",
+        "policy": "all Mathpix line-object fields are preserved under objects[].raw and all page-envelope fields under pages[].rawPage",
+        "rawTopLevel": {key: value for key, value in data.items() if key != "pages"},
         "summary": {
             "pageCount": len(pages),
             "lineObjectCount": object_count,
             "lineTypes": dict(sorted(type_counts.items())),
             "observedFields": sorted(field_counts),
+            "observedPageFields": sorted(page_field_counts),
         },
         "pages": pages,
     }
@@ -207,11 +214,13 @@ def summarize_mathpix_lines(path: Path | None) -> dict[str, Any]:
     data = load_mathpix_lines(path)
     type_counts: Counter[str] = Counter()
     field_counts: Counter[str] = Counter()
+    page_field_counts: Counter[str] = Counter()
     pages: list[dict[str, Any]] = []
     all_font_sizes: list[float] = []
     for page in data.get("pages", []) or []:
         if not isinstance(page, dict):
             continue
+        page_field_counts.update(str(key) for key in page.keys())
         line_items = [item for item in page.get("lines", []) or [] if isinstance(item, dict)]
         page_types: Counter[str] = Counter()
         page_font_sizes: list[float] = []
@@ -228,6 +237,8 @@ def summarize_mathpix_lines(path: Path | None) -> dict[str, Any]:
             all_font_sizes.append(size)
         pages.append({
             "page": page.get("page"),
+            "image_id": page.get("image_id"),
+            "languages_detected": list(page.get("languages_detected") or []),
             "page_width": page.get("page_width"),
             "page_height": page.get("page_height"),
             "lineObjectCount": len(line_items),
@@ -242,6 +253,7 @@ def summarize_mathpix_lines(path: Path | None) -> dict[str, Any]:
         "lineObjectCount": sum(page["lineObjectCount"] for page in pages),
         "lineTypes": dict(sorted(type_counts.items())),
         "observedFields": sorted(field_counts),
+        "observedPageFields": sorted(page_field_counts),
         "fontSizes": sorted(set(all_font_sizes)),
         "pages": pages,
     }
