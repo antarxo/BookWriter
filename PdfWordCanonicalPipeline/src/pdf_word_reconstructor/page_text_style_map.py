@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Any
 
 
-VERSION = "page-text-style-map-0.1"
+VERSION = "page-text-style-map-0.2"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -45,7 +45,6 @@ def _contains(outer: list[float] | None, inner: list[float] | None, tolerance: f
 
 
 def _flag_style(flags: Any) -> dict[str, bool]:
-    """Decode PyMuPDF text flags without replacing the authoritative raw flags."""
     try:
         value = int(flags or 0)
     except (TypeError, ValueError):
@@ -61,7 +60,8 @@ def _flag_style(flags: Any) -> dict[str, bool]:
 
 def _region_runs(region: dict[str, Any]) -> list[dict[str, Any]]:
     runs: list[dict[str, Any]] = []
-    for line_index, line in enumerate(region.get("lines", []) or []):
+    lines = list(region.get("lines", []) or [])
+    for line_index, line in enumerate(lines):
         for span_index, span in enumerate(line.get("spans", []) or []):
             text = str(span.get("text") or "")
             if not text:
@@ -81,7 +81,7 @@ def _region_runs(region: dict[str, Any]) -> list[dict[str, Any]]:
                 "sourceLineIndex": line_index,
                 "sourceSpanIndex": span_index,
             })
-        if line_index < len(region.get("lines", []) or []) - 1:
+        if line_index < len(lines) - 1:
             runs.append({
                 "text": "\n",
                 "lineBreak": True,
@@ -150,8 +150,6 @@ def _background_evidence(item_box: list[float] | None, drawings: list[dict[str, 
         drawing_area = max(1.0, _area(drawing_box))
         area_ratio = drawing_area / item_area
         contains = _contains(drawing_box, item_box)
-        # Keep only plausible local text/container backgrounds. Large page art is
-        # retained in pdf_drawings but is not promoted to text-background evidence.
         if text_coverage < 0.45 and not contains:
             continue
         if area_ratio > 6.0:
@@ -180,6 +178,17 @@ def _region_lookup(pdf_page: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def _resolve_region_id(region_id: str, regions: dict[str, dict[str, Any]]) -> str | None:
+    if region_id in regions:
+        return region_id
+    for suffix in ("-span-title", "-left", "-right", "-span"):
+        if region_id.endswith(suffix):
+            base = region_id[:-len(suffix)]
+            if base in regions:
+                return base
+    return None
+
+
 def _source_regions(item: dict[str, Any], regions: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     ids: list[str] = []
     for key in ("region_ids", "member_ids"):
@@ -193,12 +202,11 @@ def _source_regions(item: dict[str, Any], regions: dict[str, dict[str, Any]]) ->
     seen: set[str] = set()
     found: list[dict[str, Any]] = []
     for region_id in ids:
-        if region_id in seen:
+        resolved = _resolve_region_id(region_id, regions)
+        if not resolved or resolved in seen:
             continue
-        seen.add(region_id)
-        region = regions.get(region_id)
-        if region is not None:
-            found.append(region)
+        seen.add(resolved)
+        found.append(regions[resolved])
     return found
 
 
