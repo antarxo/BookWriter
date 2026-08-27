@@ -15,6 +15,7 @@ from pdf_word_canonical_pipeline.markdown_element_map import extract_markdown_el
 from .common import parse_page_range, write_json
 from .docx_analyzer import analyze_docx
 from .markdown_pdf_spine import build_markdown_pdf_spine
+from .mathpix_exact_layout_recovery import recover_exact_mathpix_layouts
 from .mathpix_lines_input import find_mathpix_lines_json
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
@@ -24,7 +25,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.1"
+VERSION = "mathpix-package-reconstruction-cli-0.2"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -160,6 +161,12 @@ def main(argv: list[str] | None = None) -> int:
         None,
         mathpix_lines_path=lines_path,
     )
+    exact_recovery = recover_exact_mathpix_layouts(
+        page_layout_spine,
+        markdown_pdf_spine,
+        page_structure,
+    )
+    write_json(analysis_dir / "mathpix_exact_layout_recovery.json", exact_recovery)
     write_json(analysis_dir / "page_layout_spine.json", page_layout_spine)
 
     print("[7/8] Prepare neutral legacy API shim (not a content/typography donor)")
@@ -202,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
             "contentAuthority": "Mathpix MMD via build contract",
             "physicalAuthority": "page_structure maps derived from PDF",
             "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
+            "mathpixExactLayoutRecovery": exact_recovery,
         }
     write_json(analysis_dir / "build_report.json", report or {})
 
@@ -215,6 +223,10 @@ def main(argv: list[str] | None = None) -> int:
         "spineCoverage": (markdown_pdf_spine.get("coverage")),
         "layoutCoverage": ((page_layout_spine.get("summary") or {}).get("coverage")),
         "textStyleMapSummary": page_structure.get("textStyleMapSummary") or {},
+        "mathpixExactLayoutRecovery": {
+            "recoveredCount": exact_recovery.get("recoveredCount"),
+            "unresolvedCount": exact_recovery.get("unresolvedCount"),
+        },
         "docxDonorEnabled": False,
     }
     write_json(analysis_dir / "package_first_summary.json", summary)
