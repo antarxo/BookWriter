@@ -7,15 +7,21 @@ from typing import Any
 
 from .common import normalize_text
 
-VERSION = "page-furniture-analysis-0.1"
+VERSION = "page-furniture-analysis-0.2"
 
 
 def _bbox(value: Any) -> list[float] | None:
-    if not isinstance(value, (list, tuple)) or len(value) != 4:
-        return None
-    try:
-        x0, y0, x1, y1 = [float(part) for part in value]
-    except (TypeError, ValueError):
+    if isinstance(value, dict):
+        try:
+            x0, y0, x1, y1 = [float(value.get(key)) for key in ("x0", "y0", "x1", "y1")]
+        except (TypeError, ValueError):
+            return None
+    elif isinstance(value, (list, tuple)) and len(value) == 4:
+        try:
+            x0, y0, x1, y1 = [float(part) for part in value]
+        except (TypeError, ValueError):
+            return None
+    else:
         return None
     if x1 <= x0 or y1 <= y0:
         return None
@@ -33,13 +39,21 @@ def _union(boxes: list[list[float]]) -> list[float] | None:
     ]
 
 
+def _intersection(a: list[float], b: list[float]) -> float:
+    x0, y0 = max(a[0], b[0]), max(a[1], b[1])
+    x1, y1 = min(a[2], b[2]), min(a[3], b[3])
+    return max(0.0, x1 - x0) * max(0.0, y1 - y0)
+
+
+def _area(box: list[float]) -> float:
+    return max(0.0, box[2] - box[0]) * max(0.0, box[3] - box[1])
+
+
 def _furniture_key(text: str) -> str:
     norm = normalize_text(text)
     compact = " ".join(norm.split())
     if not compact:
         return ""
-    # Preserve real words but canonicalize obvious per-page counters/dates so
-    # repeated furniture can still be recognized when one token changes.
     if re.fullmatch(r"\d{1,4}\s*/\s*\d{1,4}", compact):
         return "<page-counter>"
     if re.fullmatch(r"\d{1,4}", compact):
@@ -60,12 +74,77 @@ def _zone(box: list[float], page_height: float) -> str | None:
     return None
 
 
-def analyze_page_furniture(pdf_analysis: dict[str, Any]) -> dict[str, Any]:
+def _mathpix_page_info(mathpix_line_layout_map: dict[str, Any] | None) -> dict[int, list[dict[str, Any]]]:
+    by_page: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    if not mathpix_line_layout_map:
+        return by_page
+    for page in mathpix_line_layout_map.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+        if page_no <= 0:
+            continue
+        for obj in page.get("objects", []) or []:
+            if str(obj.get("type") or "") != "page_info":
+                continue
+            box = _bbox(obj.get("bbox_pt"))
+            text = str(obj.get("text_display") or obj.get("text") or "")
+            if box:
+                by_page[page_no].append({
+                    "id": obj.get("id"),
+                    "bbox": box,
+                    "text": text,
+                    "key": _furniture_key(text),
+                })
+    return by_page
+
+
+def _mathpix_witness(
+    page_no: int,
+    pdf_box: list[float],
+    pdf_text: str,
+    zone: str | None,
+    mathpix_by_page: dict[int, list[dict[str, Any]]],
+) -> dict[str, Any] | None:
+    if zone not in {"header", "footer"}:
+        return None
+    pdf_key = _furniture_key(pdf_text)
+    best: tuple[float, dict[str, Any]] | None = None
+    for item in mathpix_by_page.get(page_no, []):
+        item_box = item["bbox"]
+        inter = _intersection(pdf_box, item_box)
+        overlap_pdf = inter / max(1.0, _area(pdf_box))
+        overlap_mpx = inter / max(1.0, _area(item_box))
+        text_match = bool(pdf_key and item.get("key") and pdf_key == item.get("key"))
+        center_pdf = ((pdf_box[0] + pdf_box[2]) / 2.0, (pdf_box[1] + pdf_box[3]) / 2.0)
+        center_mpx = ((item_box[0] + item_box[2]) / 2.0, (item_box[1] + item_box[3]) / 2.0)
+        center_distance = math.hypot(center_pdf[0] - center_mpx[0], center_pdf[1] - center_mpx[1])
+        score = max(overlap_pdf, overlap_mpx) * 70.0
+        if text_match:
+            score += 35.0
+        score -= min(25.0, center_distance * 0.35)
+        if best is None or score > best[0]:
+            best = (score, item)
+    if best is None or best[0] < 38.0:
+        return None
+    score, item = best
+    return {
+        "source": "mathpix-page_info-semantic-witness/pdf-geometry-authority",
+        "mathpixObjectId": item.get("id"),
+        "mathpixBBoxPtDiagnosticOnly": [round(v, 3) for v in item["bbox"]],
+        "score": round(score, 2),
+        "textKeyMatch": bool(pdf_key and pdf_key == item.get("key")),
+    }
+
+
+def analyze_page_furniture(
+    pdf_analysis: dict[str, Any],
+    mathpix_line_layout_map: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     pages = list(pdf_analysis.get("pages", []) or [])
     page_count = len(pages)
     if not page_count:
         return {"version": VERSION, "pageCount": 0, "detectedRegionCount": 0, "patterns": []}
 
+    mathpix_by_page = _mathpix_page_info(mathpix_line_layout_map)
     occurrences: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     explicit_ids: set[tuple[int, str]] = set()
 
@@ -111,6 +190,7 @@ def analyze_page_furniture(pdf_analysis: dict[str, Any]) -> dict[str, Any]:
         })
 
     detected = 0
+    mathpix_witnessed = 0
     by_zone: Counter[str] = Counter()
     page_summaries: list[dict[str, Any]] = []
 
@@ -136,28 +216,38 @@ def analyze_page_furniture(pdf_analysis: dict[str, Any]) -> dict[str, Any]:
             key = _furniture_key(str(region.get("text") or ""))
             is_explicit = (page_no, region_id) in explicit_ids
             is_repeated = bool(zone and key and (zone, key) in repeated_keys)
-            if is_explicit or is_repeated:
+            witness = _mathpix_witness(page_no, box, str(region.get("text") or ""), zone, mathpix_by_page)
+            is_mathpix_witnessed = witness is not None
+            if is_explicit or is_repeated or is_mathpix_witnessed:
                 furniture_zone = str(sem.get("type") or zone or "")
                 if furniture_zone not in {"header", "footer"}:
                     furniture_zone = zone or "header"
                 sem["type"] = furniture_zone
                 sem["alignable"] = False
                 sem["flow_zone"] = "page_furniture"
-                sem["confidence"] = max(float(sem.get("confidence") or 0.0), 0.96 if is_repeated else 0.93)
+                confidence = 0.96 if is_repeated else (0.95 if is_mathpix_witnessed else 0.93)
+                sem["confidence"] = max(float(sem.get("confidence") or 0.0), confidence)
                 reasons = sem.setdefault("reasons", [])
-                reason = "repeated page-furniture pattern" if is_repeated else "existing header/footer classification"
-                if reason not in reasons:
-                    reasons.append(reason)
+                if is_repeated and "repeated page-furniture pattern" not in reasons:
+                    reasons.append("repeated page-furniture pattern")
+                if is_explicit and "existing header/footer classification" not in reasons:
+                    reasons.append("existing header/footer classification")
+                if is_mathpix_witnessed and "Mathpix page_info confirms PDF page-furniture role" not in reasons:
+                    reasons.append("Mathpix page_info confirms PDF page-furniture role")
                 sem["pageFurniture"] = {
                     "detected": True,
                     "zone": furniture_zone,
                     "patternKey": key or None,
                     "repeated": is_repeated,
+                    "mathpixWitness": witness,
+                    "geometryAuthority": "pdf-native-region-bbox",
                 }
                 region["semantic"] = sem
                 furniture_boxes[furniture_zone].append(box)
                 detected += 1
                 by_zone[furniture_zone] += 1
+                if is_mathpix_witnessed:
+                    mathpix_witnessed += 1
                 continue
 
             sem_type = str(sem.get("type") or "body")
@@ -182,6 +272,8 @@ def analyze_page_furniture(pdf_analysis: dict[str, Any]) -> dict[str, Any]:
         body_right = float(body_bbox[2]) if body_bbox else width
         geometry = {
             "version": VERSION,
+            "geometryAuthority": "pdf-native-regions",
+            "semanticWitnesses": ["pdf-recurrence", "existing-classifier", "mathpix-page_info"],
             "pageBBox": [0.0, 0.0, round(width, 3), round(height, 3)],
             "pageContentBBox": content_bbox,
             "bodyBBox": body_bbox,
@@ -210,12 +302,15 @@ def analyze_page_furniture(pdf_analysis: dict[str, Any]) -> dict[str, Any]:
         "pageCount": page_count,
         "repeatThresholdPages": repeat_threshold,
         "detectedRegionCount": detected,
+        "mathpixWitnessedRegionCount": mathpix_witnessed,
+        "mathpixPageInfoEvidenceCount": sum(len(rows) for rows in mathpix_by_page.values()),
         "detectedByZone": dict(by_zone),
         "patterns": patterns[:120],
         "pages": page_summaries[:400],
+        "geometryAuthority": "PDF",
         "policy": (
-            "header/footer furniture is inferred from repeated normalized text in stable top/bottom page zones, "
-            "plus existing high-confidence classifier labels; furniture is excluded from bodyBBox but retained as PDF evidence"
+            "PDF-native region coordinates are authoritative for header/footer/body geometry and inferred margins. "
+            "Mathpix page_info may confirm semantic page-furniture role but never supplies final map coordinates."
         ),
     }
     pdf_analysis["pageFurniture"] = summary
