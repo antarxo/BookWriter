@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import importlib
 from contextlib import contextmanager
 from difflib import SequenceMatcher
 from typing import Any, Iterator
 
-from .contract_typography_bridge import contract_typography_bridge
+from .contract_typography_bridge import contract_typography_bridge as _base_contract_typography_bridge
 
 
-VERSION = "map-run-typography-bridge-0.1"
+VERSION = "map-run-typography-bridge-0.2"
 
 
 def _style_payload(run: dict[str, Any]) -> dict[str, Any]:
@@ -90,8 +91,9 @@ def _project_runs(authoritative_text: str, map_runs: list[dict[str, Any]]) -> tu
             if source_index < len(source_styles) and target_index < len(target_styles):
                 target_styles[target_index] = source_styles[source_index]
 
-    # Markdown remains the content authority. Characters that have no literal PDF
-    # counterpart inherit the nearest mapped PDF style; their text is never replaced.
+    # Markdown/build-contract text remains authoritative. Characters without an
+    # exact PDF counterpart inherit the nearest mapped PDF style; text is never
+    # replaced by the PDF witness.
     last_style: dict[str, Any] | None = None
     for index, value in enumerate(target_styles):
         if value is not None:
@@ -129,14 +131,8 @@ def map_run_typography_bridge(
     contract: dict[str, Any],
     page_structure: dict[str, Any],
 ) -> Iterator[dict[str, Any]]:
-    """Layer PDF-native page-map runs over the existing contract bridge.
-
-    The existing bridge continues to own paragraph geometry, dominant fallback,
-    callout frames and safety checks. This layer changes only run-level typography.
-    Markdown/build-contract text remains byte-for-byte the rendered text; PDF run
-    styles are projected onto it by sequence alignment.
-    """
-    with contract_typography_bridge(legacy_module, contract, page_structure) as audit:
+    """Layer page-map PDF runs over the existing maps-first contract bridge."""
+    with _base_contract_typography_bridge(legacy_module, contract, page_structure) as audit:
         original_item_text = legacy_module._item_text_and_runs
         stats = {
             "version": VERSION,
@@ -175,4 +171,10 @@ def map_run_typography_bridge(
             legacy_module._item_text_and_runs = original_item_text
 
 
-__all__ = ["map_run_typography_bridge"]
+def install_as_contract_bridge() -> None:
+    """Make the run-aware bridge canonical before native_builder imports it."""
+    module = importlib.import_module(".contract_typography_bridge", __package__)
+    module.contract_typography_bridge = map_run_typography_bridge
+
+
+__all__ = ["map_run_typography_bridge", "install_as_contract_bridge"]
