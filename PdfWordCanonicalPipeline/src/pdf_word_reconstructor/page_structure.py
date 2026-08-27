@@ -14,7 +14,7 @@ from .mathpix_package_enrichment import enrich_with_mathpix_package
 from .page_furniture import analyze_page_furniture
 
 
-VERSION = "page-structure-frame-evidence-0.4"
+VERSION = "page-structure-frame-evidence-0.5"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -239,6 +239,77 @@ def _reconcile_external_mathpix_assets(
     }
 
 
+def _reconcile_toc_column_false_positives(
+    result: dict[str, Any],
+    mathpix_line_layout_map: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not mathpix_line_layout_map:
+        return {"reviewedTwoColumnPageCount": 0, "suppressedTwoColumnPageCount": 0, "suppressedPages": []}
+
+    line_pages = {
+        int(page.get("page") or 0): page
+        for page in mathpix_line_layout_map.get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    reviewed = 0
+    suppressed: list[int] = []
+
+    for page in result.get("pages", []) or []:
+        if str(page.get("layout_mode") or "") != "two_columns":
+            continue
+        reviewed += 1
+        page_no = int(page.get("page") or 0)
+        line_page = line_pages.get(page_no) or {}
+        ids_by_type = line_page.get("objectIdsByType") or {}
+        toc_containers = len(ids_by_type.get("table_of_contents_container") or [])
+        toc_rows = len(ids_by_type.get("table_of_contents_row") or [])
+        toc_items = len(ids_by_type.get("table_of_contents_item") or [])
+        toc_numbers = len(ids_by_type.get("table_of_contents_number") or [])
+        mathpix_columns = len(ids_by_type.get("column") or [])
+        strong_toc = toc_containers >= 1 and (toc_rows >= 3 or toc_items >= 5)
+        if not strong_toc:
+            continue
+
+        prior_detection = dict(page.get("layout_detection") or {})
+        prior_columns = list(page.get("columns") or [])
+        page["layout_mode"] = "single_column"
+        page["columns"] = []
+        page["layout_detection"] = {
+            **prior_detection,
+            "accepted": False,
+            "reason": "strong-toc-container-not-word-columns",
+            "pdfTwoColumnCandidate": bool(prior_columns),
+            "semanticReconciliation": {
+                "source": "Mathpix lines structural witness",
+                "tableOfContentsContainerCount": toc_containers,
+                "tableOfContentsRowCount": toc_rows,
+                "tableOfContentsItemCount": toc_items,
+                "tableOfContentsNumberCount": toc_numbers,
+                "mathpixColumnObjectCount": mathpix_columns,
+                "policy": "PDF detects geometric two-sided flow; a strong TOC container means that geometry is not emitted as Word section columns.",
+            },
+        }
+        page["suppressedPdfColumns"] = prior_columns
+        for item in page.get("flow", []) or []:
+            item.pop("column_index", None)
+            item.pop("spanning", None)
+        page["flow"] = sorted(
+            page.get("flow", []) or [],
+            key=lambda item: (
+                float((item.get("bbox") or [0, 0, 0, 0])[1]),
+                float((item.get("bbox") or [0, 0, 0, 0])[0]),
+            ),
+        )
+        suppressed.append(page_no)
+
+    return {
+        "reviewedTwoColumnPageCount": reviewed,
+        "suppressedTwoColumnPageCount": len(suppressed),
+        "suppressedPages": suppressed,
+        "policy": "No page numbers are hard-coded. Only strong Mathpix TOC structure can suppress an otherwise accepted PDF two-column candidate.",
+    }
+
+
 def build_page_structure(
     pdf_analysis: dict[str, Any],
     work_dir,
@@ -279,6 +350,8 @@ def build_page_structure(
         Path(work_dir),
         Path(asset_dir),
     ) if package_roots else {"catalogCount": 0, "positionedCatalogCount": 0, "reconciledGroupCount": 0}
+
+    toc_column_summary = _reconcile_toc_column_false_positives(result, mathpix_line_layout_map)
 
     pdf_pages = {
         int(page.get("page") or 0): page
@@ -331,6 +404,7 @@ def build_page_structure(
         enrich_with_mathpix_package(result, package_map)
 
     result["externalAssetReconciliation"] = external_summary
+    result["tocColumnReconciliation"] = toc_column_summary
     result["frameEvidenceSummary"] = {
         "source": "pdf_analysis.pages[].drawings",
         "matchedCalloutCount": matched,
@@ -340,8 +414,8 @@ def build_page_structure(
     }
     result["pageGeometryPolicy"] = {
         "geometryAuthority": "PDF",
-        "semanticWitness": "Mathpix page_info",
-        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt"],
-        "policy": "Mathpix may refine semantic role; final coordinates stored in maps come from PDF-native regions only.",
+        "semanticWitness": "Mathpix page_info / structural objects",
+        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt", "columns"],
+        "policy": "Mathpix may refine semantic role; final coordinates stored in maps come from PDF-native regions only. Strong TOC structure may suppress Word-column emission without replacing PDF geometry.",
     }
     return result
