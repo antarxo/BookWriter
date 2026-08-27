@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from statistics import median
 from typing import Any
 
-VERSION = "word-section-plan-0.1"
+VERSION = "word-section-plan-0.2"
 
 
 def _round_pt(value: Any, step: float = 0.5) -> float | None:
@@ -57,14 +58,13 @@ def _page_signature(page: dict[str, Any]) -> dict[str, Any]:
 
 
 def _hard_layout_key(signature: dict[str, Any]) -> tuple[Any, ...]:
-    # Only properties that require a physical Word section break belong here.
-    # Header/footer text is retained as evidence but does not automatically split
-    # the document; running furniture can legitimately vary within a layout family.
+    # Section breaks are driven only by structural properties that Word itself
+    # cannot vary inside one section. Small PDF-measurement differences in gutter
+    # belong to the same two-column family and are summarized later.
     return (
         signature.get("pageWidthPt"),
         signature.get("pageHeightPt"),
         signature.get("columnCount"),
-        signature.get("columnGutterPt") if signature.get("columnCount") == 2 else None,
     )
 
 
@@ -102,7 +102,7 @@ def build_word_section_plan(page_structure: dict[str, Any]) -> dict[str, Any]:
                 "pageWidthPt": signature.get("pageWidthPt"),
                 "pageHeightPt": signature.get("pageHeightPt"),
                 "columnCount": signature.get("columnCount"),
-                "columnGutterPt": signature.get("columnGutterPt"),
+                "columnGuttersPt": [signature.get("columnGutterPt")] if signature.get("columnGutterPt") is not None else [],
                 "blankPageCount": 1 if signature.get("blank") else 0,
                 "headerPresenceCount": 1 if signature.get("hasHeader") else 0,
                 "footerPresenceCount": 1 if signature.get("hasFooter") else 0,
@@ -114,6 +114,8 @@ def build_word_section_plan(page_structure: dict[str, Any]) -> dict[str, Any]:
             current["endPage"] = page_no
             current["pageCount"] += 1
             current["pages"].append(page_no)
+            if signature.get("columnGutterPt") is not None:
+                current["columnGuttersPt"].append(signature.get("columnGutterPt"))
             current["blankPageCount"] += 1 if signature.get("blank") else 0
             current["headerPresenceCount"] += 1 if signature.get("hasHeader") else 0
             current["footerPresenceCount"] += 1 if signature.get("hasFooter") else 0
@@ -125,9 +127,15 @@ def build_word_section_plan(page_structure: dict[str, Any]) -> dict[str, Any]:
 
     serial_sections: list[dict[str, Any]] = []
     for section in sections:
+        gutters = [float(value) for value in section.get("columnGuttersPt", []) if value is not None]
+        representative_gutter = round(median(gutters), 3) if gutters else None
+        gutter_min = round(min(gutters), 3) if gutters else None
+        gutter_max = round(max(gutters), 3) if gutters else None
         serial_sections.append({
-            **{key: value for key, value in section.items() if key not in {"hardLayoutKey", "headerSignatures", "footerSignatures"}},
+            **{key: value for key, value in section.items() if key not in {"hardLayoutKey", "headerSignatures", "footerSignatures", "columnGuttersPt"}},
             "hardLayoutKey": list(section["hardLayoutKey"]),
+            "columnGutterPt": representative_gutter,
+            "columnGutterRangePt": [gutter_min, gutter_max] if gutters else None,
             "headerSignatures": [
                 {"signature": list(signature), "pageCount": count}
                 for signature, count in section["headerSignatures"].most_common()
@@ -136,7 +144,7 @@ def build_word_section_plan(page_structure: dict[str, Any]) -> dict[str, Any]:
                 {"signature": list(signature), "pageCount": count}
                 for signature, count in section["footerSignatures"].most_common()
             ],
-            "policy": "physical section family from contiguous page size + Word column configuration; furniture retained as evidence for later header/footer assignment",
+            "policy": "physical section family from contiguous page size + column count; measured gutter variation is summarized, not used as a section-break trigger",
         })
 
     return {
@@ -149,8 +157,9 @@ def build_word_section_plan(page_structure: dict[str, Any]) -> dict[str, Any]:
             "source": "existing per-page page_structure map",
             "pageMapIsAuthority": True,
             "blankPagesPreserved": True,
-            "hardBreakProperties": ["page size", "column count", "two-column gutter"],
-            "notYetHardBreakProperties": ["header/footer presence", "header/footer text", "observed per-page body extent"],
+            "hardBreakProperties": ["page size", "column count"],
+            "measuredButNotHardBreakProperties": ["two-column gutter", "header/footer presence", "header/footer text", "observed per-page body extent"],
+            "gutterPolicy": "use the median measured PDF gutter inside each contiguous two-column section family",
             "marginPolicy": "do not derive Word section breaks from sparse-page body extents; margins require stable page-family inference",
         },
     }
