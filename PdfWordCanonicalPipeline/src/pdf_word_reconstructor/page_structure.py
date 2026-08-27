@@ -12,9 +12,10 @@ from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpi
 from .mathpix_package_input import build_mathpix_package_map
 from .mathpix_package_enrichment import enrich_with_mathpix_package
 from .page_furniture import analyze_page_furniture
+from .page_text_style_map import enrich_page_text_styles
 
 
-VERSION = "page-structure-frame-evidence-0.5"
+VERSION = "page-structure-frame-evidence-0.6"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -380,6 +381,8 @@ def build_page_structure(
             else:
                 unresolved += 1
 
+    text_style_summary = enrich_page_text_styles(result, pdf_analysis)
+
     result["version"] = VERSION
     result["mathpixLinesSummary"] = mathpix_lines_summary
     if mathpix_line_layout_map:
@@ -405,6 +408,7 @@ def build_page_structure(
 
     result["externalAssetReconciliation"] = external_summary
     result["tocColumnReconciliation"] = toc_column_summary
+    result["textStyleMapSummary"] = text_style_summary
     result["frameEvidenceSummary"] = {
         "source": "pdf_analysis.pages[].drawings",
         "matchedCalloutCount": matched,
@@ -415,7 +419,7 @@ def build_page_structure(
     result["pageGeometryPolicy"] = {
         "geometryAuthority": "PDF",
         "semanticWitness": "Mathpix page_info / structural objects",
-        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt", "columns"],
-        "policy": "Mathpix may refine semantic role; final coordinates stored in maps come from PDF-native regions only. Strong TOC structure may suppress Word-column emission without replacing PDF geometry.",
+        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt", "columns", "textStyleMap"],
+        "policy": "Mathpix may refine semantic role; final coordinates and PDF-native typography stored in maps come from PDF evidence only. Strong TOC structure may suppress Word-column emission without replacing PDF geometry.",
     }
     return result
