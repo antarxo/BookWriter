@@ -8,7 +8,7 @@ from .page_furniture import analyze_page_furniture
 from .region_classifier import classify_pdf_regions as _classify_v01
 
 
-VERSION = "pdf-region-classifier-0.3"
+VERSION = "pdf-region-classifier-0.4"
 
 
 def _looks_like_prose_false_positive(region: dict[str, Any]) -> bool:
@@ -20,9 +20,6 @@ def _looks_like_prose_false_positive(region: dict[str, Any]) -> bool:
     if not text:
         return False
 
-    # Ordinary explanatory prose may legitimately contain ΔE, n=2, '=' and
-    # numbers. Those tokens alone must not turn the whole sentence into an
-    # equation region. Require a substantial natural-language word signal.
     words = re.findall(r"[A-Za-zΑ-Ωα-ωΆ-Ώά-ώ]{3,}", text)
     alpha_ratio = float(stats.get("alpha_ratio") or 0.0)
     math_ratio = float(stats.get("math_ratio") or 0.0)
@@ -38,7 +35,11 @@ def _looks_like_prose_false_positive(region: dict[str, Any]) -> bool:
     return False
 
 
-def classify_pdf_regions(pdf_analysis: dict[str, Any], body_size: float | None = None) -> dict[str, Any]:
+def classify_pdf_regions(
+    pdf_analysis: dict[str, Any],
+    body_size: float | None = None,
+    mathpix_line_layout_map: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     _classify_v01(pdf_analysis, body_size=body_size)
     demoted = 0
     examples: list[dict[str, Any]] = []
@@ -71,11 +72,10 @@ def classify_pdf_regions(pdf_analysis: dict[str, Any], body_size: float | None =
                     "previous": prior,
                 })
 
-    # Page furniture is a separate PDF geometry layer. It may refine a region
-    # from body/header/footer evidence, but it is explicitly excluded from the
-    # main text flow and from body pagination. Its geometry is retained so the
-    # native builder can later emit real Word section headers/footers.
-    furniture = analyze_page_furniture(pdf_analysis)
+    furniture = analyze_page_furniture(
+        pdf_analysis,
+        mathpix_line_layout_map=mathpix_line_layout_map,
+    )
 
     counts: Counter[str] = Counter()
     alignable_counts: Counter[str] = Counter()
@@ -97,8 +97,7 @@ def classify_pdf_regions(pdf_analysis: dict[str, Any], body_size: float | None =
         "demotionExamples": examples,
         "pageFurniture": furniture,
         "policy": (
-            "Do not classify explanatory prose as equation merely because it contains mathematical symbols or short inline relations. "
-            "Repeated headers/footers are page furniture: they are excluded from alignment/body flow and never count toward body pagination; "
-            "their PDF geometry is preserved for later native Word header/footer reconstruction."
+            "PDF geometry remains authoritative. Mathpix page_info is used only as semantic witness for page furniture; "
+            "repeated headers/footers are excluded from alignment/body flow and never count toward body pagination."
         ),
     }
