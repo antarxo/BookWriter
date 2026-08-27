@@ -17,6 +17,7 @@ from .docx_analyzer import analyze_docx
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .mathpix_exact_layout_recovery import recover_exact_mathpix_layouts
 from .mathpix_lines_input import find_mathpix_lines_json
+from .mathpix_mmd_block_refinement import refine_markdown_element_map
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
 from .page_structure import build_page_structure
@@ -25,7 +26,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.2"
+VERSION = "mathpix-package-reconstruction-cli-0.3"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -35,8 +36,6 @@ def _extract_package(package_zip: Path, target: Path) -> Path:
     with zipfile.ZipFile(package_zip) as archive:
         archive.extractall(target)
 
-    # Mathpix packages may contain result.mmd.zip. Expand nested archives once;
-    # the package inventory/parser will then discover result.mmd and local assets.
     nested_root = target / "__nested__"
     for index, nested in enumerate(sorted(target.rglob("*.zip")), start=1):
         if nested.resolve() == package_zip.resolve():
@@ -62,11 +61,6 @@ def _find_canonical_mmd(package_dir: Path) -> Path:
 
 
 def _blank_docx_shim(path: Path) -> dict[str, Any]:
-    """Create the neutral source object required only by the preserved renderer API.
-
-    It supplies no content evidence: alignment matches and docx_donor_map are both
-    disabled in this package-first route.
-    """
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = Document()
     doc.save(path)
@@ -106,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         import pymupdf as fitz
-    except ImportError:  # pragma: no cover
+    except ImportError:
         import fitz  # type: ignore
 
     with fitz.open(pdf_path) as probe:
@@ -145,9 +139,19 @@ def main(argv: list[str] | None = None) -> int:
     print("[4/8] Parse canonical Mathpix MMD with existing Markdown element mapper")
     markdown_element_map = extract_markdown_element_map(
         [mmd_path],
-        analysis_dir / "markdown_element_map.json",
+        analysis_dir / "markdown_element_map_raw.json",
         docx_path=None,
         attach_docx_evidence=False,
+    )
+    markdown_element_map = refine_markdown_element_map(
+        markdown_element_map,
+        mmd_path,
+        page_structure,
+    )
+    write_json(analysis_dir / "markdown_element_map.json", markdown_element_map)
+    write_json(
+        analysis_dir / "mathpix_mmd_block_refinement.json",
+        markdown_element_map.get("mmdBlockRefinement") or {},
     )
 
     print("[5/8] Build Markdown/PDF spine")
@@ -206,10 +210,11 @@ def main(argv: list[str] | None = None) -> int:
             "docxDonorEnabled": False,
             "alignmentEnabled": False,
             "rendererApiShim": str(shim_path),
-            "contentAuthority": "Mathpix MMD via build contract",
+            "contentAuthority": "Mathpix MMD via refined build contract",
             "physicalAuthority": "page_structure maps derived from PDF",
             "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
             "mathpixExactLayoutRecovery": exact_recovery,
+            "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
         }
     write_json(analysis_dir / "build_report.json", report or {})
 
@@ -220,9 +225,10 @@ def main(argv: list[str] | None = None) -> int:
         "pageCount": len(pages),
         "outputDocx": str(final_docx),
         "markdownRecordCount": int(markdown_element_map.get("count") or 0),
-        "spineCoverage": (markdown_pdf_spine.get("coverage")),
+        "spineCoverage": markdown_pdf_spine.get("coverage"),
         "layoutCoverage": ((page_layout_spine.get("summary") or {}).get("coverage")),
         "textStyleMapSummary": page_structure.get("textStyleMapSummary") or {},
+        "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
         "mathpixExactLayoutRecovery": {
             "recoveredCount": exact_recovery.get("recoveredCount"),
             "unresolvedCount": exact_recovery.get("unresolvedCount"),
