@@ -9,9 +9,11 @@ from . import page_structure_legacy as _legacy
 from .page_structure_legacy import *  # noqa: F401,F403
 from .page_structure_legacy import build_page_structure as _build_legacy
 from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpix_lines
+from .mathpix_package_input import build_mathpix_package_map
+from .mathpix_package_enrichment import enrich_with_mathpix_package
 
 
-VERSION = "page-structure-frame-evidence-0.2"
+VERSION = "page-structure-frame-evidence-0.3"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -195,8 +197,6 @@ def _reconcile_external_mathpix_assets(
             reconciled += 1
 
         page["visual_groups"] = groups
-        # Rebuild only figure flow entries. Equation flow entries remain owned by
-        # the legacy equation path.
         flow = [
             item for item in (page.get("flow", []) or [])
             if not (item.get("type") == "visual" and item.get("semantic_type") == "figure")
@@ -260,13 +260,19 @@ def build_page_structure(
         "available": False,
         "reason": "mathpix_lines_path not provided",
     })
+
+    package_map = None
+    package_roots = [Path(path) for path in (external_asset_paths or [])]
+    if package_roots:
+        package_map = build_mathpix_package_map(package_roots[0], mathpix_line_layout_map)
+
     external_summary = _reconcile_external_mathpix_assets(
         result,
         pdf_analysis,
-        [Path(path) for path in (external_asset_paths or [])],
+        package_roots,
         Path(work_dir),
         Path(asset_dir),
-    ) if external_asset_paths else {"catalogCount": 0, "positionedCatalogCount": 0, "reconciledGroupCount": 0}
+    ) if package_roots else {"catalogCount": 0, "positionedCatalogCount": 0, "reconciledGroupCount": 0}
 
     pdf_pages = {
         int(page.get("page") or 0): page
@@ -300,6 +306,7 @@ def build_page_structure(
             "source": mathpix_line_layout_map.get("source"),
             "policy": mathpix_line_layout_map.get("policy"),
             "summary": mathpix_line_layout_map.get("summary"),
+            "rawTopLevel": mathpix_line_layout_map.get("rawTopLevel"),
         }
         line_pages = {
             int(page.get("page") or 0): page
@@ -310,6 +317,10 @@ def build_page_structure(
             page_no = int(page.get("page") or 0)
             if page_no in line_pages:
                 page["mathpixLinePageMap"] = line_pages[page_no]
+
+    if package_map:
+        enrich_with_mathpix_package(result, package_map)
+
     result["externalAssetReconciliation"] = external_summary
     result["frameEvidenceSummary"] = {
         "source": "pdf_analysis.pages[].drawings",
