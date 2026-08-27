@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 import tempfile
 import zipfile
@@ -22,7 +21,7 @@ from pdf_word_reconstructor.mathpix_package_enrichment import enrich_with_mathpi
 from pdf_word_reconstructor.mathpix_package_input import build_mathpix_package_map  # noqa: E402
 
 
-VERSION = "mathpix-package-enrichment-audit-0.1"
+VERSION = "mathpix-package-enrichment-audit-0.2"
 
 
 def _extract_recursive(source_zip: Path, target: Path) -> None:
@@ -95,19 +94,20 @@ def run_audit(package_zip: Path, output_json: Path | None = None) -> dict:
         packaged_ref_count = int(audit.get("packagedMmdImageReferenceCount") or 0)
         packaged_resolved = int(audit.get("packagedMmdResolvedReferenceCount") or 0)
         canonical_ref_count = int(audit.get("canonicalMmdImageReferenceCount") or 0)
-        canonical_resolved = int(audit.get("canonicalMmdGeometryResolvedReferenceCount") or 0)
+        canonical_resolved = int(audit.get("canonicalMmdResolvedReferenceCount") or 0)
+        pair_count = int(audit.get("pairedReferenceCount") or 0)
+        pair_resolved = int(audit.get("resolvedReferencePairCount") or 0)
+        pair_geometry_matched = int(audit.get("geometryMatchingReferencePairCount") or 0)
 
         _assert(checks, "package-audit-complete", audit.get("status") == "complete", audit.get("status"))
         _assert(checks, "manifest-image-count-matches", bool(audit.get("manifestImageCountMatches")), {"manifest": audit.get("manifestImageCount"), "assets": len(assets)})
         _assert(checks, "page-counts-agree", bool(audit.get("pageCountsAgree")), {"status": audit.get("statusPageCount"), "lines": audit.get("linesPageCount")})
         _assert(checks, "all-packaged-mmd-refs-resolve", packaged_ref_count == packaged_resolved, {"refs": packaged_ref_count, "resolved": packaged_resolved})
-        _assert(checks, "all-canonical-mmd-refs-resolve-by-geometry", canonical_ref_count == canonical_resolved, {"refs": canonical_ref_count, "resolved": canonical_resolved})
-        _assert(
-            checks,
-            "all-assets-have-hash",
-            all(bool(asset.get("sha256")) for asset in assets),
-            len(assets),
-        )
+        _assert(checks, "all-canonical-mmd-refs-resolve", canonical_ref_count == canonical_resolved, {"refs": canonical_ref_count, "resolved": canonical_resolved})
+        _assert(checks, "all-reference-pairs-resolve", pair_count == pair_resolved, {"pairs": pair_count, "resolved": pair_resolved})
+        _assert(checks, "all-reference-pairs-geometry-match", pair_count == pair_geometry_matched, {"pairs": pair_count, "geometryMatched": pair_geometry_matched})
+
+        _assert(checks, "all-assets-have-hash", all(bool(asset.get("sha256")) for asset in assets), len(assets))
         _assert(
             checks,
             "all-assets-have-geometry",
@@ -118,10 +118,7 @@ def run_audit(package_zip: Path, output_json: Path | None = None) -> dict:
             checks,
             "all-assets-have-lines-geometry-witness",
             all(bool(asset.get("relatedLineObjects")) for asset in assets),
-            {
-                "assets": len(assets),
-                "withLineWitness": sum(1 for asset in assets if asset.get("relatedLineObjects")),
-            },
+            {"assets": len(assets), "withLineWitness": sum(1 for asset in assets if asset.get("relatedLineObjects"))},
         )
 
         unreferenced = [asset for asset in assets if not asset.get("packagedMmdReferenced")]
@@ -153,7 +150,7 @@ def run_audit(package_zip: Path, output_json: Path | None = None) -> dict:
 
         pairs = markdown.get("referencePairs") or []
         _assert(checks, "canonical-packaged-reference-pairs-complete", len(pairs) == max(canonical_ref_count, packaged_ref_count), {"pairs": len(pairs), "canonical": canonical_ref_count, "packaged": packaged_ref_count})
-        _assert(checks, "all-reference-pairs-geometry-match", all(pair.get("geometryMatch") is True for pair in pairs), sum(1 for pair in pairs if pair.get("geometryMatch") is True))
+        _assert(checks, "reference-pair-records-expose-geometry", all("geometryMatches" in pair for pair in pairs), len(pairs))
 
         failed = [check for check in checks if not check["ok"]]
         report = {
