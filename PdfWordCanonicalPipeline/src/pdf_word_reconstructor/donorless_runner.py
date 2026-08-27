@@ -14,6 +14,7 @@ from .common import compact_text, parse_page_range, write_json
 from .donorless_equation_groups_v07 import bind_display_equations_to_pdf_groups
 from .mapping_fidelity import build_mapping_fidelity
 from .markdown_pdf_spine import build_markdown_pdf_spine
+from .mathpix_lines_input import build_mathpix_line_layout_map, find_mathpix_lines_json, summarize_mathpix_lines
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
 from .page_structure import build_page_structure
@@ -304,6 +305,10 @@ def run_donorless_reconstruction(
         pages = parse_page_range(pages_spec, max_pages=probe.page_count)
 
     markdown_files, asset_files = _extract_markdown_package(markdown_zip, package_dir)
+    mathpix_lines_path = find_mathpix_lines_json(package_dir)
+    mathpix_lines_summary = summarize_mathpix_lines(mathpix_lines_path)
+    write_json(analysis_dir / "mathpix_lines_summary.json", mathpix_lines_summary)
+
     markdown_map_path = analysis_dir / "markdown_element_map.json"
     markdown_element_map = extract_markdown_element_map(
         markdown_files,
@@ -314,12 +319,15 @@ def run_donorless_reconstruction(
     extract_markdown_equations(markdown_files, equation_donor_path)
 
     pdf_analysis = analyze_pdf(pdf_path, pages, work_dir, dpi=dpi)
+    mathpix_line_layout_map = build_mathpix_line_layout_map(mathpix_lines_path, pdf_analysis) if mathpix_lines_path else None
     style_profile = build_style_profile(pdf_analysis)
     classification_summary = classify_pdf_regions(
         pdf_analysis,
         body_size=style_profile.get("inferred_body_font_size_pt"),
     )
     write_json(analysis_dir / "pdf_analysis.json", pdf_analysis)
+    if mathpix_line_layout_map:
+        write_json(analysis_dir / "mathpix_line_layout_map.json", mathpix_line_layout_map)
     write_json(analysis_dir / "style_profile.json", style_profile)
     write_json(analysis_dir / "classification_summary.json", classification_summary)
 
@@ -330,6 +338,7 @@ def run_donorless_reconstruction(
         reference_docx=None,
         external_asset_paths=[package_dir],
         equation_donor_path=equation_donor_path,
+        mathpix_lines_path=mathpix_lines_path,
     )
     write_json(analysis_dir / "page_structure.json", page_structure)
 
@@ -352,6 +361,7 @@ def run_donorless_reconstruction(
         markdown_pdf_spine,
         page_structure,
         donor_map,
+        mathpix_lines_path=mathpix_lines_path,
     )
     write_json(analysis_dir / "page_layout_spine.json", page_layout_spine)
 
@@ -420,6 +430,7 @@ def run_donorless_reconstruction(
             "selectedPages": pages,
             "markdownFiles": [str(path) for path in markdown_files],
             "assetCount": len(asset_files),
+            "mathpixLines": mathpix_lines_summary,
         },
         "stagesSkipped": [
             "analyze_docx",
@@ -437,6 +448,7 @@ def run_donorless_reconstruction(
         },
         "mappingPreflight": mapping_preflight,
         "pageLayoutSummary": page_layout_spine.get("summary") or {},
+        "mathpixLinesSummary": mathpix_lines_summary,
         "buildReport": build_report,
         "outputDocx": str(final_docx),
     }

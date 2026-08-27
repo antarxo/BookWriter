@@ -8,6 +8,7 @@ from .donorless_asset_catalog import build_external_asset_catalog
 from . import page_structure_legacy as _legacy
 from .page_structure_legacy import *  # noqa: F401,F403
 from .page_structure_legacy import build_page_structure as _build_legacy
+from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpix_lines
 
 
 VERSION = "page-structure-frame-evidence-0.2"
@@ -244,6 +245,7 @@ def build_page_structure(
     reference_docx=None,
     external_asset_paths=None,
     equation_donor_path=None,
+    mathpix_lines_path=None,
 ) -> dict[str, Any]:
     result = _build_legacy(
         pdf_analysis,
@@ -253,6 +255,11 @@ def build_page_structure(
         external_asset_paths=external_asset_paths,
         equation_donor_path=equation_donor_path,
     )
+    mathpix_line_layout_map = build_mathpix_line_layout_map(Path(mathpix_lines_path), pdf_analysis) if mathpix_lines_path else None
+    mathpix_lines_summary = (mathpix_line_layout_map or {}).get("summary") or (summarize_mathpix_lines(Path(mathpix_lines_path)) if mathpix_lines_path else {
+        "available": False,
+        "reason": "mathpix_lines_path not provided",
+    })
     external_summary = _reconcile_external_mathpix_assets(
         result,
         pdf_analysis,
@@ -286,6 +293,23 @@ def build_page_structure(
                 unresolved += 1
 
     result["version"] = VERSION
+    result["mathpixLinesSummary"] = mathpix_lines_summary
+    if mathpix_line_layout_map:
+        result["mathpixLineLayoutMap"] = {
+            "version": mathpix_line_layout_map.get("version"),
+            "source": mathpix_line_layout_map.get("source"),
+            "policy": mathpix_line_layout_map.get("policy"),
+            "summary": mathpix_line_layout_map.get("summary"),
+        }
+        line_pages = {
+            int(page.get("page") or 0): page
+            for page in mathpix_line_layout_map.get("pages", []) or []
+            if int(page.get("page") or 0) > 0
+        }
+        for page in result.get("pages", []) or []:
+            page_no = int(page.get("page") or 0)
+            if page_no in line_pages:
+                page["mathpixLinePageMap"] = line_pages[page_no]
     result["externalAssetReconciliation"] = external_summary
     result["frameEvidenceSummary"] = {
         "source": "pdf_analysis.pages[].drawings",
