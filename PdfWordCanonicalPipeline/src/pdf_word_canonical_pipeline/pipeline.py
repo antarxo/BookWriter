@@ -5,13 +5,14 @@ import json
 import shutil
 import sys
 import tempfile
+from zipfile import ZipFile
 from pathlib import Path
 
 from pdf_word_reconstructor.cli import main as reconstructor_main
 from .word_normalizer import build_parser as build_normalizer_parser, normalize_docx
 from .word_composite_rasterizer import inspect_docx_complexity, rasterize_complex_objects
 from .mathpix_input_collector import collect_mathpix_inputs
-from .word_page_mapper import extract_word_page_map, embed_page_map
+from .word_page_mapper import extract_word_page_map
 from .word_vector_preview_converter import convert_vector_previews_in_docx
 from .word_group_surrogate_renderer import render_required_group_surrogates
 
@@ -24,7 +25,7 @@ def _find_reconstructed_docx(output_dir: Path, pages: str) -> Path:
         return expected
     candidates = sorted(output_dir.glob("native_page_structure_*.docx"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not candidates:
-        raise FileNotFoundError(f"Δεν βρέθηκε reconstructed DOCX στο {output_dir}")
+        raise FileNotFoundError(f"Ξ”ΞµΞ½ Ξ²ΟΞ­ΞΈΞ·ΞΊΞµ reconstructed DOCX ΟƒΟ„ΞΏ {output_dir}")
     return candidates[0]
 
 
@@ -52,20 +53,10 @@ def canonicalize(
     report_path = Path(report or output_docx.with_suffix('.normalization_report.json')).resolve()
     policy = str(composite_policy or "auto").strip().lower()
     if policy not in {"off", "auto", "strict"}:
-        raise ValueError(f"Άγνωστη composite policy: {composite_policy!r}. Επιτρεπτές: off, auto, strict.")
+        raise ValueError(f"Ξ†Ξ³Ξ½Ο‰ΟƒΟ„Ξ· composite policy: {composite_policy!r}. Ξ•Ο€ΞΉΟ„ΟΞµΟ€Ο„Ξ­Ο‚: off, auto, strict.")
 
     complexity = inspect_docx_complexity(input_docx)
     detected = bool(complexity.get("requiresWordCompositeRasterization"))
-    # HF11: page ownership comes from the actual Word layout engine.
-    # Manual/rendered XML page-break markers are never treated as a page map.
-    word_page_map = extract_word_page_map(input_docx) if str(sections or "all").strip().lower() == "all" else {
-        "version": 3,
-        "source": "word-rendered-page-map-v3-list-row-fragments",
-        "available": False,
-        "status": "skipped-partial-section-selection",
-        "pageCount": 0,
-        "blocks": {},
-    }
     composite = {
         "version": VERSION,
         "policy": policy,
@@ -85,9 +76,9 @@ def canonicalize(
             composite["action"] = "skipped-by-policy"
             if detected:
                 composite["warning"] = (
-                    "HF8 native visual/anchor probe: εντοπίστηκαν σύνθετα Word αντικείμενα και "
-                    "διατηρήθηκαν σκόπιμα native. Δεν εκτελέστηκε Word-COM rasterization "
-                    "και δεν ενεργοποιήθηκε fallback εικόνας."
+                    "HF8 native visual/anchor probe: ΞµΞ½Ο„ΞΏΟ€Ξ―ΟƒΟ„Ξ·ΞΊΞ±Ξ½ ΟƒΟΞ½ΞΈΞµΟ„Ξ± Word Ξ±Ξ½Ο„ΞΉΞΊΞµΞ―ΞΌΞµΞ½Ξ± ΞΊΞ±ΞΉ "
+                    "Ξ΄ΞΉΞ±Ο„Ξ·ΟΞ®ΞΈΞ·ΞΊΞ±Ξ½ ΟƒΞΊΟΟ€ΞΉΞΌΞ± native. Ξ”ΞµΞ½ ΞµΞΊΟ„ΞµΞ»Ξ­ΟƒΟ„Ξ·ΞΊΞµ Word-COM rasterization "
+                    "ΞΊΞ±ΞΉ Ξ΄ΞµΞ½ ΞµΞ½ΞµΟΞ³ΞΏΟ€ΞΏΞΉΞ®ΞΈΞ·ΞΊΞµ fallback ΞµΞΉΞΊΟΞ½Ξ±Ο‚."
                 )
         elif run_word_com:
             preprocessed = Path(td) / f"{input_docx.stem}_COMPOSITES_AS_PICTURES.docx"
@@ -102,8 +93,8 @@ def canonicalize(
                     or bool(composite.get("unconvertedComplexObjectsRemain"))
                 ):
                     raise RuntimeError(
-                        "Η strict πολιτική απαιτεί πιστό υπόβαθρο για όλα τα σύνθετα αντικείμενα. "
-                        f"Λείπουν {int(composite.get('backgroundMissingCount') or 0)} υπόβαθρα."
+                        "Ξ— strict Ο€ΞΏΞ»ΞΉΟ„ΞΉΞΊΞ® Ξ±Ο€Ξ±ΞΉΟ„ΞµΞ― Ο€ΞΉΟƒΟ„Ο Ο…Ο€ΟΞ²Ξ±ΞΈΟΞΏ Ξ³ΞΉΞ± ΟΞ»Ξ± Ο„Ξ± ΟƒΟΞ½ΞΈΞµΟ„Ξ± Ξ±Ξ½Ο„ΞΉΞΊΞµΞ―ΞΌΞµΞ½Ξ±. "
+                        f"Ξ›ΞµΞ―Ο€ΞΏΟ…Ξ½ {int(composite.get('backgroundMissingCount') or 0)} Ο…Ο€ΟΞ²Ξ±ΞΈΟΞ±."
                     )
                 source_for_normalizer = preprocessed
             except Exception as exc:
@@ -139,6 +130,7 @@ def canonicalize(
         args = parser.parse_args([
             str(source_for_normalizer), str(output_docx),
             "--sections", sections,
+            "--strategy", "standard",
             "--report", str(report_path),
         ])
         result = normalize_docx(args)
@@ -150,13 +142,54 @@ def canonicalize(
         # groups that fail the explicit native/hybrid fidelity contract.  The
         # source groups are never replaced; browser-only PNG surrogates are
         # embedded in a sidecar manifest keyed by top-level group ordinal.
-        group_surrogate_conversion = render_required_group_surrogates(input_docx, output_docx)
-        # The map refers to the original top-level Word structure. The normalizer
-        # preserves that order for the all-sections gateway, so embed it only after
-        # canonicalization and vector-preview patching have finished.
-        embed_page_map(output_docx, word_page_map)
+        # Browser-only group surrogates must not modify the deliverable DOCX.
+        # Generate them against a temporary copy and externalize the manifest/media.
+        group_probe_docx = Path(td) / f"{output_docx.stem}_GROUP_SURROGATE_PROBE.docx"
+        shutil.copy2(output_docx, group_probe_docx)
+
+        group_surrogate_conversion = render_required_group_surrogates(
+            input_docx,
+            group_probe_docx,
+        )
+
+        group_sidecar_dir = output_docx.parent / f"{output_docx.stem}_group_surrogates"
+        group_sidecar_dir.mkdir(parents=True, exist_ok=True)
+
+        with ZipFile(group_probe_docx, "r") as zf:
+            names = set(zf.namelist())
+            manifest_name = "customXml/bookwriter-group-surrogates.json"
+
+            if manifest_name in names:
+                (group_sidecar_dir / "manifest.json").write_bytes(
+                    zf.read(manifest_name)
+                )
+
+            media_dir = group_sidecar_dir / "media"
+            for name in sorted(names):
+                if name.startswith("word/media/bw_group_surrogate_"):
+                    media_dir.mkdir(parents=True, exist_ok=True)
+                    (media_dir / Path(name).name).write_bytes(zf.read(name))
+        # Page ownership must describe the exact canonical DOCX consumed by BookWriter.
+        # Repaginate the final DOCX, after canonicalization/surrogate preparation.
+        word_page_map = extract_word_page_map(output_docx) if str(sections or "all").strip().lower() == "all" else {
+            "version": 3,
+            "source": "word-rendered-page-map-v3-list-row-fragments",
+            "available": False,
+            "status": "skipped-partial-section-selection",
+            "pageCount": 0,
+            "blocks": {},
+        }
+        # Page ownership is pipeline state, not Word document content.
+        # Keep it beside the DOCX instead of embedding ad-hoc customXml.
+        page_map_sidecar = output_docx.with_suffix(".page-map.json")
+        page_map_sidecar.write_text(
+            json.dumps(word_page_map, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
     result["originalInput"] = str(input_docx)
+    result["wordPageMapSidecar"] = str(page_map_sidecar)
+    result["groupSurrogateSidecar"] = str(group_sidecar_dir)
     result["wordPageMap"] = {
         "version": word_page_map.get("version", 3),
         "source": word_page_map.get("source", "word-rendered-page-map-v3-list-row-fragments"),
@@ -436,3 +469,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -356,6 +356,135 @@ def add_custom_property(parts_dir: Path, name: str, value: str) -> None:
         ct_path.write_bytes(etree.tostring(ct_root, xml_declaration=True, encoding="UTF-8", standalone="yes"))
 
 
+
+def sanitize_deliverable_metadata(parts_dir: Path) -> None:
+    """Remove authoring/pipeline provenance from the emitted Word document."""
+
+    core_path = parts_dir / "docProps" / "core.xml"
+    if core_path.exists():
+        root = etree.parse(str(core_path)).getroot()
+
+        DC = "http://purl.org/dc/elements/1.1/"
+        CP = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+        DCT = "http://purl.org/dc/terms/"
+
+        # Keep only a neutral author identity.
+        creator = root.find(f"{{{DC}}}creator")
+        if creator is None:
+            creator = etree.SubElement(root, f"{{{DC}}}creator")
+        creator.text = "user"
+
+        modified_by = root.find(f"{{{CP}}}lastModifiedBy")
+        if modified_by is None:
+            modified_by = etree.SubElement(root, f"{{{CP}}}lastModifiedBy")
+        modified_by.text = "user"
+
+        # Remove inherited/template/provenance fields.
+        remove_tags = {
+            f"{{{DC}}}title",
+            f"{{{DC}}}subject",
+            f"{{{DC}}}description",
+            f"{{{DC}}}identifier",
+            f"{{{DC}}}language",
+            f"{{{CP}}}keywords",
+            f"{{{CP}}}category",
+            f"{{{CP}}}contentStatus",
+            f"{{{CP}}}contentType",
+            f"{{{CP}}}revision",
+            f"{{{CP}}}lastPrinted",
+            f"{{{DCT}}}created",
+            f"{{{DCT}}}modified",
+        }
+
+        for child in list(root):
+            if child.tag in remove_tags:
+                root.remove(child)
+
+        core_path.write_bytes(
+            etree.tostring(
+                root,
+                xml_declaration=True,
+                encoding="UTF-8",
+                standalone="yes",
+            )
+        )
+
+    # Remove visible extended personal/company fields if inherited.
+    app_path = parts_dir / "docProps" / "app.xml"
+    if app_path.exists():
+        root = etree.parse(str(app_path)).getroot()
+        APP = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+
+        remove_tags = {
+            f"{{{APP}}}Manager",
+            f"{{{APP}}}Company",
+            f"{{{APP}}}HyperlinkBase",
+        }
+
+        for child in list(root):
+            if child.tag in remove_tags:
+                root.remove(child)
+
+        app_path.write_bytes(
+            etree.tostring(
+                root,
+                xml_declaration=True,
+                encoding="UTF-8",
+                standalone="yes",
+            )
+        )
+
+    # No pipeline custom-properties part in the deliverable.
+    custom_path = parts_dir / "docProps" / "custom.xml"
+    if custom_path.exists():
+        custom_path.unlink()
+
+    rels_path = parts_dir / "_rels" / ".rels"
+    if rels_path.exists():
+        rels_root = etree.parse(str(rels_path)).getroot()
+        custom_rel_type = (
+            "http://schemas.openxmlformats.org/"
+            "officeDocument/2006/relationships/custom-properties"
+        )
+        changed = False
+
+        for rel in list(rels_root):
+            if rel.get("Type") == custom_rel_type:
+                rels_root.remove(rel)
+                changed = True
+
+        if changed:
+            rels_path.write_bytes(
+                etree.tostring(
+                    rels_root,
+                    xml_declaration=True,
+                    encoding="UTF-8",
+                    standalone="yes",
+                )
+            )
+
+    ct_path = parts_dir / "[Content_Types].xml"
+    if ct_path.exists():
+        ct_root = etree.parse(str(ct_path)).getroot()
+        changed = False
+
+        for node in list(ct_root):
+            if node.get("PartName") == "/docProps/custom.xml":
+                ct_root.remove(node)
+                changed = True
+
+        if changed:
+            ct_path.write_bytes(
+                etree.tostring(
+                    ct_root,
+                    xml_declaration=True,
+                    encoding="UTF-8",
+                    standalone="yes",
+                )
+            )
+
+
+
 def rezip(parts_dir: Path, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(output_path, "w", ZIP_DEFLATED) as z:
@@ -526,15 +655,12 @@ def normalize_docx(args: argparse.Namespace) -> dict:
                     ))
 
             document_path.write_bytes(etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone="yes"))
-            add_custom_property(parts, "BookWriterImportMode", "canonical-word-v1")
-            add_custom_property(parts, "BookWriterCanonicalizationMode", action)
-            add_custom_property(parts, "BookWriterSourceSections", args.sections or "all")
-            add_custom_property(parts, "BookWriterNormalizerVersion", "0.4.7e-hf9-direct-visual-selection")
+            sanitize_deliverable_metadata(parts)
             rezip(parts, output_path)
 
         if already_canonical and all_selected:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_bytes(input_path.read_bytes())
+            sanitize_deliverable_metadata(parts)
+            rezip(parts, output_path)
 
     result = {
         "type": "implementation checkpoint / canonical Word input gateway",

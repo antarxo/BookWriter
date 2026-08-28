@@ -533,6 +533,31 @@ def _embed_manifest_and_media(target_docx: Path, manifest: dict[str, Any], media
         infos = zf.infolist()
         entries = {info.filename: zf.read(info.filename) for info in infos}
     entries[MANIFEST_PATH] = json.dumps(manifest, ensure_ascii=False, indent=2).encode("utf-8")
+
+    # Every OPC package part must have a declared content type.
+    # The group-surrogate manifest is JSON, so declare application/json
+    # whenever the manifest is embedded in the DOCX.
+    content_types_name = "[Content_Types].xml"
+    if content_types_name in entries:
+        ct_ns = "http://schemas.openxmlformats.org/package/2006/content-types"
+        root = etree.fromstring(entries[content_types_name])
+        has_json = any(
+            node.get("Extension") == "json"
+            for node in root.findall(f"{{{ct_ns}}}Default")
+        )
+        if not has_json:
+            etree.SubElement(
+                root,
+                f"{{{ct_ns}}}Default",
+                Extension="json",
+                ContentType="application/json",
+            )
+            entries[content_types_name] = etree.tostring(
+                root,
+                xml_declaration=True,
+                encoding="UTF-8",
+                standalone="yes",
+            )
     for package_path, file_path in media.items():
         entries[package_path] = Path(file_path).read_bytes()
     _write_docx(entries, infos, target_docx)
@@ -910,4 +935,6 @@ def render_required_group_surrogates(source_docx: Path, target_docx: Path) -> di
         _embed_manifest_and_media(target_docx, manifest, media_to_embed)
         shutil.rmtree(scratch, ignore_errors=True)
     return report
+
+
 
