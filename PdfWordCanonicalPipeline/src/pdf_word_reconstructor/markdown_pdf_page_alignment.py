@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from difflib import SequenceMatcher
 from typing import Any
 
 
-VERSION = "markdown-pdf-page-alignment-0.1"
+VERSION = "markdown-pdf-page-alignment-0.2"
 
 _TEXT_TYPES = {
     "paragraph", "heading", "title", "caption", "callout", "list", "latex_list",
@@ -47,6 +48,36 @@ def _page_texts(pdf_analysis: dict[str, Any]) -> dict[int, str]:
     return result
 
 
+def _token_coverage(text: str, page_text: str) -> float:
+    """How much of one Markdown text block is witnessed by one PDF page.
+
+    This is deliberately asymmetric: a paragraph should be mostly explainable by
+    a page, while the page is naturally much longer than the paragraph.  The old
+    whole-string SequenceMatcher ratio penalized exactly that length asymmetry and
+    could yield zero trusted page anchors for a clean short Mathpix extract.
+    """
+    words = text.split()
+    page_words = page_text.split()
+    if len(words) < 5 or not page_words:
+        return 0.0
+
+    # Ordered token witness.  Hyphenation/line-break differences may split a few
+    # words, so do not require literal substring equality.
+    matcher = SequenceMatcher(None, words, page_words, autojunk=False)
+    ordered = sum(block.size for block in matcher.get_matching_blocks()) / max(1, len(words))
+
+    # Bag-of-words witness is secondary and robust to PDF extraction order around
+    # side notes.  Count multiplicity so repeated common words do not over-score.
+    need = Counter(words)
+    have = Counter(page_words)
+    overlap = sum(min(count, have.get(token, 0)) for token, count in need.items())
+    bag = overlap / max(1, len(words))
+
+    # Ordered evidence carries more authority; bag overlap only rescues benign
+    # extraction reordering and word wrapping.
+    return min(1.0, 0.72 * ordered + 0.28 * bag)
+
+
 def _anchor_score(text: str, page_text: str) -> float:
     if not text or not page_text:
         return 0.0
@@ -56,16 +87,18 @@ def _anchor_score(text: str, page_text: str) -> float:
     words = text.split()
     if len(words) < 5 or len(text) < 28:
         return 0.0
-    # Compare a bounded leading/trailing signature to reduce cost on large pages.
+
+    token_score = _token_coverage(text, page_text)
+
+    # Compare a bounded leading/trailing signature as an additional witness.
     probes = [text]
     if len(words) >= 10:
         probes.extend([" ".join(words[:10]), " ".join(words[-10:])])
-    best = 0.0
+    best = token_score
     for probe in probes:
         if len(probe) >= 20 and probe in page_text:
             best = max(best, 0.97 if probe != text else 1.0)
             continue
-        # SequenceMatcher against page-sized text is only a secondary signal.
         ratio = SequenceMatcher(None, probe[:220], page_text[:6000], autojunk=True).ratio()
         best = max(best, ratio)
     return best
@@ -99,8 +132,10 @@ def infer_missing_markdown_pages(
             continue
         best_page, best_score = scored[0]
         second_score = scored[1][1] if len(scored) > 1 else 0.0
-        # High precision only: exact/near-exact page witness plus useful margin.
-        if best_score < 0.90 or best_score - second_score < 0.08:
+        # High precision only. Token coverage is asymmetric, so 0.82 already
+        # means that most paragraph tokens are witnessed by one page. Keep a
+        # useful margin so repeated boilerplate cannot become a page anchor.
+        if best_score < 0.82 or best_score - second_score < 0.10:
             continue
         candidates.append({
             "recordIndex": idx,
@@ -124,15 +159,14 @@ def infer_missing_markdown_pages(
         record["pageConfidence"] = "content-anchor-high"
         record["pageInference"] = {
             "source": VERSION,
-            "mode": "normalized-text-page-anchor",
+            "mode": "normalized-token-page-anchor",
             "score": anchor["score"],
             "margin": anchor["margin"],
         }
 
     inferred = len(chain)
     # Interpolate only between trusted anchors. Outside the anchored interval,
-    # use the nearest trusted anchor only when there is a single PDF page gap;
-    # otherwise leave unresolved rather than inventing pagination.
+    # leave unresolved rather than inventing pagination.
     for left, right in zip(chain, chain[1:]):
         li, ri = int(left["recordIndex"]), int(right["recordIndex"])
         lp, rp = int(left["page"]), int(right["page"])
@@ -158,7 +192,7 @@ def infer_missing_markdown_pages(
     unresolved = sum(1 for record in records if record.get("page") is None)
     audit = {
         "version": VERSION,
-        "policy": "high-confidence normalized-text anchors; monotonic chain; interpolate only between trusted anchors",
+        "policy": "high-confidence normalized token/page anchors; monotonic chain; interpolate only between trusted anchors",
         "recordCount": len(records),
         "candidateAnchorCount": len(candidates),
         "anchorCount": len(chain),
