@@ -30,6 +30,16 @@ def _box(value: Any) -> list[float] | None:
     return [x0, y0, x1, y1]
 
 
+def _line_box(record: dict[str, Any]) -> list[float] | None:
+    bbox = record.get("bbox_pt") if isinstance(record.get("bbox_pt"), dict) else {}
+    if not bbox:
+        return None
+    try:
+        return _box([bbox.get("x0"), bbox.get("y0"), bbox.get("x1"), bbox.get("y1")])
+    except (TypeError, ValueError):
+        return None
+
+
 def _area(box: list[float]) -> float:
     return max(0.0, box[2] - box[0]) * max(0.0, box[3] - box[1])
 
@@ -311,6 +321,151 @@ def _reconcile_toc_column_false_positives(
     }
 
 
+def _best_line_match(item_box: list[float], records: list[dict[str, Any]]) -> tuple[int, dict[str, Any]] | None:
+    best: tuple[float, int, dict[str, Any]] | None = None
+    item_area = max(1.0, _area(item_box))
+    for index, record in enumerate(records):
+        if str(record.get("type") or "") == "column":
+            continue
+        line_box = _line_box(record)
+        if line_box is None:
+            continue
+        intersection = _intersection(item_box, line_box)
+        line_area = max(1.0, _area(line_box))
+        overlap = intersection / min(item_area, line_area)
+        contains = _contains(line_box, item_box, tolerance=4.0) or _contains(item_box, line_box, tolerance=4.0)
+        if overlap < 0.30 and not contains:
+            continue
+        score = overlap + (0.20 if contains else 0.0)
+        if best is None or score > best[0]:
+            best = (score, index, record)
+    return (best[1], best[2]) if best is not None else None
+
+
+def _lines_columns(line_page: dict[str, Any]) -> list[list[float]]:
+    boxes: list[list[float]] = []
+    for record in line_page.get("objects", []) or []:
+        if str(record.get("type") or "") != "column":
+            continue
+        box = _line_box(record)
+        if box is not None:
+            boxes.append(box)
+    boxes.sort(key=lambda box: (box[0], box[1]))
+    if len(boxes) != 2:
+        return []
+    left, right = boxes
+    if left[2] >= right[0] - 2.0:
+        return []
+    return boxes
+
+
+def _lines_semantic_type(record_type: str, current: str | None) -> str | None:
+    mapping = {
+        "section_header": "heading",
+        "figure_label": "caption",
+        "diagram": "figure",
+        "text": "paragraph",
+    }
+    return mapping.get(record_type, current)
+
+
+def _apply_lines_first_structure(
+    result: dict[str, Any],
+    mathpix_line_layout_map: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Let Lines lead existing structural fields without changing the downstream schema.
+
+    PDF remains the physical geometry/typography authority. Lines decides, where it
+    has usable evidence, semantic role, column ownership and flow order. No Lines-only
+    production fields are introduced here; diagnostics stay in the witness object.
+    """
+    if not mathpix_line_layout_map:
+        return {"pageCount": 0, "matchedFlowItemCount": 0, "twoColumnPageCount": 0}
+
+    line_pages = {
+        int(page.get("page") or 0): page
+        for page in mathpix_line_layout_map.get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    matched_count = 0
+    semantic_count = 0
+    reordered_pages = 0
+    two_column_pages = 0
+
+    for page in result.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+        line_page = line_pages.get(page_no)
+        if not line_page:
+            continue
+        records = list(line_page.get("objects", []) or [])
+        columns = _lines_columns(line_page)
+        existing_columns = list(page.get("columns", []) or [])
+        if columns:
+            rebuilt_columns: list[dict[str, Any]] = []
+            for index, box in enumerate(columns):
+                base = dict(existing_columns[index]) if index < len(existing_columns) else {}
+                base["x0"] = round(box[0], 3)
+                base["x1"] = round(box[2], 3)
+                if "width" in base:
+                    base["width"] = round(box[2] - box[0], 3)
+                rebuilt_columns.append(base)
+            page["columns"] = rebuilt_columns
+            page["layout_mode"] = "two_columns"
+            two_column_pages += 1
+
+        ranked: list[tuple[int, int, float, float, dict[str, Any]]] = []
+        changed_order = False
+        for original_index, item in enumerate(page.get("flow", []) or []):
+            item_box = _box(item.get("bbox"))
+            if item_box is None:
+                ranked.append((2, 1000000 + original_index, 0.0, 0.0, item))
+                continue
+            match = _best_line_match(item_box, records)
+            rank = 1000000 + original_index
+            if match is not None:
+                record_index, record = match
+                rank = int(record.get("line") or record_index)
+                matched_count += 1
+                previous_semantic = item.get("semantic_type")
+                semantic = _lines_semantic_type(str(record.get("type") or ""), previous_semantic)
+                if semantic is not None and semantic != previous_semantic:
+                    item["semantic_type"] = semantic
+                    semantic_count += 1
+
+            column_index = 2
+            if columns:
+                center_x = (item_box[0] + item_box[2]) / 2.0
+                overlaps = [
+                    _intersection(item_box, column_box) / max(1.0, _area(item_box))
+                    for column_box in columns
+                ]
+                if max(overlaps) >= 0.50:
+                    column_index = 0 if overlaps[0] >= overlaps[1] else 1
+                    item["column_index"] = column_index
+                    item["spanning"] = False
+                elif columns[0][0] <= center_x <= columns[1][2]:
+                    item.pop("column_index", None)
+                    item["spanning"] = True
+            ranked.append((column_index, rank, item_box[1], item_box[0], item))
+
+        reordered = [entry[-1] for entry in sorted(ranked, key=lambda entry: entry[:4])]
+        original = list(page.get("flow", []) or [])
+        if [id(item) for item in reordered] != [id(item) for item in original]:
+            changed_order = True
+        page["flow"] = reordered
+        if changed_order:
+            reordered_pages += 1
+
+    return {
+        "pageCount": len(line_pages),
+        "matchedFlowItemCount": matched_count,
+        "semanticTypeChangeCount": semantic_count,
+        "reorderedPageCount": reordered_pages,
+        "twoColumnPageCount": two_column_pages,
+        "policy": "Lines leads existing semantic/column/flow fields; PDF remains geometry and typography authority; schema unchanged.",
+    }
+
+
 def build_page_structure(
     pdf_analysis: dict[str, Any],
     work_dir,
@@ -319,6 +474,7 @@ def build_page_structure(
     external_asset_paths=None,
     equation_donor_path=None,
     mathpix_lines_path=None,
+    mathpix_lines_mode="witness",
 ) -> dict[str, Any]:
     # Build Mathpix evidence before the legacy map so page-furniture semantic
     # roles can be refined first. PDF-native coordinates remain authoritative.
@@ -353,6 +509,11 @@ def build_page_structure(
     ) if package_roots else {"catalogCount": 0, "positionedCatalogCount": 0, "reconciledGroupCount": 0}
 
     toc_column_summary = _reconcile_toc_column_false_positives(result, mathpix_line_layout_map)
+    lines_first_summary = (
+        _apply_lines_first_structure(result, mathpix_line_layout_map)
+        if str(mathpix_lines_mode or "witness").lower().replace("-", "_") == "lines_first"
+        else None
+    )
 
     pdf_pages = {
         int(page.get("page") or 0): page
@@ -392,6 +553,7 @@ def build_page_structure(
             "policy": mathpix_line_layout_map.get("policy"),
             "summary": mathpix_line_layout_map.get("summary"),
             "rawTopLevel": mathpix_line_layout_map.get("rawTopLevel"),
+            "linesFirstSummary": lines_first_summary,
         }
         line_pages = {
             int(page.get("page") or 0): page
