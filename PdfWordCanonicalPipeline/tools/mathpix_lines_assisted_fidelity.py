@@ -67,6 +67,24 @@ def _box(value: Any) -> list[float] | None:
     return [x0, y0, x1, y1]
 
 
+def _relative_box(box: list[float] | None, page: dict[str, Any] | None) -> list[float] | None:
+    if box is None or not page:
+        return None
+    try:
+        width = float(page.get("width_pt") or 0.0)
+        height = float(page.get("height_pt") or 0.0)
+    except (TypeError, ValueError):
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return [
+        round(box[0] / width, 6),
+        round(box[1] / height, 6),
+        round(box[2] / width, 6),
+        round(box[3] / height, 6),
+    ]
+
+
 def _record_box(record: dict[str, Any]) -> list[float] | None:
     bbox = record.get("bbox_pt") if isinstance(record.get("bbox_pt"), dict) else {}
     if not bbox:
@@ -198,7 +216,6 @@ def _apply_lines_first_hierarchy(result: dict[str, Any]) -> dict[str, Any]:
         flow = list(page.get("flow", []) or [])
         pdf_columns = list(page.get("columns", []) or []) if str(page.get("layout_mode") or "") == "two_columns" else []
 
-        matched: dict[int, dict[str, Any]] = {}
         groups: dict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list)
 
         for index, item in enumerate(flow):
@@ -208,7 +225,6 @@ def _apply_lines_first_hierarchy(result: dict[str, Any]) -> dict[str, Any]:
             record = _best_record_match(item_box, records)
             if record is None:
                 continue
-            matched[index] = record
             matched_count += 1
 
             previous_semantic = item.get("semantic_type")
@@ -270,6 +286,226 @@ def _apply_lines_first_hierarchy(result: dict[str, Any]) -> dict[str, Any]:
             "no new Word columns and no global cross-container sorting are allowed."
         ),
     }
+
+
+def _page_structure_slots(page_structure: dict[str, Any]) -> tuple[dict[tuple[int, str], dict[str, Any]], dict[str, int]]:
+    slots: dict[tuple[int, str], dict[str, Any]] = {}
+    order_by_slot: dict[str, int] = {}
+    global_order = 0
+    for page in page_structure.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+        for order, item in enumerate(page.get("flow", []) or []):
+            slot_id = str(item.get("id") or "")
+            if not slot_id:
+                continue
+            slot = {
+                "page": page_no,
+                "slotId": slot_id,
+                "source": "page_structure.flow",
+                "type": item.get("type"),
+                "semanticType": item.get("semantic_type"),
+                "bbox": _box(item.get("bbox")),
+                "columnIndex": item.get("column_index"),
+                "spanning": bool(item.get("spanning")),
+                "flowOrder": order,
+                "wordFlowOrder": global_order,
+                "page": page,
+            }
+            slots[(page_no, slot_id)] = slot
+            order_by_slot[f"{page_no}:{slot_id}"] = global_order
+            global_order += 1
+        for group in page.get("visual_groups", []) or []:
+            slot_id = str(group.get("id") or "")
+            if slot_id:
+                slots[(page_no, slot_id)] = {
+                    "page": page_no,
+                    "slotId": slot_id,
+                    "source": "page_structure.visual_group",
+                    "type": "visual",
+                    "semanticType": group.get("kind"),
+                    "bbox": _box(group.get("bbox")),
+                    "columnIndex": None,
+                    "spanning": group.get("placement") == "floating",
+                    "placement": group.get("placement"),
+                    "flowOrder": None,
+                    "wordFlowOrder": None,
+                    "page": page,
+                }
+        for callout in page.get("callouts", []) or []:
+            slot_id = str(callout.get("id") or "")
+            if slot_id:
+                slots[(page_no, slot_id)] = {
+                    "page": page_no,
+                    "slotId": slot_id,
+                    "source": "page_structure.callout",
+                    "type": "callout",
+                    "semanticType": "callout",
+                    "bbox": _box(callout.get("bbox")),
+                    "columnIndex": None,
+                    "spanning": True,
+                    "flowOrder": None,
+                    "wordFlowOrder": None,
+                    "page": page,
+                }
+    return slots, order_by_slot
+
+
+def _column_box_for_slot(page: dict[str, Any], column_index: Any, spanning: bool) -> dict[str, float] | None:
+    columns = [item for item in page.get("columns", []) or [] if isinstance(item, dict)]
+    if spanning and columns:
+        try:
+            return {
+                "x0": min(float(item.get("x0")) for item in columns),
+                "x1": max(float(item.get("x1")) for item in columns),
+                "y0": min(float(item.get("y0")) for item in columns),
+                "y1": max(float(item.get("y1")) for item in columns),
+            }
+        except (TypeError, ValueError):
+            pass
+    try:
+        index = int(column_index)
+    except (TypeError, ValueError):
+        index = -1
+    if 0 <= index < len(columns):
+        return dict(columns[index])
+    main = page.get("main_column")
+    return dict(main) if isinstance(main, dict) else None
+
+
+def _placement_for_slot(slot: dict[str, Any]) -> str:
+    source = str(slot.get("source") or "")
+    page = slot.get("page") if isinstance(slot.get("page"), dict) else {}
+    if source == "page_structure.callout":
+        return "positioned-text-frame"
+    if source == "page_structure.visual_group":
+        return "floating-visual" if slot.get("placement") == "floating" else "inline-visual"
+    if slot.get("spanning"):
+        return "spanning-text-frame"
+    if str(page.get("layout_mode") or "") == "two_columns" and slot.get("columnIndex") is not None:
+        return "word-column-flow"
+    return "normal-flow"
+
+
+def _apply_lines_first_layout_consume_only(
+    spine: dict[str, Any],
+    page_structure: dict[str, Any],
+) -> dict[str, Any]:
+    """Lock structural layout fields to the already-built page_structure.
+
+    The ordinary page-layout module may still provide content, typography and donor
+    payloads, but it is not allowed to supersede page/slot/order/column/placement
+    when an exact page_structure slot exists. Non-exact rows are retained only as
+    legacy content fallbacks and are counted explicitly.
+    """
+    slots, order_by_slot = _page_structure_slots(page_structure)
+    locked = 0
+    inherited = 0
+
+    for row in spine.get("rows", []) or []:
+        layout = row.get("layout") if isinstance(row.get("layout"), dict) else {}
+        try:
+            page_no = int(layout.get("page") or 0)
+        except (TypeError, ValueError):
+            page_no = 0
+        slot_id = str(layout.get("slotId") or "")
+        slot = slots.get((page_no, slot_id)) if page_no and slot_id else None
+        if slot is None:
+            inherited += 1
+            continue
+
+        page = slot.get("page") if isinstance(slot.get("page"), dict) else {}
+        box = slot.get("bbox")
+        column_index = slot.get("columnIndex")
+        spanning = bool(slot.get("spanning"))
+        placement = _placement_for_slot(slot)
+        column_role = "span" if spanning else (f"col-{column_index}" if column_index is not None else "main")
+
+        layout.update({
+            "status": "layout-slot",
+            "matchMode": "lines-first-page-structure-consume-only",
+            "score": 100.0,
+            "page": page_no,
+            "slotId": slot_id,
+            "slotSource": slot.get("source"),
+            "slotType": slot.get("type"),
+            "semanticType": slot.get("semanticType"),
+            "bbox": box,
+            "columnIndex": column_index,
+            "columnRole": column_role,
+            "spanning": spanning,
+            "flowOrder": slot.get("flowOrder"),
+            "wordFlowOrder": slot.get("wordFlowOrder"),
+        })
+        row["layout"] = layout
+
+        contract = row.get("layoutContract") if isinstance(row.get("layoutContract"), dict) else {}
+        contract["status"] = "usable"
+        contract["page"] = page_no
+        contract["layoutMode"] = page.get("layout_mode")
+        contract["slot"] = {
+            "id": slot_id,
+            "source": slot.get("source"),
+            "type": slot.get("type"),
+            "semanticType": slot.get("semanticType"),
+        }
+        contract["column"] = {
+            "index": column_index,
+            "role": column_role,
+            "box": _column_box_for_slot(page, column_index, spanning),
+            "spanning": spanning,
+        }
+        contract["box"] = {
+            "absolutePt": box,
+            "relativePage": _relative_box(box, page),
+            "source": "page_structure-slot",
+        }
+        contract["placement"] = placement
+        builder_use = contract.get("builderUse") if isinstance(contract.get("builderUse"), dict) else {}
+        builder_use.update({
+            "safeForFlowOrdering": bool(slot.get("source") == "page_structure.flow" and not spanning),
+            "requiresPositionedFrame": placement in {"positioned-text-frame", "spanning-text-frame"},
+            "requiresVisualPlacement": placement in {"floating-visual", "inline-visual"},
+        })
+        contract["builderUse"] = builder_use
+
+        word = row.get("wordParagraph") if isinstance(row.get("wordParagraph"), dict) else {}
+        geometry = word.get("geometry") if isinstance(word.get("geometry"), dict) else {}
+        geometry["bboxPt"] = box
+        geometry["columnBoxPt"] = _box(list((contract.get("column") or {}).get("box", {}).values())) if isinstance((contract.get("column") or {}).get("box"), dict) and all(key in (contract.get("column") or {}).get("box", {}) for key in ("x0", "y0", "x1", "y1")) else geometry.get("columnBoxPt")
+        geometry["source"] = "page_structure-slot+pdf-typography"
+        word["geometry"] = geometry
+        word["placement"] = placement
+        word["pageColumns"] = {
+            "layoutMode": page.get("layout_mode"),
+            "columns": [dict(item) for item in page.get("columns", []) or [] if isinstance(item, dict)],
+            "columnCount": len(page.get("columns", []) or []) if page.get("columns") else 1,
+            "source": "page_structure-consume-only",
+        }
+        contract["wordParagraph"] = word
+        row["wordParagraph"] = word
+        row["layoutContract"] = contract
+        locked += 1
+
+    spine["layoutOrderBySlot"] = order_by_slot
+    rows = list(spine.get("rows", []) or [])
+    rows.sort(key=lambda row: (
+        int((row.get("layout") or {}).get("page") or 0),
+        1000000 if (row.get("layout") or {}).get("wordFlowOrder") is None else int((row.get("layout") or {}).get("wordFlowOrder")),
+        int(row.get("markdownOrder") or 0),
+    ))
+    spine["rows"] = rows
+    spine["linesFirstConsumeOnly"] = {
+        "lockedRowCount": locked,
+        "inheritedFallbackRowCount": inherited,
+        "pageStructureSlotCount": len(slots),
+        "policy": (
+            "page_structure owns page/slot/order/column/placement in LINES_FIRST; "
+            "Markdown/PDF spine, DOCX donor and the ordinary page-layout module may contribute content, typography and native donors only."
+        ),
+    }
+    summary = spine.setdefault("summary", {})
+    summary["linesFirstConsumeOnly"] = deepcopy(spine["linesFirstConsumeOnly"])
+    return spine
 
 
 def main() -> int:
@@ -346,6 +582,19 @@ def main() -> int:
 
         recon_cli.build_page_structure = lines_reconciled_build_page_structure
 
+        if mode == "lines-first":
+            original_build_page_layout_spine = recon_cli.build_page_layout_spine
+
+            def lines_first_build_page_layout_spine(
+                markdown_pdf_spine,
+                page_structure,
+                docx_donor_map=None,
+            ):
+                spine = original_build_page_layout_spine(markdown_pdf_spine, page_structure, docx_donor_map)
+                return _apply_lines_first_layout_consume_only(spine, page_structure)
+
+            recon_cli.build_page_layout_spine = lines_first_build_page_layout_spine
+
     argv = [
         "fidelity",
         "--pdf", str(pdf),
@@ -373,14 +622,14 @@ def main() -> int:
         "pages": args.pages,
         "calibration": args.calibration,
         "contract": {
-            "linesScope": "inside page_structure only",
+            "linesScope": "inside page_structure plus LINES_FIRST consume-only layout overlay",
             "downstreamSchema": "unchanged",
             "downstreamModules": "unchanged",
             "renderer": "unchanged",
             "canonicalCleanup": "unchanged",
             "linesFirstPriority": (
-                "Lines hierarchy leads semantic role and sibling order. Column ownership is refined only when PDF already "
-                "confirms a two-column page. Unrelated containers are never globally reordered."
+                "Lines hierarchy leads semantic role and sibling order. page_structure then owns page/slot/order/column/placement; "
+                "the ordinary page-layout stage may contribute content, PDF typography and native donors but cannot supersede exact page_structure slots."
                 if mode == "lines-first"
                 else None
             ),
@@ -400,8 +649,8 @@ def main() -> int:
     print(f"LINES  : {lines if lines is not None else 'OFF'}")
     print(f"PAGES  : {args.pages}")
     if mode == "lines-first":
-        print("PRIORITY: Lines hierarchy -> PDF physical authority -> Markdown/DOCX content/donors")
-        print("LINES_FIRST: no forced Word columns; no global cross-container flow sort")
+        print("PRIORITY: Lines hierarchy -> page_structure authority -> PDF typography -> Markdown/DOCX content/donors")
+        print("LINES_FIRST: page_layout_spine consume-only for exact page_structure slots")
     else:
         print("CONTRACT: downstream interface and modules stay unchanged")
     return int(canonical_pipeline_main(argv))
