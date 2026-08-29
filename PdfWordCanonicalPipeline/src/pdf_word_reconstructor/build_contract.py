@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Any
 
 
-BUILD_CONTRACT_VERSION = "build-contract-0.4"
+BUILD_CONTRACT_VERSION = "build-contract-0.5-renderer-schema"
 
 
 def _output_kind(row: dict[str, Any]) -> str:
@@ -54,6 +54,23 @@ def _content_text(row: dict[str, Any]) -> str:
     return ""
 
 
+def _valid_bbox(value: Any) -> bool:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return False
+    try:
+        x0, y0, x1, y1 = [float(part) for part in value]
+    except (TypeError, ValueError):
+        return False
+    return x1 > x0 and y1 > y0
+
+
+def _positive_number(value: Any) -> bool:
+    try:
+        return float(value) > 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _unresolved_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
     reasons: list[str] = []
     markdown_id = str(row.get("markdownId") or "")
@@ -70,12 +87,31 @@ def _unresolved_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
         reasons.append("missing-markdown-authoritative-payload")
     if output_kind not in {"visual", "equation", "table"} and not _content_text(row).strip():
         reasons.append("missing-markdown-content")
+
     if output_kind in {"paragraph", "heading", "caption", "callout", "list"}:
         if not isinstance(word_paragraph, dict) or not word_paragraph:
             reasons.append("missing-word-paragraph-contract")
         if str((typography or {}).get("confidence") or "none") == "none":
             reasons.append("missing-pdf-typography")
-    return reasons
+
+        # Renderer schema: the Word renderer consumes these exact fields. They
+        # must be present before rendering; a generic 'typography exists' flag is
+        # not sufficient and must never allow a later crash.
+        font_size = ((typography.get("fontSizePt") or {}).get("dominant")) if isinstance(typography, dict) else None
+        if not _positive_number(font_size):
+            reasons.append("missing-renderer-font-size")
+
+        geometry = word_paragraph.get("geometry") if isinstance(word_paragraph.get("geometry"), dict) else {}
+        if not _positive_number(geometry.get("lineHeightPt")):
+            reasons.append("missing-renderer-line-height")
+
+        positioned = str(layout_contract.get("placement") or "") == "positioned-text-frame"
+        if output_kind == "callout" or positioned:
+            frame = word_paragraph.get("frame") if isinstance(word_paragraph.get("frame"), dict) else {}
+            if not _valid_bbox(frame.get("bboxPt")):
+                reasons.append("missing-renderer-frame-bbox")
+
+    return list(dict.fromkeys(reasons))
 
 
 def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, Any]:
@@ -153,7 +189,7 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "authority": {
                 "content": "markdown",
                 "layout": "pdf-via-page-layout-spine",
-                "typography": "pdf-via-markdown-pdf-spine",
+                "typography": "pdf-via-page-maps",
                 "nativeDonor": "docx-donor-map-secondary-only" if row.get("docxDonor") else None,
             },
         })
@@ -164,12 +200,13 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
         "version": BUILD_CONTRACT_VERSION,
         "sourcePageLayoutSpineVersion": spine.get("version"),
         "policy": {
-            "role": "assembler-and-completeness-gate-only",
+            "role": "assembler-and-renderer-schema-completeness-gate",
             "contentAuthority": "markdown",
             "layoutAuthority": "pdf",
-            "typographyAuthority": "pdf",
+            "typographyAuthority": "pdf-page-maps",
             "docxRole": "native-donor-only",
             "builderRole": "execute-contract-no-rematching",
+            "rendererSchemaValidatedBeforeBuild": True,
             "rematching": "forbidden",
             "reinterpretation": "forbidden",
             "silentFallback": "forbidden",
