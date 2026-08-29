@@ -7,7 +7,7 @@ from .build_contract import build_build_contract
 from .mathpix_lines_input import build_mathpix_line_layout_map
 
 
-VERSION = "lines-only-contract-0.1"
+VERSION = "lines-only-contract-0.2"
 _TEXT_TYPES = {"text", "section_header", "figure_label", "math"}
 _SEMANTIC = {
     "text": "paragraph",
@@ -61,8 +61,6 @@ def _font_size_pt(record: dict[str, Any], sy: float) -> float | None:
         return None
     if value <= 0:
         return None
-    # Mathpix font_size is expressed in source-image units. Convert with the same
-    # page scale used for geometry; no PDF or DOCX typography evidence is consulted.
     return round(value * sy, 3)
 
 
@@ -125,12 +123,64 @@ def _layout_contract(
     }
 
 
+def _page_setup_estimate(pages: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not pages:
+        return None
+    widths = [float(page.get("width_pt") or 0.0) for page in pages if float(page.get("width_pt") or 0.0) > 0]
+    heights = [float(page.get("height_pt") or 0.0) for page in pages if float(page.get("height_pt") or 0.0) > 0]
+    if not widths or not heights:
+        return None
+    width = sorted(widths)[len(widths) // 2]
+    height = sorted(heights)[len(heights) // 2]
+    content_boxes = [
+        box
+        for page in pages
+        for item in page.get("flow", []) or []
+        for box in [_box_from_value(item.get("bbox"))]
+        if box is not None
+    ]
+    if content_boxes:
+        left = max(18.0, min(box[0] for box in content_boxes))
+        right = max(18.0, width - max(box[2] for box in content_boxes))
+        top = max(24.0, min(box[1] for box in content_boxes))
+        bottom = max(24.0, height - max(box[3] for box in content_boxes))
+    else:
+        left = right = 36.0
+        top = bottom = 36.0
+    if left + right >= width * 0.78:
+        left = right = 36.0
+    if top + bottom >= height * 0.55:
+        top = bottom = 36.0
+    return {
+        "pageWidthPt": round(width, 3),
+        "pageHeightPt": round(height, 3),
+        "marginSource": "mathpix-lines-content-envelope",
+        "mirrorMargins": False,
+        "insideMarginPt": None,
+        "outsideMarginPt": None,
+        "leftMarginPt": round(left, 3),
+        "rightMarginPt": round(right, 3),
+        "topMarginPt": round(top, 3),
+        "bottomMarginPt": round(bottom, 3),
+        "mainFlowWidthPt": round(max(120.0, width - left - right), 3),
+    }
+
+
+def _box_from_value(value: Any) -> list[float] | None:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return None
+    try:
+        box = [float(part) for part in value]
+    except (TypeError, ValueError):
+        return None
+    return box if box[2] > box[0] and box[3] > box[1] else None
+
+
 def build_lines_only_contract(lines_path: Path, page_width_pt: float = 595.276) -> dict[str, Any]:
     """Adapt raw Mathpix Lines to the existing page_structure/page_layout/build contracts.
 
-    This is intentionally source-pure: no PDF, Markdown or DOCX is read. The adapter
-    changes only representation, not evidence. Geometry is scaled from each Lines
-    page envelope to a Word-point page with the same aspect ratio.
+    Source-pure by design: no PDF, Markdown or DOCX is read. Geometry and page setup
+    are derived only from the Lines page envelope and Lines object regions.
     """
     line_map = build_mathpix_line_layout_map(Path(lines_path), None)
     page_structure_pages: list[dict[str, Any]] = []
@@ -283,14 +333,28 @@ def build_lines_only_contract(lines_path: Path, page_width_pt: float = 595.276) 
         "pages": page_structure_pages,
         "policy": "No PDF, Markdown or DOCX evidence. Lines text/type/order/region are adapted directly to the canonical page_structure shape.",
     }
+    page_setup = _page_setup_estimate(page_structure_pages)
     layout_spine = {
         "version": VERSION,
         "policy": "Lines-only adapter emits the same builder-facing row/layout contract shape used by the existing maps-first boundary.",
         "layoutPreflight": {
             "version": VERSION,
-            "source": "mathpix-lines-page-envelope",
+            "source": "mathpix-lines-page-envelope-and-content-envelope",
             "pageCount": len(page_structure_pages),
-            "pageSetupEstimate": None,
+            "pageSetupEstimate": page_setup,
+            "columnProfile": {
+                "twoColumnPageCount": 0,
+                "singleColumnPageCount": len(page_structure_pages),
+                "twoColumnPageRatio": 0.0,
+                "medianColumnWidthPt": None,
+                "medianGutterPt": None,
+                "policy": "L0 does not infer Word columns",
+            },
+            "localTypographyPolicy": {
+                "fontSize": "mathpix-lines-font-size-scaled-with-page-envelope",
+                "lineHeight": "unresolved-in-L0",
+                "scope": "flow-item-local",
+            },
         },
         "layoutOrderBySlot": layout_order_by_slot,
         "rows": rows,
@@ -301,8 +365,6 @@ def build_lines_only_contract(lines_path: Path, page_width_pt: float = 595.276) 
         },
     }
     build_contract = build_build_contract(layout_spine)
-    # Preserve actual source authority in the experimental artifact without changing
-    # the shared build_contract implementation used by existing routes.
     build_contract["sourceAuthority"] = {
         "content": "mathpix-lines",
         "layout": "mathpix-lines",
