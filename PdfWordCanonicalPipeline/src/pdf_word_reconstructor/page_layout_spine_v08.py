@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .layout_contract_normalizer import normalize_layout_contracts
 from .page_layout_spine_v07 import build_page_layout_spine as _build_v07
 
 VERSION = "page-layout-spine-0.8"
@@ -150,12 +151,18 @@ def build_page_layout_spine(
             "placement": placement,
         })
 
+    # Canonical boundary: renderer-facing fields are completed only from evidence
+    # already frozen in page_structure.  No downstream PDF/DOCX/Lines reread and
+    # no fabricated defaults are allowed.
+    normalization = normalize_layout_contracts(result, page_structure or {})
+
     result["version"] = VERSION
     result["directPdfWitnessRecovery"] = {
         "recoveredCount": len(recovered),
         "policy": "recover only no-layout-slot text rows that already have pdfPage+pdfRegion+bbox; no new matching",
         "items": recovered[:120],
     }
+    result["layoutContractNormalization"] = normalization
     summary = result.setdefault("summary", {})
     summary["directPdfWitnessRecoveryCount"] = len(recovered)
     return result
