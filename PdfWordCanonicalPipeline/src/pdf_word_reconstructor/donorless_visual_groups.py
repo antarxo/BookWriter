@@ -119,6 +119,14 @@ def bind_visuals_to_pdf_groups(
     markdown_pdf_spine: dict[str, Any],
     page_structure: dict[str, Any],
 ) -> dict[str, Any]:
+    """Bind Markdown visuals to real PDF figure geometry.
+
+    First use exact per-page count agreement. If the PDF has fragmented one visual
+    into several figure groups, recover only when the Markdown visual lies between
+    confirmed neighbouring Markdown/PDF text witnesses; all PDF figure groups whose
+    vertical centres lie in that evidence band are consolidated into one synthetic
+    page_structure group. No raster-coordinate guessing is used.
+    """
     all_items = sorted(
         list(markdown_pdf_spine.get("items", []) or []),
         key=lambda row: int(row.get("orderIndex") or 0),
@@ -165,8 +173,24 @@ def bind_visuals_to_pdf_groups(
             "unplacedMarkdownVisualCount": len(items),
             "pdfFigureGroupCount": len(groups),
             "groupDelta": len(groups) - len(items),
-            "markdownItems": [{"id": i.get("id"), "type": i.get("type"), "orderIndex": i.get("orderIndex"), "text": str(i.get("text") or i.get("rawMarkdown") or "")[:320]} for i in items],
-            "groups": [{"id": g.get("id"), "bbox": g.get("bbox"), "memberIds": list(g.get("member_ids") or []), "memberKinds": list(g.get("member_kinds") or [])} for g in groups],
+            "markdownItems": [
+                {
+                    "id": item.get("id"),
+                    "type": item.get("type"),
+                    "orderIndex": item.get("orderIndex"),
+                    "text": str(item.get("text") or item.get("rawMarkdown") or "")[:320],
+                }
+                for item in items
+            ],
+            "groups": [
+                {
+                    "id": group.get("id"),
+                    "bbox": group.get("bbox"),
+                    "memberIds": list(group.get("member_ids") or []),
+                    "memberKinds": list(group.get("member_kinds") or []),
+                }
+                for group in groups
+            ],
             "boundCount": 0,
             "consolidatedCount": 0,
             "recoveries": [],
@@ -203,7 +227,7 @@ def bind_visuals_to_pdf_groups(
             if not band:
                 continue
             y0, y1, evidence = band
-            candidates = []
+            candidates: list[dict[str, Any]] = []
             for group in groups:
                 group_id = str(group.get("id") or "")
                 if group_id in claimed_ids:
@@ -217,6 +241,9 @@ def bind_visuals_to_pdf_groups(
             if not candidates:
                 continue
 
+            # If another unplaced Markdown visual sits between the same two text
+            # witnesses, the band does not uniquely identify ownership. Leave it
+            # unresolved instead of splitting PDF fragments by guesswork.
             ambiguous_visuals = 0
             for other in items:
                 if other is item:
@@ -228,7 +255,13 @@ def bind_visuals_to_pdf_groups(
                 if other_band and abs(other_band[0] - y0) < 0.5 and abs(other_band[1] - y1) < 0.5:
                     ambiguous_visuals += 1
             if ambiguous_visuals:
-                page_record["recoveries"].append({"markdownId": item.get("id"), "status": "not-bound-shared-neighbour-band", "candidateGroupCount": len(candidates), "band": [round(y0, 3), round(y1, 3)], **evidence})
+                page_record["recoveries"].append({
+                    "markdownId": item.get("id"),
+                    "status": "not-bound-shared-neighbour-band",
+                    "candidateGroupCount": len(candidates),
+                    "band": [round(y0, 3), round(y1, 3)],
+                    **evidence,
+                })
                 continue
 
             member_ids: list[str] = []
@@ -257,9 +290,21 @@ def bind_visuals_to_pdf_groups(
             consolidated += 1
             page_record["boundCount"] += 1
             page_record["consolidatedCount"] += 1
-            page_record["recoveries"].append({"markdownId": item.get("id"), "status": "bound-consolidated-fragments", "candidateGroupCount": len(candidates), "sourceGroupIds": synthetic["source_group_ids"], "band": [round(y0, 3), round(y1, 3)], "bbox": synthetic["bbox"], **evidence})
+            page_record["recoveries"].append({
+                "markdownId": item.get("id"),
+                "status": "bound-consolidated-fragments",
+                "candidateGroupCount": len(candidates),
+                "sourceGroupIds": synthetic["source_group_ids"],
+                "band": [round(y0, 3), round(y1, 3)],
+                "bbox": synthetic["bbox"],
+                **evidence,
+            })
 
-        page_record["policy"] = "fragmented-groups-recovered-by-confirmed-text-neighbour-band" if page_record["boundCount"] else "no-bind-count-mismatch-no-unique-neighbour-band"
+        page_record["policy"] = (
+            "fragmented-groups-recovered-by-confirmed-text-neighbour-band"
+            if page_record["boundCount"]
+            else "no-bind-count-mismatch-no-unique-neighbour-band"
+        )
         pages.append(page_record)
 
     visual_pages = [row for row in pages if int(row.get("unplacedMarkdownVisualCount") or 0) > 0]
