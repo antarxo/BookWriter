@@ -5,7 +5,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-VERSION = "lines-occupancy-graph-0.1"
+VERSION = "lines-occupancy-graph-0.2"
 
 
 def _bbox(obj: dict[str, Any]) -> list[float] | None:
@@ -48,18 +48,44 @@ def _vertical_gap(a: list[float], b: list[float]) -> float:
     return 0.0
 
 
-def _segment_children(children: list[dict[str, Any]], page_height: float) -> list[dict[str, Any]]:
-    items = [(c, _bbox(c)) for c in children]
-    items = [(c, b) for c, b in items if b]
-    items.sort(key=lambda cb: (cb[1][1], cb[1][0], cb[0].get("line") or 0))
+def _descendant_leaves(root: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    child_ids = list(root.get("children_ids") or [])
+    if not child_ids:
+        return [root]
+    out: list[dict[str, Any]] = []
+    stack = [by_id[cid] for cid in reversed(child_ids) if cid in by_id]
+    seen: set[str] = set()
+    while stack:
+        obj = stack.pop()
+        oid = str(obj.get("id") or "")
+        if oid and oid in seen:
+            continue
+        if oid:
+            seen.add(oid)
+        kids = list(obj.get("children_ids") or [])
+        if kids:
+            for cid in reversed(kids):
+                child = by_id.get(str(cid))
+                if child is not None:
+                    stack.append(child)
+        else:
+            out.append(obj)
+    return out
+
+
+def _segment_objects(objects: list[dict[str, Any]], page_height: float) -> list[dict[str, Any]]:
+    items = [(o, _bbox(o)) for o in objects]
+    items = [(o, b) for o, b in items if b]
+    items.sort(key=lambda ob: (ob[1][1], ob[1][0], ob[0].get("line") or 0))
     if not items:
         return []
-    typical_h = sorted([b[3] - b[1] for _, b in items])[len(items)//2]
+    heights = sorted(b[3] - b[1] for _, b in items)
+    typical_h = heights[len(heights) // 2]
     split_gap = max(100.0, typical_h * 2.5, page_height * 0.035)
     groups: list[list[tuple[dict[str, Any], list[float]]]] = [[items[0]]]
     current_bottom = items[0][1][3]
     for item in items[1:]:
-        obj, box = item
+        _, box = item
         gap = box[1] - current_bottom
         if gap >= split_gap:
             groups.append([item])
@@ -81,108 +107,191 @@ def _segment_children(children: list[dict[str, Any]], page_height: float) -> lis
     return out
 
 
-def _classify_stream(container: dict[str, Any], segments: list[dict[str, Any]], page_width: float, page_height: float) -> dict[str, Any]:
-    b = _bbox(container)
+def _compatible(a: dict[str, Any], b: dict[str, Any], page_w: float, page_h: float) -> bool:
+    ba = a.get("bboxPx"); bb = b.get("bboxPx")
+    if not ba or not bb:
+        return False
+    xo = _x_overlap(ba, bb); yo = _y_overlap(ba, bb)
+    vg = _vertical_gap(ba, bb); hg = _horizontal_gap(ba, bb)
+    # Same vertical stream: strong horizontal overlap and modest vertical gap.
+    if xo >= 0.45 and vg <= max(85.0, page_h * 0.03):
+        return True
+    # Same local horizontal band: strong vertical overlap and a small horizontal gap.
+    if yo >= 0.55 and hg <= max(55.0, page_w * 0.03):
+        return True
+    return False
+
+
+def _cluster_raw_segments(raw: list[dict[str, Any]], page_w: float, page_h: float) -> list[list[dict[str, Any]]]:
+    n = len(raw)
+    parent = list(range(n))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(i: int, j: int) -> None:
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            parent[rj] = ri
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _compatible(raw[i], raw[j], page_w, page_h):
+                union(i, j)
+
+    groups: dict[int, list[dict[str, Any]]] = {}
+    for i, node in enumerate(raw):
+        groups.setdefault(find(i), []).append(node)
+    return list(groups.values())
+
+
+def _classify_spatial_node(node: dict[str, Any], page_w: float, page_h: float) -> dict[str, Any]:
+    b = node.get("bboxPx")
     if not b:
         return {"roleCandidate": "unknown", "confidence": 0.0}
-    child_union = _union([s["bboxPx"] for s in segments if s.get("bboxPx")])
-    if not child_union:
-        return {"roleCandidate": "unknown", "confidence": 0.0}
-    width_ratio = (child_union[2] - child_union[0]) / max(1.0, page_width)
-    height_ratio = (child_union[3] - child_union[1]) / max(1.0, page_height)
-    x_center = (child_union[0] + child_union[2]) / 2 / max(1.0, page_width)
-    type_counts = Counter()
-    for s in segments:
-        type_counts.update(s.get("typeCounts") or {})
-    has_diagram = type_counts.get("diagram", 0) > 0
-    text_like = type_counts.get("text", 0) + type_counts.get("section_header", 0) + type_counts.get("math", 0)
-    if width_ratio >= 0.52 and text_like >= 3:
-        return {"roleCandidate": "main-stream", "confidence": 0.75, "widthRatio": round(width_ratio, 4), "heightRatio": round(height_ratio, 4)}
-    if width_ratio <= 0.38 and (x_center <= 0.32 or x_center >= 0.68):
-        return {"roleCandidate": "ancillary-stream", "confidence": 0.72, "widthRatio": round(width_ratio, 4), "heightRatio": round(height_ratio, 4)}
-    if has_diagram and text_like <= 4:
-        return {"roleCandidate": "visual-stream", "confidence": 0.62, "widthRatio": round(width_ratio, 4), "heightRatio": round(height_ratio, 4)}
-    return {"roleCandidate": "mixed-stream", "confidence": 0.45, "widthRatio": round(width_ratio, 4), "heightRatio": round(height_ratio, 4)}
+    width_ratio = (b[2] - b[0]) / max(1.0, page_w)
+    height_ratio = (b[3] - b[1]) / max(1.0, page_h)
+    x_center = (b[0] + b[2]) / 2 / max(1.0, page_w)
+    tc = Counter(node.get("typeCounts") or {})
+    text_like = tc.get("text", 0) + tc.get("section_header", 0) + tc.get("math", 0) + tc.get("figure_label", 0)
+    diagrams = tc.get("diagram", 0)
+    if width_ratio >= 0.50 and text_like >= 3:
+        role, conf = "main-stream", 0.78
+    elif width_ratio <= 0.38 and (x_center <= 0.34 or x_center >= 0.66):
+        role, conf = "ancillary-stream", 0.74
+    elif diagrams and text_like <= 4:
+        role, conf = "visual-stream", 0.66
+    else:
+        role, conf = "mixed-stream", 0.48
+    return {
+        "roleCandidate": role,
+        "confidence": conf,
+        "widthRatio": round(width_ratio, 4),
+        "heightRatio": round(height_ratio, 4),
+    }
 
 
 def build_lines_occupancy_graph(lines_path: Path) -> dict[str, Any]:
     payload = json.loads(Path(lines_path).read_text(encoding="utf-8"))
     pages_out = []
-    total_segments = 0
+    total_nodes = 0
+
     for page in payload.get("pages") or []:
         objects = list(page.get("lines") or [])
         by_id = {str(o.get("id")): o for o in objects if o.get("id")}
         page_w = float(page.get("page_width") or 1)
         page_h = float(page.get("page_height") or 1)
-        containers_out = []
-        segment_nodes = []
-        edges = []
-        for obj in objects:
-            child_ids = list(obj.get("children_ids") or [])
-            if not child_ids:
-                continue
-            children = [by_id[cid] for cid in child_ids if cid in by_id]
-            segments = _segment_children(children, page_h)
-            role = _classify_stream(obj, segments, page_w, page_h)
-            container_id = str(obj.get("id"))
-            seg_ids = []
-            for seg in segments:
-                seg_id = f"{container_id}:seg:{seg['segmentIndex']}"
-                seg_ids.append(seg_id)
-                node = {"id": seg_id, "containerId": container_id, **seg, **role}
-                segment_nodes.append(node)
-                edges.append({"type": "container-segment", "from": container_id, "to": seg_id})
-            containers_out.append({
-                "id": container_id,
-                "line": obj.get("line"),
-                "mathpixType": obj.get("type"),
-                "bboxPx": _bbox(obj),
-                "childCount": len(children),
-                "segmentIds": seg_ids,
-                "segmentCount": len(segments),
-                **role,
-            })
-        for obj in objects:
-            for label_id in obj.get("selected_labels") or []:
-                if str(label_id) in by_id:
-                    edges.append({"type": "figure-label", "from": obj.get("id"), "to": label_id})
+        top = [o for o in objects if not o.get("parent_id")]
+
+        hierarchy_edges = []
+        semantic_edges = []
         for obj in objects:
             pid = obj.get("parent_id")
             if pid:
-                edges.append({"type": "parent-child", "from": pid, "to": obj.get("id")})
-        # spatial edges between occupancy segments only, not raw container bboxes
-        for i, a in enumerate(segment_nodes):
+                hierarchy_edges.append({"type": "parent-child", "from": pid, "to": obj.get("id")})
+            for label_id in obj.get("selected_labels") or []:
+                if str(label_id) in by_id:
+                    semantic_edges.append({"type": "figure-label", "from": obj.get("id"), "to": label_id})
+
+        raw_segments: list[dict[str, Any]] = []
+        root_records: list[dict[str, Any]] = []
+        for root in top:
+            rid = str(root.get("id"))
+            leaves = _descendant_leaves(root, by_id)
+            segments = _segment_objects(leaves, page_h)
+            seg_ids = []
+            for seg in segments:
+                sid = f"root:{rid}:seg:{seg['segmentIndex']}"
+                seg_ids.append(sid)
+                raw_segments.append({
+                    "id": sid,
+                    "rootId": rid,
+                    "rootType": root.get("type"),
+                    **seg,
+                })
+            root_records.append({
+                "id": rid,
+                "line": root.get("line"),
+                "mathpixType": root.get("type"),
+                "bboxPx": _bbox(root),
+                "leafCount": len(leaves),
+                "rawSegmentIds": seg_ids,
+                "rawSegmentCount": len(seg_ids),
+            })
+
+        clusters = _cluster_raw_segments(raw_segments, page_w, page_h)
+        spatial_nodes = []
+        for idx, group in enumerate(sorted(clusters, key=lambda grp: min((g.get("firstLine") or 10**9) for g in grp))):
+            boxes = [g["bboxPx"] for g in group if g.get("bboxPx")]
+            tc = Counter()
+            object_ids: list[str] = []
+            object_lines: list[int] = []
+            root_ids: list[str] = []
+            raw_ids: list[str] = []
+            for g in group:
+                tc.update(g.get("typeCounts") or {})
+                object_ids.extend(str(v) for v in g.get("objectIds") or [] if v)
+                object_lines.extend(int(v) for v in g.get("objectLines") or [] if isinstance(v, int))
+                root_ids.append(str(g.get("rootId")))
+                raw_ids.append(str(g.get("id")))
+            node = {
+                "id": f"spatial:{idx}",
+                "bboxPx": _union(boxes),
+                "rootIds": sorted(set(root_ids)),
+                "rawSegmentIds": raw_ids,
+                "objectIds": list(dict.fromkeys(object_ids)),
+                "objectLines": sorted(set(object_lines)),
+                "typeCounts": dict(tc),
+                "firstLine": min(object_lines) if object_lines else None,
+            }
+            node.update(_classify_spatial_node(node, page_w, page_h))
+            spatial_nodes.append(node)
+
+        spatial_edges = []
+        for i, a in enumerate(spatial_nodes):
             ba = a.get("bboxPx")
-            if not ba: continue
-            for b in segment_nodes[i+1:]:
+            if not ba:
+                continue
+            for b in spatial_nodes[i + 1:]:
                 bb = b.get("bboxPx")
-                if not bb: continue
+                if not bb:
+                    continue
                 xo = _x_overlap(ba, bb); yo = _y_overlap(ba, bb)
                 hg = _horizontal_gap(ba, bb); vg = _vertical_gap(ba, bb)
                 if yo >= 0.35 and hg <= page_w * 0.08:
                     left, right = (a, b) if ba[0] <= bb[0] else (b, a)
-                    edges.append({"type": "side-by-side", "from": left["id"], "to": right["id"], "verticalOverlap": round(yo, 4), "gapPx": round(hg, 3)})
+                    spatial_edges.append({"type": "side-by-side", "from": left["id"], "to": right["id"], "verticalOverlap": round(yo, 4), "gapPx": round(hg, 3)})
                 if xo >= 0.35 and vg <= page_h * 0.04:
                     upper, lower = (a, b) if ba[1] <= bb[1] else (b, a)
-                    edges.append({"type": "vertical-neighbor", "from": upper["id"], "to": lower["id"], "horizontalOverlap": round(xo, 4), "gapPx": round(vg, 3)})
-        total_segments += len(segment_nodes)
+                    spatial_edges.append({"type": "vertical-neighbor", "from": upper["id"], "to": lower["id"], "horizontalOverlap": round(xo, 4), "gapPx": round(vg, 3)})
+
+        total_nodes += len(spatial_nodes)
         pages_out.append({
             "page": page.get("page"),
             "pageWidthPx": page.get("page_width"),
             "pageHeightPx": page.get("page_height"),
-            "containers": containers_out,
-            "segments": segment_nodes,
-            "edges": edges,
-            "roleCounts": dict(Counter(s.get("roleCandidate") for s in segment_nodes)),
+            "topLevelRootCount": len(top),
+            "roots": root_records,
+            "rawRootSegments": raw_segments,
+            "spatialNodes": spatial_nodes,
+            "hierarchyEdges": hierarchy_edges,
+            "semanticEdges": semantic_edges,
+            "spatialEdges": spatial_edges,
+            "roleCounts": dict(Counter(n.get("roleCandidate") for n in spatial_nodes)),
         })
+
     return {
         "version": VERSION,
         "source": str(Path(lines_path)),
         "policy": (
-            "Lines-only diagnostic graph. Mathpix containers are decomposed into occupied child segments; "
-            "roles are candidates only and do not drive Word rendering."
+            "Lines-only diagnostic graph with two layers. Spatial nodes are derived once from top-level roots and their leaf occupancy; "
+            "nested Mathpix containers are preserved only in hierarchy evidence and are not duplicated as spatial nodes. "
+            "Role candidates are diagnostic and do not drive Word rendering."
         ),
-        "summary": {"pageCount": len(pages_out), "segmentCount": total_segments},
+        "summary": {"pageCount": len(pages_out), "spatialNodeCount": total_nodes},
         "pages": pages_out,
     }
 
