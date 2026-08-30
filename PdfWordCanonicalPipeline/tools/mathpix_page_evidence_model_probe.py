@@ -75,9 +75,15 @@ def main() -> int:
         print("PACKAGE PAGE TOKENS    : NONE EXTRACTED")
         samples = report.get("unresolvedPackageVisualSamples") or []
         for i, sample in enumerate(samples, start=1):
-            print(f"UNRESOLVED VISUAL {i}   : id={sample.get('id')} targetSource={sample.get('targetSource')}")
+            target = str(sample.get("target") or "")
+            if len(target) > 220:
+                target = target[:217] + "..."
+            print(f"UNRESOLVED VISUAL {i}   : id={sample.get('id')}")
+            print(f"  TARGET SOURCE        : {sample.get('targetSource')}")
+            print(f"  TARGET               : {target!r}")
+            print(f"  GEOMETRY AVAILABLE   : {sample.get('geometryAvailable')}")
             print(f"  RECORD KEYS          : {sample.get('recordKeys')}")
-        print("NOTE                   : Inspect mapped image record structure before changing target/page parsing again.")
+        print("NOTE                   : These are actual mapped targets with no page token; inspect their syntax before changing parsing.")
     print(f"OUTPUT                 : {report_path}")
     return 0
 
