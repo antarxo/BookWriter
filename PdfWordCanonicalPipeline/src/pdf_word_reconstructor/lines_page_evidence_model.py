@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import tempfile
-from collections import Counter
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -12,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 from pdf_word_reconstructor.lines_page_frame_visual import build_page_frame_visual
 
-VERSION = "lines-page-evidence-model-0.4"
+VERSION = "lines-page-evidence-model-0.5"
 
 
 def _bbox_iou(a: list[float] | None, b: list[float] | None) -> float:
@@ -100,11 +99,6 @@ def _target(record: dict[str, Any]) -> tuple[str, str]:
         text = str(value or "").strip()
         if text:
             return text, source
-
-    # Use the full mapped image/figure record as evidence. The canonical mapper
-    # may place the original Mathpix image expression in fields such as text,
-    # captionText, alt, latex or nested authoritativeContent values. Search only
-    # string leaves of this one visual record and extract an image-like target.
     for raw in _string_values(record):
         target = _extract_target_from_string(raw)
         if target:
@@ -188,11 +182,10 @@ def _cross_page_template(pages: list[dict[str, Any]]) -> dict[str, Any]:
     envelopes = [b for b in envelopes if b]
     if not envelopes:
         return {"candidate": None, "confidence": 0.0}
-    lefts = [b[0] for b in envelopes]
-    tops = [b[1] for b in envelopes]
-    rights = [b[2] for b in envelopes]
-    bottoms = [b[3] for b in envelopes]
-    candidate = [median(lefts), median(tops), median(rights), median(bottoms)]
+    candidate = [
+        median([b[0] for b in envelopes]), median([b[1] for b in envelopes]),
+        median([b[2] for b in envelopes]), median([b[3] for b in envelopes]),
+    ]
     deviations = [sum(abs(b[i] - candidate[i]) for i in range(4)) / 4.0 for b in envelopes]
     typical_dev = median(deviations) if deviations else 0.0
     page_w = median([p["physicalPage"]["widthPx"] for p in pages])
@@ -215,10 +208,8 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             "page": p.get("page"),
             "physicalPage": p.get("physicalPage"),
             "activeContentEnvelope": {
-                "bboxPx": bf.get("bboxPx"),
-                "occupiedUnionBBoxPx": bf.get("occupiedUnionBBoxPx"),
-                "edgeDistancesPx": bf.get("marginsPx"),
-                "confidence": bf.get("confidence"),
+                "bboxPx": bf.get("bboxPx"), "occupiedUnionBBoxPx": bf.get("occupiedUnionBBoxPx"),
+                "edgeDistancesPx": bf.get("marginsPx"), "confidence": bf.get("confidence"),
                 "policy": "occupied-content envelope; these distances are not Word margins",
             },
             "pageDecorationCandidates": p.get("pageDecorationCandidates") or [],
@@ -233,10 +224,7 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
         except Exception:
             manifest = None
 
-    mmd_visuals: list[dict[str, Any]] = []
-    if mmd_path is not None and Path(mmd_path).exists():
-        mmd_visuals = _mmd_visuals(Path(mmd_path))
-
+    mmd_visuals = _mmd_visuals(Path(mmd_path)) if mmd_path is not None and Path(mmd_path).exists() else []
     lines_page_numbers = [int(p.get("page")) for p in pages if isinstance(p.get("page"), int)]
     page_mapping = _map_package_pages(mmd_visuals, manifest, lines_page_numbers)
     mmd_by_page: dict[int, list[dict[str, Any]]] = {}
@@ -289,8 +277,15 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
     template = _cross_page_template(pages)
     repeated_edge = frame.get("repeatedEdgeEvidence") or []
     unresolved_samples = [
-        {"id": v.get("id"), "recordKeys": v.get("recordKeys"), "targetSource": v.get("targetSource")}
-        for v in mmd_visuals if not v.get("target")
+        {
+            "id": v.get("id"),
+            "target": v.get("target"),
+            "targetSource": v.get("targetSource"),
+            "localPage": v.get("localPage"),
+            "geometryAvailable": v.get("geometryAvailable"),
+            "recordKeys": v.get("recordKeys"),
+        }
+        for v in mmd_visuals if not isinstance(v.get("localPage"), int)
     ][:5]
     return {
         "version": VERSION,
