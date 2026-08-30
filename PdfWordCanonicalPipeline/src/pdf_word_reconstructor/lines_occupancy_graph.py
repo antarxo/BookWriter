@@ -5,7 +5,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-VERSION = "lines-occupancy-graph-0.2"
+VERSION = "lines-occupancy-graph-0.3"
 
 
 def _bbox(obj: dict[str, Any]) -> list[float] | None:
@@ -46,6 +46,14 @@ def _vertical_gap(a: list[float], b: list[float]) -> float:
     if a[3] < b[1]: return b[1] - a[3]
     if b[3] < a[1]: return a[1] - b[3]
     return 0.0
+
+
+def _x_center(box: list[float]) -> float:
+    return (box[0] + box[2]) / 2.0
+
+
+def _width(box: list[float]) -> float:
+    return max(1.0, box[2] - box[0])
 
 
 def _descendant_leaves(root: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -107,18 +115,43 @@ def _segment_objects(objects: list[dict[str, Any]], page_height: float) -> list[
     return out
 
 
+def _same_x_lane(a: list[float], b: list[float], page_w: float) -> bool:
+    xo = _x_overlap(a, b)
+    if xo >= 0.48:
+        return True
+    ca, cb = _x_center(a), _x_center(b)
+    center_gap = abs(ca - cb)
+    narrow = min(_width(a), _width(b))
+    # Similar centre lines may still represent the same stream when one block is
+    # narrower (heading/equation/caption) than the surrounding text column.
+    if center_gap <= min(page_w * 0.075, narrow * 0.55):
+        return True
+    # Strong containment is also same-lane evidence.
+    if (a[0] <= b[0] and a[2] >= b[2]) or (b[0] <= a[0] and b[2] >= a[2]):
+        return xo >= 0.32
+    return False
+
+
 def _compatible(a: dict[str, Any], b: dict[str, Any], page_w: float, page_h: float) -> bool:
     ba = a.get("bboxPx"); bb = b.get("bboxPx")
     if not ba or not bb:
         return False
     xo = _x_overlap(ba, bb); yo = _y_overlap(ba, bb)
     vg = _vertical_gap(ba, bb); hg = _horizontal_gap(ba, bb)
-    # Same vertical stream: strong horizontal overlap and modest vertical gap.
-    if xo >= 0.45 and vg <= max(85.0, page_h * 0.03):
+
+    # Primary rule: vertical continuity is allowed only inside the same x-lane.
+    if _same_x_lane(ba, bb, page_w) and vg <= max(90.0, page_h * 0.032):
         return True
-    # Same local horizontal band: strong vertical overlap and a small horizontal gap.
-    if yo >= 0.55 and hg <= max(55.0, page_w * 0.03):
+
+    # Local horizontal compositions (e.g. figure + caption/label in one band)
+    # may cluster only when they are very close and neither block is a page-wide
+    # text stream swallowing a neighbouring sidebar.
+    wa = _width(ba) / max(1.0, page_w)
+    wb = _width(bb) / max(1.0, page_w)
+    if yo >= 0.68 and hg <= max(36.0, page_w * 0.018) and max(wa, wb) < 0.50:
         return True
+
+    # Do not merge merely because two lanes overlap vertically.
     return False
 
 
@@ -224,7 +257,7 @@ def build_lines_occupancy_graph(lines_path: Path) -> dict[str, Any]:
 
         clusters = _cluster_raw_segments(raw_segments, page_w, page_h)
         spatial_nodes = []
-        for idx, group in enumerate(sorted(clusters, key=lambda grp: min((g.get("firstLine") or 10**9) for g in grp))):
+        for idx, group in enumerate(sorted(clusters, key=lambda grp: (min((g.get("bboxPx") or [0, 10**9])[1] for g in grp), min((g.get("bboxPx") or [10**9])[0] for g in grp)))):
             boxes = [g["bboxPx"] for g in group if g.get("bboxPx")]
             tc = Counter()
             object_ids: list[str] = []
@@ -264,7 +297,7 @@ def build_lines_occupancy_graph(lines_path: Path) -> dict[str, Any]:
                 if yo >= 0.35 and hg <= page_w * 0.08:
                     left, right = (a, b) if ba[0] <= bb[0] else (b, a)
                     spatial_edges.append({"type": "side-by-side", "from": left["id"], "to": right["id"], "verticalOverlap": round(yo, 4), "gapPx": round(hg, 3)})
-                if xo >= 0.35 and vg <= page_h * 0.04:
+                if _same_x_lane(ba, bb, page_w) and vg <= page_h * 0.04:
                     upper, lower = (a, b) if ba[1] <= bb[1] else (b, a)
                     spatial_edges.append({"type": "vertical-neighbor", "from": upper["id"], "to": lower["id"], "horizontalOverlap": round(xo, 4), "gapPx": round(vg, 3)})
 
@@ -287,8 +320,8 @@ def build_lines_occupancy_graph(lines_path: Path) -> dict[str, Any]:
         "version": VERSION,
         "source": str(Path(lines_path)),
         "policy": (
-            "Lines-only diagnostic graph with two layers. Spatial nodes are derived once from top-level roots and their leaf occupancy; "
-            "nested Mathpix containers are preserved only in hierarchy evidence and are not duplicated as spatial nodes. "
+            "Lines-only diagnostic graph with hierarchy and x-lane-aware spatial layers. Spatial nodes are derived once from top-level roots and leaf occupancy; "
+            "nested Mathpix containers are hierarchy evidence only. Vertical overlap alone never merges distinct horizontal lanes. "
             "Role candidates are diagnostic and do not drive Word rendering."
         ),
         "summary": {"pageCount": len(pages_out), "spatialNodeCount": total_nodes},
