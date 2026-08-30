@@ -72,16 +72,12 @@ def main() -> int:
             f"packageVisuals={len(page.get('packageVisualEntities') or [])} matched={matched} packageMissing={missing}"
         )
     if s.get("packageVisualCount") and not mapping.get("localPackagePages"):
-        targets = []
-        for page in report.get("pages") or []:
-            for v in page.get("packageVisualEntities") or []:
-                if v.get("target"):
-                    targets.append(str(v.get("target")))
-        # If page association failed, packageVisualEntities may be empty on every source page.
-        # The JSON report still preserves mapping diagnostics; the explicit note prevents a
-        # zero-per-page result from being mistaken for absence of package visuals.
         print("PACKAGE PAGE TOKENS    : NONE EXTRACTED")
-        print("NOTE                   : Inspect package targets/page-token parser before interpreting visual completeness.")
+        samples = report.get("unresolvedPackageVisualSamples") or []
+        for i, sample in enumerate(samples, start=1):
+            print(f"UNRESOLVED VISUAL {i}   : id={sample.get('id')} targetSource={sample.get('targetSource')}")
+            print(f"  RECORD KEYS          : {sample.get('recordKeys')}")
+        print("NOTE                   : Inspect mapped image record structure before changing target/page parsing again.")
     print(f"OUTPUT                 : {report_path}")
     return 0
 
