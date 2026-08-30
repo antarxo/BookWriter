@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlparse
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 from pdf_word_reconstructor.lines_page_frame_visual import build_page_frame_visual
 
-VERSION = "lines-page-evidence-model-0.2"
+VERSION = "lines-page-evidence-model-0.3"
 
 
 def _bbox_iou(a: list[float] | None, b: list[float] | None) -> float:
@@ -60,7 +60,34 @@ def _image_page_from_target(target: str) -> int | None:
 def _target(record: dict[str, Any]) -> str:
     auth = record.get("authoritativeContent") if isinstance(record.get("authoritativeContent"), dict) else {}
     targets = auth.get("imageTargets") or []
-    return str(record.get("target") or (targets[0] if targets else auth.get("target") or ""))
+    direct = str(record.get("target") or (targets[0] if targets else auth.get("target") or "")).strip()
+    if direct:
+        return direct
+
+    # Mathpix MMD image records may preserve the asset reference only in raw
+    # markdown, e.g. ![](./images/<uuid>-4_304_487_564_272.jpg).  Preserve that
+    # path as package evidence instead of treating the visual as page-unassigned.
+    for value in (
+        record.get("rawMarkdown"),
+        auth.get("rawMarkdown"),
+        record.get("text"),
+        auth.get("text"),
+        auth.get("plainText"),
+    ):
+        raw = str(value or "").strip()
+        if not raw:
+            continue
+        md = re.search(r"!\[[^\]]*\]\(([^)]+)\)", raw)
+        if md:
+            candidate = md.group(1).strip()
+            # Remove an optional Markdown title following a whitespace separator.
+            candidate = re.sub(r"\s+[\"'].*[\"']\s*$", "", candidate).strip()
+            if candidate:
+                return candidate
+        html = re.search(r"<img\b[^>]*\bsrc=[\"']([^\"']+)[\"']", raw, flags=re.IGNORECASE)
+        if html:
+            return html.group(1).strip()
+    return ""
 
 
 def _mmd_visuals(mmd_path: Path) -> list[dict[str, Any]]:
@@ -133,7 +160,7 @@ def _map_package_pages(mmd_visuals: list[dict[str, Any]], manifest: dict[str, An
         "requestedPages": requested,
         "localPackagePages": unique_local,
         "localToSourcePage": {str(k): v for k, v in sorted(mapping.items())},
-        "resolved": bool(mapping) or not unique_local,
+        "resolved": True if not mmd_visuals else bool(mapping),
     }
 
 
@@ -281,6 +308,7 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             "matchedVisualCount": matched,
             "packageVisualMissingFromLinesCount": missing_from_lines,
             "unassignedPackageVisualCount": unassigned_package,
+            "visualAuditValid": unassigned_package == 0,
             "repeatedEdgeSignatureCount": len(repeated_edge),
         },
         "crossPageTemplateCandidate": template,
