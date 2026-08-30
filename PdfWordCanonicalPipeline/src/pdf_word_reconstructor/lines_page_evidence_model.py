@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlparse
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 from pdf_word_reconstructor.lines_page_frame_visual import build_page_frame_visual
 
-VERSION = "lines-page-evidence-model-0.1"
+VERSION = "lines-page-evidence-model-0.2"
 
 
 def _bbox_iou(a: list[float] | None, b: list[float] | None) -> float:
@@ -72,19 +72,69 @@ def _mmd_visuals(mmd_path: Path) -> list[dict[str, Any]]:
             continue
         target = _target(rec)
         geom = _image_geometry_from_target(target)
-        page = _image_page_from_target(target)
+        local_page = _image_page_from_target(target)
         bbox = None
         if geom:
             bbox = [geom["x"], geom["y"], geom["x"] + geom["w"], geom["y"] + geom["h"]]
         out.append({
             "id": rec.get("id"),
             "type": rec.get("type"),
-            "page": page,
+            "localPage": local_page,
+            "page": local_page,
             "target": target,
             "bboxPx": bbox,
             "geometryAvailable": bbox is not None,
         })
     return out
+
+
+def _requested_page_sequence(manifest: dict[str, Any] | None, lines_pages: list[int]) -> list[int]:
+    if isinstance(manifest, dict):
+        raw = manifest.get("requested_pages")
+        if isinstance(raw, list):
+            vals = []
+            for v in raw:
+                try:
+                    vals.append(int(v))
+                except (TypeError, ValueError):
+                    pass
+            if vals:
+                return vals
+        if isinstance(raw, str):
+            nums = [int(x) for x in re.findall(r"\d+", raw)]
+            if len(nums) >= 2 and "-" in raw:
+                a, b = nums[0], nums[1]
+                if b >= a:
+                    return list(range(a, b + 1))
+            if nums:
+                return nums
+    return sorted(lines_pages)
+
+
+def _map_package_pages(mmd_visuals: list[dict[str, Any]], manifest: dict[str, Any] | None, lines_pages: list[int]) -> dict[str, Any]:
+    requested = _requested_page_sequence(manifest, lines_pages)
+    unique_local = sorted({int(v["localPage"]) for v in mmd_visuals if isinstance(v.get("localPage"), int)})
+    mapping: dict[int, int] = {}
+
+    # Most Mathpix asset filenames use local package pages 1..N. Map those
+    # positions onto manifest requested_pages / Lines source page numbers.
+    if unique_local and requested:
+        if min(unique_local) >= 1 and max(unique_local) <= len(requested):
+            mapping = {lp: requested[lp - 1] for lp in unique_local}
+        elif unique_local == requested:
+            mapping = {lp: lp for lp in unique_local}
+
+    for v in mmd_visuals:
+        lp = v.get("localPage")
+        if isinstance(lp, int) and lp in mapping:
+            v["page"] = mapping[lp]
+
+    return {
+        "requestedPages": requested,
+        "localPackagePages": unique_local,
+        "localToSourcePage": {str(k): v for k, v in sorted(mapping.items())},
+        "resolved": bool(mapping) or not unique_local,
+    }
 
 
 def _cross_page_template(pages: list[dict[str, Any]]) -> dict[str, Any]:
@@ -132,9 +182,19 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             "occupancyGraphRef": p.get("occupancyGraphRef"),
         })
 
+    manifest = None
+    if manifest_path is not None and Path(manifest_path).exists():
+        try:
+            manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+        except Exception:
+            manifest = None
+
     mmd_visuals: list[dict[str, Any]] = []
     if mmd_path is not None and Path(mmd_path).exists():
         mmd_visuals = _mmd_visuals(Path(mmd_path))
+
+    lines_page_numbers = [int(p.get("page")) for p in pages if isinstance(p.get("page"), int)]
+    page_mapping = _map_package_pages(mmd_visuals, manifest, lines_page_numbers)
 
     mmd_by_page: dict[int, list[dict[str, Any]]] = {}
     for v in mmd_visuals:
@@ -145,6 +205,12 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
     total_mmd = len(mmd_visuals)
     matched = 0
     missing_from_lines = 0
+    unassigned_package = 0
+    valid_pages = set(lines_page_numbers)
+    for v in mmd_visuals:
+        if v.get("page") not in valid_pages:
+            unassigned_package += 1
+
     for p in pages:
         lines_visuals = p["linesVisualEntities"]
         total_lines += len(lines_visuals)
@@ -171,6 +237,8 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             audit.append({
                 "packageVisualId": mv.get("id"),
                 "packageTarget": mv.get("target"),
+                "packageLocalPage": mv.get("localPage"),
+                "packageSourcePage": mv.get("page"),
                 "packageBBoxPx": mv.get("bboxPx"),
                 "linesVisualId": lines_id,
                 "iou": round(best_iou, 4),
@@ -189,13 +257,6 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
         p["packageVisualEntities"] = package_visuals
         p["visualCompletenessAudit"] = audit
 
-    manifest = None
-    if manifest_path is not None and Path(manifest_path).exists():
-        try:
-            manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
-        except Exception:
-            manifest = None
-
     template = _cross_page_template(pages)
     repeated_edge = frame.get("repeatedEdgeEvidence") or []
     return {
@@ -207,9 +268,11 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             "manifestFileId": manifest.get("file_id") if isinstance(manifest, dict) else None,
             "manifestRequestedPages": manifest.get("requested_pages") if isinstance(manifest, dict) else None,
         },
+        "pageNumberMapping": page_mapping,
         "policy": (
             "Diagnostic page evidence model. Active-content envelope is not a Word margin. "
-            "Header/footer/page-decoration labels remain candidates. Lines visuals and Mathpix package visuals are audited independently; actual asset insertion remains deferred."
+            "Header/footer/page-decoration labels remain candidates. Lines visuals and Mathpix package visuals are audited independently; actual asset insertion remains deferred. "
+            "Mathpix package-local asset page numbers are mapped to source/Lines page numbers through manifest requested_pages when available."
         ),
         "summary": {
             "pageCount": len(pages),
@@ -217,6 +280,7 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             "packageVisualCount": total_mmd,
             "matchedVisualCount": matched,
             "packageVisualMissingFromLinesCount": missing_from_lines,
+            "unassignedPackageVisualCount": unassigned_package,
             "repeatedEdgeSignatureCount": len(repeated_edge),
         },
         "crossPageTemplateCandidate": template,
