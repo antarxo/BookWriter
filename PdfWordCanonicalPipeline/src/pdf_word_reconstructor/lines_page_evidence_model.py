@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlparse
 from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 from pdf_word_reconstructor.lines_page_frame_visual import build_page_frame_visual
 
-VERSION = "lines-page-evidence-model-0.3"
+VERSION = "lines-page-evidence-model-0.4"
 
 
 def _bbox_iou(a: list[float] | None, b: list[float] | None) -> float:
@@ -57,37 +57,59 @@ def _image_page_from_target(target: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def _target(record: dict[str, Any]) -> str:
+def _extract_target_from_string(raw: str) -> str:
+    raw = str(raw or "").strip()
+    if not raw:
+        return ""
+    md = re.search(r"!\[[^\]]*\]\(([^)]+)\)", raw)
+    if md:
+        candidate = md.group(1).strip()
+        candidate = re.sub(r"\s+[\"'].*[\"']\s*$", "", candidate).strip()
+        if candidate:
+            return candidate
+    html = re.search(r"<img\b[^>]*\bsrc=[\"']([^\"']+)[\"']", raw, flags=re.IGNORECASE)
+    if html:
+        return html.group(1).strip()
+    file_match = re.search(r"([^\s\"'()<>]+-\d+_\d+_\d+_\d+_\d+\.(?:png|jpe?g|webp|gif|svg))", raw, flags=re.IGNORECASE)
+    return file_match.group(1).strip() if file_match else ""
+
+
+def _string_values(value: Any) -> list[str]:
+    out: list[str] = []
+    stack = [value]
+    while stack:
+        cur = stack.pop()
+        if isinstance(cur, str):
+            out.append(cur)
+        elif isinstance(cur, dict):
+            stack.extend(cur.values())
+        elif isinstance(cur, (list, tuple)):
+            stack.extend(cur)
+    return out
+
+
+def _target(record: dict[str, Any]) -> tuple[str, str]:
     auth = record.get("authoritativeContent") if isinstance(record.get("authoritativeContent"), dict) else {}
     targets = auth.get("imageTargets") or []
-    direct = str(record.get("target") or (targets[0] if targets else auth.get("target") or "")).strip()
-    if direct:
-        return direct
+    direct_candidates = [
+        ("record.target", record.get("target")),
+        ("auth.imageTargets[0]", targets[0] if targets else None),
+        ("auth.target", auth.get("target")),
+    ]
+    for source, value in direct_candidates:
+        text = str(value or "").strip()
+        if text:
+            return text, source
 
-    # Mathpix MMD image records may preserve the asset reference only in raw
-    # markdown, e.g. ![](./images/<uuid>-4_304_487_564_272.jpg).  Preserve that
-    # path as package evidence instead of treating the visual as page-unassigned.
-    for value in (
-        record.get("rawMarkdown"),
-        auth.get("rawMarkdown"),
-        record.get("text"),
-        auth.get("text"),
-        auth.get("plainText"),
-    ):
-        raw = str(value or "").strip()
-        if not raw:
-            continue
-        md = re.search(r"!\[[^\]]*\]\(([^)]+)\)", raw)
-        if md:
-            candidate = md.group(1).strip()
-            # Remove an optional Markdown title following a whitespace separator.
-            candidate = re.sub(r"\s+[\"'].*[\"']\s*$", "", candidate).strip()
-            if candidate:
-                return candidate
-        html = re.search(r"<img\b[^>]*\bsrc=[\"']([^\"']+)[\"']", raw, flags=re.IGNORECASE)
-        if html:
-            return html.group(1).strip()
-    return ""
+    # Use the full mapped image/figure record as evidence. The canonical mapper
+    # may place the original Mathpix image expression in fields such as text,
+    # captionText, alt, latex or nested authoritativeContent values. Search only
+    # string leaves of this one visual record and extract an image-like target.
+    for raw in _string_values(record):
+        target = _extract_target_from_string(raw)
+        if target:
+            return target, "record-string-evidence"
+    return "", "unresolved"
 
 
 def _mmd_visuals(mmd_path: Path) -> list[dict[str, Any]]:
@@ -97,7 +119,7 @@ def _mmd_visuals(mmd_path: Path) -> list[dict[str, Any]]:
     for rec in mapped.get("records", []) or []:
         if str(rec.get("type") or "") not in {"image", "figure"}:
             continue
-        target = _target(rec)
+        target, target_source = _target(rec)
         geom = _image_geometry_from_target(target)
         local_page = _image_page_from_target(target)
         bbox = None
@@ -109,8 +131,10 @@ def _mmd_visuals(mmd_path: Path) -> list[dict[str, Any]]:
             "localPage": local_page,
             "page": local_page,
             "target": target,
+            "targetSource": target_source,
             "bboxPx": bbox,
             "geometryAvailable": bbox is not None,
+            "recordKeys": sorted(str(k) for k in rec.keys()),
         })
     return out
 
@@ -142,20 +166,15 @@ def _map_package_pages(mmd_visuals: list[dict[str, Any]], manifest: dict[str, An
     requested = _requested_page_sequence(manifest, lines_pages)
     unique_local = sorted({int(v["localPage"]) for v in mmd_visuals if isinstance(v.get("localPage"), int)})
     mapping: dict[int, int] = {}
-
-    # Most Mathpix asset filenames use local package pages 1..N. Map those
-    # positions onto manifest requested_pages / Lines source page numbers.
     if unique_local and requested:
         if min(unique_local) >= 1 and max(unique_local) <= len(requested):
             mapping = {lp: requested[lp - 1] for lp in unique_local}
         elif unique_local == requested:
             mapping = {lp: lp for lp in unique_local}
-
     for v in mmd_visuals:
         lp = v.get("localPage")
         if isinstance(lp, int) and lp in mapping:
             v["page"] = mapping[lp]
-
     return {
         "requestedPages": requested,
         "localPackagePages": unique_local,
@@ -174,9 +193,7 @@ def _cross_page_template(pages: list[dict[str, Any]]) -> dict[str, Any]:
     rights = [b[2] for b in envelopes]
     bottoms = [b[3] for b in envelopes]
     candidate = [median(lefts), median(tops), median(rights), median(bottoms)]
-    deviations = []
-    for b in envelopes:
-        deviations.append(sum(abs(b[i] - candidate[i]) for i in range(4)) / 4.0)
+    deviations = [sum(abs(b[i] - candidate[i]) for i in range(4)) / 4.0 for b in envelopes]
     typical_dev = median(deviations) if deviations else 0.0
     page_w = median([p["physicalPage"]["widthPx"] for p in pages])
     page_h = median([p["physicalPage"]["heightPx"] for p in pages])
@@ -222,21 +239,16 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
 
     lines_page_numbers = [int(p.get("page")) for p in pages if isinstance(p.get("page"), int)]
     page_mapping = _map_package_pages(mmd_visuals, manifest, lines_page_numbers)
-
     mmd_by_page: dict[int, list[dict[str, Any]]] = {}
     for v in mmd_visuals:
         if isinstance(v.get("page"), int):
             mmd_by_page.setdefault(int(v["page"]), []).append(v)
 
     total_lines = 0
-    total_mmd = len(mmd_visuals)
     matched = 0
     missing_from_lines = 0
-    unassigned_package = 0
     valid_pages = set(lines_page_numbers)
-    for v in mmd_visuals:
-        if v.get("page") not in valid_pages:
-            unassigned_package += 1
+    unassigned_package = sum(1 for v in mmd_visuals if v.get("page") not in valid_pages)
 
     for p in pages:
         lines_visuals = p["linesVisualEntities"]
@@ -262,53 +274,42 @@ def build_page_evidence_model(lines_path: Path, mmd_path: Path | None = None, ma
             else:
                 missing_from_lines += 1
             audit.append({
-                "packageVisualId": mv.get("id"),
-                "packageTarget": mv.get("target"),
-                "packageLocalPage": mv.get("localPage"),
-                "packageSourcePage": mv.get("page"),
-                "packageBBoxPx": mv.get("bboxPx"),
-                "linesVisualId": lines_id,
-                "iou": round(best_iou, 4),
-                "status": status,
+                "packageVisualId": mv.get("id"), "packageTarget": mv.get("target"),
+                "packageTargetSource": mv.get("targetSource"), "packageLocalPage": mv.get("localPage"),
+                "packageSourcePage": mv.get("page"), "packageBBoxPx": mv.get("bboxPx"),
+                "linesVisualId": lines_id, "iou": round(best_iou, 4), "status": status,
             })
         for i, lv in enumerate(lines_visuals):
             if i not in used_lines:
-                audit.append({
-                    "packageVisualId": None,
-                    "packageTarget": None,
-                    "packageBBoxPx": None,
-                    "linesVisualId": lv.get("id"),
-                    "iou": 0.0,
-                    "status": "lines-visual-without-mmd-match",
-                })
+                audit.append({"packageVisualId": None, "packageTarget": None, "packageBBoxPx": None,
+                              "linesVisualId": lv.get("id"), "iou": 0.0, "status": "lines-visual-without-mmd-match"})
         p["packageVisualEntities"] = package_visuals
         p["visualCompletenessAudit"] = audit
 
     template = _cross_page_template(pages)
     repeated_edge = frame.get("repeatedEdgeEvidence") or []
+    unresolved_samples = [
+        {"id": v.get("id"), "recordKeys": v.get("recordKeys"), "targetSource": v.get("targetSource")}
+        for v in mmd_visuals if not v.get("target")
+    ][:5]
     return {
         "version": VERSION,
         "sources": {
-            "lines": str(lines_path),
-            "mmd": str(mmd_path) if mmd_path else None,
+            "lines": str(lines_path), "mmd": str(mmd_path) if mmd_path else None,
             "manifest": str(manifest_path) if manifest_path else None,
             "manifestFileId": manifest.get("file_id") if isinstance(manifest, dict) else None,
             "manifestRequestedPages": manifest.get("requested_pages") if isinstance(manifest, dict) else None,
         },
         "pageNumberMapping": page_mapping,
+        "unresolvedPackageVisualSamples": unresolved_samples,
         "policy": (
-            "Diagnostic page evidence model. Active-content envelope is not a Word margin. "
-            "Header/footer/page-decoration labels remain candidates. Lines visuals and Mathpix package visuals are audited independently; actual asset insertion remains deferred. "
-            "Mathpix package-local asset page numbers are mapped to source/Lines page numbers through manifest requested_pages when available."
+            "Diagnostic page evidence model. Active-content envelope is not a Word margin. Header/footer/page-decoration labels remain candidates. "
+            "Lines visuals and Mathpix package visuals are audited independently; actual asset insertion remains deferred."
         ),
         "summary": {
-            "pageCount": len(pages),
-            "linesVisualCount": total_lines,
-            "packageVisualCount": total_mmd,
-            "matchedVisualCount": matched,
-            "packageVisualMissingFromLinesCount": missing_from_lines,
-            "unassignedPackageVisualCount": unassigned_package,
-            "visualAuditValid": unassigned_package == 0,
+            "pageCount": len(pages), "linesVisualCount": total_lines, "packageVisualCount": len(mmd_visuals),
+            "matchedVisualCount": matched, "packageVisualMissingFromLinesCount": missing_from_lines,
+            "unassignedPackageVisualCount": unassigned_package, "visualAuditValid": unassigned_package == 0,
             "repeatedEdgeSignatureCount": len(repeated_edge),
         },
         "crossPageTemplateCandidate": template,
