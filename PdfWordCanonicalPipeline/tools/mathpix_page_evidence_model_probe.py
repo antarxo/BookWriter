@@ -38,7 +38,7 @@ def main() -> int:
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     s = report["summary"]
-    print("MODE: MATHPIX_PAGE_EVIDENCE_MODEL_V01")
+    print(f"MODE: MATHPIX_PAGE_EVIDENCE_MODEL_{str(report.get('version') or 'UNKNOWN').upper().replace('-', '_')}")
     print("PDF INPUT             : OFF")
     print("WORD RENDERING        : OFF")
     print("LINES                  : ON")
@@ -53,6 +53,12 @@ def main() -> int:
     print(f"PACKAGE VISUALS        : {s['packageVisualCount']}")
     print(f"VISUAL MATCHES         : {s['matchedVisualCount']}")
     print(f"PACKAGE NOT IN LINES   : {s['packageVisualMissingFromLinesCount']}")
+    print(f"UNASSIGNED PACKAGE     : {s.get('unassignedPackageVisualCount')}")
+    mapping = report.get("pageNumberMapping") or {}
+    print(f"REQUESTED PAGES        : {mapping.get('requestedPages')}")
+    print(f"LOCAL PACKAGE PAGES    : {mapping.get('localPackagePages')}")
+    print(f"LOCAL->SOURCE MAP      : {mapping.get('localToSourcePage')}")
+    print(f"PAGE MAP RESOLVED      : {mapping.get('resolved')}")
     print(f"REPEATED EDGE SIGS     : {s['repeatedEdgeSignatureCount']}")
     template = report.get("crossPageTemplateCandidate") or {}
     print(f"TEMPLATE BBOX          : {template.get('candidateBBoxPx')}")
@@ -65,6 +71,17 @@ def main() -> int:
             f"PAGE {page.get('page')}: linesVisuals={len(page.get('linesVisualEntities') or [])} "
             f"packageVisuals={len(page.get('packageVisualEntities') or [])} matched={matched} packageMissing={missing}"
         )
+    if s.get("packageVisualCount") and not mapping.get("localPackagePages"):
+        targets = []
+        for page in report.get("pages") or []:
+            for v in page.get("packageVisualEntities") or []:
+                if v.get("target"):
+                    targets.append(str(v.get("target")))
+        # If page association failed, packageVisualEntities may be empty on every source page.
+        # The JSON report still preserves mapping diagnostics; the explicit note prevents a
+        # zero-per-page result from being mistaken for absence of package visuals.
+        print("PACKAGE PAGE TOKENS    : NONE EXTRACTED")
+        print("NOTE                   : Inspect package targets/page-token parser before interpreting visual completeness.")
     print(f"OUTPUT                 : {report_path}")
     return 0
 
