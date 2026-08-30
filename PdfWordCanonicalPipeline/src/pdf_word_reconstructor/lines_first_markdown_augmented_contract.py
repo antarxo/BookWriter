@@ -12,12 +12,11 @@ from pdf_word_canonical_pipeline.markdown_element_map import extract_markdown_el
 from .build_contract import build_build_contract
 from .lines_only_region_contract import build_lines_only_region_contract
 
-VERSION = "lines-first-markdown-augmented-contract-0.1"
+VERSION = "lines-first-markdown-augmented-contract-0.2"
 
 
 def _clean_text(value: str) -> str:
     text = str(value or "")
-    # Structural LaTeX commands: keep their body, not the command syntax.
     text = re.sub(r"\\(?:section\*?|subsection\*?|subsubsection\*?|title|author|caption)\s*\{([^{}]*)\}", r"\1", text)
     text = text.replace("\\\\", " ")
     text = re.sub(r"\s+", " ", text).strip()
@@ -113,22 +112,32 @@ def _row_text(row: dict[str, Any]) -> str:
 
 
 def _match_rows(rows: list[dict[str, Any]], md: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Monotonic Lines-first matching.
+    """Strict one-to-one monotonic Lines-first matching.
 
-    Lines rows remain the authoritative skeleton. Markdown candidates are searched
-    in a forward window, using page hint when it is available, but no row is created
-    from Markdown and no geometry is changed by this matcher.
+    Each Markdown element may be consumed at most once. A later Lines row may only
+    match a later Markdown record. Page hints may boost a candidate but never allow
+    backward or repeated binding. Lines remain the authoritative geometry skeleton.
     """
     matches: list[dict[str, Any]] = []
     cursor = 0
+    used: set[int] = set()
     for index, row in enumerate(rows):
         line_text = _row_text(row)
         page = int((row.get("layout") or {}).get("page") or 0)
-        start = max(0, cursor - 2)
-        stop = min(len(md), max(cursor + 14, start + 18))
-        candidates = list(range(start, stop))
-        # Also admit same-page records farther away; page hints are evidence, not authority.
-        candidates.extend(i for i, item in enumerate(md) if item.get("page") == page and i not in candidates)
+        stop = min(len(md), cursor + 24)
+        candidates = [i for i in range(cursor, stop) if i not in used]
+        if not candidates:
+            matches.append({
+                "rowIndex": index,
+                "page": page,
+                "linesText": line_text,
+                "markdownIndex": None,
+                "markdownId": None,
+                "score": 0.0,
+                "accepted": False,
+            })
+            continue
+
         best_i = None
         best_score = 0.0
         for i in candidates:
@@ -136,11 +145,12 @@ def _match_rows(rows: list[dict[str, Any]], md: list[dict[str, Any]]) -> list[di
             score = _score(line_text, item["text"])
             if item.get("page") == page:
                 score += 3.0
-            if i < cursor - 2:
-                score -= 8.0
+            distance = i - cursor
+            score -= min(8.0, distance * 0.25)
             if score > best_score:
                 best_i, best_score = i, score
-        accepted = best_i is not None and best_score >= 58.0
+
+        accepted = best_i is not None and best_score >= 62.0
         matches.append({
             "rowIndex": index,
             "page": page,
@@ -151,7 +161,8 @@ def _match_rows(rows: list[dict[str, Any]], md: list[dict[str, Any]]) -> list[di
             "accepted": accepted,
         })
         if accepted and best_i is not None:
-            cursor = max(cursor, best_i + 1)
+            used.add(best_i)
+            cursor = best_i + 1
     return matches
 
 
@@ -160,13 +171,6 @@ def build_lines_first_markdown_augmented_contract(
     mmd_path: Path,
     page_width_pt: float = 595.276,
 ) -> dict[str, Any]:
-    """Lines-first reconstruction with Markdown semantic/content augmentation.
-
-    Authority split:
-      * Lines: page geometry, bbox, columns, font-size evidence and the L2 grouped-unit skeleton.
-      * MMD: text cleanup, paragraph/heading/equation/caption/list semantics and reading-order evidence.
-    The L2.1 normal-flow safety control is retained. No PDF or DOCX evidence is read.
-    """
     result = deepcopy(build_lines_only_region_contract(Path(lines_path), page_width_pt=page_width_pt))
     md = _markdown_records(Path(mmd_path))
     rows = _lines_rows(result)
@@ -183,11 +187,13 @@ def build_lines_first_markdown_augmented_contract(
     accepted = 0
     semantic_changes = 0
     text_changes = 0
+    used_markdown_ids: list[str] = []
     for row, match in zip(rows, matches):
         if not match["accepted"]:
             continue
         item = md[int(match["markdownIndex"])]
         accepted += 1
+        used_markdown_ids.append(str(item.get("id") or ""))
         old_text = _row_text(row)
         new_text = item["text"]
         old_sem = str(row.get("markdownType") or "paragraph")
@@ -229,7 +235,7 @@ def build_lines_first_markdown_augmented_contract(
     spine["version"] = VERSION
     spine["policy"] = (
         "LINES_FIRST_MMD keeps L2/L2.1 Lines geometry and grouped-unit skeleton. "
-        "Mathpix MMD may augment matched units with authoritative text/semantic structure; "
+        "Mathpix MMD may augment only a strict one-to-one monotonic match; "
         "it may not create geometry or floating placement."
     )
     spine["linesFirstMarkdown"] = {
@@ -238,7 +244,8 @@ def build_lines_first_markdown_augmented_contract(
         "markdownContentSemantics": True,
         "markdownMayCreateGeometry": False,
         "positionedFramesDisabled": True,
-        "matchThreshold": 58.0,
+        "matchThreshold": 62.0,
+        "matchingPolicy": "strict-one-to-one-monotonic-forward-only",
         "matches": matches,
     }
 
@@ -261,6 +268,8 @@ def build_lines_first_markdown_augmented_contract(
         "markdownSemanticChangeCount": semantic_changes,
         "markdownTextChangeCount": text_changes,
         "markdownMatchCoverage": round(accepted / len(rows), 5) if rows else 1.0,
+        "markdownUniqueMatchedElementCount": len(set(used_markdown_ids)),
+        "markdownDuplicateBindingCount": accepted - len(set(used_markdown_ids)),
         "buildReadyCount": int((build_contract.get("summary") or {}).get("readyCount") or 0),
         "buildUnresolvedCount": int((build_contract.get("summary") or {}).get("unresolvedCount") or 0),
     })
