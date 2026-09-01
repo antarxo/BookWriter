@@ -11,6 +11,7 @@ PIPELINE_SRC = REPO_ROOT / "src"
 if str(PIPELINE_SRC) not in sys.path:
     sys.path.insert(0, str(PIPELINE_SRC))
 
+from pdf_word_reconstructor.canonical_frame_profile import build_canonical_frame_profile  # noqa: E402
 from pdf_word_reconstructor.canonical_page_evidence import build_canonical_page_evidence  # noqa: E402
 from pdf_word_reconstructor.canonical_page_recovery import recover_blocked_pages  # noqa: E402
 from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout_map  # noqa: E402
@@ -47,7 +48,8 @@ def main() -> int:
     lines_path = _resolve_lines(args.package_root, args.lines)
     line_map = build_mathpix_line_layout_map(lines_path, None)
     report = build_canonical_page_evidence(line_map)
-    report = recover_blocked_pages(report, line_map)
+    outer_frame_profile = build_canonical_frame_profile(report)
+    report = recover_blocked_pages(report, line_map, outer_frame_profile)
     selected = next(
         (row for row in report.get("pages", []) if int(row.get("page") or 0) == args.page),
         None,
@@ -66,6 +68,7 @@ def main() -> int:
         "documentFurnitureProfile": report.get("documentFurnitureProfile"),
         "documentReservedZoneProfiles": report.get("documentReservedZoneProfiles"),
         "documentFrameProfiles": report.get("documentFrameProfiles"),
+        "canonicalOuterFrameProfile": outer_frame_profile,
         "profileRecovery": report.get("profileRecovery"),
         "documentSummary": report.get("summary"),
         "page": selected,
@@ -80,6 +83,7 @@ def main() -> int:
     recovery = selected.get("profileRecoveryEvidence") or {}
     recovery_relation = selected.get("recoveryZoneRelationship") or {}
     frame_fit = recovery_relation.get("zoneFrameFit") or {}
+    outer_family = (outer_frame_profile.get("families") or {}).get(str(selected.get("frameFamily") or "unknown")) or {}
 
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
@@ -87,6 +91,7 @@ def main() -> int:
     print("WORD REALIZATION FORBIDDEN")
     print("PDF WITNESS OFF")
     print(f"VERSION {report.get('version')}")
+    print(f"OUTER FRAME VERSION {outer_frame_profile.get('version')}")
     print(f"RECOVERY VERSION {(report.get('profileRecovery') or {}).get('version')}")
     print(f"PAGE {args.page}")
     print(f"FRAME FAMILY {selected.get('frameFamily')}")
@@ -97,14 +102,15 @@ def main() -> int:
     print(f"FOOTER RESERVED {reserved.get('footerReservedZoneStatus')} ({reserved.get('effectiveFooterBoundarySource')})")
     print(f"BODY {body.get('status')} ({body.get('reason') or body.get('confidence')})")
     print(f"FRAME {margin.get('status')} source={margin.get('source')} confidence={margin.get('confidence')}")
+    print(
+        "OUTER FRAME PROFILE "
+        f"status={outer_family.get('status')} source={outer_family.get('source')} "
+        f"confidence={outer_family.get('confidence')} pages={outer_family.get('sourcePageCount')}"
+    )
+    print(f"OUTER FRAME RATIOS {outer_family.get('frameRatios')}")
     print(f"PROFILE RECOVERY {recovery.get('status')} confidence={recovery.get('confidence')}")
     print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
-    print(
-        "RECOVERY BOTTOM "
-        f"source={recovery.get('bottomConstraintSource')} "
-        f"median={recovery.get('medianBottomMarginRatio')} "
-        f"effective={recovery.get('effectiveBottomMarginRatio')}"
-    )
+    print(f"RECOVERY FRAME SOURCE {recovery.get('source')}")
     print(f"ZONES {len(selected.get('zones') or [])}")
     print(f"ZONE RELATIONSHIP {relation.get('classification')} ({relation.get('confidence')})")
     print(
@@ -113,8 +119,9 @@ def main() -> int:
     )
     print(
         "RECOVERY ZONE FRAME FIT "
-        f"inside={frame_fit.get('allInsideVerticalFrame')} "
-        f"above={frame_fit.get('aboveCount')} below={frame_fit.get('belowCount')}"
+        f"inside={frame_fit.get('allInsideFrame')} "
+        f"left={frame_fit.get('leftCount')} above={frame_fit.get('aboveCount')} "
+        f"right={frame_fit.get('rightCount')} below={frame_fit.get('belowCount')}"
     )
     print(f"RECOVERY RENDERER MEANING {recovery_relation.get('rendererMeaning')}")
     print(f"RECOVERY CROSS-ZONE ORDER {recovery_relation.get('crossZoneReadingOrder')}")
