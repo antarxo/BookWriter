@@ -6,7 +6,48 @@ from typing import Any
 from .canonical_evidence_fusion import _intersection_fraction, _pdf_visual_containers
 
 
-VERSION = "canonical-pdf-visual-witness-0.2"
+VERSION = "canonical-pdf-visual-witness-0.3"
+
+
+def _resolve_pdf_input(path: Path) -> dict[str, Any]:
+    path = Path(path).resolve()
+    if path.is_file():
+        if path.suffix.casefold() != ".pdf":
+            return {
+                "status": "unresolved",
+                "reason": "explicit-path-is-not-pdf",
+                "inputPath": str(path),
+            }
+        return {
+            "status": "resolved",
+            "source": "explicit-file",
+            "pdfPath": str(path),
+        }
+    if path.is_dir():
+        candidates = sorted(
+            candidate.resolve()
+            for candidate in path.iterdir()
+            if candidate.is_file() and candidate.suffix.casefold() == ".pdf"
+        )
+        if len(candidates) == 1:
+            return {
+                "status": "resolved",
+                "source": "unique-pdf-in-directory",
+                "inputPath": str(path),
+                "pdfPath": str(candidates[0]),
+            }
+        return {
+            "status": "unresolved",
+            "reason": "no-pdf-in-directory" if not candidates else "multiple-pdfs-in-directory",
+            "inputPath": str(path),
+            "candidateCount": len(candidates),
+            "candidates": [str(candidate) for candidate in candidates],
+        }
+    return {
+        "status": "unresolved",
+        "reason": "pdf-input-path-not-found",
+        "inputPath": str(path),
+    }
 
 
 def _pdf_page_count(pdf_path: Path) -> int | None:
@@ -14,7 +55,10 @@ def _pdf_page_count(pdf_path: Path) -> int | None:
         import fitz  # type: ignore
     except Exception:
         return None
-    doc = fitz.open(str(pdf_path))
+    try:
+        doc = fitz.open(str(pdf_path))
+    except Exception:
+        return None
     count = len(doc)
     doc.close()
     return count
@@ -68,23 +112,30 @@ def apply_pdf_visual_witness(
     physical_page: int,
 ) -> dict[str, Any]:
     """Attach the existing PDF drawing evidence through explicit page mapping."""
+    resolved_input = _resolve_pdf_input(Path(pdf_path))
+    report["pdfVisualWitness"] = {
+        "version": VERSION,
+        "inputResolution": resolved_input,
+        "status": "blocked" if resolved_input.get("status") != "resolved" else "pending",
+        "wordRealization": None,
+    }
+    if resolved_input.get("status") != "resolved":
+        return report
+
+    actual_pdf = Path(str(resolved_input["pdfPath"]))
     line_pages = [
         int(page.get("page") or 0)
         for page in line_map.get("pages", []) or []
         if int(page.get("page") or 0) > 0
     ]
-    mapping = resolve_pdf_page_mapping(Path(pdf_path), line_pages, physical_page)
-    report["pdfVisualWitness"] = {
-        "version": VERSION,
-        "mapping": mapping,
-        "status": "blocked" if mapping.get("status") != "resolved" else "pending",
-        "wordRealization": None,
-    }
+    mapping = resolve_pdf_page_mapping(actual_pdf, line_pages, physical_page)
+    report["pdfVisualWitness"]["mapping"] = mapping
     if mapping.get("status") != "resolved":
+        report["pdfVisualWitness"]["status"] = "blocked"
         return report
 
     page_index = int(mapping["pdfPageIndex"])
-    containers, profile = _pdf_visual_containers(Path(pdf_path), page_index)
+    containers, profile = _pdf_visual_containers(actual_pdf, page_index)
     source_page = next(
         (page for page in line_map.get("pages", []) or [] if int(page.get("page") or 0) == physical_page),
         None,
@@ -169,6 +220,7 @@ def apply_pdf_visual_witness(
     )
     report["pdfVisualWitness"].update({
         "status": "observed",
+        "resolvedPdfPath": str(actual_pdf),
         "profile": profile,
         "scale": {"xPtPerPx": scale_x, "yPtPerPx": scale_y},
         "containerCount": len(attached_containers),
@@ -176,7 +228,8 @@ def apply_pdf_visual_witness(
         "createdGroupIds": created_groups,
         "policy": (
             "existing PDF drawing extraction is reused as visual enclosure evidence; "
-            "page mapping is explicit and semantic/topology/Word decisions are unchanged"
+            "directory input resolves only when exactly one PDF is present; page mapping is explicit and "
+            "semantic/topology/Word decisions are unchanged"
         ),
     })
     return report
