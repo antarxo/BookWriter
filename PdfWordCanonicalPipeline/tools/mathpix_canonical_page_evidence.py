@@ -84,6 +84,7 @@ def main() -> int:
     recovery_relation = selected.get("recoveryZoneRelationship") or {}
     frame_fit = recovery_relation.get("zoneFrameFit") or {}
     outer_family = (outer_frame_profile.get("families") or {}).get(str(selected.get("frameFamily") or "unknown")) or {}
+    overhang = outer_family.get("structuralZoneOverhang") or {}
 
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
@@ -108,6 +109,14 @@ def main() -> int:
         f"confidence={outer_family.get('confidence')} pages={outer_family.get('sourcePageCount')}"
     )
     print(f"OUTER FRAME RATIOS {outer_family.get('frameRatios')}")
+    print(
+        "STRUCTURAL OVERHANG "
+        f"pages={overhang.get('sourcePageCount')} "
+        f"left(med/p90/max)={overhang.get('leftMedianRatio')}/{overhang.get('leftP90Ratio')}/{overhang.get('leftMaxRatio')} "
+        f"top(med/p90/max)={overhang.get('topMedianRatio')}/{overhang.get('topP90Ratio')}/{overhang.get('topMaxRatio')} "
+        f"right(med/p90/max)={overhang.get('rightMedianRatio')}/{overhang.get('rightP90Ratio')}/{overhang.get('rightMaxRatio')} "
+        f"bottom(med/p90/max)={overhang.get('bottomMedianRatio')}/{overhang.get('bottomP90Ratio')}/{overhang.get('bottomMaxRatio')}"
+    )
     print(f"PROFILE RECOVERY {recovery.get('status')} confidence={recovery.get('confidence')}")
     print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
     print(f"RECOVERY FRAME SOURCE {recovery.get('source')}")
