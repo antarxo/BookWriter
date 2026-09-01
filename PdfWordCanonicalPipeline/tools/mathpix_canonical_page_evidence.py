@@ -12,6 +12,7 @@ if str(PIPELINE_SRC) not in sys.path:
     sys.path.insert(0, str(PIPELINE_SRC))
 
 from pdf_word_reconstructor.canonical_page_evidence import build_canonical_page_evidence  # noqa: E402
+from pdf_word_reconstructor.canonical_page_recovery import recover_blocked_pages  # noqa: E402
 from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout_map  # noqa: E402
 
 
@@ -46,6 +47,7 @@ def main() -> int:
     lines_path = _resolve_lines(args.package_root, args.lines)
     line_map = build_mathpix_line_layout_map(lines_path, None)
     report = build_canonical_page_evidence(line_map)
+    report = recover_blocked_pages(report, line_map)
     selected = next(
         (row for row in report.get("pages", []) if int(row.get("page") or 0) == args.page),
         None,
@@ -64,6 +66,7 @@ def main() -> int:
         "documentFurnitureProfile": report.get("documentFurnitureProfile"),
         "documentReservedZoneProfiles": report.get("documentReservedZoneProfiles"),
         "documentFrameProfiles": report.get("documentFrameProfiles"),
+        "profileRecovery": report.get("profileRecovery"),
         "documentSummary": report.get("summary"),
         "page": selected,
     }
@@ -74,6 +77,7 @@ def main() -> int:
     body = selected.get("bodyEvidence") or {}
     margin = selected.get("marginEvidence") or {}
     relation = selected.get("zoneRelationship") or {}
+    recovery = selected.get("profileRecoveryEvidence") or {}
 
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
@@ -90,6 +94,8 @@ def main() -> int:
     print(f"FOOTER RESERVED {reserved.get('footerReservedZoneStatus')} ({reserved.get('effectiveFooterBoundarySource')})")
     print(f"BODY {body.get('status')} ({body.get('reason') or body.get('confidence')})")
     print(f"FRAME {margin.get('status')} source={margin.get('source')} confidence={margin.get('confidence')}")
+    print(f"PROFILE RECOVERY {recovery.get('status')} confidence={recovery.get('confidence')}")
+    print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
     print(f"ZONES {len(selected.get('zones') or [])}")
     print(f"ZONE RELATIONSHIP {relation.get('classification')} ({relation.get('confidence')})")
     print(f"RENDERER MEANING {relation.get('rendererMeaning')}")
