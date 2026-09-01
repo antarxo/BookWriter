@@ -78,6 +78,7 @@ def main() -> int:
     margin = selected.get("marginEvidence") or {}
     relation = selected.get("zoneRelationship") or {}
     recovery = selected.get("profileRecoveryEvidence") or {}
+    recovery_relation = selected.get("recoveryZoneRelationship") or {}
 
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
@@ -85,6 +86,7 @@ def main() -> int:
     print("WORD REALIZATION FORBIDDEN")
     print("PDF WITNESS OFF")
     print(f"VERSION {report.get('version')}")
+    print(f"RECOVERY VERSION {(report.get('profileRecovery') or {}).get('version')}")
     print(f"PAGE {args.page}")
     print(f"FRAME FAMILY {selected.get('frameFamily')}")
     print(f"LINES {lines_path}")
@@ -98,6 +100,12 @@ def main() -> int:
     print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
     print(f"ZONES {len(selected.get('zones') or [])}")
     print(f"ZONE RELATIONSHIP {relation.get('classification')} ({relation.get('confidence')})")
+    print(
+        "RECOVERY ZONE RELATIONSHIP "
+        f"{recovery_relation.get('classification')} ({recovery_relation.get('confidence')})"
+    )
+    print(f"RECOVERY RENDERER MEANING {recovery_relation.get('rendererMeaning')}")
+    print(f"RECOVERY CROSS-ZONE ORDER {recovery_relation.get('crossZoneReadingOrder')}")
     print(f"RENDERER MEANING {relation.get('rendererMeaning')}")
     print(f"CROSS-ZONE ORDER {(selected.get('crossZoneReadingOrder') or {}).get('status')}")
     print(f"CONFLICTS {len(selected.get('conflicts') or [])}")
