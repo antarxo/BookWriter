@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "canonical-page-recovery-0.3"
+VERSION = "canonical-page-recovery-0.4"
 
 
 def _classify_recovered_zones(
@@ -36,8 +36,10 @@ def _classify_recovered_zones(
             **zone,
             "recoveryHeightRatioToFrame": (y1 - y0) / frame_height,
             "recoveryWidthRatioToPage": (x1 - x0) / max(1.0, page_width),
-            "extendsBelowRecoveryFrame": y1 > float(frame[3]),
+            "extendsLeftOfRecoveryFrame": x0 < float(frame[0]),
             "extendsAboveRecoveryFrame": y0 < float(frame[1]),
+            "extendsRightOfRecoveryFrame": x1 > float(frame[2]),
+            "extendsBelowRecoveryFrame": y1 > float(frame[3]),
         })
 
     long_lived = [
@@ -47,7 +49,6 @@ def _classify_recovered_zones(
         and zone["recoveryWidthRatioToPage"] >= 0.16
     ]
 
-    result: dict[str, Any]
     if len(long_lived) == 2:
         left, right = sorted(long_lived, key=lambda zone: float(zone["bboxPx"][0]))
         left_width = float(left["recoveryWidthRatioToPage"])
@@ -60,7 +61,7 @@ def _classify_recovered_zones(
             classification = "asymmetric-parallel-zones"
         else:
             classification = "ambiguous-parallel-zones"
-        result = {
+        result: dict[str, Any] = {
             "status": "observed-from-recovered-frame",
             "classification": classification,
             "confidence": "medium",
@@ -90,111 +91,97 @@ def _classify_recovered_zones(
             "zoneIds": [zone.get("zoneId") for zone in normalized],
         }
 
+    left_count = sum(1 for zone in normalized if zone.get("extendsLeftOfRecoveryFrame"))
+    above_count = sum(1 for zone in normalized if zone.get("extendsAboveRecoveryFrame"))
+    right_count = sum(1 for zone in normalized if zone.get("extendsRightOfRecoveryFrame"))
+    below_count = sum(1 for zone in normalized if zone.get("extendsBelowRecoveryFrame"))
     result.update({
         "zoneFrameFit": {
-            "aboveCount": sum(1 for zone in normalized if zone.get("extendsAboveRecoveryFrame")),
-            "belowCount": sum(1 for zone in normalized if zone.get("extendsBelowRecoveryFrame")),
-            "allInsideVerticalFrame": all(
-                not zone.get("extendsAboveRecoveryFrame") and not zone.get("extendsBelowRecoveryFrame")
-                for zone in normalized
-            ),
+            "leftCount": left_count,
+            "aboveCount": above_count,
+            "rightCount": right_count,
+            "belowCount": below_count,
+            "allInsideFrame": left_count == 0 and above_count == 0 and right_count == 0 and below_count == 0,
         },
         "rendererMeaning": "unresolved",
         "crossZoneReadingOrder": "unresolved" if len(normalized) > 1 else "not-applicable",
         "wordRealization": None,
         "policy": (
-            "zone relationship is measured against the inherited recovery frame only; "
+            "zone relationship is measured against inherited outer-frame evidence only; "
             "confidence is capped at medium and no Word columns/sidebar/reading order are inferred"
         ),
     })
     return result
 
 
-def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> dict[str, Any]:
+def recover_blocked_pages(
+    report: dict[str, Any],
+    line_map: dict[str, Any],
+    frame_profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Attach renderer-neutral second-pass recovery evidence.
 
-    Recovery is allowed only for pages whose primary body evidence is blocked but
-    whose compatible frame-family margin evidence is already resolved. The
-    inherited frame may constrain secondary zone geometry, but visible furniture
-    semantics, reading order and Word realization remain unresolved.
-
-    The bottom frame is constrained by the fullest trusted pages when that
-    evidence exists. A median margin learned from shorter pages may not enlarge
-    the bottom margin beyond the dense-page constraint.
+    Primary body evidence remains untouched. Recovery prefers a dedicated outer
+    frame profile learned from trusted raw extents. Robust-body margin profiles
+    are not treated as page/text frames because their quantiles intentionally
+    shrink observed content envelopes.
     """
     page_map = {
         int(page.get("page") or 0): page
         for page in line_map.get("pages", []) or []
         if int(page.get("page") or 0) > 0
     }
+    frame_families = (frame_profile or {}).get("families") or {}
     recovered = 0
     zone_recovered = 0
+
     for row in report.get("pages", []) or []:
         body = row.get("bodyEvidence") or {}
-        margin = row.get("marginEvidence") or {}
         recovery: dict[str, Any] = {"status": "not-needed", "wordRealization": None}
         zone_recovery: dict[str, Any] = {"status": "not-needed", "wordRealization": None}
 
         if body.get("status") != "observed":
             recovery = {"status": "blocked", "wordRealization": None}
             zone_recovery = {"status": "blocked", "wordRealization": None}
+            family = str(row.get("frameFamily") or "unknown")
+            family_frame = frame_families.get(family) or {}
             eligible = (
-                margin.get("status") == "resolved-inherited-frame"
-                and margin.get("source") == "frame-family-profile"
-                and margin.get("confidence") == "medium"
+                family_frame.get("status") == "resolved"
+                and family_frame.get("source") == "trusted-raw-outer-extents"
+                and family_frame.get("confidence") == "medium"
                 and not (row.get("conflicts") or [])
             )
             page = page_map.get(int(row.get("page") or 0)) or {}
             try:
                 width = float(page.get("page_width_px") or 0)
                 height = float(page.get("page_height_px") or 0)
-                margins = margin.get("normalizedMargins") or {}
-                left = float(margins["left"])
-                right = float(margins["right"])
-                top = float(margins["top"])
-                median_bottom = float(margins["bottom"])
+                ratios = family_frame.get("frameRatios") or {}
+                left = float(ratios["left"])
+                top = float(ratios["top"])
+                right = float(ratios["right"])
+                bottom = float(ratios["bottom"])
             except (KeyError, TypeError, ValueError):
                 eligible = False
                 width = height = 0.0
-                median_bottom = 0.0
-
-            dense = margin.get("denseBottomConstraint") or {}
-            dense_bottom = dense.get("medianRobustBottomMargin")
-            if dense.get("status") == "observed" and dense_bottom is not None:
-                try:
-                    effective_bottom = min(median_bottom, float(dense_bottom))
-                    bottom_source = "p10-dense-trusted-pages" if effective_bottom < median_bottom else "family-median"
-                except (TypeError, ValueError):
-                    effective_bottom = median_bottom
-                    bottom_source = "family-median"
-            else:
-                effective_bottom = median_bottom
-                bottom_source = "family-median"
 
             if eligible and width > 0 and height > 0:
-                frame = [
-                    left * width,
-                    top * height,
-                    width - right * width,
-                    height - effective_bottom * height,
-                ]
+                frame = [left * width, top * height, right * width, bottom * height]
                 if frame[2] > frame[0] and frame[3] > frame[1]:
                     recovery = {
-                        "status": "recovered-from-compatible-frame",
+                        "status": "recovered-from-outer-frame-profile",
                         "confidence": "medium",
                         "bodyConstraintPx": frame,
-                        "source": "frame-family-profile",
-                        "bottomConstraintSource": bottom_source,
-                        "medianBottomMarginRatio": median_bottom,
-                        "effectiveBottomMarginRatio": effective_bottom,
-                        "denseBottomConstraint": dense if dense else None,
+                        "source": "trusted-raw-outer-extents",
+                        "frameProfileVersion": (frame_profile or {}).get("version"),
+                        "frameProfileSourcePages": family_frame.get("sourcePages"),
+                        "frameRatios": ratios,
                         "headerSemanticStatus": "unresolved",
                         "footerSemanticStatus": "unresolved",
                         "crossZoneReadingOrder": "unresolved",
                         "wordRealization": None,
                         "policy": (
-                            "inherited frame is geometry only; the fullest trusted pages may reduce an inflated "
-                            "family median bottom margin, while furniture semantics remain unresolved"
+                            "outer trusted raw extents constrain recovery geometry; robust-content "
+                            "quantiles remain separate and furniture semantics remain unresolved"
                         ),
                     }
                     zone_recovery = _classify_recovered_zones(row, frame, width)
@@ -207,11 +194,12 @@ def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> d
 
     report["profileRecovery"] = {
         "version": VERSION,
+        "frameProfileVersion": (frame_profile or {}).get("version"),
         "recoveredPageCount": recovered,
         "zoneRecoveredPageCount": zone_recovered,
         "policy": (
-            "second-pass geometry only; dense trusted pages constrain the bottom frame; primary evidence is preserved, "
-            "confidence cannot exceed medium, and no page_structure mutation or Word realization is permitted"
+            "second-pass geometry only; dedicated outer-frame evidence is separate from robust content envelopes; "
+            "primary evidence is preserved and no page_structure mutation or Word realization is permitted"
         ),
     }
     return report
