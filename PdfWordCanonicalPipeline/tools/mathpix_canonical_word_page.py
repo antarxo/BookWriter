@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
+import zipfile
 from collections import defaultdict
 from pathlib import Path
 
@@ -22,36 +24,38 @@ from pdf_word_reconstructor.canonical_word_bridge import build_canonical_word_do
 from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout_map  # noqa: E402
 
 
-def _resolve(root: Path, name: str) -> Path:
-    root = root.resolve()
-    direct = root / name
-    if direct.is_file():
-        return direct
-    candidates = sorted(root.rglob(name))
+def _extract_package(zip_path: Path, target: Path) -> Path:
+    zip_path = zip_path.resolve()
+    if not zip_path.is_file():
+        raise FileNotFoundError(zip_path)
+    if zip_path.suffix.casefold() != ".zip":
+        raise RuntimeError(f"Canonical Word input must be a ZIP package: {zip_path}")
+    if target.exists():
+        shutil.rmtree(target)
+    target.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path) as archive:
+        archive.extractall(target)
+    return target
+
+
+def _resolve_unique(root: Path, pattern: str, label: str) -> Path:
+    candidates = sorted(path.resolve() for path in root.rglob(pattern) if path.is_file())
     if len(candidates) == 1:
         return candidates[0]
     if not candidates:
-        raise FileNotFoundError(f"{name} not found below {root}")
-    raise RuntimeError(f"Ambiguous {name}: {candidates}")
+        raise FileNotFoundError(f"{label} not found inside ZIP: pattern={pattern}")
+    raise RuntimeError(f"Ambiguous {label} inside ZIP ({len(candidates)} candidates): {candidates}")
 
 
-def _discover_pdf(root: Path, explicit: Path | None) -> Path | None:
-    if explicit is not None:
-        path = explicit.resolve()
-        if not path.is_file():
-            raise FileNotFoundError(path)
-        return path
-    current = root.resolve()
-    for _ in range(5):
-        candidates = sorted(p for p in current.glob("*.pdf") if p.is_file())
-        if len(candidates) == 1:
-            return candidates[0].resolve()
-        if len(candidates) > 1:
-            return None
-        if current.parent == current:
-            break
-        current = current.parent
-    return None
+def _resolve_package_sources(package_root: Path) -> tuple[Path, Path, Path]:
+    mmd = _resolve_unique(package_root, "result.mmd", "Mathpix Markdown")
+    lines = _resolve_unique(package_root, "result.lines.json", "Mathpix Lines")
+    pdfs = sorted(path.resolve() for path in package_root.rglob("*.pdf") if path.is_file())
+    if len(pdfs) != 1:
+        if not pdfs:
+            raise FileNotFoundError("Source PDF not found inside ZIP")
+        raise RuntimeError(f"Ambiguous source PDF inside ZIP ({len(pdfs)} candidates): {pdfs}")
+    return mmd, lines, pdfs[0]
 
 
 def _markdown_index_map(mmd: Path, work_dir: Path) -> dict[str, int]:
@@ -65,31 +69,27 @@ def _markdown_index_map(mmd: Path, work_dir: Path) -> dict[str, int]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build one Word page directly from completed canonical evidence.")
-    parser.add_argument("--package-root", required=True, type=Path)
-    parser.add_argument("--pdf", type=Path, default=None)
+    parser = argparse.ArgumentParser(
+        description="Build one Word page from one complete Mathpix ZIP package through the canonical pipeline."
+    )
+    parser.add_argument("--zip", required=True, type=Path, dest="zip_path")
     parser.add_argument("--page", type=int, default=19)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-
-    package_root = args.package_root.resolve()
-    mmd = _resolve(package_root, "result.mmd")
-    lines = _resolve(package_root, "result.lines.json")
-    pdf = _discover_pdf(package_root, args.pdf)
-    if pdf is None:
-        raise RuntimeError("Canonical Word proof requires one explicit/unambiguous source PDF. Pass --pdf <source.pdf>.")
 
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     work = output / "work"
     work.mkdir(parents=True, exist_ok=True)
+    package_root = _extract_package(args.zip_path, work / "package")
+    mmd, lines, pdf = _resolve_package_sources(package_root)
 
     canonical = build_canonical_evidence_document(
         mmd_path=mmd,
         lines_path=lines,
         pdf_path=None,
         target_page=args.page,
-        work_dir=work,
+        work_dir=work / "canonical",
     )
     line_map = build_mathpix_line_layout_map(lines, None)
     canonical = apply_pdf_visual_witness(canonical, line_map, pdf, args.page)
@@ -104,7 +104,7 @@ def main() -> int:
     if page_evidence is None:
         raise RuntimeError(f"Canonical page evidence missing for page {args.page}")
 
-    markdown_index = _markdown_index_map(mmd, work)
+    markdown_index = _markdown_index_map(mmd, work / "canonical")
     canonical["pageEvidence"] = page_evidence
     canonical["canonicalOuterFrameProfile"] = frame_profile
     canonical["pageTopology"] = build_page_topology(
@@ -129,12 +129,14 @@ def main() -> int:
 
     validation = result.get("validation") or {}
     build = result.get("buildReport") or {}
-    print("MODE CANONICAL_TO_WORD")
+    print("MODE CANONICAL_ZIP_TO_WORD")
+    print("INPUT ZIP", args.zip_path.resolve())
     print("OLD WORD BUILDERS MODIFIED: NO")
     print("REMATCHING: FORBIDDEN")
     print("LAYOUT REINFERENCE: FORBIDDEN")
     print("LEGACY FALLBACK: FORBIDDEN")
     print("PAGE", args.page)
+    print("PACKAGE ROOT", package_root)
     print("MMD", mmd)
     print("LINES", lines)
     print("PDF", pdf)
