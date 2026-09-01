@@ -83,6 +83,7 @@ def main() -> int:
     recovery = selected.get("profileRecoveryEvidence") or {}
     recovery_relation = selected.get("recoveryZoneRelationship") or {}
     frame_fit = recovery_relation.get("zoneFrameFit") or {}
+    descendant_fit = recovery_relation.get("descendantContentFrameFit") or {}
     outer_family = (outer_frame_profile.get("families") or {}).get(str(selected.get("frameFamily") or "unknown")) or {}
     overhang = outer_family.get("structuralZoneOverhang") or {}
 
@@ -132,6 +133,23 @@ def main() -> int:
         f"left={frame_fit.get('leftCount')} above={frame_fit.get('aboveCount')} "
         f"right={frame_fit.get('rightCount')} below={frame_fit.get('belowCount')}"
     )
+    print(
+        "DESCENDANT CONTENT FRAME FIT "
+        f"inside={descendant_fit.get('allObservedDescendantsInsideFrame')} "
+        f"zones={descendant_fit.get('observedZoneCount')} "
+        f"left={descendant_fit.get('leftCount')} above={descendant_fit.get('aboveCount')} "
+        f"right={descendant_fit.get('rightCount')} below={descendant_fit.get('belowCount')}"
+    )
+    for diagnostic in descendant_fit.get("zoneDiagnostics") or []:
+        content = diagnostic.get("descendantContentExtent") or {}
+        fit = diagnostic.get("descendantContentFrameFit") or {}
+        print(
+            "DESCENDANT ZONE "
+            f"{diagnostic.get('zoneId')} zone={diagnostic.get('zoneBoxPx')} "
+            f"content={content.get('bboxPx')} count={content.get('contentObjectCount')} "
+            f"left={fit.get('extendsLeftOfRecoveryFrame')} above={fit.get('extendsAboveRecoveryFrame')} "
+            f"right={fit.get('extendsRightOfRecoveryFrame')} below={fit.get('extendsBelowRecoveryFrame')}"
+        )
     print(f"RECOVERY RENDERER MEANING {recovery_relation.get('rendererMeaning')}")
     print(f"RECOVERY CROSS-ZONE ORDER {recovery_relation.get('crossZoneReadingOrder')}")
     print(f"RENDERER MEANING {relation.get('rendererMeaning')}")
