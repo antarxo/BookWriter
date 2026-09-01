@@ -6,7 +6,7 @@ from typing import Any
 from .canonical_evidence_fusion import _intersection_fraction, _pdf_visual_containers
 
 
-VERSION = "canonical-pdf-visual-witness-0.1"
+VERSION = "canonical-pdf-visual-witness-0.2"
 
 
 def _pdf_page_count(pdf_path: Path) -> int | None:
@@ -25,12 +25,6 @@ def resolve_pdf_page_mapping(
     line_pages: list[int],
     physical_page: int,
 ) -> dict[str, Any]:
-    """Resolve PDF page index without silently assuming full-document numbering.
-
-    A PDF whose page count equals the Lines page count is treated as a subset in
-    the same page order. A larger PDF that can contain the requested physical
-    page is treated as a full document. Any other situation is unresolved.
-    """
     pages = sorted({int(value) for value in line_pages if int(value) > 0})
     count = _pdf_page_count(Path(pdf_path))
     if count is None:
@@ -42,33 +36,22 @@ def resolve_pdf_page_mapping(
             "pdfPageCount": count,
             "linePages": pages,
         }
-
     if count == len(pages):
         index = pages.index(physical_page)
         return {
-            "status": "resolved",
-            "mode": "subset-ordinal",
-            "pdfPageIndex": index,
-            "pdfPageNumber": index + 1,
-            "physicalPage": physical_page,
-            "pdfPageCount": count,
-            "linePages": pages,
-            "confidence": "high",
+            "status": "resolved", "mode": "subset-ordinal",
+            "pdfPageIndex": index, "pdfPageNumber": index + 1,
+            "physicalPage": physical_page, "pdfPageCount": count,
+            "linePages": pages, "confidence": "high",
         }
-
     if physical_page <= count:
         index = physical_page - 1
         return {
-            "status": "resolved",
-            "mode": "physical-page-number",
-            "pdfPageIndex": index,
-            "pdfPageNumber": physical_page,
-            "physicalPage": physical_page,
-            "pdfPageCount": count,
-            "linePages": pages,
-            "confidence": "high",
+            "status": "resolved", "mode": "physical-page-number",
+            "pdfPageIndex": index, "pdfPageNumber": physical_page,
+            "physicalPage": physical_page, "pdfPageCount": count,
+            "linePages": pages, "confidence": "high",
         }
-
     return {
         "status": "unresolved",
         "reason": "pdf-page-count-incompatible-with-lines-page-range",
@@ -84,12 +67,7 @@ def apply_pdf_visual_witness(
     pdf_path: Path,
     physical_page: int,
 ) -> dict[str, Any]:
-    """Attach existing PDF drawing evidence with explicit page mapping.
-
-    This is orchestration only. Drawing extraction and block/container overlap use
-    the pre-existing canonical evidence fusion routines. Semantic type, topology,
-    reading order and Word realization are never changed.
-    """
+    """Attach the existing PDF drawing evidence through explicit page mapping."""
     line_pages = [
         int(page.get("page") or 0)
         for page in line_map.get("pages", []) or []
@@ -108,10 +86,7 @@ def apply_pdf_visual_witness(
     page_index = int(mapping["pdfPageIndex"])
     containers, profile = _pdf_visual_containers(Path(pdf_path), page_index)
     source_page = next(
-        (
-            page for page in line_map.get("pages", []) or []
-            if int(page.get("page") or 0) == physical_page
-        ),
+        (page for page in line_map.get("pages", []) or [] if int(page.get("page") or 0) == physical_page),
         None,
     ) or {}
     try:
@@ -124,9 +99,7 @@ def apply_pdf_visual_witness(
 
     if not profile.get("available") or min(width_px, height_px, width_pt, height_pt) <= 0:
         report["pdfVisualWitness"].update({
-            "status": "blocked",
-            "reason": "page-scale-unavailable",
-            "profile": profile,
+            "status": "blocked", "reason": "page-scale-unavailable", "profile": profile,
         })
         return report
 
@@ -150,13 +123,10 @@ def apply_pdf_visual_witness(
             if not isinstance(bbox, list) or len(bbox) != 4:
                 continue
             block_pt = [
-                float(bbox[0]) * scale_x,
-                float(bbox[1]) * scale_y,
-                float(bbox[2]) * scale_x,
-                float(bbox[3]) * scale_y,
+                float(bbox[0]) * scale_x, float(bbox[1]) * scale_y,
+                float(bbox[2]) * scale_x, float(bbox[3]) * scale_y,
             ]
-            coverage = _intersection_fraction(block_pt, row["bboxPt"])
-            if coverage >= 0.78:
+            if _intersection_fraction(block_pt, row["bboxPt"]) >= 0.78:
                 members.append(str(block.get("id") or ""))
         row["memberBlockIds"] = members
         attached_containers.append(row)
@@ -182,17 +152,21 @@ def apply_pdf_visual_witness(
         for block in blocks:
             if str(block.get("id") or "") not in members:
                 continue
-            relations = block.setdefault("relations", {})
-            relation_groups = relations.setdefault("belongsToGroups", [])
+            relation_groups = block.setdefault("relations", {}).setdefault("belongsToGroups", [])
             if group_id not in relation_groups:
                 relation_groups.append(group_id)
-            visual = block.setdefault("visualEvidence", {})
-            container_ids = visual.setdefault("pdfContainerIds", [])
+            container_ids = block.setdefault("visualEvidence", {}).setdefault("pdfContainerIds", [])
             if row.get("id") not in container_ids:
                 container_ids.append(row.get("id"))
 
     report["groups"] = groups
     report["pdfContainers"] = attached_containers
+    summary = report.setdefault("summary", {})
+    summary["groupCount"] = len(groups)
+    summary["wordDecisionCount"] = (
+        sum(block.get("wordRealization") is not None for block in report.get("blocks", []) or [])
+        + sum(group.get("wordRealization") is not None for group in groups)
+    )
     report["pdfVisualWitness"].update({
         "status": "observed",
         "profile": profile,
@@ -201,7 +175,7 @@ def apply_pdf_visual_witness(
         "groupCount": len(created_groups),
         "createdGroupIds": created_groups,
         "policy": (
-            "existing PDF drawing extraction is used only as visual enclosure evidence; "
+            "existing PDF drawing extraction is reused as visual enclosure evidence; "
             "page mapping is explicit and semantic/topology/Word decisions are unchanged"
         ),
     })
