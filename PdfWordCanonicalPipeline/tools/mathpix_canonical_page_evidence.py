@@ -36,7 +36,7 @@ def _resolve_lines(package_root: Path | None, explicit: Path | None) -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Renderer-neutral page evidence from Mathpix Lines.")
+    parser = argparse.ArgumentParser(description="Renderer-neutral canonical page evidence from Mathpix Lines.")
     parser.add_argument("--package-root", type=Path, default=None)
     parser.add_argument("--lines", type=Path, default=None)
     parser.add_argument("--page", type=int, default=19)
@@ -46,7 +46,10 @@ def main() -> int:
     lines_path = _resolve_lines(args.package_root, args.lines)
     line_map = build_mathpix_line_layout_map(lines_path, None)
     report = build_canonical_page_evidence(line_map)
-    selected = next((row for row in report.get("pages", []) if int(row.get("page") or 0) == args.page), None)
+    selected = next(
+        (row for row in report.get("pages", []) if int(row.get("page") or 0) == args.page),
+        None,
+    )
     if selected is None:
         raise RuntimeError(f"Page {args.page} not present in Lines payload")
 
@@ -59,28 +62,39 @@ def main() -> int:
         "policy": report.get("policy"),
         "sourceLines": str(lines_path),
         "documentFurnitureProfile": report.get("documentFurnitureProfile"),
+        "documentReservedZoneProfiles": report.get("documentReservedZoneProfiles"),
+        "documentFrameProfiles": report.get("documentFrameProfiles"),
         "documentSummary": report.get("summary"),
         "page": selected,
     }
     output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    furniture = selected.get("furnitureEvidence") or {}
+    visible = selected.get("visibleFurnitureEvidence") or {}
+    reserved = selected.get("reservedZoneEvidence") or {}
     body = selected.get("bodyEvidence") or {}
+    margin = selected.get("marginEvidence") or {}
     relation = selected.get("zoneRelationship") or {}
+
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
     print("WORD RENDERER OFF")
     print("WORD REALIZATION FORBIDDEN")
     print("PDF WITNESS OFF")
+    print(f"VERSION {report.get('version')}")
     print(f"PAGE {args.page}")
+    print(f"FRAME FAMILY {selected.get('frameFamily')}")
     print(f"LINES {lines_path}")
-    print(f"HEADER {furniture.get('headerStatus')}")
-    print(f"FOOTER {furniture.get('footerStatus')}")
+    print(f"HEADER OBJECT {visible.get('headerStatus')}")
+    print(f"FOOTER OBJECT {visible.get('footerStatus')}")
+    print(f"HEADER RESERVED {reserved.get('headerReservedZoneStatus')} ({reserved.get('effectiveHeaderBoundarySource')})")
+    print(f"FOOTER RESERVED {reserved.get('footerReservedZoneStatus')} ({reserved.get('effectiveFooterBoundarySource')})")
     print(f"BODY {body.get('status')} ({body.get('reason') or body.get('confidence')})")
+    print(f"FRAME {margin.get('status')} source={margin.get('source')} confidence={margin.get('confidence')}")
     print(f"ZONES {len(selected.get('zones') or [])}")
     print(f"ZONE RELATIONSHIP {relation.get('classification')} ({relation.get('confidence')})")
     print(f"RENDERER MEANING {relation.get('rendererMeaning')}")
     print(f"CROSS-ZONE ORDER {(selected.get('crossZoneReadingOrder') or {}).get('status')}")
+    print(f"CONFLICTS {len(selected.get('conflicts') or [])}")
     print(f"WORD DECISIONS {(report.get('summary') or {}).get('wordDecisionCount')}")
     print(f"REPORT {output_path}")
     return 0
