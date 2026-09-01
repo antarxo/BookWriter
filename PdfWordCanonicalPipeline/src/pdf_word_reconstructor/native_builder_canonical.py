@@ -9,14 +9,13 @@ from statistics import median
 from typing import Any
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_LINE_SPACING
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 
 
-VERSION = "native-builder-canonical-0.1"
+VERSION = "native-builder-canonical-0.1.1"
 TWIPS_PER_PT = 20
 PAGE_WIDTH_PT = 595.276
 PAGE_HEIGHT_PT = 841.89
@@ -37,18 +36,37 @@ def _rgb_hex(value: Any) -> str | None:
 def _page_scale(canonical: dict[str, Any]) -> tuple[float, float, float, float]:
     page_evidence = canonical.get("pageEvidence") or {}
     size = page_evidence.get("pageSizePx") or page_evidence.get("pageDimensionsPx") or {}
-    width_px = float(size.get("width") or size.get("widthPx") or 0.0)
-    height_px = float(size.get("height") or size.get("heightPx") or 0.0)
+
+    width_px = 0.0
+    height_px = 0.0
+    if isinstance(size, dict):
+        width_px = float(size.get("width") or size.get("widthPx") or 0.0)
+        height_px = float(size.get("height") or size.get("heightPx") or 0.0)
+    elif isinstance(size, (list, tuple)) and len(size) >= 2:
+        width_px = float(size[0] or 0.0)
+        height_px = float(size[1] or 0.0)
+    elif size:
+        raise RuntimeError(
+            f"Canonical Word build blocked: unsupported pageSizePx schema: {type(size).__name__}"
+        )
+
     if width_px <= 0 or height_px <= 0:
         blocks = canonical.get("blocks") or []
-        xs = [float((b.get("geometry") or {}).get("bboxPx", [0, 0, 0, 0])[2]) for b in blocks if (b.get("geometry") or {}).get("bboxPx")]
-        ys = [float((b.get("geometry") or {}).get("bboxPx", [0, 0, 0, 0])[3]) for b in blocks if (b.get("geometry") or {}).get("bboxPx")]
-        width_px = max(xs, default=2067.0)
-        height_px = max(ys, default=2924.0)
-        # Canonical page 19 Lines source is A4 portrait; use the complete source page
-        # dimensions when available in pageEvidence, otherwise the known Mathpix page canvas.
-        width_px = max(width_px, 2067.0)
-        height_px = max(height_px, 2924.0)
+        xs = [
+            float((b.get("geometry") or {}).get("bboxPx", [0, 0, 0, 0])[2])
+            for b in blocks
+            if isinstance((b.get("geometry") or {}).get("bboxPx"), (list, tuple))
+            and len((b.get("geometry") or {}).get("bboxPx")) == 4
+        ]
+        ys = [
+            float((b.get("geometry") or {}).get("bboxPx", [0, 0, 0, 0])[3])
+            for b in blocks
+            if isinstance((b.get("geometry") or {}).get("bboxPx"), (list, tuple))
+            and len((b.get("geometry") or {}).get("bboxPx")) == 4
+        ]
+        width_px = max(max(xs, default=0.0), 2067.0)
+        height_px = max(max(ys, default=0.0), 2924.0)
+
     return width_px, height_px, PAGE_WIDTH_PT / width_px, PAGE_HEIGHT_PT / height_px
 
 
@@ -56,7 +74,12 @@ def _bbox_pt(box: Any, sx: float, sy: float) -> list[float] | None:
     if not isinstance(box, (list, tuple)) or len(box) != 4:
         return None
     try:
-        values = [float(box[0]) * sx, float(box[1]) * sy, float(box[2]) * sx, float(box[3]) * sy]
+        values = [
+            float(box[0]) * sx,
+            float(box[1]) * sy,
+            float(box[2]) * sx,
+            float(box[3]) * sy,
+        ]
     except (TypeError, ValueError):
         return None
     if values[2] <= values[0] or values[3] <= values[1]:
@@ -75,7 +98,6 @@ def _set_language(run, lang: str = "el-GR") -> None:
 
 
 def _set_unequal_columns(section, columns: list[dict[str, Any]]) -> dict[str, Any]:
-    """Write native unequal Word columns from canonical physical zones."""
     sect_pr = section._sectPr
     existing = sect_pr.find(qn("w:cols"))
     if existing is not None:
@@ -93,6 +115,7 @@ def _set_unequal_columns(section, columns: list[dict[str, Any]]) -> dict[str, An
     cols.set(qn("w:num"), "2")
     cols.set(qn("w:equalWidth"), "0")
     cols.set(qn("w:space"), str(round(gutter * TWIPS_PER_PT)))
+
     c1 = OxmlElement("w:col")
     c1.set(qn("w:w"), str(round(left_w * TWIPS_PER_PT)))
     c1.set(qn("w:space"), str(round(gutter * TWIPS_PER_PT)))
@@ -102,6 +125,7 @@ def _set_unequal_columns(section, columns: list[dict[str, Any]]) -> dict[str, An
     cols.append(c1)
     cols.append(c2)
     sect_pr.append(cols)
+
     return {
         "columnCount": 2,
         "equalWidth": False,
@@ -135,7 +159,11 @@ def _paragraph_frame_style(paragraph, container: dict[str, Any]) -> dict[str, An
             node.set(qn("w:color"), color)
             borders.append(node)
         p_pr.append(borders)
-        audit.update({"borderApplied": True, "borderColor": f"#{color}", "borderWidthPt": width_pt})
+        audit.update({
+            "borderApplied": True,
+            "borderColor": f"#{color}",
+            "borderWidthPt": width_pt,
+        })
 
     fill_color = _rgb_hex(fill.get("color"))
     if fill_color and fill.get("status") != "none":
@@ -158,20 +186,26 @@ def _append_omml(paragraph, latex: str) -> bool:
     latex = _latex_body(latex)
     if not latex or shutil.which("pandoc") is None:
         return False
-    from lxml import etree
     from copy import deepcopy
+    import zipfile
+    from lxml import etree
+
     with tempfile.TemporaryDirectory(prefix="canonical-omml-") as td:
         root = Path(td)
         md = root / "eq.md"
         out = root / "eq.docx"
         md.write_text("$$\n" + latex + "\n$$\n", encoding="utf-8")
         try:
-            completed = subprocess.run(["pandoc", str(md), "-o", str(out)], capture_output=True, text=True, timeout=30)
+            completed = subprocess.run(
+                ["pandoc", str(md), "-o", str(out)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
         except Exception:
             return False
         if completed.returncode != 0 or not out.exists():
             return False
-        import zipfile
         with zipfile.ZipFile(out) as archive:
             xml = etree.fromstring(archive.read("word/document.xml"))
         maths = xml.xpath(".//*[local-name()='oMath']")
@@ -187,19 +221,21 @@ def _resolve_asset(package_root: Path | None, block: dict[str, Any]) -> Path | N
         return None
     text = str((block.get("content") or {}).get("text") or "")
     match = re.search(r"([0-9a-fA-F-]{20,}\.(?:png|jpe?g|webp|svg))", text)
-    names = []
-    if match:
-        names.append(match.group(1))
+    names = [match.group(1)] if match else []
     for candidate in names:
         direct = list(package_root.rglob(candidate))
         if direct:
             return direct[0]
-    # Mathpix package often stores the UUID with a normalized local extension/name.
+
     uuid_match = re.search(r"([0-9a-fA-F]{8}-[0-9a-fA-F-]{27,})", text)
     if uuid_match:
         stem = uuid_match.group(1).lower()
         for path in package_root.rglob("*"):
-            if path.is_file() and stem in path.name.lower() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
+            if (
+                path.is_file()
+                and stem in path.name.lower()
+                and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+            ):
                 return path
     return None
 
@@ -244,13 +280,18 @@ def _ordered_blocks(canonical: dict[str, Any], page: int) -> tuple[list[dict[str
     by_id = {str(b.get("id")): b for b in canonical.get("blocks") or []}
     result: list[dict[str, Any]] = []
     for zone_id in order:
-        zone = next((z for z in topology.get("zones") or [] if str(z.get("zoneId")) == zone_id), None)
+        zone = next(
+            (z for z in topology.get("zones") or [] if str(z.get("zoneId")) == zone_id),
+            None,
+        )
         if zone is None:
             raise RuntimeError(f"Canonical Word build blocked: zone missing from topology: {zone_id}")
         for block_id in zone.get("localFlowOrder") or []:
             block = by_id.get(str(block_id))
             if block is None:
-                raise RuntimeError(f"Canonical Word build blocked: topology references missing block {block_id}")
+                raise RuntimeError(
+                    f"Canonical Word build blocked: topology references missing block {block_id}"
+                )
             if int((block.get("pageAssignment") or {}).get("physicalPage") or 0) == page:
                 result.append(block)
     return result, order
@@ -263,16 +304,13 @@ def build_canonical_native_document(
     target_page: int,
     package_root: Path | None = None,
 ) -> dict[str, Any]:
-    """Render an already-resolved canonical page as native Word objects.
-
-    No matching, column inference, margin inference or semantic reinterpretation occurs here.
-    The builder consumes canonical blocks, topology, recovered frame and PDF visual containers.
-    """
     topology = canonical.get("pageTopology") or {}
-    page_evidence = canonical.get("pageEvidence") or {}
     if int(topology.get("physicalPage") or 0) != int(target_page):
         raise RuntimeError("Canonical Word build blocked: topology page does not match requested page.")
-    if (topology.get("crossZoneReadingOrder") or {}).get("status") not in {"resolved-by-markdown-record-order", "not-needed"}:
+    if (topology.get("crossZoneReadingOrder") or {}).get("status") not in {
+        "resolved-by-markdown-record-order",
+        "not-needed",
+    }:
         raise RuntimeError("Canonical Word build blocked: cross-zone reading order unresolved.")
 
     width_px, height_px, sx, sy = _page_scale(canonical)
@@ -283,11 +321,23 @@ def build_canonical_native_document(
 
     zone_rows = []
     for zone in topology.get("zones") or []:
-        bbox = _bbox_pt(zone.get("physicalZoneBBoxPx") or zone.get("canonicalCoverageBBoxPx"), sx, sy)
+        bbox = _bbox_pt(
+            zone.get("physicalZoneBBoxPx") or zone.get("canonicalCoverageBBoxPx"),
+            sx,
+            sy,
+        )
         if bbox:
-            zone_rows.append({"id": str(zone.get("zoneId")), "x0": bbox[0], "y0": bbox[1], "x1": bbox[2], "y1": bbox[3]})
+            zone_rows.append({
+                "id": str(zone.get("zoneId")),
+                "x0": bbox[0],
+                "y0": bbox[1],
+                "x1": bbox[2],
+                "y1": bbox[3],
+            })
     if len(zone_rows) != 2:
-        raise RuntimeError(f"Canonical Word build blocked: page {target_page} requires exactly two resolved zones for this proof, got {len(zone_rows)}.")
+        raise RuntimeError(
+            f"Canonical Word build blocked: page {target_page} requires exactly two resolved zones for this proof, got {len(zone_rows)}."
+        )
     zone_rows.sort(key=lambda z: z["x0"])
 
     ordered, reading_order = _ordered_blocks(canonical, target_page)
@@ -332,8 +382,6 @@ def build_canonical_native_document(
 
         prev_bottom = previous_bottom_by_zone.get(zone_id)
         raw_gap = max(0.0, bbox[1] - prev_bottom) if prev_bottom is not None else 0.0
-        # Preserve only modest observed gaps in natural Word flow; large blank regions
-        # are structural evidence and belong to explicit objects/containers, not spacer hacks.
         gap_pt = min(raw_gap, 12.0)
         size = _font_size_pt(block, sy)
         container_id = block_to_container.get(block_id)
@@ -346,16 +394,22 @@ def build_canonical_native_document(
             p.paragraph_format.space_after = Pt(0)
             asset = _resolve_asset(Path(package_root) if package_root else None, block)
             if asset is None:
-                run = p.add_run("[CANONICAL FIGURE ASSET UNRESOLVED]")
-                run.font.size = Pt(max(6.0, size))
-                report_items.append({"id": block_id, "type": semantic, "status": "asset-unresolved"})
-            else:
-                width = max(12.0, bbox[2] - bbox[0])
-                try:
-                    p.add_run().add_picture(str(asset), width=Pt(width))
-                except Exception as exc:
-                    raise RuntimeError(f"Canonical Word build blocked: figure asset failed {asset}: {exc}") from exc
-                report_items.append({"id": block_id, "type": semantic, "status": "rendered", "asset": str(asset)})
+                raise RuntimeError(
+                    f"Canonical Word build blocked: figure asset unresolved for {block_id}"
+                )
+            width = max(12.0, bbox[2] - bbox[0])
+            try:
+                p.add_run().add_picture(str(asset), width=Pt(width))
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Canonical Word build blocked: figure asset failed {asset}: {exc}"
+                ) from exc
+            report_items.append({
+                "id": block_id,
+                "type": semantic,
+                "status": "rendered",
+                "asset": str(asset),
+            })
             previous_bottom_by_zone[zone_id] = bbox[3]
             continue
 
@@ -387,10 +441,7 @@ def build_canonical_native_document(
             run.font.size = Pt(max(5.5, size))
             _set_language(run)
 
-        frame_audit = None
-        if container is not None:
-            frame_audit = _paragraph_frame_style(p, container)
-
+        frame_audit = _paragraph_frame_style(p, container) if container is not None else None
         report_items.append({
             "id": block_id,
             "type": semantic,
