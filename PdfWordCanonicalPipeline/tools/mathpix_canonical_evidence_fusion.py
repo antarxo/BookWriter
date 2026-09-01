@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from pdf_word_reconstructor.canonical_evidence_fusion import build_canonical_evidence_document
+from pdf_word_reconstructor.canonical_page_topology import build_page_topology
 
 
 def parser() -> argparse.ArgumentParser:
@@ -58,8 +59,6 @@ def _discover_pdf(root: Path | None, explicit: Path | None) -> Path | None:
         return path
     if root is None:
         return None
-    # Search the package and then a few enclosing fixture/runtime folders. Select
-    # automatically only when the evidence is unambiguous; never guess among PDFs.
     search_roots: list[Path] = []
     current = root.resolve()
     for _ in range(4):
@@ -97,9 +96,11 @@ def main() -> int:
         target_page=args.page,
         work_dir=args.output / "work",
     )
+    report["pageTopology"] = build_page_topology(list(report.get("blocks") or []), args.page)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     summary = report.get("summary") or {}
+    topology = report.get("pageTopology") or {}
     print("MODE CANONICAL_EVIDENCE_FUSION")
     print("WORD RENDERER OFF")
     print("WORD REALIZATION FORBIDDEN")
@@ -112,6 +113,8 @@ def main() -> int:
     print("LINES", lines)
     print("PDF", pdf if pdf else "NONE")
     print("CANONICAL BLOCKS", summary.get("canonicalBlockCount"))
+    print("TOPOLOGY ZONES", topology.get("zoneCount"))
+    print("CROSS-ZONE ORDER", (topology.get("crossZoneReadingOrder") or {}).get("status"))
     print("GROUPS", summary.get("groupCount"))
     print("MATCHED MMD", summary.get("matchedMarkdownCount"), "/", summary.get("markdownRecordCount"))
     print("MATCHED LINES UNITS", summary.get("matchedLinesUnitCount"), "/", summary.get("linesUnitCount"))
