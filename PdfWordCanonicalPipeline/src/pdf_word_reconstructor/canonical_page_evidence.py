@@ -6,7 +6,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "canonical-page-evidence-0.3"
+VERSION = "canonical-page-evidence-0.4"
 
 _EXCLUDED_BODY_TYPES = {
     "page_info",
@@ -259,48 +259,104 @@ def _classify_visible_furniture(page: dict[str, Any], document_profile: dict[str
     }
 
 
+def _seed_body_from_visible_furniture(
+    page: dict[str, Any],
+    visible: dict[str, Any],
+) -> dict[str, Any]:
+    width, height = _page_dimensions(page)
+    if width <= 0 or height <= 0:
+        return {"status": "blocked", "reason": "missing-page-dimensions"}
+    if not str(visible.get("headerStatus") or "").startswith("present-"):
+        return {"status": "blocked", "reason": "header-not-visibly-resolved"}
+    if not str(visible.get("footerStatus") or "").startswith("present-"):
+        return {"status": "blocked", "reason": "footer-not-visibly-resolved"}
+
+    header_box = (visible.get("header") or {}).get("bboxPx")
+    footer_box = (visible.get("footer") or {}).get("bboxPx")
+    if not header_box or not footer_box:
+        return {"status": "blocked", "reason": "visible-furniture-bounds-missing"}
+    header_end = float(header_box[3])
+    footer_start = float(footer_box[1])
+    if footer_start <= header_end:
+        return {"status": "blocked", "reason": "invalid-visible-furniture-bounds"}
+
+    rows = [
+        row
+        for row in _body_objects(page)
+        if row["bboxPx"][3] > header_end and row["bboxPx"][1] < footer_start
+    ]
+    if not rows:
+        return {"status": "blocked", "reason": "no-body-objects-after-visible-furniture-exclusion"}
+
+    x0 = _quantile([row["bboxPx"][0] for row in rows], 0.08)
+    y0 = _quantile([row["bboxPx"][1] for row in rows], 0.04)
+    x1 = _quantile([row["bboxPx"][2] for row in rows], 0.92)
+    y1 = _quantile([row["bboxPx"][3] for row in rows], 0.96)
+    if None in {x0, y0, x1, y1}:
+        return {"status": "blocked", "reason": "insufficient-seed-body-envelope"}
+    bbox = [
+        float(x0),
+        max(float(y0), header_end),
+        float(x1),
+        min(float(y1), footer_start),
+    ]
+    if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
+        return {"status": "blocked", "reason": "invalid-seed-body-envelope"}
+
+    return {
+        "status": "observed",
+        "bboxPx": bbox,
+        "objectCount": len(rows),
+        "confidence": "high" if len(rows) >= 8 else "medium",
+        "source": "visible-furniture-seed-body",
+    }
+
+
 def _reserved_zone_profiles(
     pages: list[dict[str, Any]],
     visible_by_page: dict[int, dict[str, Any]],
-    raw_body_by_page: dict[int, dict[str, Any]],
+    seed_body_by_page: dict[int, dict[str, Any]],
 ) -> dict[str, Any]:
     result: dict[str, Any] = {"families": {}}
     for family, family_pages in _pages_by_family(pages).items():
         header_ends: list[float] = []
         footer_starts: list[float] = []
-        raw_body_starts: list[float] = []
-        raw_body_ends: list[float] = []
+        body_starts: list[float] = []
+        body_ends: list[float] = []
+        seed_pages: list[int] = []
         for page in family_pages:
             page_no = int(page.get("page") or 0)
             _width, height = _page_dimensions(page)
             if height <= 0:
                 continue
             visible = visible_by_page.get(page_no) or {}
-            raw = raw_body_by_page.get(page_no) or {}
+            seed = seed_body_by_page.get(page_no) or {}
             header = visible.get("header") or {}
             footer = visible.get("footer") or {}
             if visible.get("headerStatus") == "present-high" and header.get("bboxPx"):
                 header_ends.append(float(header["bboxPx"][3]) / height)
             if visible.get("footerStatus") == "present-high" and footer.get("bboxPx"):
                 footer_starts.append(float(footer["bboxPx"][1]) / height)
-            if raw.get("status") == "observed":
-                raw_body_starts.append(float(raw["startRatio"]))
-                raw_body_ends.append(float(raw["endRatio"]))
+            if seed.get("status") == "observed" and seed.get("bboxPx"):
+                body_starts.append(float(seed["bboxPx"][1]) / height)
+                body_ends.append(float(seed["bboxPx"][3]) / height)
+                seed_pages.append(page_no)
         result["families"][family] = {
             "pageCount": len(family_pages),
             "headerReservedEndRatio": median(header_ends) if header_ends else None,
             "footerReservedStartRatio": median(footer_starts) if footer_starts else None,
-            "typicalRawBodyStartRatio": median(raw_body_starts) if raw_body_starts else None,
-            "typicalRawBodyEndRatio": median(raw_body_ends) if raw_body_ends else None,
+            "typicalSeedBodyStartRatio": median(body_starts) if body_starts else None,
+            "typicalSeedBodyEndRatio": median(body_ends) if body_ends else None,
+            "seedBodyPages": seed_pages,
             "sourceCounts": {
                 "highHeaderPages": len(header_ends),
                 "highFooterPages": len(footer_starts),
-                "rawBodyPages": len(raw_body_starts),
+                "seedBodyPages": len(seed_pages),
             },
         }
     result["policy"] = (
-        "visible furniture may be suppressed while a learned reserved frame remains active; "
-        "profiles never cross provisional frame-family boundaries"
+        "reserved-zone profiles learn body start/end only from pages whose visible "
+        "header and footer were already resolved; special/unresolved pages cannot train the profile"
     )
     return result
 
@@ -317,8 +373,8 @@ def _resolve_reserved_zones(
     footer_status = str(visible.get("footerStatus") or "")
     raw_start = raw_body.get("startRatio") if raw_body.get("status") == "observed" else None
     raw_end = raw_body.get("endRatio") if raw_body.get("status") == "observed" else None
-    typical_start = profile.get("typicalRawBodyStartRatio")
-    typical_end = profile.get("typicalRawBodyEndRatio")
+    typical_start = profile.get("typicalSeedBodyStartRatio")
+    typical_end = profile.get("typicalSeedBodyEndRatio")
 
     header_zone = "visible-furniture" if header_status.startswith("present-") else "unresolved"
     footer_zone = "visible-furniture" if footer_status.startswith("present-") else "unresolved"
@@ -694,7 +750,14 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
         int(page.get("page") or 0): _raw_body_observation(page)
         for page in pages
     }
-    reserved_profiles = _reserved_zone_profiles(pages, visible_by_page, raw_body_by_page)
+    seed_body_by_page = {
+        int(page.get("page") or 0): _seed_body_from_visible_furniture(
+            page,
+            visible_by_page.get(int(page.get("page") or 0)) or {},
+        )
+        for page in pages
+    }
+    reserved_profiles = _reserved_zone_profiles(pages, visible_by_page, seed_body_by_page)
 
     first_pass: list[dict[str, Any]] = []
     for page in pages:
@@ -712,6 +775,7 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
             "visibleFurnitureEvidence": visible,
             "reservedZoneEvidence": reserved,
             "rawBodyEvidence": raw,
+            "seedBodyEvidence": seed_body_by_page.get(page_no) or {},
             "bodyEvidence": body,
             "furnitureValidation": validation,
         })
@@ -779,7 +843,7 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
             "wordDecisions": "forbidden",
             "frameFamilies": "provisional-page-shape-only-no-semantic-section-claim",
             "visibleFurniture": "recurrence-plus-edge-band-within-frame-family",
-            "reservedZones": "suppressed-visible-furniture-may-retain-family-reserved-boundary",
+            "reservedZones": "seed-visible-pages-learn-family-boundaries-before-special-page-inheritance",
             "bodyObservation": "robust-page-observation-constrained-by-visible-or-reserved-boundaries",
             "frameEvidence": "trusted-page-observation-or-compatible-frame-family-profile",
             "bottomFrame": "dense-bottom-constraint-from-trusted-pages-only",
