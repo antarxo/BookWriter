@@ -11,6 +11,7 @@ from pdf_word_reconstructor.canonical_frame_profile import build_canonical_frame
 from pdf_word_reconstructor.canonical_page_evidence import build_canonical_page_evidence
 from pdf_word_reconstructor.canonical_page_recovery import recover_blocked_pages
 from pdf_word_reconstructor.canonical_page_topology import build_page_topology
+from pdf_word_reconstructor.canonical_pdf_visual_witness import apply_pdf_visual_witness
 from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout_map
 
 
@@ -94,16 +95,8 @@ def _markdown_index_witness(mmd: Path, work_dir: Path) -> dict[str, object]:
         record_id = str(record.get("id") or "").strip()
         if record_id:
             positions[record_id].append(index)
-    unique = {
-        record_id: values[0]
-        for record_id, values in positions.items()
-        if len(values) == 1
-    }
-    duplicates = {
-        record_id: values
-        for record_id, values in positions.items()
-        if len(values) > 1
-    }
+    unique = {record_id: values[0] for record_id, values in positions.items() if len(values) == 1}
+    duplicates = {record_id: values for record_id, values in positions.items() if len(values) > 1}
     return {
         "recordCount": len(records),
         "uniqueIndexById": unique,
@@ -122,23 +115,26 @@ def main() -> int:
     args.output.mkdir(parents=True, exist_ok=True)
     report_path = args.output / f"CANONICAL_EVIDENCE_PAGE_{args.page}.json"
     work_dir = args.output / "work"
+
+    # The legacy fusion core still assumes ordinal PDF pages. Keep that path off;
+    # PDF evidence is attached below only through the explicit fail-closed mapper.
     report = build_canonical_evidence_document(
         mmd_path=mmd,
         lines_path=lines,
-        pdf_path=pdf,
+        pdf_path=None,
         target_page=args.page,
         work_dir=work_dir,
     )
 
     line_map = build_mathpix_line_layout_map(lines, None)
+    if pdf is not None:
+        report = apply_pdf_visual_witness(report, line_map, pdf, args.page)
+
     page_evidence_report = build_canonical_page_evidence(line_map)
     outer_frame_profile = build_canonical_frame_profile(page_evidence_report)
     page_evidence_report = recover_blocked_pages(page_evidence_report, line_map, outer_frame_profile)
     selected_page_evidence = next(
-        (
-            row for row in page_evidence_report.get("pages", []) or []
-            if int(row.get("page") or 0) == args.page
-        ),
+        (row for row in page_evidence_report.get("pages", []) or [] if int(row.get("page") or 0) == args.page),
         None,
     )
     markdown_witness = _markdown_index_witness(mmd, work_dir)
@@ -169,6 +165,9 @@ def main() -> int:
     coverage = topology.get("zoneCoverageAudit") or {}
     recovered = topology.get("recoveredFrameEvidence") or {}
     cross_zone = topology.get("crossZoneReadingOrder") or {}
+    pdf_witness = report.get("pdfVisualWitness") or {}
+    pdf_mapping = pdf_witness.get("mapping") or {}
+
     print("MODE CANONICAL_EVIDENCE_FUSION")
     print("WORD RENDERER OFF")
     print("WORD REALIZATION FORBIDDEN")
@@ -180,14 +179,45 @@ def main() -> int:
     print("MMD", mmd)
     print("LINES", lines)
     print("PDF", pdf if pdf else "NONE")
+    if pdf:
+        print(
+            "PDF PAGE MAPPING",
+            pdf_mapping.get("status"),
+            "mode=", pdf_mapping.get("mode"),
+            "pdfIndex=", pdf_mapping.get("pdfPageIndex"),
+            "pdfPage=", pdf_mapping.get("pdfPageNumber"),
+            "count=", pdf_mapping.get("pdfPageCount"),
+        )
+        print(
+            "PDF WITNESS STATUS",
+            pdf_witness.get("status"),
+            "containers=", pdf_witness.get("containerCount"),
+            "groups=", pdf_witness.get("groupCount"),
+        )
+        profile = pdf_witness.get("profile") or {}
+        print(
+            "PDF PAGE PROFILE",
+            "textChars=", profile.get("textChars"),
+            "drawings=", profile.get("drawingCount"),
+            "images=", profile.get("imageCount"),
+            "candidates=", profile.get("containerCandidateCount"),
+        )
+        for container in report.get("pdfContainers") or []:
+            print(
+                "PDF CONTAINER",
+                container.get("id"),
+                "bbox=", container.get("bboxPt"),
+                "stroke=", container.get("stroke"),
+                "fill=", container.get("fill"),
+                "members=", container.get("memberBlockIds"),
+            )
     print("CANONICAL BLOCKS", summary.get("canonicalBlockCount"))
     print("TOPOLOGY VERSION", topology.get("version"))
     print("TOPOLOGY ZONES", topology.get("zoneCount"))
     for zone in topology.get("zones") or []:
         md_order = zone.get("markdownOrderEvidence") or {}
         print(
-            "TOPOLOGY ZONE",
-            zone.get("zoneId"),
+            "TOPOLOGY ZONE", zone.get("zoneId"),
             "blocks=", zone.get("blockCount"),
             "semantics=", zone.get("semanticTypeCounts"),
             "physical=", zone.get("physicalZoneBBoxPx"),
