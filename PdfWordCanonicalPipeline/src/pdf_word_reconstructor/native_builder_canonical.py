@@ -15,7 +15,7 @@ from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 
 
-VERSION = "native-builder-canonical-0.1.1"
+VERSION = "native-builder-canonical-0.1.2"
 TWIPS_PER_PT = 20
 PAGE_WIDTH_PT = 595.276
 PAGE_HEIGHT_PT = 841.89
@@ -240,6 +240,54 @@ def _resolve_asset(package_root: Path | None, block: dict[str, Any]) -> Path | N
     return None
 
 
+def _add_word_picture(paragraph, asset: Path, width_pt: float) -> dict[str, Any]:
+    """Insert an authoritative canonical asset, normalizing only its image encoding if required."""
+    run = paragraph.add_run()
+    try:
+        run.add_picture(str(asset), width=Pt(width_pt))
+        return {"asset": str(asset), "normalization": "not-needed"}
+    except Exception as direct_error:
+        try:
+            from PIL import Image
+        except Exception as pil_import_error:
+            raise RuntimeError(
+                f"Word cannot read canonical image {asset}; Pillow unavailable for encoding normalization: {pil_import_error}"
+            ) from direct_error
+
+        try:
+            with Image.open(asset) as image:
+                detected_format = image.format
+                normalized = image.convert("RGB")
+                with tempfile.NamedTemporaryFile(
+                    prefix="canonical-word-image-",
+                    suffix=".png",
+                    delete=False,
+                ) as handle:
+                    normalized_path = Path(handle.name)
+                normalized.save(normalized_path, format="PNG")
+        except Exception as normalize_error:
+            try:
+                signature = asset.read_bytes()[:24].hex(" ")
+            except Exception:
+                signature = "unavailable"
+            raise RuntimeError(
+                f"Canonical image asset cannot be decoded for Word: {asset}; file signature={signature}; decoder={normalize_error}"
+            ) from direct_error
+
+        try:
+            paragraph.add_run().add_picture(str(normalized_path), width=Pt(width_pt))
+        finally:
+            try:
+                normalized_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+        return {
+            "asset": str(asset),
+            "normalization": "pillow-to-png",
+            "detectedFormat": detected_format,
+        }
+
+
 def _font_size_pt(block: dict[str, Any], sy: float) -> float:
     values = []
     for value in (block.get("typographyEvidence") or {}).get("fontSizes") or []:
@@ -399,7 +447,7 @@ def build_canonical_native_document(
                 )
             width = max(12.0, bbox[2] - bbox[0])
             try:
-                p.add_run().add_picture(str(asset), width=Pt(width))
+                image_audit = _add_word_picture(p, asset, width)
             except Exception as exc:
                 raise RuntimeError(
                     f"Canonical Word build blocked: figure asset failed {asset}: {exc}"
@@ -408,7 +456,7 @@ def build_canonical_native_document(
                 "id": block_id,
                 "type": semantic,
                 "status": "rendered",
-                "asset": str(asset),
+                **image_audit,
             })
             previous_bottom_by_zone[zone_id] = bbox[3]
             continue
