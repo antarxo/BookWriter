@@ -79,6 +79,7 @@ def main() -> int:
     relation = selected.get("zoneRelationship") or {}
     recovery = selected.get("profileRecoveryEvidence") or {}
     recovery_relation = selected.get("recoveryZoneRelationship") or {}
+    frame_fit = recovery_relation.get("zoneFrameFit") or {}
 
     print("MODE CANONICAL_PAGE_EVIDENCE")
     print("PAGE_STRUCTURE MUTATION OFF")
@@ -98,11 +99,22 @@ def main() -> int:
     print(f"FRAME {margin.get('status')} source={margin.get('source')} confidence={margin.get('confidence')}")
     print(f"PROFILE RECOVERY {recovery.get('status')} confidence={recovery.get('confidence')}")
     print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
+    print(
+        "RECOVERY BOTTOM "
+        f"source={recovery.get('bottomConstraintSource')} "
+        f"median={recovery.get('medianBottomMarginRatio')} "
+        f"effective={recovery.get('effectiveBottomMarginRatio')}"
+    )
     print(f"ZONES {len(selected.get('zones') or [])}")
     print(f"ZONE RELATIONSHIP {relation.get('classification')} ({relation.get('confidence')})")
     print(
         "RECOVERY ZONE RELATIONSHIP "
         f"{recovery_relation.get('classification')} ({recovery_relation.get('confidence')})"
+    )
+    print(
+        "RECOVERY ZONE FRAME FIT "
+        f"inside={frame_fit.get('allInsideVerticalFrame')} "
+        f"above={frame_fit.get('aboveCount')} below={frame_fit.get('belowCount')}"
     )
     print(f"RECOVERY RENDERER MEANING {recovery_relation.get('rendererMeaning')}")
     print(f"RECOVERY CROSS-ZONE ORDER {recovery_relation.get('crossZoneReadingOrder')}")
