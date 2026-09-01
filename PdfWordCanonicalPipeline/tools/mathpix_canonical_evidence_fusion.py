@@ -25,7 +25,7 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--package-root", type=Path, help="Folder containing result.mmd and result.lines.json")
     p.add_argument("--mmd", type=Path, help="Explicit Mathpix result.mmd")
     p.add_argument("--lines", type=Path, help="Explicit Mathpix result.lines.json")
-    p.add_argument("--pdf", type=Path, help="Optional source/package PDF visual witness")
+    p.add_argument("--pdf", type=Path, help="Optional source/package PDF visual witness; file or directory containing exactly one PDF")
     p.add_argument("--page", type=int, default=19, help="Physical source page to report; default 19")
     p.add_argument("--output", required=True, type=Path)
     return p
@@ -116,8 +116,6 @@ def main() -> int:
     report_path = args.output / f"CANONICAL_EVIDENCE_PAGE_{args.page}.json"
     work_dir = args.output / "work"
 
-    # The legacy fusion core still assumes ordinal PDF pages. Keep that path off;
-    # PDF evidence is attached below only through the explicit fail-closed mapper.
     report = build_canonical_evidence_document(
         mmd_path=mmd,
         lines_path=lines,
@@ -166,6 +164,7 @@ def main() -> int:
     recovered = topology.get("recoveredFrameEvidence") or {}
     cross_zone = topology.get("crossZoneReadingOrder") or {}
     pdf_witness = report.get("pdfVisualWitness") or {}
+    pdf_input = pdf_witness.get("inputResolution") or {}
     pdf_mapping = pdf_witness.get("mapping") or {}
 
     print("MODE CANONICAL_EVIDENCE_FUSION")
@@ -180,6 +179,16 @@ def main() -> int:
     print("LINES", lines)
     print("PDF", pdf if pdf else "NONE")
     if pdf:
+        print(
+            "PDF INPUT RESOLUTION",
+            pdf_input.get("status"),
+            "source=", pdf_input.get("source"),
+            "reason=", pdf_input.get("reason"),
+            "resolved=", pdf_input.get("pdfPath"),
+            "candidates=", pdf_input.get("candidateCount"),
+        )
+        for candidate in pdf_input.get("candidates") or []:
+            print("PDF CANDIDATE", candidate)
         print(
             "PDF PAGE MAPPING",
             pdf_mapping.get("status"),
