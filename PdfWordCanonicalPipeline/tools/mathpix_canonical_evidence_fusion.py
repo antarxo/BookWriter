@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import defaultdict
 from pathlib import Path
 
+from pdf_word_canonical_pipeline.markdown_element_map_v03 import extract_markdown_element_map
 from pdf_word_reconstructor.canonical_evidence_fusion import build_canonical_evidence_document
 from pdf_word_reconstructor.canonical_frame_profile import build_canonical_frame_profile
 from pdf_word_reconstructor.canonical_page_evidence import build_canonical_page_evidence
@@ -84,6 +86,32 @@ def _discover_pdf(root: Path | None, explicit: Path | None) -> Path | None:
     return candidates[0] if len(candidates) == 1 else None
 
 
+def _markdown_index_witness(mmd: Path, work_dir: Path) -> dict[str, object]:
+    mapped = extract_markdown_element_map([mmd], work_dir / "_topology_markdown_map.json")
+    records = list(mapped.get("records", []) or [])
+    positions: dict[str, list[int]] = defaultdict(list)
+    for index, record in enumerate(records):
+        record_id = str(record.get("id") or "").strip()
+        if record_id:
+            positions[record_id].append(index)
+    unique = {
+        record_id: values[0]
+        for record_id, values in positions.items()
+        if len(values) == 1
+    }
+    duplicates = {
+        record_id: values
+        for record_id, values in positions.items()
+        if len(values) > 1
+    }
+    return {
+        "recordCount": len(records),
+        "uniqueIndexById": unique,
+        "duplicateIds": duplicates,
+        "policy": "only unique Markdown record ids are admitted as cross-zone order witnesses",
+    }
+
+
 def main() -> int:
     args = parser().parse_args()
     root = args.package_root.resolve() if args.package_root else None
@@ -93,12 +121,13 @@ def main() -> int:
 
     args.output.mkdir(parents=True, exist_ok=True)
     report_path = args.output / f"CANONICAL_EVIDENCE_PAGE_{args.page}.json"
+    work_dir = args.output / "work"
     report = build_canonical_evidence_document(
         mmd_path=mmd,
         lines_path=lines,
         pdf_path=pdf,
         target_page=args.page,
-        work_dir=args.output / "work",
+        work_dir=work_dir,
     )
 
     line_map = build_mathpix_line_layout_map(lines, None)
@@ -112,6 +141,7 @@ def main() -> int:
         ),
         None,
     )
+    markdown_witness = _markdown_index_witness(mmd, work_dir)
 
     report["pageEvidenceVersions"] = {
         "canonicalPageEvidence": page_evidence_report.get("version"),
@@ -120,10 +150,17 @@ def main() -> int:
     }
     report["pageEvidence"] = selected_page_evidence
     report["canonicalOuterFrameProfile"] = outer_frame_profile
+    report["markdownOrderWitness"] = {
+        "recordCount": markdown_witness.get("recordCount"),
+        "uniqueIdCount": len(markdown_witness.get("uniqueIndexById") or {}),
+        "duplicateIds": markdown_witness.get("duplicateIds"),
+        "policy": markdown_witness.get("policy"),
+    }
     report["pageTopology"] = build_page_topology(
         list(report.get("blocks") or []),
         args.page,
         selected_page_evidence,
+        markdown_index_by_id=dict(markdown_witness.get("uniqueIndexById") or {}),
     )
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -131,6 +168,7 @@ def main() -> int:
     topology = report.get("pageTopology") or {}
     coverage = topology.get("zoneCoverageAudit") or {}
     recovered = topology.get("recoveredFrameEvidence") or {}
+    cross_zone = topology.get("crossZoneReadingOrder") or {}
     print("MODE CANONICAL_EVIDENCE_FUSION")
     print("WORD RENDERER OFF")
     print("WORD REALIZATION FORBIDDEN")
@@ -146,6 +184,7 @@ def main() -> int:
     print("TOPOLOGY VERSION", topology.get("version"))
     print("TOPOLOGY ZONES", topology.get("zoneCount"))
     for zone in topology.get("zones") or []:
+        md_order = zone.get("markdownOrderEvidence") or {}
         print(
             "TOPOLOGY ZONE",
             zone.get("zoneId"),
@@ -153,13 +192,18 @@ def main() -> int:
             "semantics=", zone.get("semanticTypeCounts"),
             "physical=", zone.get("physicalZoneBBoxPx"),
             "canonical=", zone.get("canonicalCoverageBBoxPx"),
+            "mmd=", md_order.get("status"),
+            [md_order.get("indexMin"), md_order.get("indexMax")],
         )
     print("ZONE COVERAGE ALL PHYSICAL", coverage.get("allSemanticZonesPhysicallyWitnessed"))
     print("SEMANTIC ZONES MISSING PHYSICAL", coverage.get("semanticZonesMissingPhysicalWitness"))
     print("PHYSICAL ZONES WITHOUT BLOCKS", coverage.get("physicalZonesWithoutCanonicalBlocks"))
     print("RECOVERED FRAME", recovered.get("bboxPx"), "source=", recovered.get("source"))
     print("RECOVERED ZONE RELATIONSHIP", recovered.get("zoneRelationship"), f"({recovered.get('zoneRelationshipConfidence')})")
-    print("CROSS-ZONE ORDER", (topology.get("crossZoneReadingOrder") or {}).get("status"))
+    print("MMD ORDER WITNESS", "records=", markdown_witness.get("recordCount"), "uniqueIds=", len(markdown_witness.get("uniqueIndexById") or {}), "duplicates=", len(markdown_witness.get("duplicateIds") or {}))
+    print("CROSS-ZONE ORDER", cross_zone.get("status"), "order=", cross_zone.get("order"), "confidence=", cross_zone.get("confidence"))
+    print("CROSS-ZONE ORDER REASON", cross_zone.get("reason"))
+    print("CROSS-ZONE INTERVALS", cross_zone.get("zoneIntervals"))
     print("GROUPS", summary.get("groupCount"))
     print("MATCHED MMD", summary.get("matchedMarkdownCount"), "/", summary.get("markdownRecordCount"))
     print("MATCHED LINES UNITS", summary.get("matchedLinesUnitCount"), "/", summary.get("linesUnitCount"))
