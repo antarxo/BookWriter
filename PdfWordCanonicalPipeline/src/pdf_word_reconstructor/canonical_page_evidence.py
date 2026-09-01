@@ -6,7 +6,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "canonical-page-evidence-0.4"
+VERSION = "canonical-page-evidence-0.5"
 
 _EXCLUDED_BODY_TYPES = {
     "page_info",
@@ -565,7 +565,7 @@ def _build_family_margin_profiles(page_rows: list[dict[str, Any]]) -> dict[str, 
             float((row.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio"))
             for row in raw_bottom_rows
         ]
-        dense_threshold = _quantile(raw_bottom_values, 0.25)
+        dense_threshold = _quantile(raw_bottom_values, 0.10)
         dense_rows = [
             row for row in raw_bottom_rows
             if dense_threshold is not None
@@ -582,7 +582,7 @@ def _build_family_margin_profiles(page_rows: list[dict[str, Any]]) -> dict[str, 
             "medianNormalizedMargins": median_margins,
             "denseBottomConstraint": {
                 "status": "observed" if dense_rows else "unresolved",
-                "rawBottomWhitespaceP25": dense_threshold,
+                "rawBottomWhitespaceP10": dense_threshold,
                 "sourcePages": [int(row.get("page") or 0) for row in dense_rows],
                 "medianRobustBottomMargin": median(dense_robust_bottom) if dense_robust_bottom else None,
                 "policy": (
@@ -679,6 +679,17 @@ def _classify_zone_relationship(
     zones: list[dict[str, Any]],
 ) -> dict[str, Any]:
     width, _height = _page_dimensions(page)
+    if body.get("status") != "observed":
+        return {
+            "classification": "blocked-until-body-resolved",
+            "confidence": "none",
+            "rendererMeaning": "unresolved",
+            "zoneIds": [zone.get("zoneId") for zone in zones],
+            "policy": (
+                "zone relationship is not interpreted until reserved page furniture "
+                "and robust body evidence are resolved"
+            ),
+        }
     if not zones:
         return {
             "classification": "no-explicit-zones",
@@ -846,7 +857,7 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
             "reservedZones": "seed-visible-pages-learn-family-boundaries-before-special-page-inheritance",
             "bodyObservation": "robust-page-observation-constrained-by-visible-or-reserved-boundaries",
             "frameEvidence": "trusted-page-observation-or-compatible-frame-family-profile",
-            "bottomFrame": "dense-bottom-constraint-from-trusted-pages-only",
+            "bottomFrame": "p10-dense-bottom-constraint-from-trusted-pages-only",
             "zoneNames": "geometric-only-no-main-sidebar-column-labels",
             "crossZoneReadingOrder": "never-inferred-from-x-y-position-alone",
         },
