@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "canonical-page-recovery-0.2"
+VERSION = "canonical-page-recovery-0.3"
 
 
 def _classify_recovered_zones(
@@ -27,7 +27,7 @@ def _classify_recovered_zones(
         if len(box) != 4:
             continue
         try:
-            x0, y0, x1, y1 = [float(v) for v in box]
+            x0, y0, x1, y1 = [float(value) for value in box]
         except (TypeError, ValueError):
             continue
         if x1 <= x0 or y1 <= y0:
@@ -36,6 +36,8 @@ def _classify_recovered_zones(
             **zone,
             "recoveryHeightRatioToFrame": (y1 - y0) / frame_height,
             "recoveryWidthRatioToPage": (x1 - x0) / max(1.0, page_width),
+            "extendsBelowRecoveryFrame": y1 > float(frame[3]),
+            "extendsAboveRecoveryFrame": y0 < float(frame[1]),
         })
 
     long_lived = [
@@ -89,6 +91,14 @@ def _classify_recovered_zones(
         }
 
     result.update({
+        "zoneFrameFit": {
+            "aboveCount": sum(1 for zone in normalized if zone.get("extendsAboveRecoveryFrame")),
+            "belowCount": sum(1 for zone in normalized if zone.get("extendsBelowRecoveryFrame")),
+            "allInsideVerticalFrame": all(
+                not zone.get("extendsAboveRecoveryFrame") and not zone.get("extendsBelowRecoveryFrame")
+                for zone in normalized
+            ),
+        },
         "rendererMeaning": "unresolved",
         "crossZoneReadingOrder": "unresolved" if len(normalized) > 1 else "not-applicable",
         "wordRealization": None,
@@ -105,8 +115,12 @@ def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> d
 
     Recovery is allowed only for pages whose primary body evidence is blocked but
     whose compatible frame-family margin evidence is already resolved. The
-    inherited frame may then constrain secondary zone geometry, but visible
-    furniture semantics, reading order and Word realization remain unresolved.
+    inherited frame may constrain secondary zone geometry, but visible furniture
+    semantics, reading order and Word realization remain unresolved.
+
+    The bottom frame is constrained by the fullest trusted pages when that
+    evidence exists. A median margin learned from shorter pages may not enlarge
+    the bottom margin beyond the dense-page constraint.
     """
     page_map = {
         int(page.get("page") or 0): page
@@ -138,17 +152,31 @@ def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> d
                 left = float(margins["left"])
                 right = float(margins["right"])
                 top = float(margins["top"])
-                bottom = float(margins["bottom"])
+                median_bottom = float(margins["bottom"])
             except (KeyError, TypeError, ValueError):
                 eligible = False
                 width = height = 0.0
+                median_bottom = 0.0
+
+            dense = margin.get("denseBottomConstraint") or {}
+            dense_bottom = dense.get("medianRobustBottomMargin")
+            if dense.get("status") == "observed" and dense_bottom is not None:
+                try:
+                    effective_bottom = min(median_bottom, float(dense_bottom))
+                    bottom_source = "p10-dense-trusted-pages" if effective_bottom < median_bottom else "family-median"
+                except (TypeError, ValueError):
+                    effective_bottom = median_bottom
+                    bottom_source = "family-median"
+            else:
+                effective_bottom = median_bottom
+                bottom_source = "family-median"
 
             if eligible and width > 0 and height > 0:
                 frame = [
                     left * width,
                     top * height,
                     width - right * width,
-                    height - bottom * height,
+                    height - effective_bottom * height,
                 ]
                 if frame[2] > frame[0] and frame[3] > frame[1]:
                     recovery = {
@@ -156,13 +184,17 @@ def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> d
                         "confidence": "medium",
                         "bodyConstraintPx": frame,
                         "source": "frame-family-profile",
+                        "bottomConstraintSource": bottom_source,
+                        "medianBottomMarginRatio": median_bottom,
+                        "effectiveBottomMarginRatio": effective_bottom,
+                        "denseBottomConstraint": dense if dense else None,
                         "headerSemanticStatus": "unresolved",
                         "footerSemanticStatus": "unresolved",
                         "crossZoneReadingOrder": "unresolved",
                         "wordRealization": None,
                         "policy": (
-                            "inherited frame is used only as a geometric constraint; "
-                            "furniture semantics remain unresolved"
+                            "inherited frame is geometry only; the fullest trusted pages may reduce an inflated "
+                            "family median bottom margin, while furniture semantics remain unresolved"
                         ),
                     }
                     zone_recovery = _classify_recovered_zones(row, frame, width)
@@ -178,8 +210,8 @@ def recover_blocked_pages(report: dict[str, Any], line_map: dict[str, Any]) -> d
         "recoveredPageCount": recovered,
         "zoneRecoveredPageCount": zone_recovered,
         "policy": (
-            "second-pass geometry only; primary evidence is preserved, confidence cannot exceed medium, "
-            "and no page_structure mutation or Word realization is permitted"
+            "second-pass geometry only; dense trusted pages constrain the bottom frame; primary evidence is preserved, "
+            "confidence cannot exceed medium, and no page_structure mutation or Word realization is permitted"
         ),
     }
     return report
