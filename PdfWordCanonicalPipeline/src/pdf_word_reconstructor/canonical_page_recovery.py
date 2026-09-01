@@ -2,11 +2,89 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "canonical-page-recovery-0.4"
+VERSION = "canonical-page-recovery-0.5"
+
+_EXCLUDED_STRUCTURAL_TYPES = {
+    "page_info",
+    "column",
+    "table_row",
+    "table_column",
+    "table_of_contents_container",
+    "table_of_contents_row",
+    "table_of_contents_number",
+}
+
+
+def _page_object_map(page: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(obj.get("id")): obj
+        for obj in page.get("objects", []) or []
+        if obj.get("id")
+    }
+
+
+def _box_px(obj: dict[str, Any]) -> list[float] | None:
+    src = obj.get("bbox_px") if isinstance(obj.get("bbox_px"), dict) else None
+    if not src:
+        return None
+    try:
+        x0 = float(src.get("x0")); y0 = float(src.get("y0"))
+        x1 = float(src.get("x1")); y1 = float(src.get("y1"))
+    except (TypeError, ValueError):
+        return None
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return [x0, y0, x1, y1]
+
+
+def _descendant_content_extent(page: dict[str, Any], zone: dict[str, Any]) -> dict[str, Any]:
+    by_id = _page_object_map(page)
+    pending = [str(value) for value in (zone.get("childrenIds") or [])]
+    seen: set[str] = set()
+    boxes: list[list[float]] = []
+    content_ids: list[str] = []
+
+    while pending:
+        object_id = pending.pop()
+        if not object_id or object_id in seen:
+            continue
+        seen.add(object_id)
+        obj = by_id.get(object_id)
+        if not obj:
+            continue
+        pending.extend(str(value) for value in (obj.get("children_ids") or []))
+        typ = str(obj.get("type") or "")
+        if typ in _EXCLUDED_STRUCTURAL_TYPES:
+            continue
+        box = _box_px(obj)
+        if box:
+            boxes.append(box)
+            content_ids.append(object_id)
+
+    if not boxes:
+        return {
+            "status": "unavailable",
+            "contentObjectCount": 0,
+            "contentObjectIds": [],
+            "bboxPx": None,
+        }
+
+    return {
+        "status": "observed",
+        "contentObjectCount": len(boxes),
+        "contentObjectIds": content_ids,
+        "bboxPx": [
+            min(box[0] for box in boxes),
+            min(box[1] for box in boxes),
+            max(box[2] for box in boxes),
+            max(box[3] for box in boxes),
+        ],
+    }
 
 
 def _classify_recovered_zones(
     row: dict[str, Any],
+    page: dict[str, Any],
     frame: list[float],
     page_width: float,
 ) -> dict[str, Any]:
@@ -32,6 +110,24 @@ def _classify_recovered_zones(
             continue
         if x1 <= x0 or y1 <= y0:
             continue
+        descendant = _descendant_content_extent(page, zone)
+        descendant_box = descendant.get("bboxPx") or []
+        if len(descendant_box) == 4:
+            dx0, dy0, dx1, dy1 = [float(value) for value in descendant_box]
+            descendant_fit = {
+                "extendsLeftOfRecoveryFrame": dx0 < float(frame[0]),
+                "extendsAboveRecoveryFrame": dy0 < float(frame[1]),
+                "extendsRightOfRecoveryFrame": dx1 > float(frame[2]),
+                "extendsBelowRecoveryFrame": dy1 > float(frame[3]),
+            }
+        else:
+            descendant_fit = {
+                "extendsLeftOfRecoveryFrame": None,
+                "extendsAboveRecoveryFrame": None,
+                "extendsRightOfRecoveryFrame": None,
+                "extendsBelowRecoveryFrame": None,
+            }
+
         normalized.append({
             **zone,
             "recoveryHeightRatioToFrame": (y1 - y0) / frame_height,
@@ -40,6 +136,8 @@ def _classify_recovered_zones(
             "extendsAboveRecoveryFrame": y0 < float(frame[1]),
             "extendsRightOfRecoveryFrame": x1 > float(frame[2]),
             "extendsBelowRecoveryFrame": y1 > float(frame[3]),
+            "descendantContentExtent": descendant,
+            "descendantContentFrameFit": descendant_fit,
         })
 
     long_lived = [
@@ -95,6 +193,16 @@ def _classify_recovered_zones(
     above_count = sum(1 for zone in normalized if zone.get("extendsAboveRecoveryFrame"))
     right_count = sum(1 for zone in normalized if zone.get("extendsRightOfRecoveryFrame"))
     below_count = sum(1 for zone in normalized if zone.get("extendsBelowRecoveryFrame"))
+
+    descendant_rows = [
+        zone for zone in normalized
+        if (zone.get("descendantContentExtent") or {}).get("status") == "observed"
+    ]
+    d_left = sum(1 for zone in descendant_rows if (zone.get("descendantContentFrameFit") or {}).get("extendsLeftOfRecoveryFrame"))
+    d_above = sum(1 for zone in descendant_rows if (zone.get("descendantContentFrameFit") or {}).get("extendsAboveRecoveryFrame"))
+    d_right = sum(1 for zone in descendant_rows if (zone.get("descendantContentFrameFit") or {}).get("extendsRightOfRecoveryFrame"))
+    d_below = sum(1 for zone in descendant_rows if (zone.get("descendantContentFrameFit") or {}).get("extendsBelowRecoveryFrame"))
+
     result.update({
         "zoneFrameFit": {
             "leftCount": left_count,
@@ -103,12 +211,32 @@ def _classify_recovered_zones(
             "belowCount": below_count,
             "allInsideFrame": left_count == 0 and above_count == 0 and right_count == 0 and below_count == 0,
         },
+        "descendantContentFrameFit": {
+            "observedZoneCount": len(descendant_rows),
+            "leftCount": d_left,
+            "aboveCount": d_above,
+            "rightCount": d_right,
+            "belowCount": d_below,
+            "allObservedDescendantsInsideFrame": (
+                len(descendant_rows) > 0 and d_left == 0 and d_above == 0 and d_right == 0 and d_below == 0
+            ),
+            "zoneDiagnostics": [
+                {
+                    "zoneId": zone.get("zoneId"),
+                    "zoneBoxPx": zone.get("bboxPx"),
+                    "descendantContentExtent": zone.get("descendantContentExtent"),
+                    "descendantContentFrameFit": zone.get("descendantContentFrameFit"),
+                }
+                for zone in normalized
+            ],
+        },
         "rendererMeaning": "unresolved",
         "crossZoneReadingOrder": "unresolved" if len(normalized) > 1 else "not-applicable",
         "wordRealization": None,
         "policy": (
             "zone relationship is measured against inherited outer-frame evidence only; "
-            "confidence is capped at medium and no Word columns/sidebar/reading order are inferred"
+            "container fit and descendant-content fit remain distinct, confidence is capped at medium, "
+            "and no Word columns/sidebar/reading order are inferred"
         ),
     })
     return result
@@ -184,7 +312,7 @@ def recover_blocked_pages(
                             "quantiles remain separate and furniture semantics remain unresolved"
                         ),
                     }
-                    zone_recovery = _classify_recovered_zones(row, frame, width)
+                    zone_recovery = _classify_recovered_zones(row, page, frame, width)
                     recovered += 1
                     if zone_recovery.get("status") == "observed-from-recovered-frame":
                         zone_recovered += 1
@@ -199,7 +327,8 @@ def recover_blocked_pages(
         "zoneRecoveredPageCount": zone_recovered,
         "policy": (
             "second-pass geometry only; dedicated outer-frame evidence is separate from robust content envelopes; "
-            "primary evidence is preserved and no page_structure mutation or Word realization is permitted"
+            "container geometry and descendant-content geometry remain distinct; primary evidence is preserved "
+            "and no page_structure mutation or Word realization is permitted"
         ),
     }
     return report
