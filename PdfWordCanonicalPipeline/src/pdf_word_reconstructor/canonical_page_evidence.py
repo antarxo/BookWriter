@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from statistics import median
 from typing import Any
 
 
-VERSION = "canonical-page-evidence-0.2"
-
-
-# Renderer-neutral page evidence. This module deliberately does not mutate the
-# production page_structure and never emits Word constructs. It reconstructs the
-# useful logic of the older Mathpix geometry/margin experiments as observations,
-# document profiles and explicit unresolved states.
+VERSION = "canonical-page-evidence-0.3"
 
 _EXCLUDED_BODY_TYPES = {
-    "page_info", "column", "table_row", "table_column",
-    "table_of_contents_container", "table_of_contents_row",
+    "page_info",
+    "column",
+    "table_row",
+    "table_column",
+    "table_of_contents_container",
+    "table_of_contents_row",
     "table_of_contents_number",
 }
 
@@ -26,8 +24,10 @@ def _box_px(obj: dict[str, Any]) -> list[float] | None:
     if not src:
         return None
     try:
-        x0 = float(src.get("x0")); y0 = float(src.get("y0"))
-        x1 = float(src.get("x1")); y1 = float(src.get("y1"))
+        x0 = float(src.get("x0"))
+        y0 = float(src.get("y0"))
+        x1 = float(src.get("x1"))
+        y1 = float(src.get("y1"))
     except (TypeError, ValueError):
         return None
     if x1 <= x0 or y1 <= y0:
@@ -39,17 +39,19 @@ def _union(boxes: list[list[float]]) -> list[float] | None:
     if not boxes:
         return None
     return [
-        min(b[0] for b in boxes), min(b[1] for b in boxes),
-        max(b[2] for b in boxes), max(b[3] for b in boxes),
+        min(box[0] for box in boxes),
+        min(box[1] for box in boxes),
+        max(box[2] for box in boxes),
+        max(box[3] for box in boxes),
     ]
 
 
 def _quantile(values: list[float], fraction: float) -> float | None:
     if not values:
         return None
-    vals = sorted(float(v) for v in values)
-    idx = min(len(vals) - 1, max(0, round((len(vals) - 1) * fraction)))
-    return vals[idx]
+    vals = sorted(float(value) for value in values)
+    index = min(len(vals) - 1, max(0, round((len(vals) - 1) * fraction)))
+    return vals[index]
 
 
 def _norm_text(obj: dict[str, Any]) -> str:
@@ -58,13 +60,34 @@ def _norm_text(obj: dict[str, Any]) -> str:
 
 
 def _repeat_signature(text: str) -> str:
-    text = " ".join(str(text or "").split()).casefold()
-    return re.sub(r"\b\d+\b", "#", text)
+    return re.sub(r"\b\d+\b", "#", " ".join(str(text or "").split()).casefold())
+
+
+def _page_dimensions(page: dict[str, Any]) -> tuple[float, float]:
+    try:
+        return float(page.get("page_width_px") or 0), float(page.get("page_height_px") or 0)
+    except (TypeError, ValueError):
+        return 0.0, 0.0
+
+
+def _frame_family_key(page: dict[str, Any]) -> str:
+    width, height = _page_dimensions(page)
+    if width <= 0 or height <= 0:
+        return "unknown"
+    orientation = "landscape" if width > height else "portrait"
+    aspect = round(width / height, 3)
+    return f"{orientation}:{aspect:.3f}"
+
+
+def _pages_by_family(pages: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for page in pages:
+        grouped[_frame_family_key(page)].append(page)
+    return dict(grouped)
 
 
 def _page_info_records(page: dict[str, Any]) -> list[dict[str, Any]]:
-    width = float(page.get("page_width_px") or 0)
-    height = float(page.get("page_height_px") or 0)
+    width, height = _page_dimensions(page)
     if width <= 0 or height <= 0:
         return []
     rows: list[dict[str, Any]] = []
@@ -82,9 +105,9 @@ def _page_info_records(page: dict[str, Any]) -> list[dict[str, Any]]:
             "signature": _repeat_signature(text),
             "x0Ratio": box[0] / width,
             "x1Ratio": box[2] / width,
-            "yCenterRatio": ((box[1] + box[3]) / 2.0) / height,
             "y0Ratio": box[1] / height,
             "y1Ratio": box[3] / height,
+            "yCenterRatio": ((box[1] + box[3]) / 2.0) / height,
         })
     return rows
 
@@ -108,8 +131,7 @@ def _body_objects(page: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _raw_body_observation(page: dict[str, Any]) -> dict[str, Any]:
-    width = float(page.get("page_width_px") or 0)
-    height = float(page.get("page_height_px") or 0)
+    width, height = _page_dimensions(page)
     rows = _body_objects(page)
     if width <= 0 or height <= 0 or not rows:
         return {"status": "unavailable"}
@@ -126,34 +148,47 @@ def _raw_body_observation(page: dict[str, Any]) -> dict[str, Any]:
         "rightRatio": raw[2] / width,
         "rawBottomWhitespaceRatio": max(0.0, height - raw[3]) / height,
         "verticalOccupancyRatio": max(0.0, raw[3] - raw[1]) / height,
+        "source": "mathpix-lines-raw-body-envelope",
     }
 
 
 def _document_furniture_profile(pages: list[dict[str, Any]]) -> dict[str, Any]:
-    signatures = {"top": Counter(), "bottom": Counter()}
-    centers = {"top": [], "bottom": []}
-    for page in pages:
-        for row in _page_info_records(page):
-            ratio = float(row["yCenterRatio"])
-            if ratio <= 0.16:
-                side = "top"
-            elif ratio >= 0.82:
-                side = "bottom"
-            else:
-                continue
-            if row["signature"]:
-                signatures[side][row["signature"]] += 1
-            centers[side].append(ratio)
+    family_data: dict[str, dict[str, Any]] = {}
+    for family, family_pages in _pages_by_family(pages).items():
+        signatures = {"top": Counter(), "bottom": Counter()}
+        centers = {"top": [], "bottom": []}
+        for page in family_pages:
+            for row in _page_info_records(page):
+                ratio = float(row["yCenterRatio"])
+                if ratio <= 0.16:
+                    side = "top"
+                elif ratio >= 0.82:
+                    side = "bottom"
+                else:
+                    continue
+                if row["signature"]:
+                    signatures[side][row["signature"]] += 1
+                centers[side].append(ratio)
+        family_data[family] = {
+            "pageCount": len(family_pages),
+            "topSignatureCounts": dict(signatures["top"]),
+            "bottomSignatureCounts": dict(signatures["bottom"]),
+            "topMedianCenterRatio": median(centers["top"]) if centers["top"] else None,
+            "bottomMedianCenterRatio": median(centers["bottom"]) if centers["bottom"] else None,
+            "_signatureCounters": signatures,
+        }
     return {
-        "topSignatureCounts": dict(signatures["top"]),
-        "bottomSignatureCounts": dict(signatures["bottom"]),
-        "topMedianCenterRatio": median(centers["top"]) if centers["top"] else None,
-        "bottomMedianCenterRatio": median(centers["bottom"]) if centers["bottom"] else None,
-        "_signatureCounters": signatures,
+        "families": family_data,
+        "familyPolicy": (
+            "provisional physical frame families use only page orientation/aspect ratio; "
+            "semantic or Word section identity is intentionally not inferred here"
+        ),
     }
 
 
-def _classify_visible_furniture(page: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+def _classify_visible_furniture(page: dict[str, Any], document_profile: dict[str, Any]) -> dict[str, Any]:
+    family = _frame_family_key(page)
+    profile = (document_profile.get("families") or {}).get(family) or {}
     counters = profile.get("_signatureCounters") or {"top": Counter(), "bottom": Counter()}
     medians = {
         "top": profile.get("topMedianCenterRatio"),
@@ -185,16 +220,16 @@ def _classify_visible_furniture(page: dict[str, Any], profile: dict[str, Any]) -
         })
 
     def make_band(side: str) -> dict[str, Any] | None:
-        accepted = [r for r in buckets[side] if r.get("accepted")]
+        accepted = [row for row in buckets[side] if row.get("accepted")]
         if not accepted:
             return None
-        box = _union([r["bboxPx"] for r in accepted])
+        box = _union([row["bboxPx"] for row in accepted])
         if box is None:
             return None
         return {
             "bboxPx": box,
-            "objectIds": [r.get("id") for r in accepted],
-            "confidence": "high" if any(r.get("confidence") == "high" for r in accepted) else "medium",
+            "objectIds": [row.get("id") for row in accepted],
+            "confidence": "high" if any(row.get("confidence") == "high" for row in accepted) else "medium",
             "source": "mathpix-page-info-recurrence",
         }
 
@@ -209,6 +244,7 @@ def _classify_visible_furniture(page: dict[str, Any], profile: dict[str, Any]) -
         return "no-page-info-evidence"
 
     return {
+        "frameFamily": family,
         "header": header,
         "footer": footer,
         "headerStatus": status("top", header),
@@ -216,55 +252,67 @@ def _classify_visible_furniture(page: dict[str, Any], profile: dict[str, Any]) -
         "middlePageInfo": buckets["middle"],
         "topCandidates": buckets["top"],
         "bottomCandidates": buckets["bottom"],
-        "policy": "visible furniture requires edge position plus recurrence or a stable document band; missing page_info never proves absence",
+        "policy": (
+            "visible furniture requires edge position plus recurrence or stable family band; "
+            "missing page_info never proves absence"
+        ),
     }
 
 
-def _reserved_zone_profile(
+def _reserved_zone_profiles(
     pages: list[dict[str, Any]],
     visible_by_page: dict[int, dict[str, Any]],
     raw_body_by_page: dict[int, dict[str, Any]],
 ) -> dict[str, Any]:
-    header_ends: list[float] = []
-    footer_starts: list[float] = []
-    body_starts: list[float] = []
-    body_ends: list[float] = []
-    for page in pages:
-        page_no = int(page.get("page") or 0)
-        height = float(page.get("page_height_px") or 0)
-        if height <= 0:
-            continue
-        furniture = visible_by_page.get(page_no) or {}
-        header = furniture.get("header") or {}
-        footer = furniture.get("footer") or {}
-        raw = raw_body_by_page.get(page_no) or {}
-        if furniture.get("headerStatus") == "present-high" and header.get("bboxPx"):
-            header_ends.append(float(header["bboxPx"][3]) / height)
-        if furniture.get("footerStatus") == "present-high" and footer.get("bboxPx"):
-            footer_starts.append(float(footer["bboxPx"][1]) / height)
-        if raw.get("status") == "observed":
-            body_starts.append(float(raw["startRatio"]))
-            body_ends.append(float(raw["endRatio"]))
-    return {
-        "headerReservedEndRatio": median(header_ends) if header_ends else None,
-        "footerReservedStartRatio": median(footer_starts) if footer_starts else None,
-        "typicalRawBodyStartRatio": median(body_starts) if body_starts else None,
-        "typicalRawBodyEndRatio": median(body_ends) if body_ends else None,
-        "sourceCounts": {
-            "highHeaderPages": len(header_ends),
-            "highFooterPages": len(footer_starts),
-            "rawBodyPages": len(body_starts),
-        },
-        "policy": "visible furniture may be absent while its reserved document/page-family zone remains active",
-    }
+    result: dict[str, Any] = {"families": {}}
+    for family, family_pages in _pages_by_family(pages).items():
+        header_ends: list[float] = []
+        footer_starts: list[float] = []
+        raw_body_starts: list[float] = []
+        raw_body_ends: list[float] = []
+        for page in family_pages:
+            page_no = int(page.get("page") or 0)
+            _width, height = _page_dimensions(page)
+            if height <= 0:
+                continue
+            visible = visible_by_page.get(page_no) or {}
+            raw = raw_body_by_page.get(page_no) or {}
+            header = visible.get("header") or {}
+            footer = visible.get("footer") or {}
+            if visible.get("headerStatus") == "present-high" and header.get("bboxPx"):
+                header_ends.append(float(header["bboxPx"][3]) / height)
+            if visible.get("footerStatus") == "present-high" and footer.get("bboxPx"):
+                footer_starts.append(float(footer["bboxPx"][1]) / height)
+            if raw.get("status") == "observed":
+                raw_body_starts.append(float(raw["startRatio"]))
+                raw_body_ends.append(float(raw["endRatio"]))
+        result["families"][family] = {
+            "pageCount": len(family_pages),
+            "headerReservedEndRatio": median(header_ends) if header_ends else None,
+            "footerReservedStartRatio": median(footer_starts) if footer_starts else None,
+            "typicalRawBodyStartRatio": median(raw_body_starts) if raw_body_starts else None,
+            "typicalRawBodyEndRatio": median(raw_body_ends) if raw_body_ends else None,
+            "sourceCounts": {
+                "highHeaderPages": len(header_ends),
+                "highFooterPages": len(footer_starts),
+                "rawBodyPages": len(raw_body_starts),
+            },
+        }
+    result["policy"] = (
+        "visible furniture may be suppressed while a learned reserved frame remains active; "
+        "profiles never cross provisional frame-family boundaries"
+    )
+    return result
 
 
 def _resolve_reserved_zones(
     page: dict[str, Any],
     visible: dict[str, Any],
     raw_body: dict[str, Any],
-    profile: dict[str, Any],
+    reserved_profiles: dict[str, Any],
 ) -> dict[str, Any]:
+    family = _frame_family_key(page)
+    profile = (reserved_profiles.get("families") or {}).get(family) or {}
     header_status = str(visible.get("headerStatus") or "")
     footer_status = str(visible.get("footerStatus") or "")
     raw_start = raw_body.get("startRatio") if raw_body.get("status") == "observed" else None
@@ -274,10 +322,8 @@ def _resolve_reserved_zones(
 
     header_zone = "visible-furniture" if header_status.startswith("present-") else "unresolved"
     footer_zone = "visible-furniture" if footer_status.startswith("present-") else "unresolved"
-
-    # Equivalent to the old generous ~18pt tolerance, expressed proportionally
-    # so this observation pass does not require PDF-point scaling.
     tolerance = 0.025
+
     if not header_status.startswith("present-") and raw_start is not None and typical_start is not None:
         if float(raw_start) >= float(typical_start) - tolerance:
             header_zone = "absent-by-layout"
@@ -286,44 +332,100 @@ def _resolve_reserved_zones(
             footer_zone = "absent-by-layout"
 
     return {
+        "frameFamily": family,
         "headerObjectStatus": header_status or None,
         "footerObjectStatus": footer_status or None,
         "headerReservedZoneStatus": header_zone,
         "footerReservedZoneStatus": footer_zone,
-        "bodyInferencePermission": "allowed" if header_zone != "unresolved" and footer_zone != "unresolved" else "blocked",
-        "policy": "absence of a visible object is distinguished from absence of the reserved page-furniture zone",
+        "learnedHeaderReservedEndRatio": profile.get("headerReservedEndRatio"),
+        "learnedFooterReservedStartRatio": profile.get("footerReservedStartRatio"),
+        "bodyInferencePermission": (
+            "allowed" if header_zone != "unresolved" and footer_zone != "unresolved" else "blocked"
+        ),
+        "policy": (
+            "absence of a visible object is distinct from absence of its reserved zone; "
+            "an absent-by-layout page uses the learned family boundary only as an exclusion boundary"
+        ),
     }
 
 
-def _infer_robust_body(page: dict[str, Any], visible: dict[str, Any], reserved: dict[str, Any]) -> dict[str, Any]:
-    width = float(page.get("page_width_px") or 0)
-    height = float(page.get("page_height_px") or 0)
+def _effective_vertical_boundaries(
+    page: dict[str, Any],
+    visible: dict[str, Any],
+    reserved: dict[str, Any],
+) -> tuple[float, float] | None:
+    _width, height = _page_dimensions(page)
+    if height <= 0:
+        return None
+    header_box = (visible.get("header") or {}).get("bboxPx")
+    footer_box = (visible.get("footer") or {}).get("bboxPx")
+
+    if header_box:
+        header_end = float(header_box[3])
+        header_source = "visible-header"
+    elif reserved.get("headerReservedZoneStatus") == "absent-by-layout" and reserved.get("learnedHeaderReservedEndRatio") is not None:
+        header_end = float(reserved["learnedHeaderReservedEndRatio"]) * height
+        header_source = "learned-reserved-header"
+    else:
+        return None
+
+    if footer_box:
+        footer_start = float(footer_box[1])
+        footer_source = "visible-footer"
+    elif reserved.get("footerReservedZoneStatus") == "absent-by-layout" and reserved.get("learnedFooterReservedStartRatio") is not None:
+        footer_start = float(reserved["learnedFooterReservedStartRatio"]) * height
+        footer_source = "learned-reserved-footer"
+    else:
+        return None
+
+    if footer_start <= header_end:
+        return None
+    reserved["effectiveHeaderBoundarySource"] = header_source
+    reserved["effectiveFooterBoundarySource"] = footer_source
+    return header_end, footer_start
+
+
+def _infer_robust_body(
+    page: dict[str, Any],
+    visible: dict[str, Any],
+    reserved: dict[str, Any],
+) -> dict[str, Any]:
+    width, height = _page_dimensions(page)
     if width <= 0 or height <= 0:
         return {"status": "blocked", "reason": "missing-page-dimensions"}
     if reserved.get("bodyInferencePermission") != "allowed":
         return {"status": "blocked", "reason": "reserved-page-zones-unresolved"}
 
-    header_box = (visible.get("header") or {}).get("bboxPx")
-    footer_box = (visible.get("footer") or {}).get("bboxPx")
-    header_end = float(header_box[3]) if header_box else float((0.0 if profile_none(reserved) else 0.0))
-    footer_start = float(footer_box[1]) if footer_box else height
+    boundaries = _effective_vertical_boundaries(page, visible, reserved)
+    if boundaries is None:
+        return {"status": "blocked", "reason": "reserved-boundary-coordinate-unavailable"}
+    header_end, footer_start = boundaries
+
     rows = [
-        r for r in _body_objects(page)
-        if r["bboxPx"][3] > header_end and r["bboxPx"][1] < footer_start
+        row
+        for row in _body_objects(page)
+        if row["bboxPx"][3] > header_end and row["bboxPx"][1] < footer_start
     ]
     if not rows:
         return {"status": "blocked", "reason": "no-body-objects-after-furniture-exclusion"}
 
-    x0 = _quantile([r["bboxPx"][0] for r in rows], 0.08)
-    y0 = _quantile([r["bboxPx"][1] for r in rows], 0.04)
-    x1 = _quantile([r["bboxPx"][2] for r in rows], 0.92)
-    y1 = _quantile([r["bboxPx"][3] for r in rows], 0.96)
+    x0 = _quantile([row["bboxPx"][0] for row in rows], 0.08)
+    y0 = _quantile([row["bboxPx"][1] for row in rows], 0.04)
+    x1 = _quantile([row["bboxPx"][2] for row in rows], 0.92)
+    y1 = _quantile([row["bboxPx"][3] for row in rows], 0.96)
     if None in {x0, y0, x1, y1}:
         return {"status": "blocked", "reason": "insufficient-body-envelope"}
-    robust = [float(x0), max(float(y0), header_end), float(x1), min(float(y1), footer_start)]
+
+    robust = [
+        float(x0),
+        max(float(y0), header_end),
+        float(x1),
+        min(float(y1), footer_start),
+    ]
     if robust[2] <= robust[0] or robust[3] <= robust[1]:
         return {"status": "blocked", "reason": "invalid-robust-body-envelope"}
-    raw = _union([r["bboxPx"] for r in rows])
+
+    raw = _union([row["bboxPx"] for row in rows])
     return {
         "status": "observed",
         "bboxPx": robust,
@@ -338,22 +440,22 @@ def _infer_robust_body(page: dict[str, Any], visible: dict[str, Any], reserved: 
         "rawBottomWhitespaceRatio": (height - raw[3]) / height if raw else None,
         "confidence": "high" if len(rows) >= 8 else "medium",
         "source": "mathpix-lines-robust-body-observation",
+        "policy": (
+            "robust body is a page observation constrained by visible or learned reserved-zone boundaries; "
+            "it is not itself an inherited page frame"
+        ),
     }
 
 
-def profile_none(_reserved: dict[str, Any]) -> None:
-    # Kept as a named sentinel helper to make it explicit that no learned
-    # reserved coordinate is silently substituted into a page observation.
-    return None
-
-
 def _furniture_inside_body_validation(
-    body: dict[str, Any], visible: dict[str, Any], page: dict[str, Any]
+    body: dict[str, Any],
+    visible: dict[str, Any],
+    page: dict[str, Any],
 ) -> dict[str, Any]:
     box = body.get("bboxPx") if body.get("status") == "observed" else None
     if not box:
         return {"status": "unavailable", "valid": False}
-    height = float(page.get("page_height_px") or 0)
+    _width, height = _page_dimensions(page)
     tolerance = max(2.0, height * 0.0025)
     header_box = (visible.get("header") or {}).get("bboxPx")
     footer_box = (visible.get("footer") or {}).get("bboxPx")
@@ -364,40 +466,15 @@ def _furniture_inside_body_validation(
         "headerInsideTopMargin": header_ok,
         "footerInsideBottomMargin": footer_ok,
         "valid": header_ok and footer_ok,
-        "policy": "header/footer are witnesses inside full margins; they are never additive to margin size",
+        "policy": "visible header/footer must lie inside full margins; they never add to margin size",
     }
 
 
-def _build_margin_profile(page_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    trusted = []
-    for row in page_rows:
-        body = row.get("bodyEvidence") or {}
-        reserved = row.get("reservedZoneEvidence") or {}
-        validation = row.get("furnitureValidation") or {}
-        if (
-            body.get("status") == "observed"
-            and body.get("confidence") == "high"
-            and int(body.get("objectCount") or 0) >= 8
-            and reserved.get("headerReservedZoneStatus") != "unresolved"
-            and reserved.get("footerReservedZoneStatus") != "unresolved"
-            and validation.get("valid")
-        ):
-            trusted.append(row)
-    profile = {}
-    for side in ("left", "right", "top", "bottom"):
-        values = [float((row["bodyEvidence"].get("normalizedMargins") or {})[side]) for row in trusted]
-        profile[side] = median(values) if values else None
-    profile["sourcePageCount"] = len(trusted)
-    profile["sourcePages"] = [int(row.get("page") or 0) for row in trusted]
-    profile["policy"] = "median normalized margins from trusted pages only; sparse/special pages cannot redefine the document/page-family frame"
-    return profile
-
-
-def _resolve_margin_evidence(row: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+def _trusted_page_row(row: dict[str, Any]) -> bool:
     body = row.get("bodyEvidence") or {}
     reserved = row.get("reservedZoneEvidence") or {}
     validation = row.get("furnitureValidation") or {}
-    trusted = (
+    return bool(
         body.get("status") == "observed"
         and body.get("confidence") == "high"
         and int(body.get("objectCount") or 0) >= 8
@@ -405,40 +482,115 @@ def _resolve_margin_evidence(row: dict[str, Any], profile: dict[str, Any]) -> di
         and reserved.get("footerReservedZoneStatus") != "unresolved"
         and validation.get("valid")
     )
-    if trusted:
+
+
+def _build_family_margin_profiles(page_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in page_rows:
+        if _trusted_page_row(row):
+            grouped[str(row.get("frameFamily") or "unknown")].append(row)
+
+    families: dict[str, Any] = {}
+    for family, trusted in grouped.items():
+        median_margins: dict[str, float | None] = {}
+        for side in ("left", "right", "top", "bottom"):
+            values = [
+                float((row.get("bodyEvidence") or {}).get("normalizedMargins", {}).get(side))
+                for row in trusted
+                if (row.get("bodyEvidence") or {}).get("normalizedMargins", {}).get(side) is not None
+            ]
+            median_margins[side] = median(values) if values else None
+
+        raw_bottom_rows = [
+            row for row in trusted
+            if (row.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio") is not None
+        ]
+        raw_bottom_values = [
+            float((row.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio"))
+            for row in raw_bottom_rows
+        ]
+        dense_threshold = _quantile(raw_bottom_values, 0.25)
+        dense_rows = [
+            row for row in raw_bottom_rows
+            if dense_threshold is not None
+            and float((row.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio")) <= dense_threshold
+        ]
+        dense_robust_bottom = [
+            float((row.get("bodyEvidence") or {}).get("normalizedMargins", {}).get("bottom"))
+            for row in dense_rows
+            if (row.get("bodyEvidence") or {}).get("normalizedMargins", {}).get("bottom") is not None
+        ]
+        families[family] = {
+            "trustedSourcePageCount": len(trusted),
+            "trustedSourcePages": [int(row.get("page") or 0) for row in trusted],
+            "medianNormalizedMargins": median_margins,
+            "denseBottomConstraint": {
+                "status": "observed" if dense_rows else "unresolved",
+                "rawBottomWhitespaceP25": dense_threshold,
+                "sourcePages": [int(row.get("page") or 0) for row in dense_rows],
+                "medianRobustBottomMargin": median(dense_robust_bottom) if dense_robust_bottom else None,
+                "policy": (
+                    "fullest trusted pages constrain bottom-frame evidence; "
+                    "short or unresolved pages cannot enlarge the inferred bottom frame"
+                ),
+            },
+        }
+
+    return {
+        "families": families,
+        "policy": (
+            "family profiles are built from trusted page observations only; "
+            "page-specific observation and inherited family frame remain distinct"
+        ),
+    }
+
+
+def _resolve_margin_evidence(row: dict[str, Any], family_profiles: dict[str, Any]) -> dict[str, Any]:
+    family = str(row.get("frameFamily") or "unknown")
+    profile = (family_profiles.get("families") or {}).get(family) or {}
+    if _trusted_page_row(row):
         return {
             "status": "resolved-observation",
             "source": "page-evidence",
-            "normalizedMargins": dict(body.get("normalizedMargins") or {}),
+            "normalizedMargins": dict((row.get("bodyEvidence") or {}).get("normalizedMargins") or {}),
             "confidence": "high",
             "wordRealization": None,
         }
-    if all(profile.get(side) is not None for side in ("left", "right", "top", "bottom")):
+
+    median_margins = profile.get("medianNormalizedMargins") or {}
+    if all(median_margins.get(side) is not None for side in ("left", "right", "top", "bottom")):
         return {
-            "status": "resolved-observation",
-            "source": "document-profile",
-            "normalizedMargins": {side: float(profile[side]) for side in ("left", "right", "top", "bottom")},
+            "status": "resolved-inherited-frame",
+            "source": "frame-family-profile",
+            "normalizedMargins": {
+                side: float(median_margins[side]) for side in ("left", "right", "top", "bottom")
+            },
+            "denseBottomConstraint": profile.get("denseBottomConstraint"),
             "confidence": "medium",
             "wordRealization": None,
-            "reason": "page-specific margin evidence is unsafe; stable document/page-family profile retained",
+            "reason": "page-specific frame evidence is unsafe; compatible provisional frame-family profile retained",
         }
+
     return {
         "status": "unresolved",
         "source": None,
         "normalizedMargins": None,
         "confidence": "none",
         "wordRealization": None,
-        "reason": "no-trusted-document-margin-profile",
+        "reason": "no-trusted-compatible-frame-family-profile",
     }
 
 
 def _zone_rows(page: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any]]:
-    width = float(page.get("page_width_px") or 0)
-    height = float(page.get("page_height_px") or 0)
+    width, height = _page_dimensions(page)
     body_box = body.get("bboxPx") if body.get("status") == "observed" else None
     body_height = (body_box[3] - body_box[1]) if body_box else height
-    by_id = {str(o.get("id")): o for o in page.get("objects", []) or [] if o.get("id")}
-    rows = []
+    by_id = {
+        str(obj.get("id")): obj
+        for obj in page.get("objects", []) or []
+        if obj.get("id")
+    }
+    rows: list[dict[str, Any]] = []
     for obj in page.get("objects", []) or []:
         if str(obj.get("type") or "") != "column":
             continue
@@ -446,7 +598,10 @@ def _zone_rows(page: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any
         if box is None or width <= 0 or height <= 0:
             continue
         child_ids = list(obj.get("children_ids") or [])
-        child_types = Counter(str((by_id.get(str(cid)) or {}).get("type") or "unknown") for cid in child_ids)
+        child_types = Counter(
+            str((by_id.get(str(child_id)) or {}).get("type") or "unknown")
+            for child_id in child_ids
+        )
         rows.append({
             "zoneId": str(obj.get("id") or ""),
             "bboxPx": box,
@@ -459,21 +614,38 @@ def _zone_rows(page: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any
             "childTypeCounts": dict(sorted(child_types.items())),
             "source": "mathpix-lines-column-envelope",
         })
-    return sorted(rows, key=lambda r: (r["bboxPx"][0], r["bboxPx"][1]))
+    return sorted(rows, key=lambda row: (row["bboxPx"][0], row["bboxPx"][1]))
 
 
-def _classify_zone_relationship(page: dict[str, Any], body: dict[str, Any], zones: list[dict[str, Any]]) -> dict[str, Any]:
-    width = float(page.get("page_width_px") or 0)
+def _classify_zone_relationship(
+    page: dict[str, Any],
+    body: dict[str, Any],
+    zones: list[dict[str, Any]],
+) -> dict[str, Any]:
+    width, _height = _page_dimensions(page)
     if not zones:
-        return {"classification": "no-explicit-zones", "confidence": "low", "rendererMeaning": "unresolved"}
-    long_lived = [z for z in zones if z["heightRatioToBody"] >= 0.45 and z["widthRatio"] >= 0.16]
+        return {
+            "classification": "no-explicit-zones",
+            "confidence": "low",
+            "rendererMeaning": "unresolved",
+        }
+
+    long_lived = [
+        zone
+        for zone in zones
+        if zone["heightRatioToBody"] >= 0.45 and zone["widthRatio"] >= 0.16
+    ]
     if len(long_lived) == 2:
         left, right = long_lived
         gap_ratio = max(0.0, right["bboxPx"][0] - left["bboxPx"][2]) / max(1.0, width)
-        width_similarity = min(left["widthRatio"], right["widthRatio"]) / max(left["widthRatio"], right["widthRatio"])
+        width_similarity = min(left["widthRatio"], right["widthRatio"]) / max(
+            left["widthRatio"], right["widthRatio"]
+        )
         if width_similarity >= 0.72 and gap_ratio <= 0.12:
             classification, confidence = "balanced-parallel-zones", "high"
-        elif min(left["widthRatio"], right["widthRatio"]) <= 0.28 and max(left["widthRatio"], right["widthRatio"]) >= 0.48:
+        elif min(left["widthRatio"], right["widthRatio"]) <= 0.28 and max(
+            left["widthRatio"], right["widthRatio"]
+        ) >= 0.48:
             classification, confidence = "asymmetric-parallel-zones", "high"
         else:
             classification, confidence = "ambiguous-parallel-zones", "medium"
@@ -484,33 +656,59 @@ def _classify_zone_relationship(page: dict[str, Any], body: dict[str, Any], zone
             "widthSimilarity": round(width_similarity, 4),
             "gapRatio": round(gap_ratio, 4),
             "rendererMeaning": "unresolved",
-            "policy": "geometric relationship only; balanced does not mean Word columns and asymmetric does not mean sidebar",
+            "policy": (
+                "geometric relationship only; balanced does not mean Word columns "
+                "and asymmetric does not mean sidebar"
+            ),
         }
     if len(long_lived) == 1:
-        return {"classification": "single-long-lived-zone", "confidence": "medium", "zoneIds": [long_lived[0]["zoneId"]], "rendererMeaning": "unresolved"}
+        return {
+            "classification": "single-long-lived-zone",
+            "confidence": "medium",
+            "zoneIds": [long_lived[0]["zoneId"]],
+            "rendererMeaning": "unresolved",
+        }
     if len(long_lived) > 2:
-        return {"classification": "multiple-long-lived-zones", "confidence": "medium", "zoneIds": [z["zoneId"] for z in long_lived], "rendererMeaning": "unresolved"}
-    return {"classification": "local-zones-only", "confidence": "medium", "zoneIds": [z["zoneId"] for z in zones], "rendererMeaning": "unresolved"}
+        return {
+            "classification": "multiple-long-lived-zones",
+            "confidence": "medium",
+            "zoneIds": [zone["zoneId"] for zone in long_lived],
+            "rendererMeaning": "unresolved",
+        }
+    return {
+        "classification": "local-zones-only",
+        "confidence": "medium",
+        "zoneIds": [zone["zoneId"] for zone in zones],
+        "rendererMeaning": "unresolved",
+    }
 
 
 def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
     pages = list(line_map.get("pages", []) or [])
     furniture_profile = _document_furniture_profile(pages)
-    visible_by_page = {int(p.get("page") or 0): _classify_visible_furniture(p, furniture_profile) for p in pages}
-    raw_body_by_page = {int(p.get("page") or 0): _raw_body_observation(p) for p in pages}
-    reserved_profile = _reserved_zone_profile(pages, visible_by_page, raw_body_by_page)
+    visible_by_page = {
+        int(page.get("page") or 0): _classify_visible_furniture(page, furniture_profile)
+        for page in pages
+    }
+    raw_body_by_page = {
+        int(page.get("page") or 0): _raw_body_observation(page)
+        for page in pages
+    }
+    reserved_profiles = _reserved_zone_profiles(pages, visible_by_page, raw_body_by_page)
 
     first_pass: list[dict[str, Any]] = []
     for page in pages:
         page_no = int(page.get("page") or 0)
+        family = _frame_family_key(page)
         visible = visible_by_page.get(page_no) or {}
         raw = raw_body_by_page.get(page_no) or {}
-        reserved = _resolve_reserved_zones(page, visible, raw, reserved_profile)
+        reserved = _resolve_reserved_zones(page, visible, raw, reserved_profiles)
         body = _infer_robust_body(page, visible, reserved)
         validation = _furniture_inside_body_validation(body, visible, page)
         first_pass.append({
             "page": page_no,
-            "pageSizePx": [float(page.get("page_width_px") or 0), float(page.get("page_height_px") or 0)],
+            "frameFamily": family,
+            "pageSizePx": list(_page_dimensions(page)),
             "visibleFurnitureEvidence": visible,
             "reservedZoneEvidence": reserved,
             "rawBodyEvidence": raw,
@@ -518,29 +716,40 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
             "furnitureValidation": validation,
         })
 
-    margin_profile = _build_margin_profile(first_pass)
-    page_by_no = {int(page.get("page") or 0): page for page in pages}
+    margin_profiles = _build_family_margin_profiles(first_pass)
+    page_by_no = {
+        int(page.get("page") or 0): page
+        for page in pages
+    }
+
     out: list[dict[str, Any]] = []
-    counts = Counter()
+    relationship_counts: Counter[str] = Counter()
     for row in first_pass:
         page_no = int(row.get("page") or 0)
         page = page_by_no.get(page_no) or {}
-        margin = _resolve_margin_evidence(row, margin_profile)
+        margin = _resolve_margin_evidence(row, margin_profiles)
         zones = _zone_rows(page, row.get("bodyEvidence") or {})
-        relation = _classify_zone_relationship(page, row.get("bodyEvidence") or {}, zones)
-        counts[relation.get("classification") or "unknown"] += 1
-        conflicts = []
-        if (row.get("furnitureValidation") or {}).get("status") == "checked" and not (row.get("furnitureValidation") or {}).get("valid"):
+        relationship = _classify_zone_relationship(
+            page,
+            row.get("bodyEvidence") or {},
+            zones,
+        )
+        relationship_counts[relationship.get("classification") or "unknown"] += 1
+
+        conflicts: list[dict[str, Any]] = []
+        validation = row.get("furnitureValidation") or {}
+        if validation.get("status") == "checked" and not validation.get("valid"):
             conflicts.append({
                 "attribute": "page-frame-vs-visible-furniture",
                 "status": "explicit-conflict",
-                "policy": "do not silently repair body/margins from contradictory furniture evidence",
+                "policy": "do not silently repair body/frame from contradictory furniture evidence",
             })
+
         out.append({
             **row,
             "marginEvidence": margin,
             "zones": zones,
-            "zoneRelationship": relation,
+            "zoneRelationship": relationship,
             "conflicts": conflicts,
             "crossZoneReadingOrder": {
                 "status": "unresolved" if len(zones) > 1 else "not-applicable",
@@ -550,48 +759,57 @@ def build_canonical_page_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
             "wordRealization": None,
         })
 
-    dense_values = [
-        float((p.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio"))
-        for p in out if (p.get("rawBodyEvidence") or {}).get("rawBottomWhitespaceRatio") is not None
-    ]
-    fullness_profile = {
-        "rawBottomWhitespaceRatio": {
-            "min": min(dense_values) if dense_values else None,
-            "p10": _quantile(dense_values, 0.10),
-            "p25": _quantile(dense_values, 0.25),
-            "median": _quantile(dense_values, 0.50),
+    serial_furniture = {
+        "families": {
+            family: {
+                key: value
+                for key, value in data.items()
+                if not key.startswith("_")
+            }
+            for family, data in (furniture_profile.get("families") or {}).items()
         },
-        "policy": "fullest pages constrain the bottom frame; short pages may increase whitespace but cannot establish a larger bottom margin",
+        "familyPolicy": furniture_profile.get("familyPolicy"),
     }
 
-    serial_furniture_profile = {k: v for k, v in furniture_profile.items() if not k.startswith("_")}
     return {
         "version": VERSION,
         "status": "renderer-neutral-observation-only",
         "policy": {
             "mutatesPageStructure": False,
             "wordDecisions": "forbidden",
+            "frameFamilies": "provisional-page-shape-only-no-semantic-section-claim",
+            "visibleFurniture": "recurrence-plus-edge-band-within-frame-family",
+            "reservedZones": "suppressed-visible-furniture-may-retain-family-reserved-boundary",
+            "bodyObservation": "robust-page-observation-constrained-by-visible-or-reserved-boundaries",
+            "frameEvidence": "trusted-page-observation-or-compatible-frame-family-profile",
+            "bottomFrame": "dense-bottom-constraint-from-trusted-pages-only",
             "zoneNames": "geometric-only-no-main-sidebar-column-labels",
-            "visibleFurniture": "recurrence-plus-edge-band-observation",
-            "reservedZones": "document-profile-can-distinguish-suppressed-visible-furniture-from-missing-reserved-zone",
-            "body": "robust-observation-after-reserved-zone-resolution",
-            "margins": "trusted-page-observation-or-document-profile-never-direct-Word-override",
-            "bottomMargin": "full-page-density-evidence-retained-separately",
             "crossZoneReadingOrder": "never-inferred-from-x-y-position-alone",
         },
-        "documentFurnitureProfile": serial_furniture_profile,
-        "documentReservedZoneProfile": reserved_profile,
-        "documentMarginProfile": margin_profile,
-        "documentFullnessProfile": fullness_profile,
+        "documentFurnitureProfile": serial_furniture,
+        "documentReservedZoneProfiles": reserved_profiles,
+        "documentFrameProfiles": margin_profiles,
         "summary": {
             "pageCount": len(out),
-            "zoneRelationshipCounts": dict(sorted(counts.items())),
-            "observedBodyPageCount": sum(1 for p in out if (p.get("bodyEvidence") or {}).get("status") == "observed"),
-            "blockedBodyPageCount": sum(1 for p in out if (p.get("bodyEvidence") or {}).get("status") != "observed"),
-            "pageMarginEvidenceCount": sum(1 for p in out if (p.get("marginEvidence") or {}).get("source") == "page-evidence"),
-            "profileMarginEvidenceCount": sum(1 for p in out if (p.get("marginEvidence") or {}).get("source") == "document-profile"),
-            "unresolvedMarginCount": sum(1 for p in out if (p.get("marginEvidence") or {}).get("status") == "unresolved"),
-            "conflictCount": sum(len(p.get("conflicts") or []) for p in out),
+            "frameFamilyCount": len((margin_profiles.get("families") or {})),
+            "zoneRelationshipCounts": dict(sorted(relationship_counts.items())),
+            "observedBodyPageCount": sum(
+                1 for row in out if (row.get("bodyEvidence") or {}).get("status") == "observed"
+            ),
+            "blockedBodyPageCount": sum(
+                1 for row in out if (row.get("bodyEvidence") or {}).get("status") != "observed"
+            ),
+            "pageMarginEvidenceCount": sum(
+                1 for row in out if (row.get("marginEvidence") or {}).get("source") == "page-evidence"
+            ),
+            "familyFrameEvidenceCount": sum(
+                1 for row in out
+                if (row.get("marginEvidence") or {}).get("source") == "frame-family-profile"
+            ),
+            "unresolvedMarginCount": sum(
+                1 for row in out if (row.get("marginEvidence") or {}).get("status") == "unresolved"
+            ),
+            "conflictCount": sum(len(row.get("conflicts") or []) for row in out),
             "wordDecisionCount": 0,
         },
         "pages": out,
