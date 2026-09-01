@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-VERSION = "canonical-page-recovery-0.5"
+VERSION = "canonical-page-recovery-0.6"
 
 _EXCLUDED_STRUCTURAL_TYPES = {
     "page_info",
@@ -79,6 +79,63 @@ def _descendant_content_extent(page: dict[str, Any], zone: dict[str, Any]) -> di
             max(box[2] for box in boxes),
             max(box[3] for box in boxes),
         ],
+    }
+
+
+def _reconcile_frame_outward(
+    inherited_frame: list[float],
+    raw_body: dict[str, Any],
+    page_width: float,
+    page_height: float,
+) -> dict[str, Any]:
+    """Expand an inherited frame only when direct page content proves it is too small."""
+    frame = [float(value) for value in inherited_frame]
+    raw_box = raw_body.get("bboxPx") if raw_body.get("status") == "observed" else None
+    if not raw_box or len(raw_box) != 4:
+        return {
+            "status": "unchanged-no-page-content-envelope",
+            "inheritedFramePx": frame,
+            "reconciledFramePx": frame,
+            "rawContentEnvelopePx": raw_box,
+            "expandedSides": [],
+            "source": "outer-frame-profile-only",
+        }
+
+    try:
+        rx0, ry0, rx1, ry1 = [float(value) for value in raw_box]
+    except (TypeError, ValueError):
+        return {
+            "status": "unchanged-invalid-page-content-envelope",
+            "inheritedFramePx": frame,
+            "reconciledFramePx": frame,
+            "rawContentEnvelopePx": raw_box,
+            "expandedSides": [],
+            "source": "outer-frame-profile-only",
+        }
+
+    reconciled = [
+        max(0.0, min(frame[0], rx0)),
+        max(0.0, min(frame[1], ry0)),
+        min(page_width, max(frame[2], rx1)),
+        min(page_height, max(frame[3], ry1)),
+    ]
+    expanded: list[str] = []
+    if reconciled[0] < frame[0]: expanded.append("left")
+    if reconciled[1] < frame[1]: expanded.append("top")
+    if reconciled[2] > frame[2]: expanded.append("right")
+    if reconciled[3] > frame[3]: expanded.append("bottom")
+
+    return {
+        "status": "expanded-by-direct-page-content" if expanded else "unchanged-content-inside-prior",
+        "inheritedFramePx": frame,
+        "reconciledFramePx": reconciled,
+        "rawContentEnvelopePx": [rx0, ry0, rx1, ry1],
+        "expandedSides": expanded,
+        "source": "outer-frame-prior-plus-direct-raw-content",
+        "policy": (
+            "family outer frame is a prior, never a clipping boundary; direct page-specific raw content "
+            "may expand it outward only and can never shrink it inward"
+        ),
     }
 
 
@@ -234,7 +291,7 @@ def _classify_recovered_zones(
         "crossZoneReadingOrder": "unresolved" if len(normalized) > 1 else "not-applicable",
         "wordRealization": None,
         "policy": (
-            "zone relationship is measured against inherited outer-frame evidence only; "
+            "zone relationship is measured against reconciled renderer-neutral frame evidence only; "
             "container fit and descendant-content fit remain distinct, confidence is capped at medium, "
             "and no Word columns/sidebar/reading order are inferred"
         ),
@@ -249,10 +306,10 @@ def recover_blocked_pages(
 ) -> dict[str, Any]:
     """Attach renderer-neutral second-pass recovery evidence.
 
-    Primary body evidence remains untouched. Recovery prefers a dedicated outer
-    frame profile learned from trusted raw extents. Robust-body margin profiles
-    are not treated as page/text frames because their quantiles intentionally
-    shrink observed content envelopes.
+    Primary body evidence remains untouched. Recovery starts from a dedicated
+    outer-frame prior learned from trusted raw extents, then reconciles that prior
+    outward with direct raw content evidence from the selected page. Direct page
+    evidence may expand the inherited frame but can never shrink it.
     """
     page_map = {
         int(page.get("page") or 0): page
@@ -293,13 +350,22 @@ def recover_blocked_pages(
                 width = height = 0.0
 
             if eligible and width > 0 and height > 0:
-                frame = [left * width, top * height, right * width, bottom * height]
-                if frame[2] > frame[0] and frame[3] > frame[1]:
+                inherited_frame = [left * width, top * height, right * width, bottom * height]
+                if inherited_frame[2] > inherited_frame[0] and inherited_frame[3] > inherited_frame[1]:
+                    reconciliation = _reconcile_frame_outward(
+                        inherited_frame,
+                        row.get("rawBodyEvidence") or {},
+                        width,
+                        height,
+                    )
+                    frame = list(reconciliation.get("reconciledFramePx") or inherited_frame)
                     recovery = {
-                        "status": "recovered-from-outer-frame-profile",
+                        "status": "recovered-from-reconciled-outer-frame",
                         "confidence": "medium",
                         "bodyConstraintPx": frame,
-                        "source": "trusted-raw-outer-extents",
+                        "inheritedOuterFramePx": inherited_frame,
+                        "source": "outer-frame-prior-plus-direct-raw-content",
+                        "frameReconciliation": reconciliation,
                         "frameProfileVersion": (frame_profile or {}).get("version"),
                         "frameProfileSourcePages": family_frame.get("sourcePages"),
                         "frameRatios": ratios,
@@ -308,8 +374,8 @@ def recover_blocked_pages(
                         "crossZoneReadingOrder": "unresolved",
                         "wordRealization": None,
                         "policy": (
-                            "outer trusted raw extents constrain recovery geometry; robust-content "
-                            "quantiles remain separate and furniture semantics remain unresolved"
+                            "trusted family outer frame is a prior; direct page-specific raw content may expand "
+                            "that prior outward only; furniture semantics remain unresolved"
                         ),
                     }
                     zone_recovery = _classify_recovered_zones(row, page, frame, width)
@@ -326,9 +392,8 @@ def recover_blocked_pages(
         "recoveredPageCount": recovered,
         "zoneRecoveredPageCount": zone_recovered,
         "policy": (
-            "second-pass geometry only; dedicated outer-frame evidence is separate from robust content envelopes; "
-            "container geometry and descendant-content geometry remain distinct; primary evidence is preserved "
-            "and no page_structure mutation or Word realization is permitted"
+            "second-pass geometry only; family outer frame is a prior reconciled outward with direct raw page content; "
+            "primary evidence remains untouched and no page_structure mutation or Word realization is permitted"
         ),
     }
     return report
