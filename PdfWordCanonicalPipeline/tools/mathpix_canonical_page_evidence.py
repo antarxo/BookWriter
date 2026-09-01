@@ -81,6 +81,7 @@ def main() -> int:
     margin = selected.get("marginEvidence") or {}
     relation = selected.get("zoneRelationship") or {}
     recovery = selected.get("profileRecoveryEvidence") or {}
+    reconciliation = recovery.get("frameReconciliation") or {}
     recovery_relation = selected.get("recoveryZoneRelationship") or {}
     frame_fit = recovery_relation.get("zoneFrameFit") or {}
     descendant_fit = recovery_relation.get("descendantContentFrameFit") or {}
@@ -119,6 +120,12 @@ def main() -> int:
         f"bottom(med/p90/max)={overhang.get('bottomMedianRatio')}/{overhang.get('bottomP90Ratio')}/{overhang.get('bottomMaxRatio')}"
     )
     print(f"PROFILE RECOVERY {recovery.get('status')} confidence={recovery.get('confidence')}")
+    print(f"INHERITED OUTER FRAME {recovery.get('inheritedOuterFramePx')}")
+    print(f"DIRECT RAW CONTENT {reconciliation.get('rawContentEnvelopePx')}")
+    print(
+        "FRAME RECONCILIATION "
+        f"status={reconciliation.get('status')} expanded={reconciliation.get('expandedSides')}"
+    )
     print(f"RECOVERY FRAME {recovery.get('bodyConstraintPx')}")
     print(f"RECOVERY FRAME SOURCE {recovery.get('source')}")
     print(f"ZONES {len(selected.get('zones') or [])}")
