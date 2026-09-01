@@ -5,7 +5,11 @@ import json
 from pathlib import Path
 
 from pdf_word_reconstructor.canonical_evidence_fusion import build_canonical_evidence_document
+from pdf_word_reconstructor.canonical_frame_profile import build_canonical_frame_profile
+from pdf_word_reconstructor.canonical_page_evidence import build_canonical_page_evidence
+from pdf_word_reconstructor.canonical_page_recovery import recover_blocked_pages
 from pdf_word_reconstructor.canonical_page_topology import build_page_topology
+from pdf_word_reconstructor.mathpix_lines_input import build_mathpix_line_layout_map
 
 
 def parser() -> argparse.ArgumentParser:
@@ -96,11 +100,37 @@ def main() -> int:
         target_page=args.page,
         work_dir=args.output / "work",
     )
-    report["pageTopology"] = build_page_topology(list(report.get("blocks") or []), args.page)
+
+    line_map = build_mathpix_line_layout_map(lines, None)
+    page_evidence_report = build_canonical_page_evidence(line_map)
+    outer_frame_profile = build_canonical_frame_profile(page_evidence_report)
+    page_evidence_report = recover_blocked_pages(page_evidence_report, line_map, outer_frame_profile)
+    selected_page_evidence = next(
+        (
+            row for row in page_evidence_report.get("pages", []) or []
+            if int(row.get("page") or 0) == args.page
+        ),
+        None,
+    )
+
+    report["pageEvidenceVersions"] = {
+        "canonicalPageEvidence": page_evidence_report.get("version"),
+        "outerFrameProfile": outer_frame_profile.get("version"),
+        "profileRecovery": (page_evidence_report.get("profileRecovery") or {}).get("version"),
+    }
+    report["pageEvidence"] = selected_page_evidence
+    report["canonicalOuterFrameProfile"] = outer_frame_profile
+    report["pageTopology"] = build_page_topology(
+        list(report.get("blocks") or []),
+        args.page,
+        selected_page_evidence,
+    )
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     summary = report.get("summary") or {}
     topology = report.get("pageTopology") or {}
+    coverage = topology.get("zoneCoverageAudit") or {}
+    recovered = topology.get("recoveredFrameEvidence") or {}
     print("MODE CANONICAL_EVIDENCE_FUSION")
     print("WORD RENDERER OFF")
     print("WORD REALIZATION FORBIDDEN")
@@ -113,7 +143,22 @@ def main() -> int:
     print("LINES", lines)
     print("PDF", pdf if pdf else "NONE")
     print("CANONICAL BLOCKS", summary.get("canonicalBlockCount"))
+    print("TOPOLOGY VERSION", topology.get("version"))
     print("TOPOLOGY ZONES", topology.get("zoneCount"))
+    for zone in topology.get("zones") or []:
+        print(
+            "TOPOLOGY ZONE",
+            zone.get("zoneId"),
+            "blocks=", zone.get("blockCount"),
+            "semantics=", zone.get("semanticTypeCounts"),
+            "physical=", zone.get("physicalZoneBBoxPx"),
+            "canonical=", zone.get("canonicalCoverageBBoxPx"),
+        )
+    print("ZONE COVERAGE ALL PHYSICAL", coverage.get("allSemanticZonesPhysicallyWitnessed"))
+    print("SEMANTIC ZONES MISSING PHYSICAL", coverage.get("semanticZonesMissingPhysicalWitness"))
+    print("PHYSICAL ZONES WITHOUT BLOCKS", coverage.get("physicalZonesWithoutCanonicalBlocks"))
+    print("RECOVERED FRAME", recovered.get("bboxPx"), "source=", recovered.get("source"))
+    print("RECOVERED ZONE RELATIONSHIP", recovered.get("zoneRelationship"), f"({recovered.get('zoneRelationshipConfidence')})")
     print("CROSS-ZONE ORDER", (topology.get("crossZoneReadingOrder") or {}).get("status"))
     print("GROUPS", summary.get("groupCount"))
     print("MATCHED MMD", summary.get("matchedMarkdownCount"), "/", summary.get("markdownRecordCount"))
