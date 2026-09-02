@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from statistics import median
 from typing import Any
 
 
-VERSION = "canonical-page-structure-adapter-0.1"
-_TEXT_SEMANTICS = {"paragraph", "heading", "caption"}
+VERSION = "canonical-page-structure-adapter-0.2"
+_TEXT_SEMANTICS = {"paragraph", "heading", "caption", "list"}
+_NON_TEXT_CANONICAL_TYPES = {"figure": "image", "equation": "display_equation"}
+_ORIGINAL_TEXT_TYPES = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list"}
 
 
 def _box(value: Any) -> list[float] | None:
@@ -44,18 +48,28 @@ def _intersection_fraction(inner: list[float], outer: list[float] | None) -> flo
     return intersection / area
 
 
-def _line_boxes_by_id(page: dict[str, Any]) -> dict[str, list[float]]:
+def _line_records_by_id(page: dict[str, Any]) -> dict[str, dict[str, Any]]:
     line_page = page.get("mathpixLinePageMap") if isinstance(page.get("mathpixLinePageMap"), dict) else {}
-    result: dict[str, list[float]] = {}
-    for record in line_page.get("objects", []) or []:
-        record_id = str(record.get("id") or "")
-        bbox = record.get("bbox_pt") if isinstance(record.get("bbox_pt"), dict) else {}
-        if not record_id or not bbox:
-            continue
-        box = _box([bbox.get("x0"), bbox.get("y0"), bbox.get("x1"), bbox.get("y1")])
-        if box is not None:
-            result[record_id] = box
-    return result
+    return {
+        str(record.get("id")): record
+        for record in line_page.get("objects", []) or []
+        if record.get("id")
+    }
+
+
+def _line_box(record: dict[str, Any] | None) -> list[float] | None:
+    bbox = (record or {}).get("bbox_pt") if isinstance((record or {}).get("bbox_pt"), dict) else {}
+    if not bbox:
+        return None
+    return _box([bbox.get("x0"), bbox.get("y0"), bbox.get("x1"), bbox.get("y1")])
+
+
+def _block_box(page: dict[str, Any], block: dict[str, Any]) -> list[float] | None:
+    geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
+    line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
+    records = _line_records_by_id(page)
+    boxes = [_line_box(records.get(line_id)) for line_id in line_ids]
+    return _union([value for value in boxes if value is not None])
 
 
 def _active_column_index(page: dict[str, Any], box: list[float]) -> tuple[int | None, bool]:
@@ -74,32 +88,50 @@ def _active_column_index(page: dict[str, Any], box: list[float]) -> tuple[int | 
     return (0 if abs(center_x - left_center) <= abs(center_x - right_center) else 1), False
 
 
+def _dominant_font_size_pt(page: dict[str, Any], block: dict[str, Any]) -> float | None:
+    geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
+    line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
+    records = _line_records_by_id(page)
+    sizes: list[float] = []
+    for line_id in line_ids:
+        record = records.get(line_id) or {}
+        try:
+            font_size = float(record.get("font_size"))
+            scale = float(((page.get("mathpixLinePageMap") or {}).get("scale_pt_per_px")) or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if font_size > 0 and scale > 0:
+            sizes.append(font_size * scale)
+    return round(float(median(sizes)), 3) if sizes else None
+
+
+def _canonical_slot_id(block: dict[str, Any]) -> str:
+    return f"canonical-{block.get('id')}"
+
+
 def apply_canonical_evidence_to_page_structure(
     page_structure: dict[str, Any],
     canonical_evidence: dict[str, Any],
 ) -> dict[str, Any]:
-    """Materialize already-resolved canonical text blocks into page_structure.
+    """Materialize resolved canonical text blocks into the existing page map.
 
     Canonical fusion owns text semantics/content, Mathpix Lines own local text
-    geometry, and the existing page_structure owns global page topology and PDF
-    visual objects. This adapter does not rematch, infer new geometry, or create
-    visual/equation objects.
+    geometry, and page_structure owns global page topology plus PDF visual objects.
+    The adapter does not rematch, invent geometry, or create visual/equation objects.
     """
     pages = {
         int(page.get("page") or 0): page
         for page in page_structure.get("pages", []) or []
         if int(page.get("page") or 0) > 0
     }
-    line_boxes = {page_no: _line_boxes_by_id(page) for page_no, page in pages.items()}
 
     materialized: list[dict[str, Any]] = []
     rail_materialized: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
     unsupported: list[dict[str, Any]] = []
 
-    # Package-first text authority is canonical MMD+Lines. Preserve all existing
-    # visual flow objects, but replace PDF-derived text flow/callouts with the
-    # canonical text blocks to avoid mixed authorities and duplicate prose.
+    # Package-first text authority is canonical MMD+Lines. Preserve PDF-owned
+    # visuals, but replace any pre-existing ordinary text flow with canonical text.
     for page in pages.values():
         page["flow"] = [item for item in page.get("flow", []) or [] if str(item.get("type") or "") != "text"]
         page["callouts"] = [
@@ -120,8 +152,7 @@ def apply_canonical_evidence_to_page_structure(
         page = pages.get(page_no)
         geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
         line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
-        boxes = [line_boxes.get(page_no, {}).get(line_id) for line_id in line_ids]
-        box = _union([value for value in boxes if value is not None])
+        box = _block_box(page or {}, block) if page is not None else None
         text = str(((block.get("content") or {}).get("text")) or "").strip()
         if page is None or box is None or not text:
             unresolved.append({
@@ -133,7 +164,7 @@ def apply_canonical_evidence_to_page_structure(
             })
             continue
 
-        item_id = f"canonical-{block.get('id')}"
+        item_id = _canonical_slot_id(block)
         rail_box = _box(page.get("outer_rail_box"))
         in_outer_rail = _intersection_fraction(box, rail_box) >= 0.65
         common = {
@@ -202,7 +233,7 @@ def apply_canonical_evidence_to_page_structure(
         "nonTextBlockCount": len(unsupported),
         "policy": (
             "canonical MMD+Lines blocks materialize text only; PDF/page_structure retains global topology and visual ownership; "
-            "outer-rail text uses existing mature outer_rail_box; no rematching, invented geometry, or visual duplication"
+            "outer-rail text uses existing outer_rail_box; no rematching, invented geometry, or visual duplication"
         ),
         "materialized": materialized,
         "outerRail": rail_materialized,
@@ -213,4 +244,144 @@ def apply_canonical_evidence_to_page_structure(
     return report
 
 
-__all__ = ["VERSION", "apply_canonical_evidence_to_page_structure"]
+def canonicalize_markdown_pdf_spine(
+    original_spine: dict[str, Any],
+    page_structure: dict[str, Any],
+    canonical_evidence: dict[str, Any],
+) -> dict[str, Any]:
+    """Replace matched MMD records with the already-aligned canonical blocks.
+
+    Text blocks use the exact slot IDs materialized above, so page-layout-spine can
+    bind by identity rather than rematching. Matched figure/equation blocks carry
+    canonical page+bbox evidence but remain owned by the existing visual/equation
+    binding paths. Only unmatched original MMD records are retained unchanged.
+    """
+    pages = {
+        int(page.get("page") or 0): page
+        for page in page_structure.get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    original_items = [deepcopy(item) for item in original_spine.get("items", []) or []]
+    original_by_id = {
+        str(item.get("id")): item
+        for item in original_items
+        if item.get("id")
+    }
+    accounted_markdown_ids: set[str] = set()
+    canonical_items: list[dict[str, Any]] = []
+    unresolved: list[dict[str, Any]] = []
+
+    for order_index, block in enumerate(canonical_evidence.get("blocks", []) or []):
+        semantic = str(((block.get("semantic") or {}).get("type")) or "")
+        page_no = int(((block.get("pageAssignment") or {}).get("physicalPage")) or 0)
+        page = pages.get(page_no)
+        box = _block_box(page or {}, block) if page is not None else None
+        content = block.get("content") if isinstance(block.get("content"), dict) else {}
+        text = str(content.get("text") or "")
+        markdown_ids = [str(value) for value in content.get("markdownIds", []) or [] if value]
+        accounted_markdown_ids.update(markdown_ids)
+        source_item = next((original_by_id.get(markdown_id) for markdown_id in markdown_ids if markdown_id in original_by_id), None) or {}
+
+        if page is None or box is None:
+            unresolved.append({
+                "canonicalId": block.get("id"),
+                "semanticType": semantic,
+                "page": page_no or None,
+                "markdownIds": markdown_ids,
+                "reason": "canonical-block-lacks-pdf-point-bbox",
+            })
+            continue
+
+        if semantic in _TEXT_SEMANTICS:
+            item_type = "heading" if semantic == "heading" else ("caption" if semantic == "caption" else ("list" if semantic == "list" else "paragraph"))
+            pdf_region = _canonical_slot_id(block)
+            row_granularity = "canonical-mmd-lines-text-block"
+        elif semantic in _NON_TEXT_CANONICAL_TYPES:
+            item_type = _NON_TEXT_CANONICAL_TYPES[semantic]
+            geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
+            line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
+            pdf_region = line_ids[0] if len(line_ids) == 1 else str(block.get("id") or "")
+            row_granularity = "canonical-mmd-lines-nontext-block"
+        else:
+            # Preserve uncommon semantics as paragraphs only when they carry text;
+            # otherwise retain the original MMD record through the unmatched path.
+            if not text.strip():
+                continue
+            item_type = str(source_item.get("type") or semantic or "paragraph")
+            pdf_region = _canonical_slot_id(block)
+            row_granularity = "canonical-mmd-lines-generic-block"
+
+        font_size = _dominant_font_size_pt(page, block)
+        typography = {
+            "confidence": "medium" if font_size is not None else "none",
+            "source": "mathpix-lines-via-canonical-evidence",
+            "fontFamily": {"dominant": None},
+            "fontSizePt": {"dominant": font_size},
+            "emphasis": {},
+            "color": {"dominant": None},
+        }
+        geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
+        authoritative = {
+            "text": text,
+            "plainText": text,
+            "rawMarkdown": str(content.get("rawMarkdown") or ""),
+            "source": str(content.get("source") or "mathpix-markdown-primary"),
+        }
+        if item_type == "display_equation":
+            authoritative["latex"] = str(content.get("rawMarkdown") or text)
+
+        canonical_items.append({
+            "id": str(block.get("id") or f"canonical-{order_index:05d}"),
+            "type": item_type,
+            "orderIndex": order_index,
+            "text": text,
+            "rawMarkdown": str(content.get("rawMarkdown") or ""),
+            "authoritativeContent": authoritative,
+            "contentContract": authoritative,
+            "sourceMarkdownIds": markdown_ids,
+            "pdfPage": page_no,
+            "pdfRegion": pdf_region,
+            "pdfParentRegion": None,
+            "pdfLineIndex": min([int(value) for value in geometry.get("lineNumbers", []) or []], default=None),
+            "pdfRowGranularity": row_granularity,
+            "bbox": [round(value, 3) for value in box],
+            "status": "canonical-mmd-lines-evidence",
+            "manifestOutcome": "canonical-mmd-lines-aligned",
+            "matchMode": "canonical-mmd-lines-global-alignment",
+            "score": float(((block.get("evidence") or {}).get("alignmentScore")) or 0.0),
+            "pdfTypography": typography,
+            "canonicalEvidence": block,
+        })
+
+    retained_original = [
+        item for item in original_items
+        if str(item.get("id") or "") not in accounted_markdown_ids
+    ]
+    next_order = len(canonical_items)
+    for item in retained_original:
+        item["orderIndex"] = next_order
+        next_order += 1
+
+    result = deepcopy(original_spine)
+    result["items"] = canonical_items + retained_original
+    result["canonicalEvidenceSpine"] = {
+        "version": VERSION,
+        "canonicalItemCount": len(canonical_items),
+        "retainedUnmatchedOriginalItemCount": len(retained_original),
+        "accountedOriginalMarkdownIdCount": len(accounted_markdown_ids),
+        "unresolvedCanonicalBlockCount": len(unresolved),
+        "policy": (
+            "matched MMD content is represented by canonical MMD+Lines blocks; text binds by canonical slot identity; "
+            "non-text blocks keep canonical page/bbox evidence for existing visual/equation binders; unmatched MMD remains explicit"
+        ),
+        "unresolved": unresolved,
+    }
+    result["coverage"] = round(len(canonical_items) / max(1, len(canonical_items) + len(retained_original)), 5)
+    return result
+
+
+__all__ = [
+    "VERSION",
+    "apply_canonical_evidence_to_page_structure",
+    "canonicalize_markdown_pdf_spine",
+]
