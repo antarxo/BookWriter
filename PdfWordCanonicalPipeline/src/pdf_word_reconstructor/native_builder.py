@@ -53,16 +53,6 @@ def _prepare_build_contract(
     unresolved = int(summary.get("unresolvedCount") or 0)
     if unresolved and allow_unresolved_preview:
         skipped = [item for item in (contract.get("items") or []) if item.get("status") != "ready"]
-        unsafe = [
-            item for item in skipped
-            if ((item.get("placement") or {}).get("slotId"))
-        ]
-        if unsafe:
-            ids = ", ".join(str(item.get("markdownId") or item.get("id")) for item in unsafe[:8])
-            raise RuntimeError(
-                "Maps-first preview blocked: unresolved item(s) already own physical slots and cannot be silently omitted: "
-                f"{ids}"
-            )
         ready_items = [item for item in (contract.get("items") or []) if item.get("status") == "ready"]
         preview_contract = deepcopy(contract)
         preview_contract["items"] = ready_items
@@ -83,7 +73,7 @@ def _prepare_build_contract(
                 }
                 for item in skipped
             ],
-            "policy": "diagnostic preview only; omit unresolved items only when they own no physical slot; no fallback or invented placement",
+            "policy": "diagnostic preview only; every unresolved item is recorded and omitted from DOCX, including items that already own physical slots; no fallback or invented placement",
         }
         preview_contract["summary"] = {
             **summary,
@@ -155,6 +145,21 @@ def _contract_by_slot(contract: dict[str, Any]) -> dict[tuple[int, str], dict[st
     return result
 
 
+def _preview_omitted_slots(contract: dict[str, Any]) -> set[tuple[int, str]]:
+    preview = contract.get("preview") if isinstance(contract.get("preview"), dict) else {}
+    result: set[tuple[int, str]] = set()
+    for item in preview.get("skipped", []) or []:
+        page = item.get("page")
+        slot_id = item.get("slotId")
+        if page is None or not slot_id:
+            continue
+        try:
+            result.add((int(page), str(slot_id)))
+        except (TypeError, ValueError):
+            continue
+    return result
+
+
 def _slot_keys(item: dict[str, Any]) -> list[str]:
     keys: list[str] = []
     for value in (item.get("id"), item.get("visual_group_id")):
@@ -178,6 +183,14 @@ def _find_contract_item(
     return None
 
 
+def _owns_preview_omitted_slot(
+    omitted_slots: set[tuple[int, str]],
+    page_no: int,
+    item: dict[str, Any],
+) -> bool:
+    return any((page_no, key) in omitted_slots for key in _slot_keys(item))
+
+
 def _materialize_contract_text(
     page_structure: dict[str, Any],
     contract: dict[str, Any],
@@ -185,32 +198,43 @@ def _materialize_contract_text(
     """Create the renderer input from the pre-built contract.
 
     Text-bearing flow/callout objects receive Markdown-authoritative text here.
-    The legacy renderer is therefore no longer allowed to choose prose from PDF
-    text or donor DOCX text. Missing bindings are fatal instead of falling back.
+    In diagnostic preview mode, physical slots owned by unresolved contract items
+    are removed from renderer input and remain recorded in contract.preview.skipped.
+    Other missing bindings remain fatal instead of falling back.
     """
     materialized = deepcopy(page_structure)
     by_slot = _contract_by_slot(contract)
+    omitted_slots = _preview_omitted_slots(contract)
     bound = 0
     missing: list[str] = []
     lineage: list[dict[str, Any]] = []
+    omitted_lineage: list[dict[str, Any]] = []
 
     for page in materialized.get("pages", []) or []:
         page_no = int(page.get("page") or 0)
 
+        retained_flow: list[dict[str, Any]] = []
         for flow_item in page.get("flow", []) or []:
             if str(flow_item.get("type") or "") != "text":
+                retained_flow.append(flow_item)
+                continue
+            slot_id = str(flow_item.get("id") or "")
+            if _owns_preview_omitted_slot(omitted_slots, page_no, flow_item):
+                omitted_lineage.append({"page": page_no, "slotId": slot_id, "kind": "flow"})
                 continue
             contract_item = _find_contract_item(by_slot, page_no, flow_item)
-            slot_id = str(flow_item.get("id") or "")
             if contract_item is None:
                 missing.append(f"page={page_no}:flow={slot_id}")
+                retained_flow.append(flow_item)
                 continue
             output_kind = str(contract_item.get("outputKind") or "")
             if output_kind not in _TEXT_OUTPUT_KINDS:
+                retained_flow.append(flow_item)
                 continue
             text = _contract_text(contract_item)
             if not text.strip():
                 missing.append(f"page={page_no}:flow={slot_id}:empty-markdown")
+                retained_flow.append(flow_item)
                 continue
             flow_item["text"] = text
             flow_item["content_source"] = "markdown-via-build-contract"
@@ -218,6 +242,7 @@ def _materialize_contract_text(
             flow_item["__buildContractId"] = contract_item.get("id")
             flow_item["__wordParagraph"] = contract_item.get("wordParagraph") or {}
             flow_item["__pdfTypography"] = contract_item.get("pdfTypography") or {}
+            retained_flow.append(flow_item)
             bound += 1
             lineage.append({
                 "page": page_no,
@@ -227,16 +252,23 @@ def _materialize_contract_text(
                 "contentSource": "markdown-via-build-contract",
                 "typographySource": "pdf-via-build-contract",
             })
+        page["flow"] = retained_flow
 
+        retained_callouts: list[dict[str, Any]] = []
         for callout in page.get("callouts", []) or []:
-            contract_item = _find_contract_item(by_slot, page_no, callout)
             slot_id = str(callout.get("id") or "")
+            if _owns_preview_omitted_slot(omitted_slots, page_no, callout):
+                omitted_lineage.append({"page": page_no, "slotId": slot_id, "kind": "callout"})
+                continue
+            contract_item = _find_contract_item(by_slot, page_no, callout)
             if contract_item is None:
                 missing.append(f"page={page_no}:callout={slot_id}")
+                retained_callouts.append(callout)
                 continue
             text = _contract_text(contract_item)
             if not text.strip():
                 missing.append(f"page={page_no}:callout={slot_id}:empty-markdown")
+                retained_callouts.append(callout)
                 continue
             callout["text"] = text
             callout["content_source"] = "markdown-via-build-contract"
@@ -244,6 +276,7 @@ def _materialize_contract_text(
             callout["__buildContractId"] = contract_item.get("id")
             callout["__wordParagraph"] = contract_item.get("wordParagraph") or {}
             callout["__pdfTypography"] = contract_item.get("pdfTypography") or {}
+            retained_callouts.append(callout)
             bound += 1
             lineage.append({
                 "page": page_no,
@@ -253,6 +286,7 @@ def _materialize_contract_text(
                 "contentSource": "markdown-via-build-contract",
                 "typographySource": "pdf-via-build-contract",
             })
+        page["callouts"] = retained_callouts
 
     if missing:
         preview = "; ".join(missing[:12])
@@ -262,9 +296,11 @@ def _materialize_contract_text(
         )
 
     return materialized, {
-        "policy": "contract-materialized-markdown-text-and-pdf-typography",
+        "policy": "contract-materialized-markdown-text-and-pdf-typography; diagnostic preview omits recorded unresolved physical slots",
         "boundTextSlotCount": bound,
         "missingTextSlotCount": len(missing),
+        "previewOmittedSlotCount": len(omitted_lineage),
+        "previewOmittedSlots": omitted_lineage,
         "items": lineage,
     }
 
