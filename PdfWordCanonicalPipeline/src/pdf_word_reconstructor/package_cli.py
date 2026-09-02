@@ -27,7 +27,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.5"
+VERSION = "mathpix-package-reconstruction-cli-0.6"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -61,6 +61,18 @@ def _find_canonical_mmd(package_dir: Path) -> Path:
     return candidates[0]
 
 
+def _find_package_pdf(package_dir: Path) -> Path:
+    candidates = sorted(path for path in package_dir.rglob("*.pdf") if path.is_file())
+    if not candidates:
+        raise FileNotFoundError("Mathpix package does not contain the source PDF")
+    if len(candidates) > 1:
+        preview = ", ".join(str(path.relative_to(package_dir)) for path in candidates[:8])
+        raise RuntimeError(
+            "Mathpix package contains more than one PDF; source PDF is ambiguous: " + preview
+        )
+    return candidates[0]
+
+
 def _blank_docx_shim(path: Path) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = Document()
@@ -72,7 +84,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Package-first PDF + Mathpix MMD/lines/assets -> maps-first reconstructed DOCX"
     )
-    parser.add_argument("--pdf", required=True, type=Path)
+    parser.add_argument(
+        "--pdf",
+        type=Path,
+        help="Optional source PDF override. If omitted, the unique PDF inside the Mathpix ZIP is used.",
+    )
     parser.add_argument("--mathpix-package", required=True, type=Path)
     parser.add_argument("--pages", default="17-60", help="1-based page range, e.g. 17-60")
     parser.add_argument("--output", required=True, type=Path)
@@ -90,7 +106,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    pdf_path = args.pdf.resolve()
     package_zip = args.mathpix_package.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -102,10 +117,19 @@ def main(argv: list[str] | None = None) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
     asset_dir.mkdir(parents=True, exist_ok=True)
 
-    if not pdf_path.exists():
-        raise FileNotFoundError(f"PDF not found: {pdf_path}")
     if not package_zip.exists():
         raise FileNotFoundError(f"Mathpix package not found: {package_zip}")
+
+    print(f"[1/8] Extract Mathpix package: {package_zip.name}")
+    _extract_package(package_zip, package_dir)
+    lines_path = find_mathpix_lines_json(package_dir)
+    if lines_path is None:
+        raise FileNotFoundError("Mathpix package does not contain result.lines.json")
+    mmd_path = _find_canonical_mmd(package_dir)
+
+    pdf_path = args.pdf.resolve() if args.pdf else _find_package_pdf(package_dir).resolve()
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
     try:
         import pymupdf as fitz
@@ -114,13 +138,6 @@ def main(argv: list[str] | None = None) -> int:
 
     with fitz.open(pdf_path) as probe:
         pages = parse_page_range(args.pages, max_pages=probe.page_count)
-
-    print(f"[1/8] Extract Mathpix package: {package_zip.name}")
-    _extract_package(package_zip, package_dir)
-    lines_path = find_mathpix_lines_json(package_dir)
-    if lines_path is None:
-        raise FileNotFoundError("Mathpix package does not contain result.lines.json")
-    mmd_path = _find_canonical_mmd(package_dir)
 
     print(f"[2/8] Analyze PDF pages {pages[0]}-{pages[-1]} ({len(pages)} pages)")
     pdf_analysis = analyze_pdf(pdf_path, pages, work_dir, dpi=args.dpi)
@@ -133,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     write_json(analysis_dir / "style_profile.json", style_profile)
     write_json(analysis_dir / "classification_summary.json", classification_summary)
 
-    print("[3/8] Build complete page maps from PDF + Mathpix lines/package")
+    print("[3/8] Build complete page maps from PDF + Mathpix lines/package [LINES-FIRST]")
     page_structure = build_page_structure(
         pdf_analysis,
         work_dir,
@@ -142,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         external_asset_paths=[package_dir],
         equation_donor_path=None,
         mathpix_lines_path=lines_path,
+        mathpix_lines_mode="lines_first",
     )
     write_json(analysis_dir / "page_structure.json", page_structure)
 
@@ -226,15 +244,17 @@ def main(argv: list[str] | None = None) -> int:
         report["package_first_entrypoint"] = {
             "version": VERSION,
             "pdf": str(pdf_path),
+            "pdfSource": "explicit-override" if args.pdf else "inside-mathpix-package",
             "mathpixPackage": str(package_zip),
             "mathpixLines": str(lines_path),
+            "mathpixLinesMode": "lines_first",
             "canonicalMmd": str(mmd_path),
             "pages": pages,
             "docxDonorEnabled": False,
             "alignmentEnabled": False,
             "rendererApiShim": str(shim_path),
             "contentAuthority": "Mathpix MMD via refined build contract",
-            "physicalAuthority": "page_structure maps derived from PDF",
+            "physicalAuthority": "page_structure maps derived from PDF with Lines-first structural ownership",
             "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
             "mathpixExactLayoutRecovery": exact_recovery,
             "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
@@ -249,6 +269,8 @@ def main(argv: list[str] | None = None) -> int:
         "pages": [pages[0], pages[-1]],
         "pageCount": len(pages),
         "outputDocx": str(final_docx),
+        "pdfSource": "explicit-override" if args.pdf else "inside-mathpix-package",
+        "mathpixLinesMode": "lines_first",
         "diagnosticPreview": bool(args.preview_unresolved),
         "previewRecoveryLayer": preview_recovery,
         "markdownRecordCount": int(markdown_element_map.get("count") or 0),
