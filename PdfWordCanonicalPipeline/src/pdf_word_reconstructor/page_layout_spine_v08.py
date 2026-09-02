@@ -4,9 +4,8 @@ from typing import Any
 
 from .page_layout_spine_v07 import build_page_layout_spine as _build_v07
 
-VERSION = "page-layout-spine-0.8.2"
+VERSION = "page-layout-spine-0.8.1"
 TEXT_TYPES = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list", "table", "latex_table"}
-RENDER_TEXT_TYPES = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list"}
 
 
 def _bbox(value: Any) -> list[float] | None:
@@ -58,6 +57,12 @@ def _relative(box: list[float], page: dict[str, Any] | None) -> list[float] | No
 
 
 def _region_is_text_witness(page: dict[str, Any] | None, region: str, item: dict[str, Any]) -> bool:
+    """Accept direct text recovery only from text-granular evidence.
+
+    A visual-group/image region is not a text slot merely because Markdown/PDF
+    association happened to point at it. Exact Mathpix/PDF line witnesses remain
+    eligible; otherwise the region must identify an actual text flow item.
+    """
     granularity = str(item.get("pdfRowGranularity") or "")
     if granularity in {"pdf-line", "pdf-line-cluster", "mathpix-line", "mathpix-lines-text-object"}:
         return True
@@ -67,144 +72,6 @@ def _region_is_text_witness(page: dict[str, Any] | None, region: str, item: dict
         if str(flow_item.get("id") or "") == region:
             return True
     return False
-
-
-def _materialize_renderer_text_slots(
-    result: dict[str, Any],
-    page_structure: dict[str, Any] | None,
-) -> dict[str, Any]:
-    """Bridge usable text contracts into the mature renderer's flow schema.
-
-    The legacy renderer consumes page_structure.pages[].flow. Package-first runs can
-    have usable Markdown/PDF text contracts without a corresponding physical text
-    flow object. In that case create only the missing renderer slot, using the
-    already-resolved contract page+bbox. No geometry or placement is invented.
-    """
-    pages = _page_lookup(page_structure)
-    created: list[dict[str, Any]] = []
-    existing: list[dict[str, Any]] = []
-    rejected: list[dict[str, Any]] = []
-    order_map = result.setdefault("layoutOrderBySlot", {})
-
-    for row in result.get("rows", []) or []:
-        kind = str(row.get("markdownType") or "")
-        if kind not in RENDER_TEXT_TYPES:
-            continue
-        contract = row.get("layoutContract") if isinstance(row.get("layoutContract"), dict) else {}
-        layout = row.get("layout") if isinstance(row.get("layout"), dict) else {}
-        if str(contract.get("status") or "") != "usable":
-            continue
-        try:
-            page_no = int(layout.get("page") or contract.get("page") or 0)
-        except (TypeError, ValueError):
-            page_no = 0
-        box = _bbox(layout.get("bbox")) or _bbox((contract.get("box") or {}).get("absolutePt"))
-        page = pages.get(page_no)
-        if page_no <= 0 or page is None or box is None:
-            rejected.append({
-                "markdownId": row.get("markdownId"),
-                "page": page_no or None,
-                "reason": "usable-text-contract-lacks-page-or-bbox",
-            })
-            continue
-
-        current_slot_id = str(layout.get("slotId") or "")
-        matching_flow = None
-        for flow_item in page.get("flow", []) or []:
-            if str(flow_item.get("type") or "") != "text":
-                continue
-            if current_slot_id and str(flow_item.get("id") or "") == current_slot_id:
-                matching_flow = flow_item
-                break
-        if matching_flow is not None:
-            existing.append({
-                "markdownId": row.get("markdownId"),
-                "page": page_no,
-                "slotId": current_slot_id,
-            })
-            continue
-
-        markdown_id = str(row.get("markdownId") or "")
-        if not markdown_id:
-            rejected.append({"markdownId": None, "page": page_no, "reason": "missing-markdown-id"})
-            continue
-        renderer_slot_id = f"contract-text-{markdown_id}"
-        if any(str(item.get("id") or "") == renderer_slot_id for item in page.get("flow", []) or []):
-            rejected.append({
-                "markdownId": markdown_id,
-                "page": page_no,
-                "slotId": renderer_slot_id,
-                "reason": "renderer-slot-id-collision",
-            })
-            continue
-
-        col_index = layout.get("columnIndex")
-        page.setdefault("flow", []).append({
-            "id": renderer_slot_id,
-            "type": "text",
-            "semantic_type": "heading" if kind in {"heading", "title"} else ("caption" if kind == "caption" else "body"),
-            "bbox": box,
-            "column_index": col_index,
-            "spanning": bool(layout.get("spanning")),
-            "region_ids": [],
-            "content_source": "page-layout-spine-contract-adapter",
-            "markdown_id": markdown_id,
-        })
-
-        old_slot_id = current_slot_id or None
-        layout["sourceSlotId"] = old_slot_id
-        layout["slotId"] = renderer_slot_id
-        layout["slotSource"] = "page_layout_spine.contract_text_slot"
-        layout["slotType"] = "text"
-        layout["semanticType"] = kind
-        row["layout"] = layout
-
-        slot = contract.get("slot") if isinstance(contract.get("slot"), dict) else {}
-        slot["sourceSlotId"] = old_slot_id
-        slot["id"] = renderer_slot_id
-        slot["source"] = "page_layout_spine.contract_text_slot"
-        slot["type"] = "text"
-        slot["semanticType"] = kind
-        contract["slot"] = slot
-        row["layoutContract"] = contract
-
-        flow_order = layout.get("wordFlowOrder")
-        if flow_order is None:
-            flow_order = layout.get("flowOrder")
-        if flow_order is None:
-            flow_order = row.get("markdownOrder")
-        try:
-            order_map[f"{page_no}:{renderer_slot_id}"] = int(flow_order)
-        except (TypeError, ValueError):
-            pass
-
-        created.append({
-            "markdownId": markdown_id,
-            "page": page_no,
-            "slotId": renderer_slot_id,
-            "sourceSlotId": old_slot_id,
-            "bbox": box,
-            "type": kind,
-        })
-
-    audit = {
-        "version": "renderer-text-slot-adapter-0.1",
-        "createdCount": len(created),
-        "existingCount": len(existing),
-        "rejectedCount": len(rejected),
-        "policy": "materialize only usable text contracts with resolved page+bbox into page_structure.flow; no invented geometry, no renderer changes",
-        "created": created[:160],
-        "rejected": rejected[:120],
-    }
-    result["rendererTextSlotAdapter"] = audit
-    result.setdefault("summary", {})["rendererTextSlotAdapter"] = {
-        "createdCount": len(created),
-        "existingCount": len(existing),
-        "rejectedCount": len(rejected),
-    }
-    if isinstance(page_structure, dict):
-        page_structure["rendererTextSlotAdapter"] = audit
-    return audit
 
 
 def build_page_layout_spine(
@@ -312,8 +179,6 @@ def build_page_layout_spine(
             "type": kind,
             "placement": placement,
         })
-
-    _materialize_renderer_text_slots(result, page_structure)
 
     result["version"] = VERSION
     result["directPdfWitnessRecovery"] = {
