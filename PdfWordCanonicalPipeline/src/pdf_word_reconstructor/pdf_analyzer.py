@@ -25,8 +25,6 @@ def _pdf_rgb_hex(value: Any) -> str | None:
             channels = [float(value[index]) for index in range(3)]
         except (TypeError, ValueError):
             return None
-        # PyMuPDF drawing colors are normally floats in [0,1]. Tolerate an
-        # already expanded RGB triple as well, but do not invent missing channels.
         if all(0.0 <= channel <= 1.0 for channel in channels):
             rgb = [round(channel * 255.0) for channel in channels]
         elif all(0.0 <= channel <= 255.0 for channel in channels):
@@ -170,6 +168,34 @@ def _bbox(value: Any) -> list[float] | None:
     return [x0, y0, x1, y1]
 
 
+def _image_page_role(page: fitz.Page, bbox: list[float]) -> tuple[str, dict[str, Any]]:
+    """Separate page-level raster witnesses from true content images.
+
+    Some source PDFs contain a large raster rendering of the physical page in
+    addition to native/extractable content. Such a raster is evidence of the page
+    appearance, not a second content figure. Require simultaneous near-page width,
+    height and area coverage so ordinary wide banners or large diagrams remain
+    normal content images.
+    """
+    page_width = max(1.0, float(page.rect.width))
+    page_height = max(1.0, float(page.rect.height))
+    width = max(0.0, float(bbox[2]) - float(bbox[0]))
+    height = max(0.0, float(bbox[3]) - float(bbox[1]))
+    width_coverage = width / page_width
+    height_coverage = height / page_height
+    area_coverage = (width * height) / max(1.0, page_width * page_height)
+    page_raster = width_coverage >= 0.82 and height_coverage >= 0.70 and area_coverage >= 0.58
+    return (
+        "page-raster-witness" if page_raster else "content-image",
+        {
+            "widthCoverage": round(width_coverage, 5),
+            "heightCoverage": round(height_coverage, 5),
+            "areaCoverage": round(area_coverage, 5),
+            "policy": "page-raster-witness requires simultaneous near-page width, height and area coverage",
+        },
+    )
+
+
 def _page_fullness(width_pt: float, height_pt: float, regions: list[dict[str, Any]]) -> dict[str, Any]:
     page_area = max(1.0, width_pt * height_pt)
     content_boxes: list[list[float]] = []
@@ -179,6 +205,8 @@ def _page_fullness(width_pt: float, height_pt: float, regions: list[dict[str, An
         box = _bbox(region.get("bbox"))
         if box is None:
             continue
+        if region.get("type") == "page_raster_witness":
+            continue
         content_boxes.append(box)
         if region.get("type") == "text":
             text_boxes.append(box)
@@ -186,7 +214,7 @@ def _page_fullness(width_pt: float, height_pt: float, regions: list[dict[str, An
             image_boxes.append(box)
     if not content_boxes:
         return {
-            "policy": "first-pdf-pass-region-density",
+            "policy": "first-pdf-pass-region-density-excluding-page-raster-witness",
             "score": 0.0,
             "verticalCoverage": 0.0,
             "areaRatio": 0.0,
@@ -204,7 +232,7 @@ def _page_fullness(width_pt: float, height_pt: float, regions: list[dict[str, An
     image_weight = min(1.0, len(image_boxes) / 4.0)
     score = round((vertical_coverage * 0.62) + (area_ratio * 0.16) + (text_weight * 0.16) + (image_weight * 0.06), 4)
     return {
-        "policy": "first-pdf-pass-region-density",
+        "policy": "first-pdf-pass-region-density-excluding-page-raster-witness",
         "score": score,
         "verticalCoverage": round(vertical_coverage, 4),
         "areaRatio": round(area_ratio, 4),
@@ -323,9 +351,13 @@ def analyze_pdf(pdf_path: Path, pages_1based: list[int], work_dir: Path, dpi: in
                 image_bytes = block.get("image")
                 if image_bytes:
                     image_path.write_bytes(image_bytes)
+                image_role, role_evidence = _image_page_role(page, original_bbox)
+                region_type = "page_raster_witness" if image_role == "page-raster-witness" else "image"
                 regions.append({
                     "id": f"p{page_no}-i{image_index:03d}",
-                    "type": "image",
+                    "type": region_type,
+                    "imageRole": image_role,
+                    "imageRoleEvidence": role_evidence,
                     "bbox": original_bbox,
                     "width": block.get("width"),
                     "height": block.get("height"),
@@ -350,6 +382,7 @@ def analyze_pdf(pdf_path: Path, pages_1based: list[int], work_dir: Path, dpi: in
             "page_fullness": _page_fullness(float(page.rect.width), float(page.rect.height), regions),
             "text_region_count": sum(1 for r in regions if r["type"] == "text"),
             "image_region_count": sum(1 for r in regions if r["type"] == "image"),
+            "page_raster_witness_count": sum(1 for r in regions if r["type"] == "page_raster_witness"),
             "drawing_count": len(drawings),
         })
 
@@ -373,5 +406,6 @@ def analyze_pdf(pdf_path: Path, pages_1based: list[int], work_dir: Path, dpi: in
             "source": "pymupdf-page.get_drawings",
             "pageCount": len(page_results),
             "drawingCount": sum(int(page.get("drawing_count") or 0) for page in page_results),
+            "pageRasterWitnessCount": sum(int(page.get("page_raster_witness_count") or 0) for page in page_results),
         },
     }
