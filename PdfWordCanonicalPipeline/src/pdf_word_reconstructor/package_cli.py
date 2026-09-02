@@ -155,6 +155,7 @@ def _remap_pdf_analysis_to_physical_pages(
         page["pdfOrdinalPage"] = ordinal
         page["page"] = physical
         page["pageMappingSource"] = "package-cli-subset-physical-page-map"
+    result["selected_pages"] = sorted(int(page) for page in ordinal_to_physical.values())
     return result
 
 
