@@ -6,7 +6,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "mathpix-page-geometry-adapter-0.4"
+VERSION = "mathpix-page-geometry-adapter-0.5"
 
 
 def _box(obj: dict[str, Any]) -> list[float] | None:
@@ -304,6 +304,27 @@ def _classify_columns(page: dict[str, Any], body: dict[str, Any] | None, furnitu
     }
 
 
+def _topology_boxes(column_evidence: dict[str, Any]) -> dict[str, Any]:
+    if str(column_evidence.get("classification") or "") != "main-plus-sidebar":
+        return {"mainFlowBox": None, "outerRailBox": None, "outerRailSide": None}
+    rows = list(column_evidence.get("sidebars") or [])
+    if len(rows) != 2:
+        return {"mainFlowBox": None, "outerRailBox": None, "outerRailSide": None}
+    narrow = min(rows, key=lambda row: float(row.get("widthRatio") or 1.0))
+    wide = max(rows, key=lambda row: float(row.get("widthRatio") or 0.0))
+    nbox = list(narrow.get("bbox") or [])
+    wbox = list(wide.get("bbox") or [])
+    if len(nbox) != 4 or len(wbox) != 4:
+        return {"mainFlowBox": None, "outerRailBox": None, "outerRailSide": None}
+    ncenter = (float(nbox[0]) + float(nbox[2])) / 2.0
+    wcenter = (float(wbox[0]) + float(wbox[2])) / 2.0
+    return {
+        "mainFlowBox": wbox,
+        "outerRailBox": nbox,
+        "outerRailSide": "left" if ncenter < wcenter else "right",
+    }
+
+
 def build_mathpix_page_geometry_evidence(line_map: dict[str, Any]) -> dict[str, Any]:
     pages = list(line_map.get("pages", []) or [])
     profiles = _zone_profiles(pages)
@@ -330,6 +351,7 @@ def build_mathpix_page_geometry_evidence(line_map: dict[str, Any]) -> dict[str, 
             "footerBand": footer,
             "bodyBox": body,
             "columnEvidence": columns,
+            "topologyBoxes": _topology_boxes(columns),
             "dependencyOrder": ["header", "footer", "body-margins", "columns"],
         })
 
@@ -344,6 +366,103 @@ def build_mathpix_page_geometry_evidence(line_map: dict[str, Any]) -> dict[str, 
         },
         "pages": out,
     }
+
+
+def refine_mathpix_page_geometry_evidence(
+    line_map: dict[str, Any],
+    geometry_map: dict[str, Any],
+    reserved_profile: dict[str, Any] | None,
+    margin_model: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Second topology pass after reserved zones and margin evidence exist.
+
+    This pass may classify previously blocked Mathpix containers using a resolved
+    page body box. It does not grant Word two-column authority when the body box
+    came only from an inherited/document-family profile; such evidence remains
+    structural only and is deliberately fail-closed for section columns.
+    """
+    line_pages = {
+        int(page.get("page") or 0): page
+        for page in line_map.get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    reserved_pages = {
+        int(page.get("page") or 0): page
+        for page in (reserved_profile or {}).get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    margin_pages = {
+        int(page.get("page") or 0): page
+        for page in (margin_model or {}).get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    }
+    refined = 0
+    profile_only_true_columns: list[int] = []
+
+    for row in geometry_map.get("pages", []) or []:
+        page_no = int(row.get("page") or 0)
+        current = row.get("columnEvidence") or {}
+        if str(current.get("classification") or "") != "blocked-until-furniture-resolved":
+            row["topologyBoxes"] = _topology_boxes(current)
+            continue
+        line_page = line_pages.get(page_no)
+        margin = margin_pages.get(page_no) or {}
+        body_box = margin.get("bodyBox")
+        if not line_page or margin.get("status") != "resolved" or not isinstance(body_box, list) or len(body_box) != 4:
+            continue
+
+        reserved = reserved_pages.get(page_no) or {}
+        synthetic_furniture = {
+            "safeForMarginInference": True,
+            "classificationComplete": True,
+            "headerStatus": (row.get("headerFooterClassification") or {}).get("headerStatus"),
+            "footerStatus": (row.get("headerFooterClassification") or {}).get("footerStatus"),
+            "reservedHeaderStatus": reserved.get("headerReservedZoneStatus"),
+            "reservedFooterStatus": reserved.get("footerReservedZoneStatus"),
+            "source": "resolved-margin-model-second-pass",
+        }
+        body = {
+            "bbox": list(body_box),
+            "confidence": margin.get("confidence"),
+            "source": margin.get("source"),
+        }
+        classified = _classify_columns(line_page, body, synthetic_furniture)
+        classified["refinedAfterReservedZones"] = True
+        classified["bodyGeometrySource"] = margin.get("source")
+        classified["bodyGeometryConfidence"] = margin.get("confidence")
+        classified["wordColumnAuthorization"] = (
+            "eligible"
+            if classified.get("classification") == "true-two-column-page"
+            and classified.get("confidence") == "high"
+            and margin.get("source") == "page-evidence"
+            and margin.get("confidence") == "high"
+            else "not-authorized"
+        )
+        if classified.get("classification") == "true-two-column-page" and classified["wordColumnAuthorization"] != "eligible":
+            classified["confidence"] = "medium"
+            profile_only_true_columns.append(page_no)
+        row["columnEvidence"] = classified
+        row["topologyBoxes"] = _topology_boxes(classified)
+        row["columnRefinementSource"] = {
+            "reservedPageZones": reserved,
+            "marginSource": margin.get("source"),
+            "marginConfidence": margin.get("confidence"),
+            "policy": "profile-resolved geometry may classify containers but cannot alone authorize Word section columns",
+        }
+        refined += 1
+
+    geometry_map["version"] = VERSION
+    geometry_map["secondPassRefinement"] = {
+        "refinedPageCount": refined,
+        "profileOnlyTrueColumnPages": profile_only_true_columns,
+        "policy": "second-pass classification may enrich topology after reserved zones; Word columns still require direct high-confidence page evidence",
+    }
+    counts = Counter(
+        str((row.get("columnEvidence") or {}).get("classification") or "unresolved")
+        for row in geometry_map.get("pages", []) or []
+    )
+    geometry_map.setdefault("summary", {})["columnClassificationCountsAfterRefinement"] = dict(sorted(counts.items()))
+    return geometry_map
 
 
 def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: dict[str, Any]) -> dict[str, Any]:
@@ -374,7 +493,12 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
             override_counts["bodyBoxAndMargins"] += 1
 
         col = ev.get("columnEvidence") or {}
-        if col.get("classification") == "true-two-column-page" and col.get("confidence") == "high":
+        authorized = (
+            col.get("classification") == "true-two-column-page"
+            and col.get("confidence") == "high"
+            and str(col.get("wordColumnAuthorization") or "eligible") == "eligible"
+        )
+        if authorized:
             cols = []
             for index, row in enumerate(col.get("pageColumns") or []):
                 box = row.get("bbox") or [0, 0, 0, 0]
@@ -396,6 +520,23 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
                 override_counts["trueTwoColumnPage"] += 1
         elif col.get("classification") == "main-plus-sidebar":
             page["mathpix_sidebars"] = list(col.get("sidebars") or [])
+            boxes = ev.get("topologyBoxes") or _topology_boxes(col)
+            main_flow = boxes.get("mainFlowBox")
+            rail_box = boxes.get("outerRailBox")
+            if isinstance(main_flow, list) and len(main_flow) == 4:
+                page["main_flow_box"] = list(main_flow)
+            if isinstance(rail_box, list) and len(rail_box) == 4:
+                page["outer_rail_box"] = list(rail_box)
+                page["outer_rail_side"] = boxes.get("outerRailSide")
+            page["page_topology"] = {
+                "classification": "main-plus-sidebar",
+                "contentEnvelope": page.get("body_box"),
+                "mainFlowBox": page.get("main_flow_box"),
+                "outerRailBox": page.get("outer_rail_box"),
+                "outerRailSide": page.get("outer_rail_side"),
+                "rendererMeaning": "main flow and rail remain distinct; no Word columns emitted",
+                "source": "mature-mathpix-page-geometry-adapter",
+            }
             override_counts["sidebarEvidenceOnly"] += 1
 
     page_structure["mathpixPageGeometryMap"] = geometry_map
@@ -403,6 +544,6 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
         "version": VERSION,
         "overrideCounts": dict(sorted(override_counts.items())),
         "dependencyOrder": ["header", "footer", "body-margins", "columns"],
-        "policy": "unresolved/no-evidence headers or footers block margin and column overrides; only positively resolved furniture may authorize downstream geometry",
+        "policy": "unresolved/no-evidence headers or footers block direct margin overrides; second-pass profile geometry may enrich topology but cannot alone authorize Word columns",
     }
     return page_structure
