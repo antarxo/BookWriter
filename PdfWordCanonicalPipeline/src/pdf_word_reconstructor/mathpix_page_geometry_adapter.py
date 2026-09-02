@@ -6,7 +6,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "mathpix-page-geometry-adapter-0.3"
+VERSION = "mathpix-page-geometry-adapter-0.4"
 
 
 def _box(obj: dict[str, Any]) -> list[float] | None:
@@ -386,6 +386,7 @@ def apply_mathpix_page_geometry(page_structure: dict[str, Any], geometry_map: di
                 })
             if len(cols) == 2:
                 page["columns"] = cols
+                page["layout_mode"] = "two_columns"
                 page["main_column"] = {
                     "x0": cols[0]["x0"], "x1": cols[1]["x1"],
                     "y0": min(cols[0]["y0"], cols[1]["y0"]),
