@@ -39,7 +39,7 @@ from pdf_word_reconstructor.region_classifier import classify_pdf_regions
 from pdf_word_reconstructor.style_profile import build_style_profile
 
 
-VERSION = "mathpix-page-topology-audit-0.2"
+VERSION = "mathpix-page-topology-audit-0.3"
 
 _STRUCTURAL_LINE_TYPES = {
     "page_info",
@@ -115,7 +115,10 @@ def _lines_page_text(raw_page: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _mapping_content_matrix(pdf_path: Path, raw_by_physical: dict[int, dict[str, Any]]) -> tuple[list[str], dict[int, list[float]]]:
+def _mapping_content_matrix(
+    pdf_path: Path,
+    raw_by_physical: dict[int, dict[str, Any]],
+) -> tuple[list[str], dict[int, list[float]]]:
     try:
         import pymupdf as fitz
     except ImportError:
@@ -194,33 +197,48 @@ def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[st
             + json.dumps(aspect_conflicts, ensure_ascii=False)
         )
 
-    _pdf_texts, content_matrix = _mapping_content_matrix(pdf_path, raw_by_physical)
+    pdf_texts, content_matrix = _mapping_content_matrix(pdf_path, raw_by_physical)
+    pdf_text_page_count = sum(1 for text in pdf_texts if text)
+    text_layer_available = pdf_text_page_count > 0
     content_checks: list[dict[str, Any]] = []
     content_failures: list[dict[str, Any]] = []
-    for physical, ordinal in sorted(mapping.items()):
-        scores = list(content_matrix.get(physical) or [])
-        mapped_score = scores[ordinal - 1] if 1 <= ordinal <= len(scores) else 0.0
-        ranked = sorted(enumerate(scores, start=1), key=lambda pair: (-pair[1], pair[0]))
-        best_ordinal, best_score = ranked[0] if ranked else (None, 0.0)
-        second_score = ranked[1][1] if len(ranked) > 1 else 0.0
-        mapped_is_best = best_ordinal == ordinal
-        separation = mapped_score - second_score if mapped_is_best else mapped_score - best_score
-        status = "confirmed" if mapped_score >= 70.0 and mapped_is_best else "conflict"
-        row = {
-            "physicalPage": physical,
-            "pdfOrdinalPage": ordinal,
-            "mappedScore": round(mapped_score, 2),
-            "bestPdfOrdinal": best_ordinal,
-            "bestScore": round(best_score, 2),
-            "secondBestScore": round(second_score, 2),
-            "mappedIsBest": mapped_is_best,
-            "scoreSeparation": round(separation, 2),
-            "status": status,
-            "allPdfOrdinalScores": {str(i): score for i, score in enumerate(scores, start=1)},
-        }
-        content_checks.append(row)
-        if status != "confirmed":
-            content_failures.append(row)
+
+    if text_layer_available:
+        for physical, ordinal in sorted(mapping.items()):
+            scores = list(content_matrix.get(physical) or [])
+            mapped_score = scores[ordinal - 1] if 1 <= ordinal <= len(scores) else 0.0
+            ranked = sorted(enumerate(scores, start=1), key=lambda pair: (-pair[1], pair[0]))
+            best_ordinal, best_score = ranked[0] if ranked else (None, 0.0)
+            second_score = ranked[1][1] if len(ranked) > 1 else 0.0
+            mapped_is_best = best_ordinal == ordinal
+            separation = mapped_score - second_score if mapped_is_best else mapped_score - best_score
+            status = "confirmed" if mapped_score >= 70.0 and mapped_is_best else "conflict"
+            row = {
+                "physicalPage": physical,
+                "pdfOrdinalPage": ordinal,
+                "mappedScore": round(mapped_score, 2),
+                "bestPdfOrdinal": best_ordinal,
+                "bestScore": round(best_score, 2),
+                "secondBestScore": round(second_score, 2),
+                "mappedIsBest": mapped_is_best,
+                "scoreSeparation": round(separation, 2),
+                "status": status,
+                "allPdfOrdinalScores": {str(i): score for i, score in enumerate(scores, start=1)},
+            }
+            content_checks.append(row)
+            if status != "confirmed":
+                content_failures.append(row)
+    else:
+        content_checks = [
+            {
+                "physicalPage": physical,
+                "pdfOrdinalPage": ordinal,
+                "status": "unavailable-no-pdf-text-layer",
+                "mappedScore": None,
+                "reason": "PyMuPDF extracted no text from any PDF page; no OCR fallback is permitted in this audit",
+            }
+            for physical, ordinal in sorted(mapping.items())
+        ]
 
     if content_failures:
         raise RuntimeError(
@@ -228,9 +246,10 @@ def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[st
             + json.dumps(content_failures, ensure_ascii=False)
         )
 
+    mapping_status = "resolved" if text_layer_available else "provisional-pending-geometry-corroboration"
     return {
         "version": VERSION,
-        "status": "resolved",
+        "status": mapping_status,
         "mode": mode,
         "pdfPageCount": pdf_count,
         "linesPhysicalPages": line_pages,
@@ -238,9 +257,15 @@ def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[st
         "pdfOrdinalToPhysical": {str(v): k for k, v in sorted(mapping.items())},
         "aspectRatioChecks": aspect_checks,
         "contentCorroboration": content_checks,
+        "textLayerEvidence": {
+            "available": text_layer_available,
+            "pdfPagesWithExtractedText": pdf_text_page_count,
+            "pdfPageCount": pdf_count,
+            "policy": "absence of a PDF text layer is unavailable evidence, never a content conflict and never an OCR trigger",
+        },
         "policy": (
-            "candidate identity/subset ordinal mapping must pass both page-size and content-level PDF<->Lines corroboration; "
-            "otherwise mapping remains unresolved and the audit stops"
+            "candidate identity/subset mapping must pass page-size corroboration; when a PDF text layer exists it must also pass "
+            "content corroboration; when the text layer is absent the mapping remains provisional until PDF/Lines geometry corroboration"
         ),
     }
 
@@ -254,7 +279,7 @@ def _remap_pdf_analysis(pdf_analysis: dict[str, Any], ordinal_to_physical: dict[
             raise RuntimeError(f"Analyzed PDF ordinal page {ordinal} has no resolved physical-page mapping")
         page["pdfOrdinalPage"] = ordinal
         page["page"] = physical
-        page["pageMappingSource"] = "resolved-pdf-mathpix-page-map"
+        page["pageMappingSource"] = "candidate-pdf-mathpix-page-map-pending-full-topology-audit"
     return result
 
 
@@ -407,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
     pdf_path = _find_package_pdf(package_dir).resolve()
     lines_data = load_mathpix_lines(lines_path)
 
-    print("[2/6] Resolve and content-corroborate PDF ordinal <-> Mathpix physical pages [FAIL-CLOSED]")
+    print("[2/6] Resolve/corroborate PDF ordinal <-> Mathpix physical pages [FAIL-CLOSED; NO OCR]")
     page_mapping = _resolve_page_mapping(pdf_path, lines_data)
     write_json(output / "PAGE_MAPPING_AUDIT.json", page_mapping)
     physical_pages = _parse_physical_pages(args.pages, page_mapping["linesPhysicalPages"])
@@ -415,7 +440,7 @@ def main(argv: list[str] | None = None) -> int:
     o2p = {int(k): int(v) for k, v in page_mapping["pdfOrdinalToPhysical"].items()}
     pdf_ordinals = [p2o[page] for page in physical_pages]
 
-    print(f"[3/6] Analyze PDF ordinals {pdf_ordinals} as physical pages {physical_pages}")
+    print(f"[3/6] Analyze PDF ordinals {pdf_ordinals} as candidate physical pages {physical_pages}")
     pdf_analysis_raw = analyze_pdf(pdf_path, pdf_ordinals, work_dir, dpi=args.dpi)
     pdf_analysis = _remap_pdf_analysis(pdf_analysis_raw, o2p)
     style_profile = build_style_profile(pdf_analysis)
@@ -518,6 +543,7 @@ def main(argv: list[str] | None = None) -> int:
             "renderer": "OFF",
             "pageSpecificHardcoding": "FORBIDDEN",
             "ambiguousEvidence": "FAIL-CLOSED",
+            "pdfTextLayer": "optional witness only; absence never becomes a conflict and never triggers OCR",
         },
     }
     write_json(output / "PAGE_TOPOLOGY_AUDIT.json", audit)
@@ -528,6 +554,8 @@ def main(argv: list[str] | None = None) -> int:
         "version": VERSION,
         "physicalPages": physical_pages,
         "pageMappingMode": page_mapping["mode"],
+        "pageMappingStatus": page_mapping["status"],
+        "pdfTextLayerAvailable": bool((page_mapping.get("textLayerEvidence") or {}).get("available")),
         "contentMappingConfirmedPages": sum(1 for row in page_mapping.get("contentCorroboration", []) if row.get("status") == "confirmed"),
         "mirroredMarginStatus": mirror_audit.get("status"),
         "legacyGeometryConflictPages": conflict_pages,
