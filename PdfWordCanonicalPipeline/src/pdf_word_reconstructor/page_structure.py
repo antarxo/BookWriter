@@ -12,13 +12,17 @@ from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpi
 from .mathpix_package_input import build_mathpix_package_map
 from .mathpix_package_enrichment import enrich_with_mathpix_package
 from .mathpix_margin_model import apply_mathpix_margin_model, build_mathpix_margin_model
-from .mathpix_page_geometry_adapter import apply_mathpix_page_geometry, build_mathpix_page_geometry_evidence
+from .mathpix_page_geometry_adapter import (
+    apply_mathpix_page_geometry,
+    build_mathpix_page_geometry_evidence,
+    refine_mathpix_page_geometry_evidence,
+)
 from .mathpix_reserved_page_zones import build_reserved_page_zone_profile
 from .page_furniture import analyze_page_furniture
 from .page_text_style_map import enrich_page_text_styles
 
 
-VERSION = "page-structure-frame-evidence-0.7"
+VERSION = "page-structure-frame-evidence-0.8"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -535,6 +539,12 @@ def build_page_structure(
         geometry_map = build_mathpix_page_geometry_evidence(mathpix_line_layout_map)
         reserved_zone_profile = build_reserved_page_zone_profile(mathpix_line_layout_map, geometry_map)
         margin_model = build_mathpix_margin_model(mathpix_line_layout_map, geometry_map, reserved_zone_profile)
+        refine_mathpix_page_geometry_evidence(
+            mathpix_line_layout_map,
+            geometry_map,
+            reserved_zone_profile,
+            margin_model,
+        )
         topology_column_reconciliation = _reconcile_columns_with_geometry_authority(result, geometry_map)
         apply_mathpix_page_geometry(result, geometry_map)
         apply_mathpix_margin_model(result, margin_model)
@@ -607,8 +617,8 @@ def build_page_structure(
     result["pageGeometryPolicy"] = {
         "geometryAuthority": "PDF-global topology corroborated by mature Mathpix geometry evidence",
         "semanticWitness": "Mathpix page_info / structural objects",
-        "dependencyOrder": ["header", "footer", "body-margins", "columns"],
-        "fields": ["headers", "footers", "body_box", "margins", "columns", "sidebars", "pageGeometry", "textStyleMap"],
+        "dependencyOrder": ["header", "footer", "body-margins", "second-pass-topology-refinement", "columns"],
+        "fields": ["headers", "footers", "body_box", "margins", "columns", "sidebars", "main_flow_box", "outer_rail_box", "pageGeometry", "textStyleMap"],
         "policy": (
             "raw Mathpix column objects never directly become page/Word columns; active columns require "
             "true-two-column-page/high after furniture and body geometry; unresolved/side-rail evidence is fail-closed"
