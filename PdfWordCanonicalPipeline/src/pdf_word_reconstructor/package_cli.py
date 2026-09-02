@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import shutil
 import sys
@@ -16,7 +17,7 @@ from .common import parse_page_range, write_json
 from .docx_analyzer import analyze_docx
 from .markdown_pdf_spine import build_markdown_pdf_spine
 from .mathpix_exact_layout_recovery import recover_exact_mathpix_layouts
-from .mathpix_lines_input import find_mathpix_lines_json
+from .mathpix_lines_input import find_mathpix_lines_json, load_mathpix_lines
 from .mathpix_mmd_block_refinement import refine_markdown_element_map
 from .native_builder import build_native_page_document
 from .page_layout_spine import build_page_layout_spine
@@ -27,7 +28,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.6"
+VERSION = "mathpix-package-reconstruction-cli-0.7"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -80,6 +81,83 @@ def _blank_docx_shim(path: Path) -> dict[str, Any]:
     return analyze_docx(path)
 
 
+def _parse_requested_physical_pages(spec: str, available: list[int]) -> list[int]:
+    values: set[int] = set()
+    for token in str(spec).split(","):
+        token = token.strip()
+        if not token:
+            continue
+        if "-" in token:
+            left, right = token.split("-", 1)
+            start, end = int(left), int(right)
+            if end < start:
+                start, end = end, start
+            values.update(range(start, end + 1))
+        else:
+            values.add(int(token))
+    requested = sorted(values)
+    missing = [page for page in requested if page not in set(available)]
+    if missing:
+        raise RuntimeError(
+            "Requested physical pages are absent from Mathpix Lines: " + ", ".join(map(str, missing))
+        )
+    return requested
+
+
+def _resolve_package_page_mapping(lines_data: dict[str, Any], pdf_page_count: int, page_spec: str) -> dict[str, Any]:
+    physical_pages = sorted(
+        int(page.get("page") or 0)
+        for page in lines_data.get("pages", []) or []
+        if int(page.get("page") or 0) > 0
+    )
+    if not physical_pages:
+        raise RuntimeError("Mathpix Lines contains no physical page numbers")
+
+    requested = _parse_requested_physical_pages(page_spec, physical_pages)
+    contiguous = physical_pages == list(range(physical_pages[0], physical_pages[-1] + 1))
+
+    if max(physical_pages) <= pdf_page_count:
+        physical_to_ordinal = {page: page for page in physical_pages}
+        mode = "identity-physical-page"
+    elif pdf_page_count == len(physical_pages) and contiguous:
+        physical_to_ordinal = {
+            physical: ordinal
+            for ordinal, physical in enumerate(physical_pages, start=1)
+        }
+        mode = "subset-ordinal-to-contiguous-physical-pages"
+    else:
+        raise RuntimeError(
+            "PDF/Mathpix page mapping is ambiguous: "
+            f"pdfPageCount={pdf_page_count}, linesPhysicalPages={physical_pages}. "
+            "Package reconstruction is fail-closed; no page mapping was guessed."
+        )
+
+    requested_ordinals = [physical_to_ordinal[page] for page in requested]
+    return {
+        "mode": mode,
+        "physicalPages": requested,
+        "pdfOrdinals": requested_ordinals,
+        "physicalToPdfOrdinal": {str(page): physical_to_ordinal[page] for page in requested},
+        "pdfOrdinalToPhysical": {str(physical_to_ordinal[page]): page for page in requested},
+    }
+
+
+def _remap_pdf_analysis_to_physical_pages(
+    pdf_analysis: dict[str, Any],
+    ordinal_to_physical: dict[int, int],
+) -> dict[str, Any]:
+    result = copy.deepcopy(pdf_analysis)
+    for page in result.get("pages", []) or []:
+        ordinal = int(page.get("page") or 0)
+        physical = ordinal_to_physical.get(ordinal)
+        if physical is None:
+            raise RuntimeError(f"Analyzed PDF ordinal page {ordinal} has no physical Mathpix page mapping")
+        page["pdfOrdinalPage"] = ordinal
+        page["page"] = physical
+        page["pageMappingSource"] = "package-cli-subset-physical-page-map"
+    return result
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Package-first PDF + Mathpix MMD/lines/assets -> maps-first reconstructed DOCX"
@@ -90,7 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional source PDF override. If omitted, the unique PDF inside the Mathpix ZIP is used.",
     )
     parser.add_argument("--mathpix-package", required=True, type=Path)
-    parser.add_argument("--pages", default="17-60", help="1-based page range, e.g. 17-60")
+    parser.add_argument("--pages", default="17-60", help="Physical Mathpix page range, e.g. 17-60")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--dpi", type=int, default=160)
     parser.add_argument(
@@ -125,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     lines_path = find_mathpix_lines_json(package_dir)
     if lines_path is None:
         raise FileNotFoundError("Mathpix package does not contain result.lines.json")
+    lines_data = load_mathpix_lines(lines_path)
     mmd_path = _find_canonical_mmd(package_dir)
 
     pdf_path = args.pdf.resolve() if args.pdf else _find_package_pdf(package_dir).resolve()
@@ -137,10 +216,22 @@ def main(argv: list[str] | None = None) -> int:
         import fitz  # type: ignore
 
     with fitz.open(pdf_path) as probe:
-        pages = parse_page_range(args.pages, max_pages=probe.page_count)
+        page_mapping = _resolve_package_page_mapping(lines_data, int(probe.page_count), args.pages)
 
-    print(f"[2/8] Analyze PDF pages {pages[0]}-{pages[-1]} ({len(pages)} pages)")
-    pdf_analysis = analyze_pdf(pdf_path, pages, work_dir, dpi=args.dpi)
+    physical_pages = [int(page) for page in page_mapping["physicalPages"]]
+    pdf_ordinals = [int(page) for page in page_mapping["pdfOrdinals"]]
+    ordinal_to_physical = {
+        int(k): int(v)
+        for k, v in page_mapping["pdfOrdinalToPhysical"].items()
+    }
+    write_json(analysis_dir / "package_page_mapping.json", page_mapping)
+
+    print(
+        f"[2/8] Analyze PDF ordinals {pdf_ordinals[0]}-{pdf_ordinals[-1]} "
+        f"as physical Mathpix pages {physical_pages[0]}-{physical_pages[-1]} ({len(physical_pages)} pages)"
+    )
+    pdf_analysis_raw = analyze_pdf(pdf_path, pdf_ordinals, work_dir, dpi=args.dpi)
+    pdf_analysis = _remap_pdf_analysis_to_physical_pages(pdf_analysis_raw, ordinal_to_physical)
     style_profile = build_style_profile(pdf_analysis)
     classification_summary = classify_pdf_regions(
         pdf_analysis,
@@ -249,12 +340,14 @@ def main(argv: list[str] | None = None) -> int:
             "mathpixLines": str(lines_path),
             "mathpixLinesMode": "lines_first",
             "canonicalMmd": str(mmd_path),
-            "pages": pages,
+            "pages": physical_pages,
+            "pdfOrdinals": pdf_ordinals,
+            "pageMapping": page_mapping,
             "docxDonorEnabled": False,
             "alignmentEnabled": False,
             "rendererApiShim": str(shim_path),
             "contentAuthority": "Mathpix MMD via refined build contract",
-            "physicalAuthority": "page_structure maps derived from PDF with Lines-first structural ownership",
+            "physicalAuthority": "page_structure maps derived from package PDF with Lines-first structural ownership",
             "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
             "mathpixExactLayoutRecovery": exact_recovery,
             "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
@@ -266,10 +359,12 @@ def main(argv: list[str] | None = None) -> int:
     summary = {
         "status": "PASS",
         "version": VERSION,
-        "pages": [pages[0], pages[-1]],
-        "pageCount": len(pages),
+        "pages": [physical_pages[0], physical_pages[-1]],
+        "pdfOrdinals": [pdf_ordinals[0], pdf_ordinals[-1]],
+        "pageCount": len(physical_pages),
         "outputDocx": str(final_docx),
         "pdfSource": "explicit-override" if args.pdf else "inside-mathpix-package",
+        "pageMappingMode": page_mapping["mode"],
         "mathpixLinesMode": "lines_first",
         "diagnosticPreview": bool(args.preview_unresolved),
         "previewRecoveryLayer": preview_recovery,
