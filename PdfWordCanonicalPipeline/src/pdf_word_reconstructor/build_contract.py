@@ -4,7 +4,7 @@ from collections import Counter
 from typing import Any
 
 
-BUILD_CONTRACT_VERSION = "build-contract-0.4"
+BUILD_CONTRACT_VERSION = "build-contract-0.5"
 
 
 def _output_kind(row: dict[str, Any]) -> str:
@@ -55,11 +55,16 @@ def _content_text(row: dict[str, Any]) -> str:
 
 
 def _unresolved_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
+    """Return only blockers that make the item unsafe to render.
+
+    Typography evidence is intentionally not a blocker. Missing typography is
+    reported separately as a warning so authoritative Markdown content with a
+    usable physical placement is not discarded from diagnostic or strict output.
+    """
     reasons: list[str] = []
     markdown_id = str(row.get("markdownId") or "")
     layout_contract = row.get("layoutContract") or {}
     word_paragraph = row.get("wordParagraph") or {}
-    typography = row.get("pdfTypography") or {}
     content = _authoritative_payload(row)
 
     if not markdown_id:
@@ -73,9 +78,16 @@ def _unresolved_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
     if output_kind in {"paragraph", "heading", "caption", "callout", "list"}:
         if not isinstance(word_paragraph, dict) or not word_paragraph:
             reasons.append("missing-word-paragraph-contract")
-        if str((typography or {}).get("confidence") or "none") == "none":
-            reasons.append("missing-pdf-typography")
     return reasons
+
+
+def _warning_reasons(row: dict[str, Any], output_kind: str) -> list[str]:
+    warnings: list[str] = []
+    typography = row.get("pdfTypography") or {}
+    if output_kind in {"paragraph", "heading", "caption", "callout", "list"}:
+        if str((typography or {}).get("confidence") or "none") == "none":
+            warnings.append("missing-pdf-typography")
+    return warnings
 
 
 def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, Any]:
@@ -84,18 +96,39 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
     items: list[dict[str, Any]] = []
     status_counts: Counter[str] = Counter()
     reason_counts: Counter[str] = Counter()
+    warning_counts: Counter[str] = Counter()
     output_counts: Counter[str] = Counter()
     unresolved_by_kind: Counter[str] = Counter()
     unresolved_by_reason_and_kind: Counter[str] = Counter()
+    warning_by_kind: Counter[str] = Counter()
     unresolved_samples: list[dict[str, Any]] = []
+    warning_samples: list[dict[str, Any]] = []
 
     for index, row in enumerate(rows):
         output_kind = _output_kind(row)
         unresolved = _unresolved_reasons(row, output_kind)
+        warnings = _warning_reasons(row, output_kind)
         status = "ready" if not unresolved else "unresolved"
         status_counts[status] += 1
         output_counts[output_kind] += 1
         reason_counts.update(unresolved)
+        warning_counts.update(warnings)
+        if warnings:
+            warning_by_kind[output_kind] += 1
+            if len(warning_samples) < 24:
+                layout = row.get("layout") or {}
+                typography = row.get("pdfTypography") or {}
+                warning_samples.append({
+                    "markdownId": row.get("markdownId"),
+                    "markdownType": row.get("markdownType"),
+                    "outputKind": output_kind,
+                    "warnings": list(warnings),
+                    "page": layout.get("page"),
+                    "slotId": layout.get("slotId"),
+                    "typographySource": typography.get("source"),
+                    "typographyConfidence": typography.get("confidence"),
+                    "textPreview": _content_text(row)[:140],
+                })
         if unresolved:
             unresolved_by_kind[output_kind] += 1
             for reason in unresolved:
@@ -124,6 +157,7 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "id": f"build-{index:05d}",
             "status": status,
             "unresolved": unresolved,
+            "warnings": warnings,
             "markdownId": row.get("markdownId"),
             "markdownType": row.get("markdownType"),
             "markdownOrder": row.get("markdownOrder"),
@@ -168,6 +202,7 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "contentAuthority": "markdown",
             "layoutAuthority": "pdf",
             "typographyAuthority": "pdf",
+            "typographyCompleteness": "nonblocking-warning",
             "docxRole": "native-donor-only",
             "builderRole": "execute-contract-no-rematching",
             "rematching": "forbidden",
@@ -187,6 +222,9 @@ def build_build_contract(page_layout_spine: dict[str, Any] | None) -> dict[str, 
             "unresolvedByOutputKind": dict(unresolved_by_kind),
             "unresolvedByReasonAndKind": dict(unresolved_by_reason_and_kind),
             "unresolvedSamples": unresolved_samples,
+            "warningCounts": dict(warning_counts),
+            "warningByOutputKind": dict(warning_by_kind),
+            "warningSamples": warning_samples,
             "outputKindCounts": dict(output_counts),
         },
         "items": items,
