@@ -11,11 +11,14 @@ from .page_structure_legacy import build_page_structure as _build_legacy
 from .mathpix_lines_input import build_mathpix_line_layout_map, summarize_mathpix_lines
 from .mathpix_package_input import build_mathpix_package_map
 from .mathpix_package_enrichment import enrich_with_mathpix_package
+from .mathpix_margin_model import apply_mathpix_margin_model, build_mathpix_margin_model
+from .mathpix_page_geometry_adapter import apply_mathpix_page_geometry, build_mathpix_page_geometry_evidence
+from .mathpix_reserved_page_zones import build_reserved_page_zone_profile
 from .page_furniture import analyze_page_furniture
 from .page_text_style_map import enrich_page_text_styles
 
 
-VERSION = "page-structure-frame-evidence-0.6"
+VERSION = "page-structure-frame-evidence-0.7"
 
 
 def _box(value: Any) -> list[float] | None:
@@ -342,23 +345,6 @@ def _best_line_match(item_box: list[float], records: list[dict[str, Any]]) -> tu
     return (best[1], best[2]) if best is not None else None
 
 
-def _lines_columns(line_page: dict[str, Any]) -> list[list[float]]:
-    boxes: list[list[float]] = []
-    for record in line_page.get("objects", []) or []:
-        if str(record.get("type") or "") != "column":
-            continue
-        box = _line_box(record)
-        if box is not None:
-            boxes.append(box)
-    boxes.sort(key=lambda box: (box[0], box[1]))
-    if len(boxes) != 2:
-        return []
-    left, right = boxes
-    if left[2] >= right[0] - 2.0:
-        return []
-    return boxes
-
-
 def _lines_semantic_type(record_type: str, current: str | None) -> str | None:
     mapping = {
         "section_header": "heading",
@@ -373,14 +359,14 @@ def _apply_lines_first_structure(
     result: dict[str, Any],
     mathpix_line_layout_map: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Let Lines lead existing structural fields without changing the downstream schema.
+    """Let Lines lead semantic witness/order without deciding Word page topology.
 
-    PDF remains the physical geometry/typography authority. Lines decides, where it
-    has usable evidence, semantic role, column ownership and flow order. No Lines-only
-    production fields are introduced here; diagnostics stay in the witness object.
+    Raw Mathpix ``column`` objects are deliberately not translated here into
+    ``page['columns']`` or ``layout_mode``. Page-column/rail meaning is resolved
+    later by the mature geometry adapter after furniture and body geometry.
     """
     if not mathpix_line_layout_map:
-        return {"pageCount": 0, "matchedFlowItemCount": 0, "twoColumnPageCount": 0}
+        return {"pageCount": 0, "matchedFlowItemCount": 0}
 
     line_pages = {
         int(page.get("page") or 0): page
@@ -390,7 +376,6 @@ def _apply_lines_first_structure(
     matched_count = 0
     semantic_count = 0
     reordered_pages = 0
-    two_column_pages = 0
 
     for page in result.get("pages", []) or []:
         page_no = int(page.get("page") or 0)
@@ -398,27 +383,12 @@ def _apply_lines_first_structure(
         if not line_page:
             continue
         records = list(line_page.get("objects", []) or [])
-        columns = _lines_columns(line_page)
-        existing_columns = list(page.get("columns", []) or [])
-        if columns:
-            rebuilt_columns: list[dict[str, Any]] = []
-            for index, box in enumerate(columns):
-                base = dict(existing_columns[index]) if index < len(existing_columns) else {}
-                base["x0"] = round(box[0], 3)
-                base["x1"] = round(box[2], 3)
-                if "width" in base:
-                    base["width"] = round(box[2] - box[0], 3)
-                rebuilt_columns.append(base)
-            page["columns"] = rebuilt_columns
-            page["layout_mode"] = "two_columns"
-            two_column_pages += 1
-
-        ranked: list[tuple[int, int, float, float, dict[str, Any]]] = []
+        ranked: list[tuple[int, float, float, int, dict[str, Any]]] = []
         changed_order = False
         for original_index, item in enumerate(page.get("flow", []) or []):
             item_box = _box(item.get("bbox"))
             if item_box is None:
-                ranked.append((2, 1000000 + original_index, 0.0, 0.0, item))
+                ranked.append((1000000 + original_index, 0.0, 0.0, original_index, item))
                 continue
             match = _best_line_match(item_box, records)
             rank = 1000000 + original_index
@@ -431,22 +401,7 @@ def _apply_lines_first_structure(
                 if semantic is not None and semantic != previous_semantic:
                     item["semantic_type"] = semantic
                     semantic_count += 1
-
-            column_index = 2
-            if columns:
-                center_x = (item_box[0] + item_box[2]) / 2.0
-                overlaps = [
-                    _intersection(item_box, column_box) / max(1.0, _area(item_box))
-                    for column_box in columns
-                ]
-                if max(overlaps) >= 0.50:
-                    column_index = 0 if overlaps[0] >= overlaps[1] else 1
-                    item["column_index"] = column_index
-                    item["spanning"] = False
-                elif columns[0][0] <= center_x <= columns[1][2]:
-                    item.pop("column_index", None)
-                    item["spanning"] = True
-            ranked.append((column_index, rank, item_box[1], item_box[0], item))
+            ranked.append((rank, item_box[1], item_box[0], original_index, item))
 
         reordered = [entry[-1] for entry in sorted(ranked, key=lambda entry: entry[:4])]
         original = list(page.get("flow", []) or [])
@@ -461,8 +416,67 @@ def _apply_lines_first_structure(
         "matchedFlowItemCount": matched_count,
         "semanticTypeChangeCount": semantic_count,
         "reorderedPageCount": reordered_pages,
-        "twoColumnPageCount": two_column_pages,
-        "policy": "Lines leads existing semantic/column/flow fields; PDF remains geometry and typography authority; schema unchanged.",
+        "pageTopologyDecisionCount": 0,
+        "policy": "Lines may lead semantic witness/local order; raw column objects never directly become Word/page columns here.",
+    }
+
+
+def _reconcile_columns_with_geometry_authority(
+    result: dict[str, Any],
+    geometry_map: dict[str, Any],
+) -> dict[str, Any]:
+    """Suppress pre-topology columns unless mature evidence authorizes them.
+
+    This is fail-closed: only ``true-two-column-page`` with high confidence may
+    survive as active page columns. All other legacy/PDF/Lines-first candidates
+    are retained only as diagnostic evidence and removed from active layout.
+    """
+    by_page = {
+        int(row.get("page") or 0): row
+        for row in geometry_map.get("pages", []) or []
+        if int(row.get("page") or 0) > 0
+    }
+    suppressed: list[int] = []
+    authorized: list[int] = []
+    for page in result.get("pages", []) or []:
+        page_no = int(page.get("page") or 0)
+        evidence = by_page.get(page_no) or {}
+        column_evidence = evidence.get("columnEvidence") or {}
+        classification = str(column_evidence.get("classification") or "unresolved")
+        confidence = str(column_evidence.get("confidence") or "none")
+        is_authorized = classification == "true-two-column-page" and confidence == "high"
+        if is_authorized:
+            authorized.append(page_no)
+            continue
+
+        prior_columns = list(page.get("columns", []) or [])
+        prior_two = len(prior_columns) == 2 or str(page.get("layout_mode") or "") == "two_columns"
+        if not prior_two:
+            continue
+        page["suppressedPreTopologyColumns"] = prior_columns
+        page["columns"] = []
+        page["layout_mode"] = "single_column"
+        prior_detection = dict(page.get("layout_detection") or {})
+        page["layout_detection"] = {
+            **prior_detection,
+            "accepted": False,
+            "reason": "not-authorized-by-mature-page-geometry",
+            "topologyReconciliation": {
+                "classification": classification,
+                "confidence": confidence,
+                "policy": "active page columns require true-two-column-page/high",
+            },
+        }
+        for item in page.get("flow", []) or []:
+            item.pop("column_index", None)
+            item.pop("spanning", None)
+        suppressed.append(page_no)
+
+    return {
+        "suppressedPageCount": len(suppressed),
+        "suppressedPages": suppressed,
+        "authorizedTrueTwoColumnPages": authorized,
+        "policy": "only mature true-two-column-page/high evidence can authorize active page columns",
     }
 
 
@@ -476,8 +490,6 @@ def build_page_structure(
     mathpix_lines_path=None,
     mathpix_lines_mode="witness",
 ) -> dict[str, Any]:
-    # Build Mathpix evidence before the legacy map so page-furniture semantic
-    # roles can be refined first. PDF-native coordinates remain authoritative.
     mathpix_line_layout_map = build_mathpix_line_layout_map(Path(mathpix_lines_path), pdf_analysis) if mathpix_lines_path else None
     if mathpix_line_layout_map:
         analyze_page_furniture(pdf_analysis, mathpix_line_layout_map=mathpix_line_layout_map)
@@ -514,6 +526,18 @@ def build_page_structure(
         if str(mathpix_lines_mode or "witness").lower().replace("-", "_") == "lines_first"
         else None
     )
+
+    geometry_map = None
+    reserved_zone_profile = None
+    margin_model = None
+    topology_column_reconciliation = None
+    if mathpix_line_layout_map:
+        geometry_map = build_mathpix_page_geometry_evidence(mathpix_line_layout_map)
+        reserved_zone_profile = build_reserved_page_zone_profile(mathpix_line_layout_map, geometry_map)
+        margin_model = build_mathpix_margin_model(mathpix_line_layout_map, geometry_map, reserved_zone_profile)
+        topology_column_reconciliation = _reconcile_columns_with_geometry_authority(result, geometry_map)
+        apply_mathpix_page_geometry(result, geometry_map)
+        apply_mathpix_margin_model(result, margin_model)
 
     pdf_pages = {
         int(page.get("page") or 0): page
@@ -570,6 +594,8 @@ def build_page_structure(
 
     result["externalAssetReconciliation"] = external_summary
     result["tocColumnReconciliation"] = toc_column_summary
+    result["topologyColumnReconciliation"] = topology_column_reconciliation
+    result["mathpixReservedPageZoneProfile"] = reserved_zone_profile
     result["textStyleMapSummary"] = text_style_summary
     result["frameEvidenceSummary"] = {
         "source": "pdf_analysis.pages[].drawings",
@@ -579,9 +605,13 @@ def build_page_structure(
         "policy": "callout border/fill may be reconstructed only from matched PDF vector evidence",
     }
     result["pageGeometryPolicy"] = {
-        "geometryAuthority": "PDF",
+        "geometryAuthority": "PDF-global topology corroborated by mature Mathpix geometry evidence",
         "semanticWitness": "Mathpix page_info / structural objects",
-        "fields": ["headers", "footers", "pageGeometry", "inferredMarginsPt", "columns", "textStyleMap"],
-        "policy": "Mathpix may refine semantic role; final coordinates and PDF-native typography stored in maps come from PDF evidence only. Strong TOC structure may suppress Word-column emission without replacing PDF geometry.",
+        "dependencyOrder": ["header", "footer", "body-margins", "columns"],
+        "fields": ["headers", "footers", "body_box", "margins", "columns", "sidebars", "pageGeometry", "textStyleMap"],
+        "policy": (
+            "raw Mathpix column objects never directly become page/Word columns; active columns require "
+            "true-two-column-page/high after furniture and body geometry; unresolved/side-rail evidence is fail-closed"
+        ),
     }
     return result
