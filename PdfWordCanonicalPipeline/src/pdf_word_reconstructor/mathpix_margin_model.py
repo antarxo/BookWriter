@@ -5,7 +5,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "mathpix-margin-model-0.1"
+VERSION = "mathpix-margin-model-0.2"
 
 _EXCLUDED_BODY_TYPES = {
     "page_info",
@@ -89,6 +89,75 @@ def _furniture_inside_margin_check(
         "footerInsideBottomMargin": bottom_ok,
         "valid": top_ok and bottom_ok,
         "policy": "header/footer are page furniture inside the top/bottom margins; they do not add to margin size",
+    }
+
+
+def _horizontal_pattern(left: float, right: float, tolerance: float = 3.0) -> str:
+    if left > right + tolerance:
+        return "left-larger"
+    if right > left + tolerance:
+        return "right-larger"
+    return "balanced"
+
+
+def _build_horizontal_family_profile(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Detect a mirrored odd/even horizontal-margin family before using it.
+
+    Physical-page parity is only a candidate family label. It becomes usable for
+    inheritance only when at least two observed pages exist in each family and
+    the dominant left/right asymmetry is opposite between the two families.
+    """
+    groups: dict[str, list[dict[str, float]]] = {"odd": [], "even": []}
+    patterns: dict[str, Counter[str]] = {"odd": Counter(), "even": Counter()}
+    for row in rows:
+        page_no = int(row.get("page") or 0)
+        observed = row.get("observedMarginsPt") or {}
+        try:
+            left = float(observed.get("left"))
+            right = float(observed.get("right"))
+        except (TypeError, ValueError):
+            continue
+        family = "odd" if page_no % 2 else "even"
+        groups[family].append({"left": left, "right": right})
+        patterns[family][_horizontal_pattern(left, right)] += 1
+
+    def dominant(family: str) -> str | None:
+        directional = {
+            "left-larger": patterns[family]["left-larger"],
+            "right-larger": patterns[family]["right-larger"],
+        }
+        best = max(directional, key=directional.get)
+        return best if directional[best] > directional["right-larger" if best == "left-larger" else "left-larger"] else None
+
+    odd_dom = dominant("odd")
+    even_dom = dominant("even")
+    mirrored = (
+        len(groups["odd"]) >= 2
+        and len(groups["even"]) >= 2
+        and odd_dom in {"left-larger", "right-larger"}
+        and even_dom in {"left-larger", "right-larger"}
+        and odd_dom != even_dom
+    )
+
+    families: dict[str, Any] = {}
+    for family, values in groups.items():
+        families[family] = {
+            "sourcePageCount": len(values),
+            "leftPt": median([v["left"] for v in values]) if values else None,
+            "rightPt": median([v["right"] for v in values]) if values else None,
+            "patternCounts": dict(sorted(patterns[family].items())),
+            "dominantPattern": dominant(family),
+        }
+
+    return {
+        "status": "resolved-mirrored-page-families" if mirrored else "not-resolved",
+        "usableForInheritance": mirrored,
+        "familyLabel": "physical-page-parity-candidate",
+        "families": families,
+        "policy": (
+            "odd/even labels are evidence-derived family candidates, not renderer instructions; "
+            "family-specific horizontal margins may be inherited only when opposite mirrored asymmetry is supported"
+        ),
     }
 
 
@@ -180,6 +249,9 @@ def build_mathpix_margin_model(
         "bottomPt": median(trusted_bottom) if trusted_bottom else None,
         "sourcePageCount": len(trusted_top),
     }
+    horizontal_family_profile = _build_horizontal_family_profile(
+        [row for row in provisional if row.get("status") != "unresolved"]
+    )
 
     pages: list[dict[str, Any]] = []
     status_counts: Counter[str] = Counter()
@@ -199,13 +271,16 @@ def build_mathpix_margin_model(
             source = "page-evidence"
             confidence = "high"
         elif all(profile.get(k) is not None for k in ("leftPt", "rightPt", "topPt", "bottomPt")):
-            # Special pages can suppress visible header/footer while retaining the
-            # same section margins. Use the learned document/section profile, not
-            # the first visible object, so a chapter title starting lower does not
-            # become a larger top margin.
+            horizontal = None
+            family = "odd" if page_no % 2 else "even"
+            if horizontal_family_profile.get("usableForInheritance"):
+                candidate = (horizontal_family_profile.get("families") or {}).get(family) or {}
+                if candidate.get("leftPt") is not None and candidate.get("rightPt") is not None:
+                    horizontal = candidate
+
             final_margins = {
-                "left": float(profile["leftPt"]),
-                "right": float(profile["rightPt"]),
+                "left": float(horizontal["leftPt"] if horizontal else profile["leftPt"]),
+                "right": float(horizontal["rightPt"] if horizontal else profile["rightPt"]),
                 "top": float(profile["topPt"]),
                 "bottom": float(profile["bottomPt"]),
             }
@@ -215,7 +290,7 @@ def build_mathpix_margin_model(
                 width - final_margins["right"],
                 height - final_margins["bottom"],
             ]
-            source = "document-profile"
+            source = "mirrored-page-family-profile" if horizontal else "document-profile"
             confidence = "medium"
         else:
             status_counts["unresolved"] += 1
@@ -231,18 +306,24 @@ def build_mathpix_margin_model(
             "source": source,
             "bodyBox": body,
             "marginsPt": {k: round(float(v), 3) for k, v in final_margins.items()},
+            "horizontalPageFamilyCandidate": "odd" if page_no % 2 else "even",
             "modelPolicy": "body box defines full margins; header/footer are internal margin witnesses and never additive",
         })
 
     return {
         "version": VERSION,
-        "policy": "infer the body box and full page margins first; header/footer validate occupancy inside those margins; chapter-open pages may inherit the learned section margin profile",
+        "policy": (
+            "infer body box/full margins after furniture; detect mirrored horizontal page families before inheritance; "
+            "chapter-open/special pages may inherit only evidence-supported document/page-family profiles"
+        ),
         "documentMarginProfile": profile,
+        "horizontalPageFamilyProfile": horizontal_family_profile,
         "summary": {
             "pageCount": len(pages),
             "trustedProfilePageCount": profile["sourcePageCount"],
             "statusCounts": dict(sorted(status_counts.items())),
             "documentMarginProfile": profile,
+            "horizontalPageFamilyProfileStatus": horizontal_family_profile.get("status"),
         },
         "pages": pages,
     }
@@ -265,6 +346,7 @@ def apply_mathpix_margin_model(page_structure: dict[str, Any], margin_model: dic
         page["body_box"] = list(row["bodyBox"])
         page["margins"] = dict(row.get("marginsPt") or {})
         page["margin_source"] = row.get("source")
+        page["horizontal_page_family_candidate"] = row.get("horizontalPageFamilyCandidate")
         applied += 1
 
     page_structure["mathpixMarginModel"] = margin_model
