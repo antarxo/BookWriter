@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -39,7 +41,7 @@ from pdf_word_reconstructor.region_classifier import classify_pdf_regions
 from pdf_word_reconstructor.style_profile import build_style_profile
 
 
-VERSION = "mathpix-page-topology-audit-0.3"
+VERSION = "mathpix-page-topology-audit-0.4"
 
 _STRUCTURAL_LINE_TYPES = {
     "page_info",
@@ -50,6 +52,7 @@ _STRUCTURAL_LINE_TYPES = {
     "table_of_contents_row",
     "table_of_contents_number",
 }
+_ASSET_RE = re.compile(r"-(?P<page>\d{3})_(?P<height>\d+)_(?P<width>\d+)_(?P<y>\d+)_(?P<x>\d+)\.(?:jpe?g|png)$", re.IGNORECASE)
 
 
 def _parse_physical_pages(spec: str | None, available: list[int]) -> list[int]:
@@ -137,7 +140,166 @@ def _mapping_content_matrix(
     return pdf_texts, matrix
 
 
-def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[str, Any]:
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _collect_visual_assets(package_dir: Path) -> dict[int, list[dict[str, Any]]]:
+    by_page: dict[int, list[dict[str, Any]]] = {}
+    seen: set[str] = set()
+    for path in package_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        match = _ASSET_RE.search(path.name)
+        if match is None or path.name in seen:
+            continue
+        seen.add(path.name)
+        page = int(match.group("page"))
+        height = int(match.group("height"))
+        width = int(match.group("width"))
+        y = int(match.group("y"))
+        x = int(match.group("x"))
+        by_page.setdefault(page, []).append({
+            "path": path,
+            "filename": path.name,
+            "bboxPx": [x, y, x + width, y + height],
+            "widthPx": width,
+            "heightPx": height,
+            "areaPx": width * height,
+        })
+    for page, rows in by_page.items():
+        rows.sort(key=lambda row: (-int(row["areaPx"]), str(row["filename"])))
+        by_page[page] = rows[:3]
+    return by_page
+
+
+def _visual_similarity(asset_path: Path, page_image: Any, bbox_px: list[int]) -> float:
+    try:
+        import numpy as np
+        from PIL import Image, ImageOps
+    except ImportError as exc:
+        raise RuntimeError("Visual page corroboration requires Pillow and numpy") from exc
+
+    x0, y0, x1, y1 = [int(v) for v in bbox_px]
+    x0 = max(0, min(x0, page_image.width - 1))
+    y0 = max(0, min(y0, page_image.height - 1))
+    x1 = max(x0 + 1, min(x1, page_image.width))
+    y1 = max(y0 + 1, min(y1, page_image.height))
+    crop = page_image.crop((x0, y0, x1, y1))
+    with Image.open(asset_path) as source:
+        asset = source.convert("RGB")
+    target_size = (128, 128)
+    asset_gray = ImageOps.grayscale(asset).resize(target_size, Image.Resampling.LANCZOS)
+    crop_gray = ImageOps.grayscale(crop).resize(target_size, Image.Resampling.LANCZOS)
+    a = np.asarray(asset_gray, dtype=np.float32) / 255.0
+    b = np.asarray(crop_gray, dtype=np.float32) / 255.0
+    a_std = float(a.std())
+    b_std = float(b.std())
+    if a_std < 1e-6 or b_std < 1e-6:
+        correlation = 0.0
+    else:
+        correlation = float(np.mean(((a - float(a.mean())) / a_std) * ((b - float(b.mean())) / b_std)))
+        correlation = max(-1.0, min(1.0, correlation))
+    mad_score = 1.0 - float(np.mean(np.abs(a - b)))
+    score = 0.75 * ((correlation + 1.0) / 2.0) + 0.25 * max(0.0, min(1.0, mad_score))
+    return round(max(0.0, min(1.0, score)), 4)
+
+
+def _visual_asset_corroboration(
+    pdf_path: Path,
+    package_dir: Path,
+    raw_by_physical: dict[int, dict[str, Any]],
+    mapping: dict[int, int],
+) -> list[dict[str, Any]]:
+    try:
+        import pymupdf as fitz
+        from PIL import Image
+    except ImportError:
+        import fitz  # type: ignore
+        from PIL import Image
+
+    assets_by_page = _collect_visual_assets(package_dir)
+    rendered: dict[tuple[int, int, int], Any] = {}
+    checks: list[dict[str, Any]] = []
+    with fitz.open(pdf_path) as pdf:
+        for physical, mapped_ordinal in sorted(mapping.items()):
+            raw_page = raw_by_physical.get(physical) or {}
+            page_width_px = int(raw_page.get("page_width") or 0)
+            page_height_px = int(raw_page.get("page_height") or 0)
+            assets = list(assets_by_page.get(physical) or [])
+            if page_width_px <= 0 or page_height_px <= 0 or not assets:
+                checks.append({
+                    "physicalPage": physical,
+                    "pdfOrdinalPage": mapped_ordinal,
+                    "status": "unavailable-no-visual-assets" if not assets else "unavailable-page-pixel-size",
+                    "assetCount": len(assets),
+                })
+                continue
+
+            ordinal_scores: dict[int, list[float]] = {}
+            for ordinal in range(1, pdf.page_count + 1):
+                key = (ordinal, page_width_px, page_height_px)
+                page_image = rendered.get(key)
+                if page_image is None:
+                    page = pdf[ordinal - 1]
+                    matrix = fitz.Matrix(
+                        page_width_px / max(1.0, float(page.rect.width)),
+                        page_height_px / max(1.0, float(page.rect.height)),
+                    )
+                    pix = page.get_pixmap(matrix=matrix, alpha=False)
+                    mode = "RGB" if pix.n == 3 else "RGBA"
+                    page_image = Image.frombytes(mode, (pix.width, pix.height), pix.samples).convert("RGB")
+                    if page_image.size != (page_width_px, page_height_px):
+                        page_image = page_image.resize((page_width_px, page_height_px), Image.Resampling.LANCZOS)
+                    rendered[key] = page_image
+                ordinal_scores[ordinal] = [
+                    _visual_similarity(row["path"], page_image, row["bboxPx"])
+                    for row in assets
+                ]
+
+            aggregate = {
+                ordinal: round(float(median(scores)), 4) if scores else 0.0
+                for ordinal, scores in ordinal_scores.items()
+            }
+            ranked = sorted(aggregate.items(), key=lambda pair: (-pair[1], pair[0]))
+            best_ordinal, best_score = ranked[0]
+            second_score = ranked[1][1] if len(ranked) > 1 else 0.0
+            mapped_score = aggregate.get(mapped_ordinal, 0.0)
+            separation = best_score - second_score
+            if best_ordinal == mapped_ordinal and best_score >= 0.78 and separation >= 0.06:
+                status = "confirmed"
+            elif best_ordinal != mapped_ordinal and best_score >= 0.78 and (best_score - mapped_score) >= 0.06:
+                status = "conflict"
+            else:
+                status = "inconclusive"
+            checks.append({
+                "physicalPage": physical,
+                "pdfOrdinalPage": mapped_ordinal,
+                "status": status,
+                "assetCount": len(assets),
+                "assets": [
+                    {"filename": row["filename"], "bboxPx": row["bboxPx"], "areaPx": row["areaPx"]}
+                    for row in assets
+                ],
+                "mappedScore": round(mapped_score, 4),
+                "bestPdfOrdinal": best_ordinal,
+                "bestScore": round(best_score, 4),
+                "secondBestScore": round(second_score, 4),
+                "bestSeparation": round(separation, 4),
+                "allPdfOrdinalScores": {str(k): v for k, v in aggregate.items()},
+                "perAssetScores": {
+                    str(ordinal): [round(v, 4) for v in scores]
+                    for ordinal, scores in ordinal_scores.items()
+                },
+            })
+    return checks
+
+
+def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any], package_dir: Path) -> dict[str, Any]:
     try:
         import pymupdf as fitz
     except ImportError:
@@ -246,17 +408,34 @@ def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[st
             + json.dumps(content_failures, ensure_ascii=False)
         )
 
-    mapping_status = "resolved" if text_layer_available else "provisional-pending-geometry-corroboration"
+    visual_checks = _visual_asset_corroboration(pdf_path, package_dir, raw_by_physical, mapping)
+    visual_confirmed = [row for row in visual_checks if row.get("status") == "confirmed"]
+    visual_conflicts = [row for row in visual_checks if row.get("status") == "conflict"]
+    if text_layer_available:
+        mapping_status = "resolved-text-content"
+    elif visual_conflicts:
+        mapping_status = "conflict-visual-corroboration"
+    elif len(visual_confirmed) == len(line_pages):
+        mapping_status = "resolved-visual-assets"
+    elif visual_confirmed:
+        mapping_status = "provisional-partially-visual-corroborated"
+    else:
+        mapping_status = "provisional-pending-geometry-corroboration"
+
     return {
         "version": VERSION,
         "status": mapping_status,
         "mode": mode,
+        "pdfSha256": _sha256(pdf_path),
         "pdfPageCount": pdf_count,
         "linesPhysicalPages": line_pages,
         "physicalToPdfOrdinal": {str(k): v for k, v in sorted(mapping.items())},
         "pdfOrdinalToPhysical": {str(v): k for k, v in sorted(mapping.items())},
         "aspectRatioChecks": aspect_checks,
         "contentCorroboration": content_checks,
+        "visualAssetCorroboration": visual_checks,
+        "visualConfirmedPages": [int(row["physicalPage"]) for row in visual_confirmed],
+        "visualConflictPages": [int(row["physicalPage"]) for row in visual_conflicts],
         "textLayerEvidence": {
             "available": text_layer_available,
             "pdfPagesWithExtractedText": pdf_text_page_count,
@@ -264,8 +443,9 @@ def _resolve_page_mapping(pdf_path: Path, lines_data: dict[str, Any]) -> dict[st
             "policy": "absence of a PDF text layer is unavailable evidence, never a content conflict and never an OCR trigger",
         },
         "policy": (
-            "candidate identity/subset mapping must pass page-size corroboration; when a PDF text layer exists it must also pass "
-            "content corroboration; when the text layer is absent the mapping remains provisional until PDF/Lines geometry corroboration"
+            "candidate identity/subset mapping must pass page-size corroboration; text corroboration is required when a PDF text layer exists; "
+            "otherwise packaged Mathpix crop assets are compared pixel-wise at their own normalized source coordinates against every PDF ordinal; "
+            "visual conflicts keep mapping fail-closed for production"
         ),
     }
 
@@ -325,6 +505,7 @@ def _column_summary(column_evidence: dict[str, Any]) -> dict[str, Any]:
 
 def _compact_page_structure(page: dict[str, Any]) -> dict[str, Any]:
     return {
+        "layoutMode": page.get("layout_mode"),
         "bodyBoxPt": page.get("body_box"),
         "marginsPt": page.get("margins"),
         "marginSource": page.get("margin_source"),
@@ -332,6 +513,10 @@ def _compact_page_structure(page: dict[str, Any]) -> dict[str, Any]:
         "columnCount": len(page.get("columns", []) or []),
         "columns": page.get("columns"),
         "mathpixSidebars": page.get("mathpix_sidebars"),
+        "mainFlowBox": page.get("main_flow_box"),
+        "outerRailBox": page.get("outer_rail_box"),
+        "outerRailSide": page.get("outer_rail_side"),
+        "pageTopology": page.get("page_topology"),
         "header": page.get("header"),
         "footer": page.get("footer"),
         "mathpixMarginEvidence": page.get("mathpixMarginEvidence"),
@@ -432,8 +617,8 @@ def main(argv: list[str] | None = None) -> int:
     pdf_path = _find_package_pdf(package_dir).resolve()
     lines_data = load_mathpix_lines(lines_path)
 
-    print("[2/6] Resolve/corroborate PDF ordinal <-> Mathpix physical pages [FAIL-CLOSED; NO OCR]")
-    page_mapping = _resolve_page_mapping(pdf_path, lines_data)
+    print("[2/6] Resolve/corroborate PDF ordinal <-> Mathpix physical pages [FAIL-CLOSED; NO OCR; PACKAGE-INTERNAL VISUAL ASSETS]")
+    page_mapping = _resolve_page_mapping(pdf_path, lines_data, package_dir)
     write_json(output / "PAGE_MAPPING_AUDIT.json", page_mapping)
     physical_pages = _parse_physical_pages(args.pages, page_mapping["linesPhysicalPages"])
     p2o = {int(k): int(v) for k, v in page_mapping["physicalToPdfOrdinal"].items()}
@@ -486,13 +671,18 @@ def main(argv: list[str] | None = None) -> int:
 
     pages: list[dict[str, Any]] = []
     conflict_pages: list[int] = []
+    refined_blocked_pages: list[int] = []
     for physical in physical_pages:
-        geom = geom_by_page.get(physical) or {}
+        first_geom = geom_by_page.get(physical) or {}
         margin = margin_by_page.get(physical) or {}
         raw_ps = raw_ps_by_page.get(physical) or {}
         applied_ps = applied_ps_by_page.get(physical) or {}
         pdf_page = pdf_by_page.get(physical) or {}
-        column_evidence = geom.get("columnEvidence") or {}
+        refined_geom = raw_ps.get("mathpixGeometryEvidence") or first_geom
+        column_evidence = refined_geom.get("columnEvidence") or {}
+        classification = str(column_evidence.get("classification") or "unresolved")
+        if classification.startswith("blocked"):
+            refined_blocked_pages.append(physical)
         conflict = _legacy_geometry_conflict(raw_ps, column_evidence)
         if conflict["status"] == "conflict":
             conflict_pages.append(physical)
@@ -502,10 +692,10 @@ def main(argv: list[str] | None = None) -> int:
             "pageSizePt": [pdf_page.get("width_pt"), pdf_page.get("height_pt")],
             "pageParityCandidate": "recto" if physical % 2 else "verso",
             "headerFooter": {
-                "headerStatus": ((geom.get("headerFooterClassification") or {}).get("headerStatus")),
-                "footerStatus": ((geom.get("headerFooterClassification") or {}).get("footerStatus")),
-                "headerBandPt": (geom.get("headerBand") or {}).get("bbox"),
-                "footerBandPt": (geom.get("footerBand") or {}).get("bbox"),
+                "headerStatus": ((refined_geom.get("headerFooterClassification") or {}).get("headerStatus")),
+                "footerStatus": ((refined_geom.get("headerFooterClassification") or {}).get("footerStatus")),
+                "headerBandPt": (refined_geom.get("headerBand") or {}).get("bbox"),
+                "footerBandPt": (refined_geom.get("footerBand") or {}).get("bbox"),
                 "reservedHeaderStatus": margin.get("headerReservedZoneStatus"),
                 "reservedFooterStatus": margin.get("footerReservedZoneStatus"),
             },
@@ -516,7 +706,9 @@ def main(argv: list[str] | None = None) -> int:
                 "marginsPt": margin.get("marginsPt"),
                 "observedMarginsPt": margin.get("observedMarginsPt"),
             },
-            "mathpixColumnEvidence": _column_summary(column_evidence),
+            "initialMathpixColumnEvidence": _column_summary((first_geom.get("columnEvidence") or {})),
+            "refinedProductionColumnEvidence": _column_summary(column_evidence),
+            "productionTopologyBoxes": refined_geom.get("topologyBoxes"),
             "legacyGeometryConflict": conflict,
             "rawMaturePageStructure": _compact_page_structure(raw_ps),
             "afterExistingMatureAdaptersDiagnosticOnly": _compact_page_structure(applied_ps),
@@ -528,12 +720,14 @@ def main(argv: list[str] | None = None) -> int:
         "status": "diagnostic-only",
         "sourcePackage": str(package_zip),
         "sourcePdf": str(pdf_path),
+        "sourcePdfSha256": page_mapping.get("pdfSha256"),
         "sourceLines": str(lines_path),
         "physicalPages": physical_pages,
         "pageMapping": page_mapping,
         "documentMarginProfile": margins.get("documentMarginProfile"),
         "mirroredMarginAudit": mirror_audit,
         "legacyGeometryConflictPages": conflict_pages,
+        "refinedBlockedPages": refined_blocked_pages,
         "pages": pages,
         "policy": {
             "pdfGlobalTopology": "must participate before Word layout classification",
@@ -544,6 +738,7 @@ def main(argv: list[str] | None = None) -> int:
             "pageSpecificHardcoding": "FORBIDDEN",
             "ambiguousEvidence": "FAIL-CLOSED",
             "pdfTextLayer": "optional witness only; absence never becomes a conflict and never triggers OCR",
+            "visualMapping": "package-internal Mathpix crop assets are compared against every ordinal page of the package PDF at their own source coordinates",
         },
     }
     write_json(output / "PAGE_TOPOLOGY_AUDIT.json", audit)
@@ -555,10 +750,14 @@ def main(argv: list[str] | None = None) -> int:
         "physicalPages": physical_pages,
         "pageMappingMode": page_mapping["mode"],
         "pageMappingStatus": page_mapping["status"],
+        "sourcePdfSha256": page_mapping.get("pdfSha256"),
         "pdfTextLayerAvailable": bool((page_mapping.get("textLayerEvidence") or {}).get("available")),
         "contentMappingConfirmedPages": sum(1 for row in page_mapping.get("contentCorroboration", []) if row.get("status") == "confirmed"),
+        "visualMappingConfirmedPages": page_mapping.get("visualConfirmedPages"),
+        "visualMappingConflictPages": page_mapping.get("visualConflictPages"),
         "mirroredMarginStatus": mirror_audit.get("status"),
         "legacyGeometryConflictPages": conflict_pages,
+        "refinedBlockedPages": refined_blocked_pages,
         "output": str(output / "PAGE_TOPOLOGY_AUDIT.json"),
         "renderer": "OFF",
     }, ensure_ascii=False, indent=2))
