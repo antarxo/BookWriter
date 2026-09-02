@@ -350,6 +350,23 @@ def _member_slot(slots_by_member: dict[str, list[dict[str, Any]]], member_id: st
     return None
 
 
+def _slot_compatible(item: dict[str, Any], slot: dict[str, Any] | None) -> bool:
+    if not slot:
+        return False
+    kind = str(item.get("type") or "").strip().lower()
+    slot_type = str(slot.get("type") or "").strip().lower()
+    source = str(slot.get("source") or "")
+    text_kinds = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list", "table", "latex_table"}
+    visual_kinds = {"image", "figure"}
+    if kind in text_kinds:
+        return slot_type in {"text", "callout"} and source != "page_structure.visual_group"
+    if kind in visual_kinds:
+        return slot_type == "visual" or source == "page_structure.visual_group"
+    if kind == "display_equation":
+        return slot_type in {"math", "visual"} or str(slot.get("semanticType") or "").lower() == "equation"
+    return True
+
+
 def _slot_column_index(slot: dict[str, Any], page_info: dict[str, Any] | None) -> int:
     column_index = slot.get("columnIndex")
     try:
@@ -464,7 +481,7 @@ def _best_slot(
     pdf_region = str(item.get("pdfRegion") or "")
     if pdf_region:
         slot = _member_slot(slots_by_member, pdf_region, page_no)
-        if slot:
+        if slot and _slot_compatible(item, slot):
             return slot, "pdf-region-id", 100.0
     pdf_parent = str(item.get("pdfParentRegion") or "")
     parent_slot = _member_slot(slots_by_member, pdf_parent, page_no) if pdf_parent else None
@@ -474,6 +491,8 @@ def _best_slot(
     item_box = _bbox(item.get("bbox"))
     best: tuple[float, dict[str, Any]] | None = None
     for slot in slots_by_page.get(page_no, []) or []:
+        if not _slot_compatible(item, slot):
+            continue
         score = _overlap(item_box, _bbox(slot.get("bbox")))
         if best is None or score > best[0]:
             best = (score, slot)
@@ -587,8 +606,8 @@ def build_page_layout_spine(
     placed = int(status_counts.get("layout-slot", 0))
     usable_contracts = sum(1 for row in rows if ((row.get("layoutContract") or {}).get("status") == "usable"))
     return {
-        "version": "page-layout-spine-0.3",
-        "policy": "Pagination/layout starts from Markdown/PDF witnesses mapped to page_structure slots. layoutOrderBySlot is a complete page_structure.flow Word-flow order derived from PDF geometry and columns; Markdown rows use it as a witness, not as a partial reorder fallback.",
+        "version": "page-layout-spine-0.3.1",
+        "policy": "Pagination/layout starts from Markdown/PDF witnesses mapped to semantically compatible page_structure slots. Text Markdown cannot bind to visual/image slots and visual Markdown cannot bind to text flow slots. layoutOrderBySlot is a complete page_structure.flow Word-flow order derived from PDF geometry and columns; Markdown rows use it as a witness, not as a partial reorder fallback.",
         "summary": {
             "rowCount": total,
             "layoutSlotCount": placed,
