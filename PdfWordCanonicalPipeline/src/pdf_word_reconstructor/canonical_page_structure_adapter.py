@@ -5,7 +5,7 @@ from statistics import median
 from typing import Any
 
 
-VERSION = "canonical-page-structure-adapter-0.2"
+VERSION = "canonical-page-structure-adapter-0.3"
 _TEXT_SEMANTICS = {"paragraph", "heading", "caption", "list"}
 _NON_TEXT_CANONICAL_TYPES = {"figure": "image", "equation": "display_equation"}
 _ORIGINAL_TEXT_TYPES = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list"}
@@ -64,11 +64,15 @@ def _line_box(record: dict[str, Any] | None) -> list[float] | None:
     return _box([bbox.get("x0"), bbox.get("y0"), bbox.get("x1"), bbox.get("y1")])
 
 
-def _block_box(page: dict[str, Any], block: dict[str, Any]) -> list[float] | None:
+def _block_line_records(page: dict[str, Any], block: dict[str, Any]) -> list[dict[str, Any]]:
     geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
     line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
     records = _line_records_by_id(page)
-    boxes = [_line_box(records.get(line_id)) for line_id in line_ids]
+    return [records[line_id] for line_id in line_ids if line_id in records]
+
+
+def _block_box(page: dict[str, Any], block: dict[str, Any]) -> list[float] | None:
+    boxes = [_line_box(record) for record in _block_line_records(page, block)]
     return _union([value for value in boxes if value is not None])
 
 
@@ -89,12 +93,8 @@ def _active_column_index(page: dict[str, Any], box: list[float]) -> tuple[int | 
 
 
 def _dominant_font_size_pt(page: dict[str, Any], block: dict[str, Any]) -> float | None:
-    geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
-    line_ids = [str(value) for value in geometry.get("lineIds", []) or [] if value]
-    records = _line_records_by_id(page)
     sizes: list[float] = []
-    for line_id in line_ids:
-        record = records.get(line_id) or {}
+    for record in _block_line_records(page, block):
         try:
             font_size = float(record.get("font_size"))
             scale = float(((page.get("mathpixLinePageMap") or {}).get("scale_pt_per_px")) or 0.0)
@@ -103,6 +103,37 @@ def _dominant_font_size_pt(page: dict[str, Any], block: dict[str, Any]) -> float
         if font_size > 0 and scale > 0:
             sizes.append(font_size * scale)
     return round(float(median(sizes)), 3) if sizes else None
+
+
+def _lines_typography(page: dict[str, Any], block: dict[str, Any]) -> dict[str, Any]:
+    records = _block_line_records(page, block)
+    line_boxes = [box for box in (_line_box(record) for record in records) if box is not None]
+    line_boxes = sorted(line_boxes, key=lambda box: (box[1], box[0]))
+    pitches: list[float] = []
+    if len(line_boxes) >= 2:
+        centers = [((box[1] + box[3]) / 2.0) for box in line_boxes]
+        pitches = [
+            centers[index] - centers[index - 1]
+            for index in range(1, len(centers))
+            if centers[index] - centers[index - 1] > 0
+        ]
+    font_size = _dominant_font_size_pt(page, block)
+    median_pitch = round(float(median(pitches)), 3) if pitches else None
+    return {
+        "confidence": "medium" if font_size is not None or median_pitch is not None else "none",
+        "source": "mathpix-lines-via-canonical-evidence",
+        "fontFamily": {"dominant": None},
+        "fontSizePt": {"dominant": font_size},
+        "emphasis": {},
+        "color": {"dominant": None},
+        "lineBoxes": [[round(value, 3) for value in box] for box in line_boxes],
+        "lineCount": len(line_boxes),
+        "linePitch": {
+            "medianPt": median_pitch,
+            "samplesPt": [round(value, 3) for value in pitches],
+            "source": "mathpix-lines-consecutive-line-center-distance",
+        },
+    }
 
 
 def _canonical_slot_id(block: dict[str, Any]) -> str:
@@ -130,8 +161,6 @@ def apply_canonical_evidence_to_page_structure(
     unresolved: list[dict[str, Any]] = []
     unsupported: list[dict[str, Any]] = []
 
-    # Package-first text authority is canonical MMD+Lines. Preserve PDF-owned
-    # visuals, but replace any pre-existing ordinary text flow with canonical text.
     for page in pages.values():
         page["flow"] = [item for item in page.get("flow", []) or [] if str(item.get("type") or "") != "text"]
         page["callouts"] = [
@@ -303,23 +332,13 @@ def canonicalize_markdown_pdf_spine(
             pdf_region = line_ids[0] if len(line_ids) == 1 else str(block.get("id") or "")
             row_granularity = "canonical-mmd-lines-nontext-block"
         else:
-            # Preserve uncommon semantics as paragraphs only when they carry text;
-            # otherwise retain the original MMD record through the unmatched path.
             if not text.strip():
                 continue
             item_type = str(source_item.get("type") or semantic or "paragraph")
             pdf_region = _canonical_slot_id(block)
             row_granularity = "canonical-mmd-lines-generic-block"
 
-        font_size = _dominant_font_size_pt(page, block)
-        typography = {
-            "confidence": "medium" if font_size is not None else "none",
-            "source": "mathpix-lines-via-canonical-evidence",
-            "fontFamily": {"dominant": None},
-            "fontSizePt": {"dominant": font_size},
-            "emphasis": {},
-            "color": {"dominant": None},
-        }
+        typography = _lines_typography(page, block)
         geometry = block.get("geometry") if isinstance(block.get("geometry"), dict) else {}
         authoritative = {
             "text": text,
