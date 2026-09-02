@@ -13,6 +13,11 @@ from docx import Document
 
 from pdf_word_canonical_pipeline.markdown_element_map import extract_markdown_element_map
 
+from .canonical_evidence_fusion import build_canonical_evidence_document
+from .canonical_page_structure_adapter import (
+    apply_canonical_evidence_to_page_structure,
+    canonicalize_markdown_pdf_spine,
+)
 from .common import parse_page_range, write_json
 from .docx_analyzer import analyze_docx
 from .markdown_pdf_spine import build_markdown_pdf_spine
@@ -28,7 +33,7 @@ from .region_classifier import classify_pdf_regions
 from .style_profile import build_style_profile
 
 
-VERSION = "mathpix-package-reconstruction-cli-0.7"
+VERSION = "mathpix-package-reconstruction-cli-0.8"
 
 
 def _extract_package(package_zip: Path, target: Path) -> Path:
@@ -176,8 +181,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--preview-unresolved",
         action="store_true",
         help=(
-            "Diagnostic preview only: render ready contract items and preserve unresolved/ambiguous "
-            "content as editable positioned recovery callouts. Strict production behavior remains the default."
+            "Diagnostic preview only: render ready contract items; unresolved/ambiguous items are "
+            "recorded and omitted from DOCX. Strict production behavior remains the default."
         ),
     )
     return parser
@@ -242,18 +247,18 @@ def main(argv: list[str] | None = None) -> int:
     write_json(analysis_dir / "style_profile.json", style_profile)
     write_json(analysis_dir / "classification_summary.json", classification_summary)
 
-    print("[3/8] Build complete page maps from PDF + Mathpix lines/package [LINES-FIRST]")
+    print("[3/8] Build complete page maps from PDF + Mathpix lines [PDF-FIRST VISUAL OWNERSHIP]")
     page_structure = build_page_structure(
         pdf_analysis,
         work_dir,
         asset_dir,
         reference_docx=None,
-        external_asset_paths=[package_dir],
+        external_asset_paths=None,
         equation_donor_path=None,
         mathpix_lines_path=lines_path,
         mathpix_lines_mode="lines_first",
     )
-    write_json(analysis_dir / "page_structure.json", page_structure)
+    write_json(analysis_dir / "page_structure_pdf_first.json", page_structure)
 
     print("[4/8] Parse canonical Mathpix MMD with existing Markdown element mapper")
     markdown_element_map = extract_markdown_element_map(
@@ -273,11 +278,32 @@ def main(argv: list[str] | None = None) -> int:
         markdown_element_map.get("mmdBlockRefinement") or {},
     )
 
-    print("[5/8] Build Markdown/PDF spine")
+    print("[5/8] Build canonical MMD + Lines evidence and Markdown/PDF spine")
     markdown_pdf_spine = build_markdown_pdf_spine(markdown_element_map, pdf_analysis)
+    canonical_evidence = build_canonical_evidence_document(
+        mmd_path,
+        lines_path,
+        pdf_path=pdf_path,
+        target_page=None,
+        work_dir=analysis_dir / "canonical_fusion_work",
+    )
+    write_json(analysis_dir / "canonical_evidence.json", canonical_evidence)
+
+    canonical_adapter = apply_canonical_evidence_to_page_structure(
+        page_structure,
+        canonical_evidence,
+    )
+    write_json(analysis_dir / "canonical_page_structure_adapter.json", canonical_adapter)
+    write_json(analysis_dir / "page_structure.json", page_structure)
+
+    markdown_pdf_spine = canonicalize_markdown_pdf_spine(
+        markdown_pdf_spine,
+        page_structure,
+        canonical_evidence,
+    )
     write_json(analysis_dir / "markdown_pdf_spine.json", markdown_pdf_spine)
 
-    print("[6/8] Build page-layout spine from page maps; DOCX donor disabled")
+    print("[6/8] Build page-layout spine from canonical page maps; DOCX donor disabled")
     page_layout_spine = build_page_layout_spine(
         markdown_pdf_spine,
         page_structure,
@@ -314,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
 
     suffix = "_preview" if args.preview_unresolved else ""
     final_docx = output / f"native_page_structure_{args.pages.replace(',', '_')}_package_first{suffix}.docx"
-    mode_text = " [diagnostic preview + recovery callouts]" if args.preview_unresolved else ""
+    mode_text = " [diagnostic preview: unresolved omitted]" if args.preview_unresolved else ""
     print(f"[8/8] Build Word document: {final_docx.name}{mode_text}")
     report = build_native_page_document(
         pdf_analysis,
@@ -347,9 +373,11 @@ def main(argv: list[str] | None = None) -> int:
             "docxDonorEnabled": False,
             "alignmentEnabled": False,
             "rendererApiShim": str(shim_path),
-            "contentAuthority": "Mathpix MMD via refined build contract",
-            "physicalAuthority": "page_structure maps derived from package PDF with Lines-first structural ownership",
-            "typographyAuthority": "page_structure.textStyleMap derived from PDF spans",
+            "contentAuthority": "canonical Mathpix MMD + Lines evidence",
+            "physicalAuthority": "package PDF page_structure; PDF-first visual ownership",
+            "typographyAuthority": "Mathpix Lines local size evidence plus PDF evidence when available",
+            "canonicalEvidenceSummary": canonical_evidence.get("summary") or {},
+            "canonicalPageStructureAdapter": canonical_adapter,
             "mathpixExactLayoutRecovery": exact_recovery,
             "mmdBlockRefinement": markdown_element_map.get("mmdBlockRefinement") or {},
             "diagnosticPreview": bool(args.preview_unresolved),
@@ -369,6 +397,8 @@ def main(argv: list[str] | None = None) -> int:
         "mathpixLinesMode": "lines_first",
         "diagnosticPreview": bool(args.preview_unresolved),
         "previewRecoveryLayer": preview_recovery,
+        "canonicalEvidenceSummary": canonical_evidence.get("summary") or {},
+        "canonicalPageStructureAdapter": canonical_adapter,
         "markdownRecordCount": int(markdown_element_map.get("count") or 0),
         "spineCoverage": markdown_pdf_spine.get("coverage"),
         "layoutCoverage": ((page_layout_spine.get("summary") or {}).get("coverage")),
