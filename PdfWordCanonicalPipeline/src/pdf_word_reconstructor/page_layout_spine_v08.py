@@ -4,7 +4,7 @@ from typing import Any
 
 from .page_layout_spine_v07 import build_page_layout_spine as _build_v07
 
-VERSION = "page-layout-spine-0.8"
+VERSION = "page-layout-spine-0.8.1"
 TEXT_TYPES = {"paragraph", "heading", "title", "author", "caption", "list", "latex_list", "table", "latex_table"}
 
 
@@ -56,6 +56,24 @@ def _relative(box: list[float], page: dict[str, Any] | None) -> list[float] | No
     return [round(box[0] / width, 6), round(box[1] / height, 6), round(box[2] / width, 6), round(box[3] / height, 6)]
 
 
+def _region_is_text_witness(page: dict[str, Any] | None, region: str, item: dict[str, Any]) -> bool:
+    """Accept direct text recovery only from text-granular evidence.
+
+    A visual-group/image region is not a text slot merely because Markdown/PDF
+    association happened to point at it. Exact Mathpix/PDF line witnesses remain
+    eligible; otherwise the region must identify an actual text flow item.
+    """
+    granularity = str(item.get("pdfRowGranularity") or "")
+    if granularity in {"pdf-line", "pdf-line-cluster", "mathpix-line", "mathpix-lines-text-object"}:
+        return True
+    for flow_item in (page or {}).get("flow", []) or []:
+        if str(flow_item.get("type") or "") != "text":
+            continue
+        if str(flow_item.get("id") or "") == region:
+            return True
+    return False
+
+
 def build_page_layout_spine(
     markdown_pdf_spine: dict[str, Any] | None,
     page_structure: dict[str, Any] | None,
@@ -69,6 +87,7 @@ def build_page_layout_spine(
     }
     pages = _page_lookup(page_structure)
     recovered: list[dict[str, Any]] = []
+    rejected_non_text_regions: list[dict[str, Any]] = []
 
     for row in result.get("rows", []) or []:
         layout = row.get("layout") if isinstance(row.get("layout"), dict) else {}
@@ -88,6 +107,17 @@ def build_page_layout_spine(
             continue
 
         page = pages.get(page_no)
+        if not _region_is_text_witness(page, region, item):
+            rejected_non_text_regions.append({
+                "markdownId": row.get("markdownId"),
+                "page": page_no,
+                "pdfRegion": region,
+                "type": kind,
+                "pdfRowGranularity": item.get("pdfRowGranularity"),
+                "reason": "direct-text-recovery-rejected-non-text-region",
+            })
+            continue
+
         col_index = _column_index(page, box)
         two_columns = str((page or {}).get("layout_mode") or "") == "two_columns" and col_index is not None
         placement = "word-column-flow" if two_columns else "normal-flow"
@@ -153,11 +183,14 @@ def build_page_layout_spine(
     result["version"] = VERSION
     result["directPdfWitnessRecovery"] = {
         "recoveredCount": len(recovered),
-        "policy": "recover only no-layout-slot text rows that already have pdfPage+pdfRegion+bbox; no new matching",
+        "rejectedNonTextRegionCount": len(rejected_non_text_regions),
+        "policy": "recover only no-layout-slot text rows whose pdfRegion is independently text-granular; visual/image regions cannot be promoted to text slots",
         "items": recovered[:120],
+        "rejected": rejected_non_text_regions[:120],
     }
     summary = result.setdefault("summary", {})
     summary["directPdfWitnessRecoveryCount"] = len(recovered)
+    summary["directPdfWitnessRejectedNonTextRegionCount"] = len(rejected_non_text_regions)
     return result
 
 
