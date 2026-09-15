@@ -1,0 +1,39 @@
+diff --git a/core/v4/web-core-v4.js b/core/v4/web-core-v4.js
+index 8af5214..0000000 100644
+--- a/core/v4/web-core-v4.js
++++ b/core/v4/web-core-v4.js
+@@ -137,6 +137,15 @@ function pushTable(blocks,node,baseUrl,sourceIndex){
+   blocks.push({type:'table',rows,columns,tableStyle:{headerRows:node.querySelector('thead')?1:0},sourceStyle:'table',sourceParagraph:sourceIndex});
+ }
+ function pushFigure(blocks,node,baseUrl,sourceIndex){const img=node.tagName==='IMG'?node:node.querySelector('img');if(!img)return;const caption=node.tagName==='FIGURE'?textFromHtml(node.querySelector('figcaption')?.innerHTML||''):'';pushFigureFromImg(blocks,img,sourceIndex,caption)}
++function isSemanticTable(node){
++  if(!node||node.tagName!=='TABLE')return false;
++  if([...node.children].some(child=>child.tagName==='CAPTION'))return true;
++  if([...node.querySelectorAll('th')].some(th=>th.closest('table')===node))return true;
++  const role=String(node.getAttribute('role')||'').toLowerCase();
++  if(role==='table'||role==='grid')return true;
++  if(node.hasAttribute('aria-label')||node.hasAttribute('aria-labelledby'))return true;
++  return false;
++}
+ function collectBlocks(doc,baseUrl=''){
+   const source=doc.querySelector('article,main,[role="main"]')||doc.body;if(!source)return[];
+   source.querySelectorAll('script,style,noscript,template,iframe,object,embed,canvas,svg,form,aside,.sidebar,.menu,.nav,.advertisement,.ads,[aria-hidden="true"]').forEach(node=>node.remove());
+@@ -147,10 +156,15 @@ function collectBlocks(doc,baseUrl=''){
+     if(/^H[1-6]$/.test(tag)){pushHeading(blocks,node,baseUrl,index);return}
+     if(tag==='P'||tag==='BLOCKQUOTE'){pushParagraph(blocks,node,baseUrl,index);return}
+     if(tag==='UL'||tag==='OL'){pushList(blocks,node,baseUrl,index);return}
+-    if(tag==='TABLE'){pushTable(blocks,node,baseUrl,index);return}
++    if(tag==='TABLE'){
++      if(isSemanticTable(node)){pushTable(blocks,node,baseUrl,index);return}
++      [...node.children].forEach(visit);
++      return;
++    }
+     if(tag==='FIGURE'||tag==='IMG'){pushFigure(blocks,node,baseUrl,index);return}
+-    const direct=[...node.children].filter(child=>/^(H[1-6]|P|BLOCKQUOTE|UL|OL|TABLE|FIGURE|IMG|SECTION|ARTICLE|DIV)$/i.test(child.tagName));
+-    if(direct.length)direct.forEach(visit);else if(textFromHtml(node.innerHTML).length>25)pushParagraph(blocks,node,baseUrl,index);
++    const children=[...node.children];
++    if(children.length){children.forEach(visit);return}
++    if(/^(DIV|SECTION|ARTICLE|MAIN|TD|TH|ADDRESS)$/i.test(tag)&&textFromHtml(node.innerHTML).length>25)pushParagraph(blocks,node,baseUrl,index);
+   };
+   [...source.children].forEach(visit);return blocks;
+ }
