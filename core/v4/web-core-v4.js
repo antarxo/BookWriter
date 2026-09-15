@@ -4,6 +4,65 @@ const CONVERTER='bookwriter-4.5.0-rc1-web';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const textFromHtml=html=>{const d=document.createElement('div');d.innerHTML=String(html||'');return(d.textContent||'').replace(/\s+/g,' ').trim()};
 const safeName=value=>String(value||'web-image').split(/[?#]/)[0].split('/').pop().replace(/[^A-Za-z0-9._-]+/g,'_')||'web-image.bin';
+let localPackage=null;
+function normalizeLocalPath(value=''){
+  let raw=String(value||'').trim().replace(/\\/g,'/').split('#')[0].split('?')[0];
+  try{raw=decodeURIComponent(raw)}catch{}
+  raw=raw.replace(/^\.\//,'').replace(/^\/+/, '');
+  const out=[];
+  for(const part of raw.split('/')){
+    if(!part||part==='.')continue;
+    if(part==='..')out.pop();
+    else out.push(part);
+  }
+  return out.join('/');
+}
+function joinLocalPath(base='',relative=''){
+  const rel=String(relative||'').trim();
+  if(!rel)return'';
+  if(/^(?:[a-z]+:|\/\/|#)/i.test(rel))return rel;
+  const prefix=normalizeLocalPath(base).split('/').slice(0,-1).join('/');
+  return normalizeLocalPath((prefix?prefix+'/':'')+rel);
+}
+async function collectDirectoryFiles(handle,prefix='',map=new Map()){
+  for await(const[name,entry]of handle.entries()){
+    const path=prefix?prefix+'/'+name:name;
+    if(entry.kind==='file')map.set(normalizeLocalPath(path),await entry.getFile());
+    else if(entry.kind==='directory')await collectDirectoryFiles(entry,path,map);
+  }
+  return map;
+}
+function chooseHtmlPath(files){
+  const html=[...files.keys()].filter(path=>/\.html?$/i.test(path));
+  if(!html.length)return'';
+  const root=html.filter(path=>!path.includes('/'));
+  const pool=root.length?root:html;
+  return pool.find(path=>/(^|\/)index\.html?$/i.test(path))||pool[0];
+}
+function packageFileFor(src){
+  if(!localPackage||!src)return null;
+  const joined=joinLocalPath(localPackage.htmlPath,src);
+  if(/^(?:[a-z]+:|\/\/|#)/i.test(joined))return null;
+  const exact=localPackage.files.get(normalizeLocalPath(joined));
+  if(exact)return exact;
+  const key=normalizeLocalPath(joined).toLowerCase();
+  return [...localPackage.files.entries()].find(([path])=>path.toLowerCase()===key)?.[1]||null;
+}
+function rewriteLocalImages(html=''){
+  if(!localPackage)return{html:String(html||''),urls:[]};
+  const doc=new DOMParser().parseFromString(String(html||''),'text/html');
+  const urls=[];
+  doc.querySelectorAll('img[src]').forEach(img=>{
+    const raw=img.getAttribute('src')||'';
+    if(!raw||/^(?:data:|blob:|https?:|file:|\/\/)/i.test(raw))return;
+    const file=packageFileFor(raw);
+    if(!file)return;
+    const url=URL.createObjectURL(file);
+    urls.push(url);
+    img.setAttribute('src',url);
+  });
+  return{html:'<!doctype html>\n'+doc.documentElement.outerHTML,urls};
+}
 function cleanHtml(html='',baseUrl=''){
   const template=document.createElement('template');
   template.innerHTML=String(html||'');
@@ -28,7 +87,7 @@ function filterStyle(style=''){
 function absoluteUrl(value='',base=''){
   const raw=String(value||'').trim();
   if(!raw)return'';
-  if(/^data:/i.test(raw))return raw;
+  if(/^data:/i.test(raw)||/^blob:/i.test(raw))return raw;
   try{return new URL(raw,base||global.location?.href||'http://bookwriter.local/').href}catch{return raw}
 }
 function blockText(block){return block?.type==='figure'?block.caption||block.alt||block.srcPath:block?.type==='list'?(block.items||[]).map(x=>textFromHtml(x.html)).join(' · '):block?.type==='table'?(block.rows||[]).map(r=>(r.cells||[]).map(c=>textFromHtml(c.html)).join(' | ')).join(' · '):block?.title||textFromHtml(block?.html||'')}
@@ -126,14 +185,20 @@ async function attachImages(blocks){
 }
 async function parseHtml(html='',options={}){
   const baseUrl=options.baseUrl||'';
-  const doc=new DOMParser().parseFromString(String(html||''),'text/html');
-  const title=textFromHtml(doc.querySelector('title')?.innerHTML||doc.querySelector('h1')?.innerHTML||options.fileName||'Ιστοσελίδα');
-  let blocks=collectBlocks(doc,baseUrl).filter(block=>!block.skipFigure);
-  const images=await attachImages(blocks);
-  blocks=blocks.filter(block=>block.type!=='figure'||!block.skipFigure);
-  if(!blocks.length)throw Error('Δεν βρέθηκε καθαρό περιεχόμενο για εισαγωγή.');
-  const pages=new Map([[1,blocks]]);
-  return {sourceType:'web',converter:CONVERTER,fileName:options.fileName||baseUrl||'web-page.html',title,pageCount:1,pages,imageBlobs:images.imageBlobs,usedImages:images.usedImages,rawImageRefs:blocks.filter(x=>x.type==='figure').length,skippedImages:images.skippedImages,paras:blocks.filter(x=>x.type==='paragraph').length,lists:blocks.filter(x=>x.type==='list').length,tables:blocks.filter(x=>x.type==='table').length,mathCount:blocks.filter(x=>/<math/i.test(x.html||'')).length,importedMathObjects:0,mathDuplicatesSkipped:0,inlineMath:0,displayMath:0,textBoxes:0,textBoxesUnique:0,textBoxCaptions:0,textBoxesImported:0,textBoxesImportedCanonical:0,unsupportedMath:[],documentLayout:{source:{bodyFontFamily:'Calibri',bodyFontSize:14.6667},layoutDefaults:{bodyFontFamily:'Calibri',bodyFontSize:14.6667,lineHeight:1.25,paragraphGap:6}}};
+  const rewritten=rewriteLocalImages(html);
+  try{
+    const doc=new DOMParser().parseFromString(String(rewritten.html||''),'text/html');
+    const title=textFromHtml(doc.querySelector('title')?.innerHTML||doc.querySelector('h1')?.innerHTML||options.fileName||'Ιστοσελίδα');
+    let blocks=collectBlocks(doc,baseUrl).filter(block=>!block.skipFigure);
+    const images=await attachImages(blocks);
+    blocks=blocks.filter(block=>block.type!=='figure'||!block.skipFigure);
+    if(!blocks.length)throw Error('Δεν βρέθηκε καθαρό περιεχόμενο για εισαγωγή.');
+    const pages=new Map([[1,blocks]]);
+    return {sourceType:'web',converter:CONVERTER,fileName:options.fileName||baseUrl||'web-page.html',title,pageCount:1,pages,imageBlobs:images.imageBlobs,usedImages:images.usedImages,rawImageRefs:blocks.filter(x=>x.type==='figure').length,skippedImages:images.skippedImages,paras:blocks.filter(x=>x.type==='paragraph').length,lists:blocks.filter(x=>x.type==='list').length,tables:blocks.filter(x=>x.type==='table').length,mathCount:blocks.filter(x=>/<math/i.test(x.html||'')).length,importedMathObjects:0,mathDuplicatesSkipped:0,inlineMath:0,displayMath:0,textBoxes:0,textBoxesUnique:0,textBoxCaptions:0,textBoxesImported:0,textBoxesImportedCanonical:0,unsupportedMath:[],documentLayout:{source:{bodyFontFamily:'Calibri',bodyFontSize:14.6667},layoutDefaults:{bodyFontFamily:'Calibri',bodyFontSize:14.6667,lineHeight:1.25,paragraphGap:6}}};
+  }finally{
+    rewritten.urls.forEach(url=>URL.revokeObjectURL(url));
+    localPackage=null;
+  }
 }
 async function parseUrl(url){
   const response=await fetch(url,{cache:'no-store'});
@@ -143,5 +208,41 @@ async function parseUrl(url){
 }
 function flattenEntries(result){const out=[];if(!result)return out;for(let p=1;p<=result.pageCount;p++){const arr=result.pages.get(p)||[];for(let i=0;i<arr.length;i++){const block=arr[i];out.push({key:p+':'+i,page:p,blockIndex:i,block,type:block.type||'block',level:Number(block.level||0),heading:block.type==='part_title'||block.type==='section_heading',label:blockText(block)})}}return out}
 function audit(result,entries){return{sourceFile:result.fileName,sourceType:'web',selectedBlocks:entries.length,paragraphs:result.paras,lists:result.lists,tables:result.tables,imagesImported:result.usedImages.length,imagesSkipped:result.skippedImages?.length||0,skippedImages:result.skippedImages||[],converter:CONVERTER,canonicalTarget:'bookwriter-v4'}}
+async function openLocalHtmlPackage(){
+  if(typeof showDirectoryPicker!=='function')return false;
+  try{
+    const handle=await showDirectoryPicker({mode:'read'});
+    const files=await collectDirectoryFiles(handle);
+    const htmlPath=chooseHtmlPath(files);
+    if(!htmlPath){global.alert('Δεν βρέθηκε αρχείο .html ή .htm στον επιλεγμένο φάκελο.');return true}
+    localPackage={files,htmlPath};
+    const htmlFile=files.get(htmlPath);
+    const input=document.querySelector('#insertWebFileInput');
+    if(!input)throw Error('Δεν βρέθηκε το πεδίο εισαγωγής HTML.');
+    const transfer=new DataTransfer();
+    transfer.items.add(htmlFile);
+    input.files=transfer.files;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+    return true;
+  }catch(error){
+    if(error?.name!=='AbortError'){
+      console.error('Local HTML package open failed',error);
+      global.alert('Αποτυχία ανοίγματος αποθηκευμένης ιστοσελίδας: '+(error?.message||error));
+    }
+    return true;
+  }
+}
+function bindLocalPackagePicker(){
+  const button=document.querySelector('#insertWebFileButton');
+  if(!button||typeof showDirectoryPicker!=='function')return;
+  button.textContent='HTML + φάκελος…';
+  button.title='Επίλεξε τον φάκελο που περιέχει το αποθηκευμένο HTML και τον συνοδευτικό φάκελο εικόνων.';
+  button.addEventListener('click',async event=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    await openLocalHtmlPackage();
+  },true);
+}
 global.WebCoreV4=Object.freeze({VERSION:CONVERTER,parseHtml,parseUrl,flattenEntries,entryLabel,blockText,audit});
+bindLocalPackagePicker();
 })(window);
