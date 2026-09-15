@@ -166,7 +166,8 @@ function pushList(blocks,node,baseUrl,sourceIndex){
   images.forEach(img=>pushFigureFromImg(blocks,img,sourceIndex));
 }
 function pushTable(blocks,node,baseUrl,sourceIndex){
-  const rows=[...node.querySelectorAll('tr')].map(tr=>({cells:[...tr.children].filter(cell=>['TD','TH'].includes(cell.tagName)).map(cell=>{
+  const ownedRows=[...node.querySelectorAll('tr')].filter(tr=>tr.closest('table')===node);
+  const rows=ownedRows.map(tr=>({cells:[...tr.children].filter(cell=>['TD','TH'].includes(cell.tagName)).map(cell=>{
     const images=[...cell.querySelectorAll('img')].map(imageInfo).filter(Boolean);
     return{html:cleanHtml(cell.innerHTML,baseUrl),colspan:Number(cell.getAttribute('colspan'))||1,rowspan:Number(cell.getAttribute('rowspan'))||1,style:cell.tagName==='TH'?{bold:true}:{},images};
   })})).filter(row=>row.cells.length);
@@ -177,7 +178,7 @@ function pushTable(blocks,node,baseUrl,sourceIndex){
 function pushFigure(blocks,node,baseUrl,sourceIndex){const img=node.tagName==='IMG'?node:node.querySelector('img');if(!img)return;const caption=node.tagName==='FIGURE'?textFromHtml(node.querySelector('figcaption')?.innerHTML||''):'';pushFigureFromImg(blocks,img,sourceIndex,caption)}
 function collectBlocks(doc,baseUrl=''){
   const source=doc.querySelector('article,main,[role="main"]')||doc.body;if(!source)return[];
-  source.querySelectorAll('aside,.sidebar,.menu,.nav,.advertisement,.ads,[aria-hidden="true"]').forEach(node=>node.remove());
+  source.querySelectorAll('script,style,noscript,template,iframe,object,embed,canvas,svg,form,aside,.sidebar,.menu,.nav,.advertisement,.ads,[aria-hidden="true"]').forEach(node=>node.remove());
   const blocks=[];let index=0;
   const visit=node=>{
     if(node.nodeType!==1)return;const tag=node.tagName;index++;
