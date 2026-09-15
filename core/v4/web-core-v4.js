@@ -1,7 +1,7 @@
 'use strict';
 (function(global){
 const CONVERTER='bookwriter-4.5.0-rc1-web';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const textFromHtml=html=>{const d=document.createElement('div');d.innerHTML=String(html||'');return(d.textContent||'').replace(/\s+/g,' ').trim()};
 const safeName=value=>String(value||'web-image').split(/[?#]/)[0].split('/').pop().replace(/[^A-Za-z0-9._-]+/g,'_')||'web-image.bin';
 let localPackage=null;
@@ -9,7 +9,7 @@ let pendingLocalHtmlFile=null;
 function normalizeLocalPath(value=''){
   let raw=String(value||'').trim().replace(/\\/g,'/').split('#')[0].split('?')[0];
   try{raw=decodeURIComponent(raw)}catch{}
-  raw=raw.replace(/^\.\//,'').replace(/^\/+/, '');
+  raw=raw.normalize('NFC').replace(/^\.\//,'').replace(/^\/+/, '');
   const out=[];
   for(const part of raw.split('/')){
     if(!part||part==='.')continue;
@@ -18,13 +18,8 @@ function normalizeLocalPath(value=''){
   }
   return out.join('/');
 }
-function joinLocalPath(base='',relative=''){
-  const rel=String(relative||'').trim();
-  if(!rel)return'';
-  if(/^(?:[a-z]+:|\/\/|#)/i.test(rel))return rel;
-  const prefix=normalizeLocalPath(base).split('/').slice(0,-1).join('/');
-  return normalizeLocalPath((prefix?prefix+'/':'')+rel);
-}
+const foldPath=value=>normalizeLocalPath(value).toLocaleLowerCase('el-GR');
+const basename=value=>normalizeLocalPath(value).split('/').pop()||'';
 async function collectDirectoryFiles(handle,prefix='',map=new Map()){
   for await(const[name,entry]of handle.entries()){
     const path=prefix?prefix+'/'+name:name;
@@ -33,20 +28,46 @@ async function collectDirectoryFiles(handle,prefix='',map=new Map()){
   }
   return map;
 }
+function joinLocalPath(base='',relative=''){
+  const rel=String(relative||'').trim();
+  if(!rel)return'';
+  if(/^(?:[a-z]+:|\/\/|#)/i.test(rel))return rel;
+  const prefix=normalizeLocalPath(base).split('/').slice(0,-1).join('/');
+  return normalizeLocalPath((prefix?prefix+'/':'')+rel);
+}
 function selectedHtmlPath(files,fileName=''){
-  const wanted=String(fileName||'').toLowerCase();
-  const root=[...files.keys()].find(path=>!path.includes('/')&&path.toLowerCase()===wanted);
+  const wanted=String(fileName||'').normalize('NFC').toLocaleLowerCase('el-GR');
+  const root=[...files.keys()].find(path=>!path.includes('/')&&basename(path).toLocaleLowerCase('el-GR')===wanted);
   if(root)return root;
-  return [...files.keys()].find(path=>path.split('/').pop().toLowerCase()===wanted)||'';
+  return [...files.keys()].find(path=>basename(path).toLocaleLowerCase('el-GR')===wanted)||'';
 }
 function packageFileFor(src){
   if(!localPackage||!src)return null;
   const joined=joinLocalPath(localPackage.htmlPath,src);
   if(/^(?:[a-z]+:|\/\/|#)/i.test(joined))return null;
+  const entries=[...localPackage.files.entries()];
   const exact=localPackage.files.get(normalizeLocalPath(joined));
   if(exact)return exact;
-  const key=normalizeLocalPath(joined).toLowerCase();
-  return [...localPackage.files.entries()].find(([path])=>path.toLowerCase()===key)?.[1]||null;
+  const folded=foldPath(joined);
+  const caseInsensitive=entries.find(([path])=>foldPath(path)===folded)?.[1];
+  if(caseInsensitive)return caseInsensitive;
+
+  // Browsers often flatten original site paths (images/foo.png, extras/images/foo.png)
+  // into one sibling "<page>_files" directory when saving a complete webpage.
+  // Prefer a unique basename match inside that companion directory.
+  const wantedBase=basename(src).toLocaleLowerCase('el-GR');
+  if(!wantedBase)return null;
+  const htmlBase=basename(localPackage.htmlPath).replace(/\.html?$/i,'');
+  const companionPrefix=(htmlBase+'_files/').normalize('NFC').toLocaleLowerCase('el-GR');
+  const companionMatches=entries.filter(([path])=>{
+    const foldedPath=foldPath(path);
+    return foldedPath.startsWith(companionPrefix)&&basename(path).toLocaleLowerCase('el-GR')===wantedBase;
+  });
+  if(companionMatches.length===1)return companionMatches[0][1];
+
+  // Last-resort fallback: only accept a basename when it is globally unique.
+  const basenameMatches=entries.filter(([path])=>basename(path).toLocaleLowerCase('el-GR')===wantedBase);
+  return basenameMatches.length===1?basenameMatches[0][1]:null;
 }
 function rewriteLocalImages(html=''){
   if(!localPackage)return{html:String(html||''),urls:[]};
