@@ -5,6 +5,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const textFromHtml=html=>{const d=document.createElement('div');d.innerHTML=String(html||'');return(d.textContent||'').replace(/\s+/g,' ').trim()};
 const safeName=value=>String(value||'web-image').split(/[?#]/)[0].split('/').pop().replace(/[^A-Za-z0-9._-]+/g,'_')||'web-image.bin';
 let localPackage=null;
+let pendingLocalHtmlFile=null;
 function normalizeLocalPath(value=''){
   let raw=String(value||'').trim().replace(/\\/g,'/').split('#')[0].split('?')[0];
   try{raw=decodeURIComponent(raw)}catch{}
@@ -32,12 +33,11 @@ async function collectDirectoryFiles(handle,prefix='',map=new Map()){
   }
   return map;
 }
-function chooseHtmlPath(files){
-  const html=[...files.keys()].filter(path=>/\.html?$/i.test(path));
-  if(!html.length)return'';
-  const root=html.filter(path=>!path.includes('/'));
-  const pool=root.length?root:html;
-  return pool.find(path=>/(^|\/)index\.html?$/i.test(path))||pool[0];
+function selectedHtmlPath(files,fileName=''){
+  const wanted=String(fileName||'').toLowerCase();
+  const root=[...files.keys()].find(path=>!path.includes('/')&&path.toLowerCase()===wanted);
+  if(root)return root;
+  return [...files.keys()].find(path=>path.split('/').pop().toLowerCase()===wanted)||'';
 }
 function packageFileFor(src){
   if(!localPackage||!src)return null;
@@ -208,41 +208,53 @@ async function parseUrl(url){
 }
 function flattenEntries(result){const out=[];if(!result)return out;for(let p=1;p<=result.pageCount;p++){const arr=result.pages.get(p)||[];for(let i=0;i<arr.length;i++){const block=arr[i];out.push({key:p+':'+i,page:p,blockIndex:i,block,type:block.type||'block',level:Number(block.level||0),heading:block.type==='part_title'||block.type==='section_heading',label:blockText(block)})}}return out}
 function audit(result,entries){return{sourceFile:result.fileName,sourceType:'web',selectedBlocks:entries.length,paragraphs:result.paras,lists:result.lists,tables:result.tables,imagesImported:result.usedImages.length,imagesSkipped:result.skippedImages?.length||0,skippedImages:result.skippedImages||[],converter:CONVERTER,canonicalTarget:'bookwriter-v4'}}
-async function openLocalHtmlPackage(){
-  if(typeof showDirectoryPicker!=='function')return false;
+async function grantFolderAccess(){
+  if(!pendingLocalHtmlFile||typeof showDirectoryPicker!=='function')return;
   try{
     const handle=await showDirectoryPicker({mode:'read'});
     const files=await collectDirectoryFiles(handle);
-    const htmlPath=chooseHtmlPath(files);
-    if(!htmlPath){global.alert('Δεν βρέθηκε αρχείο .html ή .htm στον επιλεγμένο φάκελο.');return true}
+    const htmlPath=selectedHtmlPath(files,pendingLocalHtmlFile.name);
+    if(!htmlPath){
+      global.alert('Ο επιλεγμένος φάκελος δεν περιέχει το HTML «'+pendingLocalHtmlFile.name+'». Επίλεξε τον φάκελο όπου αποθηκεύτηκε η ιστοσελίδα.');
+      return;
+    }
     localPackage={files,htmlPath};
-    const htmlFile=files.get(htmlPath);
     const input=document.querySelector('#insertWebFileInput');
+    const button=document.querySelector('#insertWebFileButton');
     if(!input)throw Error('Δεν βρέθηκε το πεδίο εισαγωγής HTML.');
+    if(button){button.textContent='HTML αρχείο…';button.title=''}
+    const file=pendingLocalHtmlFile;
+    pendingLocalHtmlFile=null;
     const transfer=new DataTransfer();
-    transfer.items.add(htmlFile);
+    transfer.items.add(file);
     input.files=transfer.files;
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    return true;
+    if(typeof input.onchange==='function')input.onchange({target:input});
   }catch(error){
     if(error?.name!=='AbortError'){
-      console.error('Local HTML package open failed',error);
-      global.alert('Αποτυχία ανοίγματος αποθηκευμένης ιστοσελίδας: '+(error?.message||error));
+      console.error('Local HTML folder access failed',error);
+      global.alert('Αποτυχία πρόσβασης στον φάκελο της ιστοσελίδας: '+(error?.message||error));
     }
-    return true;
   }
 }
-function bindLocalPackagePicker(){
+function bindLocalFolderAccess(){
+  const input=document.querySelector('#insertWebFileInput');
   const button=document.querySelector('#insertWebFileButton');
-  if(!button||typeof showDirectoryPicker!=='function')return;
-  button.textContent='HTML + φάκελος…';
-  button.title='Επίλεξε τον φάκελο που περιέχει το αποθηκευμένο HTML και τον συνοδευτικό φάκελο εικόνων.';
+  if(!input||!button||typeof showDirectoryPicker!=='function')return;
+  input.addEventListener('change',event=>{
+    const file=event.target.files?.[0];
+    if(!file||!/\.html?$/i.test(file.name))return;
+    event.stopImmediatePropagation();
+    pendingLocalHtmlFile=file;
+    button.textContent='Πρόσβαση στον φάκελο…';
+    button.title='Επίλεξε τον φάκελο όπου βρίσκονται το HTML και ο συνοδευτικός φάκελος εικόνων.';
+  },true);
   button.addEventListener('click',async event=>{
+    if(!pendingLocalHtmlFile)return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    await openLocalHtmlPackage();
+    await grantFolderAccess();
   },true);
 }
 global.WebCoreV4=Object.freeze({VERSION:CONVERTER,parseHtml,parseUrl,flattenEntries,entryLabel,blockText,audit});
-bindLocalPackagePicker();
+bindLocalFolderAccess();
 })(window);
